@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit for Review - eproexpo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            DEFAULT: '#5B32F6',
+                            light: '#F4F1FF',
+                        },
+                        textMain: '#1C1364',
+                        textMuted: '#6B7280',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-white text-textMain font-sans flex min-h-screen">
+    <div id="sidebar-container" class="z-50 relative"></div>
+    
+    <main class="lg:ml-[280px] ml-0 flex-1 bg-white min-h-screen flex flex-col transition-all duration-300">
+        <!-- Top Nav -->
+        <header class="bg-white flex justify-between items-center px-4 md:px-10 py-4 md:py-6 border-b border-gray-100 shrink-0">
+            <div class="flex items-center gap-4 md:gap-8">
+                <!-- Hamburger Button (Visible only on mobile/tablet) -->
+                <button id="sidebar-toggle-btn" class="lg:hidden text-textMain hover:text-primary transition-colors focus:outline-none">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="hidden xl:flex gap-8">
+                    <a href="#" class="text-[13px] font-medium text-textMain">Explore Events</a>
+                    <a href="#" class="text-[13px] font-medium text-textMain">Exhibitions</a>
+                    <a href="#" class="text-[13px] font-medium text-textMain">Products</a>
+                    <a href="#" class="text-[13px] font-medium text-textMain">Jobs</a>
+                    <a href="#" class="text-[13px] font-medium text-textMain">Resources</a>
+                    <a href="#" class="text-[13px] font-medium text-textMain">Pricing</a>
+                </div>
+            </div>
+            <div class="flex items-center gap-4 md:gap-6">
+                <div class="hidden sm:flex items-center gap-1 text-[13px] font-medium cursor-pointer">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                    EN
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div class="hidden sm:block w-px h-6 bg-gray-200"></div>
+                <div class="flex items-center gap-3">
+                    <img src="https://i.pravatar.cc/150?img=11" alt="John Doe" class="w-8 h-8 md:w-9 md:h-9 rounded-full object-cover">
+                    <div class="hidden sm:block text-left">
+                        <h4 class="text-[13px] font-bold">John Doe</h4>
+                        <p class="text-[11px] text-textMuted font-medium">Organizer</p>
+                    </div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+            </div>
+        </header>
+
+        <div class="px-4 md:px-10 py-10 max-w-[1250px] w-full flex flex-col xl:flex-row mx-auto flex-1 gap-10 md:gap-14">
+            
+            <!-- Left Column -->
+            <div class="flex-1 flex flex-col gap-10">
+                
+                <!-- Setup Checklist -->
+                <div>
+                    <h3 class="text-[16px] font-bold text-[#1C1364] mb-5">Setup Checklist</h3>
+                    <div class="border border-gray-100 rounded-[12px] bg-white flex flex-col shadow-[0_2px_8px_rgba(0,0,0,0.01)] overflow-hidden">
+                        
+                        <!-- Checklist Items -->
+                        <div class="flex items-center justify-between p-4 px-5 border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <svg class="text-[#10B981]" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+                                <span class="text-[14px] font-bold text-[#1C1364]">Basic Details</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[13px] font-bold text-[#10B981]">Completed</span>
+                                <svg class="text-[#5B6B8A]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-4 px-5 border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <svg id="chk-branding-icon" class="text-[#10B981]" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+                                <span class="text-[14px] font-bold text-[#1C1364]">Branding</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span id="chk-branding-text" class="text-[13px] font-bold text-[#10B981]">Completed</span>
+                                <svg class="text-[#5B6B8A]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 px-5 border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <svg id="chk-tickets-icon" class="text-[#10B981]" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+                                <span class="text-[14px] font-bold text-[#1C1364]">Tickets / Passes</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span id="chk-tickets-text" class="text-[13px] font-bold text-[#10B981]">Completed</span>
+                                <svg class="text-[#5B6B8A]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 px-5 border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <svg class="text-[#10B981]" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+                                <span class="text-[14px] font-bold text-[#1C1364]">Speakers</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[13px] font-bold text-[#10B981]">Completed</span>
+                                <svg class="text-[#5B6B8A]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 px-5 border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <svg class="text-[#10B981]" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+                                <span class="text-[14px] font-bold text-[#1C1364]">Sessions / Agenda</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[13px] font-bold text-[#10B981]">Completed</span>
+                                <svg class="text-[#5B6B8A]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 px-5 border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <svg class="text-[#10B981]" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+                                <span class="text-[14px] font-bold text-[#1C1364]">Sponsors</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[13px] font-bold text-[#10B981]">Completed</span>
+                                <svg class="text-[#5B6B8A]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 px-5 border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <svg class="text-[#10B981]" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+                                <span class="text-[14px] font-bold text-[#1C1364]">Resources</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[13px] font-bold text-[#10B981]">Completed</span>
+                                <svg class="text-[#5B6B8A]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 px-5 hover:bg-gray-50/50 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <svg class="text-[#10B981]" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+                                <span class="text-[14px] font-bold text-[#1C1364]">Meetings & Networking</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[13px] font-bold text-[#10B981]">Completed</span>
+                                <svg class="text-[#5B6B8A]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Review Notes -->
+                <div>
+                    <h3 class="text-[15px] font-bold text-[#1C1364] mb-1">Review Notes</h3>
+                    <p class="text-[13px] text-[#5B6B8A] mb-3">Add any additional information for the review team.</p>
+                    <div class="relative">
+                        <textarea id="review-notes" class="w-full h-[120px] p-5 bg-white border border-gray-200 rounded-[12px] text-[13px] font-medium text-[#1C1364] focus:outline-none focus:border-[#4C10D0] resize-none shadow-[0_2px_8px_rgba(0,0,0,0.01)]" placeholder="Enter notes..." maxlength="500">Our event is ready for review. Please let us know if any additional information is required.</textarea>
+                        <span id="char-counter" class="absolute bottom-4 right-4 text-[12px] font-medium text-[#5B6B8A]">0/500</span>
+                    </div>
+                </div>
+
+                <!-- Documents -->
+                <div>
+                    <h3 class="text-[15px] font-bold text-[#1C1364] mb-1">Documents (Optional)</h3>
+                    <p class="text-[13px] text-[#5B6B8A] mb-3">Upload supporting documents if needed.</p>
+                    
+                    <div class="flex flex-col gap-3 mb-4">
+                        <!-- Brochure Slot -->
+                        <div id="brochure-slot" class="border border-gray-100 rounded-[8px] bg-white p-3.5 flex items-center justify-between shadow-sm">
+                            <!-- Populated dynamically -->
+                        </div>
+
+                        <!-- Sponsorship Slot -->
+                        <div id="guide-slot" class="border border-gray-100 rounded-[8px] bg-white p-3.5 flex items-center justify-between shadow-sm">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                    
+                    <input type="file" id="brochure-input" class="hidden" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg">
+                    <input type="file" id="guide-input" class="hidden" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg">
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="w-full xl:w-[440px] flex flex-col gap-10">
+                
+                <!-- Review Summary -->
+                <div>
+                    <h3 class="text-[16px] font-bold text-[#1C1364] mb-5">Review Summary</h3>
+                    <div class="border border-gray-100 rounded-[12px] bg-white flex flex-col shadow-[0_2px_10px_rgba(0,0,0,0.01)] overflow-hidden">
+                        
+                        <!-- Row 1 -->
+                        <div class="p-6 flex items-center gap-6 border-b border-gray-50">
+                            <div class="w-[52px] h-[52px] rounded-[12px] bg-[#ECFDF5] text-[#10B981] flex items-center justify-center shrink-0">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><polyline points="9 14 11 16 15 11"></polyline></svg>
+                            </div>
+                            <div class="flex flex-col flex-1">
+                                <span id="summary-sections-count" class="text-[16px] font-bold text-[#1C1364] mb-0.5">8/8</span>
+                                <span class="text-[13px] font-medium text-[#5B6B8A]">Completed Sections</span>
+                            </div>
+                            <div class="text-[12px] font-medium text-[#5B6B8A] w-[140px] leading-tight">
+                                All required sections are completed
+                            </div>
+                        </div>
+
+                        <!-- Row 2 -->
+                        <div class="p-6 flex items-center gap-6 border-b border-gray-50">
+                            <div class="w-[52px] h-[52px] rounded-[12px] bg-[#F4F1FF] text-[#4C10D0] flex items-center justify-center shrink-0">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                            </div>
+                            <div class="flex flex-col flex-1">
+                                <span id="summary-attendees" class="text-[16px] font-bold text-[#1C1364] mb-0.5">1,500</span>
+                                <span class="text-[13px] font-medium text-[#5B6B8A]">Expected Attendees</span>
+                            </div>
+                            <div class="text-[12px] font-medium text-[#5B6B8A] w-[140px] leading-tight">
+                                Based on ticket sales configuration
+                            </div>
+                        </div>
+
+                        <!-- Row 3 -->
+                        <div class="p-6 flex items-center gap-6">
+                            <div class="w-[52px] h-[52px] rounded-[12px] bg-[#EFF6FF] text-[#3B82F6] flex items-center justify-center shrink-0">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            </div>
+                            <div class="flex flex-col flex-1 col-span-2">
+                                <span id="summary-dates" class="text-[16px] font-bold text-[#1C1364] mb-0.5">May 15 - 17, 2024</span>
+                                <span id="summary-duration" class="text-[13px] font-medium text-[#5B6B8A]">3 Days Event</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Overall Progress -->
+                <div>
+                    <h3 class="text-[16px] font-bold text-[#1C1364] mb-4">Overall Progress</h3>
+                    
+                    <div class="flex items-center gap-4 mb-8">
+                        <div class="flex-1 h-3.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div id="progress-bar-fill" class="h-full bg-[#4C10D0] w-full rounded-full transition-all duration-300"></div>
+                        </div>
+                        <span id="progress-text" class="text-[15px] font-bold text-[#1C1364]">100%</span>
+                    </div>
+
+                    <!-- Alert Box -->
+                    <div class="bg-[#F0FDF4] border border-[#DCFCE7] rounded-[12px] p-6 flex gap-4">
+                        <div class="text-[#10B981] shrink-0 mt-0.5">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                        </div>
+                        <div class="flex flex-col gap-1.5 text-left">
+                            <span class="text-[14px] font-bold text-[#10B981]">Your event is ready for review!</span>
+                            <span class="text-[13px] font-medium text-[#5B6B8A] leading-relaxed">Once submitted, our review team will verify your event details. You will be notified via email.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Buttons -->
+                <div class="flex flex-col gap-4 mt-auto">
+                    <button id="submit-review-btn" class="w-full bg-[#4C10D0] text-white py-4 rounded-lg text-[14px] font-bold hover:bg-[#3d0ba8] transition-colors shadow-[0_4px_14px_rgba(76,16,208,0.3)] focus:outline-none">
+                        Submit for Review
+                    </button>
+                    <a href="event-preview.html" class="w-[120px] py-3 border border-gray-200 text-[#1C1364] bg-white rounded-lg text-[14px] font-bold hover:bg-gray-50 transition-colors shadow-sm self-start text-center inline-block">
+                        Back
+                    </a>
+                </div>
+                
+            </div>
+        </div>
+    </main>
+
+    <script src="sidebar.js"></script>
+    <script src="app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set 'Events' as active dynamically after app.js loads the sidebar
+            setTimeout(() => {
+                const navItems = document.querySelectorAll('#sidebar-container a');
+                navItems.forEach(n => {
+                    n.classList.remove('bg-[#F4F1FF]', 'text-[#5B32F6]', 'font-semibold');
+                    n.classList.add('text-[#1C1364]', 'font-medium');
+                    const svg = n.querySelector('svg');
+                    if(svg) svg.classList.replace('text-[#5B32F6]', 'text-[#1C1364]');
+                    
+                    if(n.textContent.trim() === 'Events') {
+                        n.classList.remove('text-[#1C1364]', 'font-medium');
+                        n.classList.add('bg-[#F4F1FF]', 'text-[#5B32F6]', 'font-semibold');
+                        if(svg) svg.classList.replace('text-[#1C1364]', 'text-[#5B32F6]');
+                    }
+                });
+            }, 100);
+
+            // API details
+            const backendUrl = 'http://localhost:8000/api';
+            const eventId = localStorage.getItem('activeCreatedEventId');
+
+            // Files state
+            let brochureFile = null;
+            let guideFile = null;
+
+            // Character Counter
+            const textarea = document.getElementById('review-notes');
+            const counter = document.getElementById('char-counter');
+            function updateCounter() {
+                counter.textContent = `${textarea.value.length}/500`;
+            }
+            textarea.addEventListener('input', updateCounter);
+            updateCounter();
+
+            // Date Range Formatter
+            function formatDateRange(startStr, endStr) {
+                if (!startStr) return 'Date TBD';
+                try {
+                    const start = new Date(startStr);
+                    const end = new Date(endStr);
+                    const options = { month: 'short', day: 'numeric', year: 'numeric' };
+                    if (start.getMonth() === end.getMonth()) {
+                        return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${end.getDate()}, ${end.getFullYear()}`;
+                    }
+                    return `${start.toLocaleDateString('en-US', options)} - ${end.toLocaleDateString('en-US', options)}`;
+                } catch (e) {
+                    return `${startStr} - ${endStr}`;
+                }
+            }
+
+            // Calculate Duration Days
+            function calculateDays(startStr, endStr) {
+                if (!startStr || !endStr) return 'TBD';
+                try {
+                    const diffTime = Math.abs(new Date(endStr) - new Date(startStr));
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                    return `${diffDays} Day${diffDays > 1 ? 's' : ''}`;
+                } catch (e) {
+                    return '3 Days';
+                }
+            }
+
+            // Render Documents Slots
+            function renderDocuments() {
+                const bSlot = document.getElementById('brochure-slot');
+                const gSlot = document.getElementById('guide-slot');
+
+                // Brochure
+                if (brochureFile) {
+                    bSlot.innerHTML = `
+                        <div class="flex items-center gap-3 min-w-0">
+                            <svg class="text-red-500 shrink-0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                            <span class="text-[13px] font-medium text-[#1C1364] truncate max-w-[180px]">${brochureFile.name}</span>
+                        </div>
+                        <div class="flex items-center gap-6 shrink-0">
+                            <span class="text-[12px] font-medium text-[#5B6B8A]">${brochureFile.sizeText || 'Uploaded'}</span>
+                            <button id="del-brochure-btn" class="text-red-500 hover:text-red-600 transition-colors focus:outline-none">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                        </div>
+                    `;
+                    document.getElementById('del-brochure-btn').addEventListener('click', () => {
+                        brochureFile = null;
+                        document.getElementById('brochure-input').value = '';
+                        renderDocuments();
+                    });
+                } else {
+                    bSlot.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <svg class="text-gray-400 shrink-0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                            <span class="text-[13px] font-medium text-gray-400">Event_Brochure.pdf (Optional)</span>
+                        </div>
+                        <button id="upload-brochure-btn" class="text-[#4C10D0] hover:underline text-[13px] font-bold focus:outline-none">Upload</button>
+                    `;
+                    document.getElementById('upload-brochure-btn').addEventListener('click', () => {
+                        document.getElementById('brochure-input').click();
+                    });
+                }
+
+                // Sponsorship Guide
+                if (guideFile) {
+                    gSlot.innerHTML = `
+                        <div class="flex items-center gap-3 min-w-0">
+                            <svg class="text-red-500 shrink-0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                            <span class="text-[13px] font-medium text-[#1C1364] truncate max-w-[180px]">${guideFile.name}</span>
+                        </div>
+                        <div class="flex items-center gap-6 shrink-0">
+                            <span class="text-[12px] font-medium text-[#5B6B8A]">${guideFile.sizeText || 'Uploaded'}</span>
+                            <button id="del-guide-btn" class="text-red-500 hover:text-red-600 transition-colors focus:outline-none">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                        </div>
+                    `;
+                    document.getElementById('del-guide-btn').addEventListener('click', () => {
+                        guideFile = null;
+                        document.getElementById('guide-input').value = '';
+                        renderDocuments();
+                    });
+                } else {
+                    gSlot.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <svg class="text-gray-400 shrink-0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                            <span class="text-[13px] font-medium text-gray-400">Sponsorship_Guide.pdf (Optional)</span>
+                        </div>
+                        <button id="upload-guide-btn" class="text-[#4C10D0] hover:underline text-[13px] font-bold focus:outline-none">Upload</button>
+                    `;
+                    document.getElementById('upload-guide-btn').addEventListener('click', () => {
+                        document.getElementById('guide-input').click();
+                    });
+                }
+            }
+
+            // Input files listeners
+            document.getElementById('brochure-input').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    brochureFile = {
+                        name: file.name,
+                        sizeText: (file.size / (1024 * 1024)).toFixed(1) + ' MB',
+                        fileObj: file
+                    };
+                    renderDocuments();
+                }
+            });
+
+            document.getElementById('guide-input').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    guideFile = {
+                        name: file.name,
+                        sizeText: (file.size / (1024 * 1024)).toFixed(1) + ' MB',
+                        fileObj: file
+                    };
+                    renderDocuments();
+                }
+            });
+
+            // Format file paths to names
+            function getFileNameFromPath(path) {
+                if (!path) return '';
+                return path.substring(path.lastIndexOf('/') + 1);
+            }
+
+            // Load initial event review details
+            if (eventId) {
+                fetch(`${backendUrl}/events/${eventId}`)
+                    .then(res => res.json())
+                    .then(event => {
+                        // Expected attendees
+                        let total = 0;
+                        let hasUnlimited = false;
+                        if (event.tickets) {
+                            event.tickets.forEach(t => {
+                                const qty = parseInt(t.quantity);
+                                if (isNaN(qty)) hasUnlimited = true;
+                                else total += qty;
+                            });
+                        }
+                        document.getElementById('summary-attendees').textContent = hasUnlimited ? 'Unlimited' : total.toLocaleString();
+
+                        // Dates and duration
+                        document.getElementById('summary-dates').textContent = formatDateRange(event.start_date, event.end_date).split('|')[0].trim();
+                        document.getElementById('summary-duration').textContent = `${calculateDays(event.start_date, event.end_date)} Event`;
+
+                        // Checklist dynamic states and count
+                        let completedCount = 4; // Default baseline sections (Speakers, Agenda, Sponsors, Networking, etc. mock)
+                        
+                        // Check Basic Details
+                        completedCount++; // Always completed if we got here
+
+                        // Check Branding
+                        if (event.primary_color || event.logo_path) {
+                            completedCount++;
+                            document.getElementById('chk-branding-icon').classList.replace('text-gray-300', 'text-[#10B981]');
+                            document.getElementById('chk-branding-text').textContent = 'Completed';
+                            document.getElementById('chk-branding-text').classList.replace('text-gray-400', 'text-[#10B981]');
+                        } else {
+                            // Leave as completed defaults or dynamic
+                        }
+
+                        // Check Tickets
+                        if (event.tickets && event.tickets.length > 0) {
+                            completedCount++;
+                            document.getElementById('chk-tickets-icon').classList.replace('text-gray-300', 'text-[#10B981]');
+                            document.getElementById('chk-tickets-text').textContent = 'Completed';
+                            document.getElementById('chk-tickets-text').classList.replace('text-gray-400', 'text-[#10B981]');
+                        }
+
+                        completedCount = Math.min(completedCount, 8); // Max 8 sections
+                        document.getElementById('summary-sections-count').textContent = `${completedCount}/8`;
+
+                        // Progress percentage
+                        const pct = Math.round((completedCount / 8) * 100);
+                        document.getElementById('progress-bar-fill').style.width = `${pct}%`;
+                        document.getElementById('progress-text').textContent = `${pct}%`;
+
+                        // Notes
+                        if (event.review_notes) {
+                            textarea.value = event.review_notes;
+                            updateCounter();
+                        }
+
+                        // Brochure & Sponsorship path loading
+                        if (event.brochure_path) {
+                            brochureFile = {
+                                name: getFileNameFromPath(event.brochure_path),
+                                sizeText: 'Saved',
+                                fileObj: null
+                            };
+                        }
+                        if (event.sponsorship_guide_path) {
+                            guideFile = {
+                                name: getFileNameFromPath(event.sponsorship_guide_path),
+                                sizeText: 'Saved',
+                                fileObj: null
+                            };
+                        }
+                        renderDocuments();
+                    })
+                    .catch(err => {
+                        console.error('Failed to load review event:', err);
+                        renderDocuments();
+                    });
+            } else {
+                renderDocuments();
+            }
+
+            // Submit logic
+            const submitBtn = document.getElementById('submit-review-btn');
+            submitBtn.addEventListener('click', () => {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Submitting...';
+
+                const formData = new FormData();
+                formData.append('review_notes', textarea.value);
+
+                if (brochureFile && brochureFile.fileObj) {
+                    formData.append('brochure', brochureFile.fileObj);
+                }
+                if (guideFile && guideFile.fileObj) {
+                    formData.append('sponsorship_guide', guideFile.fileObj);
+                }
+
+                if (!eventId) {
+                    alert('Event successfully mock-submitted for review!');
+                    window.location.href = 'event_company_dashboard.html';
+                    return;
+                }
+
+                fetch(`${backendUrl}/events/${eventId}/submit`, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => {
+                    if (!res.ok) throw new Error('Submission failed');
+                    return res.json();
+                })
+                .then(data => {
+                    console.log('Event submitted successfully:', data);
+                    alert('Your event has been successfully submitted for review!');
+                    // Redirect back to dashboard to see updated pending count and events listing
+                    window.location.href = 'event_company_dashboard.html';
+                })
+                .catch(err => {
+                    console.error('Failed to submit event:', err);
+                    alert('Could not submit event details to Laravel backend server. Redirecting to dashboard in offline mode.');
+                    window.location.href = 'event_company_dashboard.html';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

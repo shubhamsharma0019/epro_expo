@@ -1,0 +1,1 @@
+@include('exhibition.pavilions.show')

@@ -1,0 +1,1 @@
+<div class="mb-8 flex flex-wrap gap-3 text-[13px] font-semibold text-[#4E567A]">@foreach (($steps ?? ['Tickets','Attendees','Summary','Payment','Confirmed']) as $step)<span class="rounded-full bg-[#F4F0FF] px-4 py-2 text-[#5B35D5]">{{ $step }}</span>@endforeach</div>

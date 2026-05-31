@@ -1,0 +1,1 @@
+<div class="rounded-[20px] border border-[#E8E3F0] bg-white p-8 text-center"><div class="mx-auto grid h-44 w-44 place-items-center rounded-xl border border-[#E8E3F0] bg-[#FAFAFC] text-[13px] font-semibold text-[#1F2A6A]">QR Code</div><p class="mt-4 text-[14px] text-[#4E567A]">GTS-2024-MUM</p></div>

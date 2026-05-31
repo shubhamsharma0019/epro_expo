@@ -1,0 +1,1 @@
+<div class="rounded-xl border border-[#E8E3F0] bg-white p-5"><h3 class="text-[16px] font-bold text-[#1F2A6A]">{{ $name ?? 'General Pass' }}</h3><p class="mt-1.5 text-[14px] text-[#4E567A]">{{ $description ?? 'Access to all sessions' }}</p><p class="mt-3 text-[18px] font-bold text-[#1F2A6A]">{{ $price ?? '₹49.00' }}</p></div>

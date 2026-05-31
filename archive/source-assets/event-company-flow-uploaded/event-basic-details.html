@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Basic Details - eproexpo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            DEFAULT: '#5B32F6',
+                            light: '#F4F1FF',
+                        },
+                        textMain: '#1C1364',
+                        textMuted: '#6B7280',
+                        borderLight: '#E5E7EB'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom select styling to match image */
+        .custom-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+        }
+        .custom-date {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+        }
+    </style>
+</head>
+<body class="bg-white text-textMain font-sans flex min-h-screen">
+    <div id="sidebar-container" class="z-50 relative"></div>
+    
+    <main class="lg:ml-[280px] flex-1 bg-gray-50/50 min-h-screen transition-all duration-300">
+        <!-- Top Nav -->
+        <header class="flex justify-between items-center px-4 md:px-10 py-4 md:py-6 border-b border-gray-100 bg-white">
+            <div class="flex items-center gap-4 md:gap-8">
+                <!-- Hamburger Button (Visible only on mobile/tablet) -->
+                <button id="sidebar-toggle-btn" class="lg:hidden text-textMain hover:text-primary transition-colors focus:outline-none">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="hidden xl:flex gap-8">
+                    <a href="#" class="text-sm font-medium text-textMain hover:text-primary transition-colors">Explore Events</a>
+                    <a href="#" class="text-sm font-medium text-textMain hover:text-primary transition-colors">Exhibitions</a>
+                    <a href="#" class="text-sm font-medium text-primary hover:text-primary transition-colors">Products</a>
+                    <a href="#" class="text-sm font-medium text-textMain hover:text-primary transition-colors">Jobs</a>
+                    <a href="#" class="text-sm font-medium text-textMain hover:text-primary transition-colors">Resources</a>
+                    <a href="#" class="text-sm font-medium text-textMain hover:text-primary transition-colors">Pricing</a>
+                </div>
+            </div>
+            <div class="flex items-center gap-4 md:gap-6">
+                <div class="hidden sm:flex items-center gap-1 text-sm font-medium cursor-pointer">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                    EN
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div class="hidden sm:block w-px h-6 bg-gray-200"></div>
+                <div class="flex items-center gap-3">
+                    <img src="https://i.pravatar.cc/150?img=11" alt="John Doe" class="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover">
+                    <div class="hidden sm:block">
+                        <h4 class="text-xs md:text-sm font-semibold">John Doe</h4>
+                        <p class="text-[10px] md:text-xs text-textMuted">Organizer</p>
+                    </div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+            </div>
+        </header>
+
+        <div class="px-4 md:px-10 py-6 md:py-8 max-w-[1100px]">
+            <!-- Header Title -->
+            <div class="mb-10">
+                <h1 class="text-[22px] font-bold tracking-tight text-textMain mb-1">Event Basic Details</h1>
+                <p class="text-[14px] text-textMuted text-[#5B6B8A]">Fill in the essential information about your event.</p>
+            </div>
+
+            <!-- Form Card -->
+            <div class="border border-gray-100 rounded-[20px] p-4 md:p-8 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.01)]">
+                <form id="basic-details-form" class="flex flex-col gap-8">
+                    <!-- Row 1: Name, Category, Sub-Category -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="flex flex-col gap-2.5">
+                            <label class="text-[13px] font-bold text-textMain">Event Name <span class="text-red-500">*</span></label>
+                            <input id="event-name" type="text" value="Global Innovation Summit 2024" class="px-4 py-3 border border-borderLight rounded-lg text-[13px] text-textMain w-full focus:outline-none focus:border-primary shadow-sm" />
+                        </div>
+                        <div class="flex flex-col gap-2.5">
+                            <label class="text-[13px] font-bold text-textMain">Event Category <span class="text-red-500">*</span></label>
+                            <select id="event-category" class="custom-select px-4 py-3 border border-borderLight rounded-lg text-[13px] text-textMain w-full focus:outline-none focus:border-primary shadow-sm bg-white cursor-pointer">
+                                <option>Technology</option>
+                                <option>Healthcare</option>
+                                <option>Education</option>
+                                <option>Finance</option>
+                                <option>Marketing</option>
+                                <option>Manufacturing</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                        <div class="flex flex-col gap-2.5">
+                            <label class="text-[13px] font-bold text-textMain">Event Sub-Category</label>
+                            <select id="event-subcategory" class="custom-select px-4 py-3 border border-borderLight rounded-lg text-[13px] text-textMain w-full focus:outline-none focus:border-primary shadow-sm bg-white cursor-pointer">
+                                <option>AI & Machine Learning</option>
+                                <option>Industrial Automation</option>
+                                <option>Product Design</option>
+                                <option>Venture Capital</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Dates, Timezone -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="flex flex-col gap-2.5">
+                            <label class="text-[13px] font-bold text-textMain">Start Date <span class="text-red-500">*</span></label>
+                            <input id="start-date" type="text" value="May 15, 2024" class="custom-date px-4 py-3 border border-borderLight rounded-lg text-[13px] text-textMain w-full focus:outline-none focus:border-primary shadow-sm cursor-pointer" />
+                        </div>
+                        <div class="flex flex-col gap-2.5">
+                            <label class="text-[13px] font-bold text-textMain">End Date <span class="text-red-500">*</span></label>
+                            <input id="end-date" type="text" value="May 17, 2024" class="custom-date px-4 py-3 border border-borderLight rounded-lg text-[13px] text-textMain w-full focus:outline-none focus:border-primary shadow-sm cursor-pointer" />
+                        </div>
+                        <div class="flex flex-col gap-2.5">
+                            <label class="text-[13px] font-bold text-textMain">Time Zone</label>
+                            <select id="timezone" class="custom-select px-4 py-3 border border-borderLight rounded-lg text-[13px] text-textMain w-full focus:outline-none focus:border-primary shadow-sm bg-white cursor-pointer">
+                                <option value="(GMT +05:30) Asia/Kolkata">(GMT +05:30) Asia/Kolkata</option>
+                                <option value="(GMT -05:00) America/Chicago">(GMT -05:00) America/Chicago</option>
+                                <option value="(GMT -04:00) America/New_York">(GMT -04:00) America/New_York</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Event Mode -->
+                    <div class="flex flex-col gap-4 mt-2">
+                        <label class="text-[13px] font-bold text-textMain">Event Mode <span class="text-red-500">*</span></label>
+                        <div class="flex items-center gap-8">
+                            <label class="flex items-center gap-2.5 cursor-default">
+                                <div class="w-4 h-4 rounded-full border border-primary flex items-center justify-center">
+                                    <div class="w-2.5 h-2.5 rounded-full bg-primary"></div>
+                                </div>
+                                <span class="text-[14px] text-textMain font-medium">In-Person (Offline)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Row 4: Venue & Website -->
+                    <div class="grid grid-cols-1 md:grid-cols-[1.2fr_1fr] gap-6 mt-2">
+                        <div class="flex flex-col gap-2.5">
+                            <label class="text-[13px] font-bold text-textMain">Venue / Location <span class="text-red-500">*</span></label>
+                            <input id="venue" type="text" value="Grand Convention Center, San Francisco, CA, USA" class="px-4 py-3 border border-borderLight rounded-lg text-[13px] text-textMain w-full focus:outline-none focus:border-primary shadow-sm" />
+                        </div>
+                        <div class="flex flex-col gap-2.5">
+                            <label class="text-[13px] font-bold text-textMain">Event Website</label>
+                            <input id="website" type="text" value="https://globalinnovate.com" class="px-4 py-3 border border-borderLight rounded-lg text-[13px] text-textMain w-full focus:outline-none focus:border-primary shadow-sm" />
+                        </div>
+                    </div>
+
+                    <!-- Row 5: Description -->
+                    <div class="flex flex-col gap-2.5 mt-2 relative">
+                        <label class="text-[13px] font-bold text-textMain">Short Description <span class="text-red-500">*</span></label>
+                        <textarea id="description" rows="4" class="px-4 py-3 border border-borderLight rounded-lg text-[13px] text-textMain w-full focus:outline-none focus:border-primary shadow-sm resize-none">Global Innovation Summit brings together technology leaders, innovators, and investors to explore the future of AI, Cloud, and Emerging Technologies.</textarea>
+                        <span id="char-counter" class="absolute bottom-3 right-4 text-[11px] text-gray-400 font-medium">143/200</span>
+                    </div>
+
+                    <!-- Row 6: Organizer Contact Section -->
+                    <div class="mt-6">
+                        <h3 class="text-[15px] font-bold text-textMain mb-5">Organizer Contact</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="flex flex-col gap-2.5">
+                                <label class="text-[13px] font-bold text-textMain">Name</label>
+                                <input id="org-name" type="text" value="John Doe" class="px-4 py-3 border border-borderLight rounded-lg text-[13px] text-textMain w-full focus:outline-none focus:border-primary shadow-sm" />
+                            </div>
+                            <div class="flex flex-col gap-2.5">
+                                <label class="text-[13px] font-bold text-textMain">Email</label>
+                                <input id="org-email" type="text" value="john.doe@techwave.com" class="px-4 py-3 border border-borderLight rounded-lg text-[13px] text-textMain w-full focus:outline-none focus:border-primary shadow-sm" />
+                            </div>
+                            <div class="flex flex-col gap-2.5">
+                                <label class="text-[13px] font-bold text-textMain">Phone</label>
+                                <input id="org-phone" type="text" value="+1 (415) 586-0189" class="px-4 py-3 border border-borderLight rounded-lg text-[13px] text-textMain w-full focus:outline-none focus:border-primary shadow-sm" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Button -->
+                    <div class="flex justify-end mt-4">
+                        <button type="submit" class="w-full sm:w-auto text-center bg-primary text-white px-8 py-3 rounded-lg text-[14px] font-semibold shadow-sm hover:bg-[#4a26d1] transition-colors focus:outline-none">Save & Continue</button>
+                    </div>
+                </form>
+            </div>
+            
+        </div>
+    </main>
+
+    <script src="sidebar.js"></script>
+    <script src="app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set 'Events' as active dynamically after app.js loads the sidebar
+            setTimeout(() => {
+                const navItems = document.querySelectorAll('#sidebar-container a');
+                navItems.forEach(n => {
+                    // Reset all
+                    n.classList.remove('bg-[#F4F1FF]', 'text-[#5B32F6]', 'font-semibold');
+                    n.classList.add('text-[#1C1364]', 'font-medium');
+                    const svg = n.querySelector('svg');
+                    if(svg) svg.classList.replace('text-[#5B32F6]', 'text-[#1C1364]');
+                    
+                    // Activate Events
+                    if(n.textContent.trim() === 'Events') {
+                        n.classList.remove('text-[#1C1364]', 'font-medium');
+                        n.classList.add('bg-[#F4F1FF]', 'text-[#5B32F6]', 'font-semibold');
+                        if(svg) svg.classList.replace('text-[#1C1364]', 'text-[#5B32F6]');
+                    }
+                });
+            }, 100);
+
+            // Load template from localStorage
+            try {
+                const selectedTemplateStr = localStorage.getItem('selectedEventTemplate');
+                if (selectedTemplateStr) {
+                    const template = JSON.parse(selectedTemplateStr);
+                    
+                    document.getElementById('event-name').value = template.name || '';
+                    document.getElementById('event-category').value = template.category || 'Technology';
+                    document.getElementById('event-subcategory').value = template.subCategory || 'Other';
+                    document.getElementById('start-date').value = template.startDate || '';
+                    document.getElementById('end-date').value = template.endDate || '';
+                    document.getElementById('timezone').value = template.timezone || '(GMT +05:30) Asia/Kolkata';
+                    document.getElementById('venue').value = template.venue || '';
+                    document.getElementById('website').value = template.website || '';
+                    document.getElementById('description').value = template.description || '';
+                    
+                    // Organizer
+                    document.getElementById('org-name').value = template.organizer?.name || '';
+                    document.getElementById('org-email').value = template.organizer?.email || '';
+                    document.getElementById('org-phone').value = template.organizer?.phone || '';
+                    
+                    // Update char counter
+                    updateCharCounter();
+                }
+            } catch (e) {
+                console.error("Failed to load selected event template details", e);
+            }
+
+            // Real-time character counter update
+            const descArea = document.getElementById('description');
+            if (descArea) {
+                descArea.addEventListener('input', updateCharCounter);
+            }
+
+            function updateCharCounter() {
+                const area = document.getElementById('description');
+                const counter = document.getElementById('char-counter');
+                if (area && counter) {
+                    counter.textContent = `${area.value.length}/200`;
+                }
+            }
+
+            // Form Submission Logic
+            const form = document.getElementById('basic-details-form');
+            if (form) {
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+
+                    const eventData = {
+                        name: document.getElementById('event-name').value,
+                        category: document.getElementById('event-category').value,
+                        sub_category: document.getElementById('event-subcategory').value,
+                        start_date: document.getElementById('start-date').value,
+                        end_date: document.getElementById('end-date').value,
+                        timezone: document.getElementById('timezone').value,
+                        venue: document.getElementById('venue').value,
+                        website: document.getElementById('website').value,
+                        description: document.getElementById('description').value,
+                        organizer_name: document.getElementById('org-name').value,
+                        organizer_email: document.getElementById('org-email').value,
+                        organizer_phone: document.getElementById('org-phone').value,
+                    };
+
+                    const backendUrl = 'http://localhost:8000/api';
+                    fetch(`${backendUrl}/events`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(eventData)
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(err => { throw err; });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Event details saved successfully:', data);
+                        // Save the created event ID to localStorage for the next screens
+                        localStorage.setItem('activeCreatedEventId', data.event.id);
+                        window.location.href = 'event-branding.html';
+                    })
+                    .catch(error => {
+                        console.error('Failed to save event details to database:', error);
+                        // Fallback: Proceed to next page even if backend is offline to avoid blocking
+                        alert('Could not connect to Laravel backend server. Navigating with offline localStorage fallback.');
+                        window.location.href = 'event-branding.html';
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>

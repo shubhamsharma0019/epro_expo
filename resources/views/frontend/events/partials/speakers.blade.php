@@ -1,0 +1,1 @@
+<section class="px-6 py-12"><div class="mx-auto max-w-6xl"><h2 class="text-[24px] font-semibold text-[#1F2A6A]">Speakers</h2><div class="mt-6 grid gap-4 md:grid-cols-3"><x-frontend.speaker-card name="Aarav Mehta" role="AI Strategist"/><x-frontend.speaker-card name="Maya Rao" role="Product Leader"/><x-frontend.speaker-card name="Neil Shah" role="Founder"/></div></div></section>

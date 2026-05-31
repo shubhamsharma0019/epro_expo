@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title desc">
+  <title id="title">Digital marketing summit control room</title>
+  <desc id="desc">A modern marketing analytics workspace with screens, charts, and warm blue lighting.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#071044"/>
+      <stop offset=".58" stop-color="#14315f"/>
+      <stop offset="1" stop-color="#fb7185"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0ea5e9"/>
+      <stop offset="1" stop-color="#7c3aed"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#bg)"/>
+  <g opacity=".28" stroke="#bfdbfe" stroke-width="1.5">
+    <path d="M0 74h640M0 286h640M92 0v360M548 0v360"/>
+  </g>
+  <g transform="translate(72 72)">
+    <rect x="0" y="22" width="176" height="108" rx="14" fill="#0f172a" stroke="#334155" stroke-width="3"/>
+    <rect x="18" y="42" width="140" height="68" rx="8" fill="url(#screen)"/>
+    <path d="M34 92l25-26 22 18 36-39 31 45" fill="none" stroke="#f8fafc" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="68" y="130" width="42" height="18" fill="#1e293b"/>
+    <rect x="46" y="148" width="88" height="10" rx="5" fill="#334155"/>
+  </g>
+  <g transform="translate(290 62)">
+    <rect x="0" y="0" width="226" height="138" rx="16" fill="#0f172a" stroke="#64748b" stroke-width="3"/>
+    <rect x="20" y="22" width="68" height="76" rx="8" fill="#1d4ed8"/>
+    <rect x="104" y="22" width="100" height="16" rx="8" fill="#38bdf8"/>
+    <rect x="104" y="54" width="80" height="12" rx="6" fill="#f97316"/>
+    <rect x="104" y="82" width="96" height="12" rx="6" fill="#a78bfa"/>
+    <rect x="104" y="110" width="58" height="12" rx="6" fill="#22c55e"/>
+    <circle cx="54" cy="60" r="24" fill="#f8fafc" opacity=".85"/>
+    <path d="M54 36v24l18 17" fill="none" stroke="#0f172a" stroke-width="5" stroke-linecap="round"/>
+  </g>
+  <g transform="translate(122 224)">
+    <rect x="0" y="0" width="392" height="54" rx="14" fill="#111827" stroke="#475569" stroke-width="2"/>
+    <rect x="22" y="16" width="86" height="12" rx="6" fill="#38bdf8"/>
+    <rect x="126" y="16" width="70" height="12" rx="6" fill="#a78bfa"/>
+    <rect x="214" y="16" width="54" height="12" rx="6" fill="#fb7185"/>
+    <rect x="286" y="16" width="82" height="12" rx="6" fill="#f97316"/>
+  </g>
+  <g fill="#0f172a">
+    <circle cx="246" cy="221" r="17"/>
+    <circle cx="420" cy="221" r="17"/>
+  </g>
+</svg>

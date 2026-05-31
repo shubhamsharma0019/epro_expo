@@ -1,0 +1,1 @@
+<section id="events" class="px-6 py-12"><div class="mx-auto max-w-6xl"><h2 class="text-[24px] font-semibold text-[#1F2A6A]">Featured Events</h2><div class="mt-6"><x-frontend.event-card /></div></div></section>

@@ -1,0 +1,80 @@
+<svg width="1200" height="760" viewBox="0 0 1200 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="760" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#DFF2FF"/>
+      <stop offset=".55" stop-color="#F7FBFF"/>
+      <stop offset="1" stop-color="#FFFFFF"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="350" y1="120" x2="860" y2="600" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EAF8FF" stop-opacity=".95"/>
+      <stop offset=".5" stop-color="#9ED5FF" stop-opacity=".74"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity=".86"/>
+    </linearGradient>
+    <linearGradient id="purple" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#7A3DFF"/>
+      <stop offset="1" stop-color="#4012C9"/>
+    </linearGradient>
+    <linearGradient id="floor" x1="0" y1="500" x2="1200" y2="760" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EFF6FF"/>
+      <stop offset=".45" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E8EEF8"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#071044" flood-opacity=".18"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="760" fill="url(#sky)"/>
+  <circle cx="1010" cy="118" r="84" fill="#BDE9FF" opacity=".55"/>
+  <path d="M68 286c55-28 103-31 147-10 42 20 85 21 130 3 63-26 122-26 177 0 58 27 115 27 171 0 51-24 103-26 157-4 42 17 83 13 125-8 47-23 92-22 136 1" stroke="#CFE4FF" stroke-width="4" opacity=".65"/>
+
+  <g filter="url(#softShadow)">
+    <path d="M174 198C280 76 467 38 614 53c177 18 326 73 412 159 38 38 24 87-28 99-117 27-253 8-383-7-135-16-270-22-391 12-61 17-93-67-50-118Z" fill="#FFFFFF"/>
+    <path d="M194 213c91-101 266-133 410-119 154 15 295 59 381 135-156-36-331-42-490-27-116 11-213 37-301 11Z" fill="#D8E7FF"/>
+  </g>
+
+  <g filter="url(#softShadow)">
+    <path d="M292 182h594l48 360H236l56-360Z" fill="#F7FBFF"/>
+    <path d="M348 210h483l36 315H303l45-315Z" fill="url(#glass)" stroke="#D7E4F2" stroke-width="5"/>
+    <path d="M410 214v310M496 210v315M587 210v315M677 210v315M768 212v312M318 306h539M304 405h574" stroke="#FFFFFF" stroke-width="6" opacity=".72"/>
+    <path d="M456 82h263c29 0 52 23 52 52v80H405v-80c0-29 23-52 51-52Z" fill="#F8FBFF" stroke="#C8D8ED" stroke-width="5"/>
+    <rect x="442" y="116" width="292" height="84" rx="10" fill="url(#purple)"/>
+    <text x="588" y="153" text-anchor="middle" fill="white" font-family="Inter, Arial, sans-serif" font-size="37" font-weight="800">eproexpo</text>
+    <text x="588" y="184" text-anchor="middle" fill="white" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700">Connect. Explore. Engage.</text>
+    <path d="M514 479h148c34 0 62 28 62 62v78H452v-78c0-34 28-62 62-62Z" fill="#0A1B58"/>
+    <path d="M533 500h110c23 0 42 19 42 42v77H491v-77c0-23 19-42 42-42Z" fill="#78BFFF"/>
+    <path d="M519 512h138M502 550h172M496 587h184" stroke="#DFF4FF" stroke-width="5" opacity=".9"/>
+    <rect x="489" y="356" width="198" height="52" rx="4" fill="#153A9C"/>
+    <text x="588" y="390" text-anchor="middle" fill="white" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800">EXPO HALL</text>
+  </g>
+
+  <g>
+    <path d="M205 315h114v220H180l25-220Z" fill="#F7FBFF" stroke="#D8E5F5" stroke-width="4"/>
+    <rect x="212" y="358" width="97" height="45" rx="3" fill="#1844B8"/>
+    <text x="260" y="386" text-anchor="middle" fill="white" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="800">CONFERENCE HALL</text>
+    <rect x="225" y="430" width="72" height="92" rx="8" fill="url(#purple)"/>
+    <text x="260" y="489" text-anchor="middle" fill="white" font-family="Inter, Arial, sans-serif" font-size="42" font-style="italic" font-weight="800">e</text>
+    <path d="M882 315h114l26 220H857l25-220Z" fill="#F7FBFF" stroke="#D8E5F5" stroke-width="4"/>
+    <rect x="877" y="358" width="117" height="45" rx="3" fill="#6325E6"/>
+    <text x="935" y="380" text-anchor="middle" fill="white" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="800">NETWORKING</text>
+    <text x="935" y="397" text-anchor="middle" fill="white" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="800">LOUNGE</text>
+    <rect x="895" y="430" width="72" height="92" rx="8" fill="url(#purple)"/>
+    <text x="931" y="489" text-anchor="middle" fill="white" font-family="Inter, Arial, sans-serif" font-size="42" font-style="italic" font-weight="800">e</text>
+  </g>
+
+  <rect y="555" width="1200" height="205" fill="url(#floor)"/>
+  <path d="M170 610h850M240 660h730M360 712h505" stroke="#D9E7F7" stroke-width="3"/>
+  <path d="M588 530 450 760M588 530 724 760M588 530v230" stroke="#CFE1F5" stroke-width="3"/>
+
+  <g fill="#2E3F67">
+    <circle cx="420" cy="580" r="9"/><path d="M413 590h15l5 58h-25l5-58Z"/>
+    <circle cx="515" cy="604" r="9"/><path d="M508 614h15l5 58h-25l5-58Z"/>
+    <circle cx="678" cy="596" r="9"/><path d="M671 606h15l5 58h-25l5-58Z"/>
+    <circle cx="820" cy="585" r="9"/><path d="M813 595h15l5 58h-25l5-58Z"/>
+    <circle cx="930" cy="617" r="8"/><path d="M924 626h13l5 52h-23l5-52Z"/>
+    <circle cx="298" cy="625" r="8"/><path d="M292 634h13l5 52h-23l5-52Z"/>
+  </g>
+  <g fill="#1C8B62">
+    <path d="M170 640h14v70h-14zM160 648c10-22 23-22 34 0-10-8-23-8-34 0Z"/>
+    <path d="M1014 640h14v70h-14zM1004 648c10-22 23-22 34 0-10-8-23-8-34 0Z"/>
+  </g>
+</svg>

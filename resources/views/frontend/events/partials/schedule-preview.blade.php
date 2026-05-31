@@ -1,0 +1,1 @@
+<section class="px-6 py-12"><div class="mx-auto max-w-6xl"><h2 class="text-[24px] font-semibold text-[#1F2A6A]">Schedule Preview</h2><div class="mt-6 space-y-4"><x-frontend.agenda-card title="Opening Keynote" time="09:00 AM"/><x-frontend.agenda-card title="AI Product Forum" time="11:30 AM"/></div></div></section>

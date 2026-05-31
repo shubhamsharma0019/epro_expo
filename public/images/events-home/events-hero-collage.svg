@@ -1,0 +1,98 @@
+<svg width="900" height="430" viewBox="0 0 900 430" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="900" y2="430" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#05082a"/>
+      <stop offset=".55" stop-color="#070b36"/>
+      <stop offset="1" stop-color="#061044"/>
+    </linearGradient>
+    <radialGradient id="centerGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(513 205) rotate(50) scale(228 180)">
+      <stop stop-color="#ff5dc8" stop-opacity=".95"/>
+      <stop offset=".38" stop-color="#7d4cff" stop-opacity=".62"/>
+      <stop offset="1" stop-color="#061044" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="topGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(340 20) scale(60 60)">
+      <stop stop-color="#9d4cff" stop-opacity=".8"/>
+      <stop offset="1" stop-color="#9d4cff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cardShade" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#11183d" stop-opacity=".95"/>
+      <stop offset="1" stop-color="#040725" stop-opacity=".7"/>
+    </linearGradient>
+    <filter id="cardShadow" x="-25%" y="-25%" width="150%" height="155%">
+      <feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#13064a" flood-opacity=".55"/>
+    </filter>
+    <clipPath id="leftClip"><rect x="37" y="63" width="244" height="264" rx="16"/></clipPath>
+    <clipPath id="mainClip"><rect x="259" y="29" width="374" height="337" rx="18"/></clipPath>
+    <clipPath id="rightClip"><rect x="628" y="63" width="234" height="264" rx="16"/></clipPath>
+  </defs>
+
+  <rect x="2" y="2" width="896" height="426" rx="18" fill="url(#bg)" stroke="#1d2c69" stroke-width="2"/>
+  <rect x="2" y="2" width="896" height="426" rx="18" fill="url(#centerGlow)"/>
+  <rect x="2" y="2" width="896" height="426" rx="18" fill="url(#topGlow)"/>
+
+  <g opacity=".42" stroke="#314386" stroke-width="1.1">
+    <path d="M7 324C124 258 224 254 342 318C458 380 557 383 665 313C747 260 821 254 892 296"/>
+    <path d="M32 93C156 138 263 128 369 68C459 17 557 22 667 88C750 138 821 142 890 106"/>
+    <path d="M85 379C181 335 286 330 397 369C492 404 597 401 701 347C771 310 838 304 895 327"/>
+  </g>
+
+  <g clip-path="url(#leftClip)">
+    <rect x="37" y="63" width="244" height="264" rx="16" fill="url(#cardShade)"/>
+    <image href="global-tech.svg" x="37" y="63" width="244" height="264" preserveAspectRatio="xMidYMid slice" opacity=".46"/>
+    <rect x="37" y="63" width="244" height="264" fill="#071044" opacity=".36"/>
+  </g>
+  <rect x="37" y="63" width="244" height="264" rx="16" stroke="#385086" stroke-width="1.8"/>
+  <rect x="60" y="90" width="78" height="22" rx="11" fill="#178b67"/>
+  <text x="72" y="105" fill="white" font-family="Inter, Arial, sans-serif" font-size="10" font-weight="700">Live in 23 Days</text>
+  <text x="60" y="159" fill="white" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="700">Global</text>
+  <text x="60" y="196" fill="white" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="700">Tech Summit</text>
+  <text x="60" y="233" fill="white" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="700">2024</text>
+  <text x="62" y="270" fill="#dce4ff" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="600">Location: USA</text>
+  <text x="62" y="296" fill="#dce4ff" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="600">May 20 - 22, 2024</text>
+  <text x="62" y="321" fill="#dce4ff" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="600">Virtual &amp; In-Person</text>
+
+  <g filter="url(#cardShadow)">
+    <g clip-path="url(#mainClip)">
+      <rect x="259" y="29" width="374" height="337" rx="18" fill="url(#cardShade)"/>
+      <image href="world-ai.svg" x="259" y="29" width="374" height="337" preserveAspectRatio="xMidYMid slice" opacity=".58"/>
+      <rect x="259" y="29" width="374" height="337" fill="#080827" opacity=".22"/>
+      <ellipse cx="545" cy="144" rx="58" ry="87" fill="none" stroke="#aa41ff" stroke-width="2.4" opacity=".9"/>
+      <path d="M505 85C540 48 591 66 602 114C614 168 584 213 539 244" stroke="#56d7ff" stroke-width="2.1" opacity=".78"/>
+      <path d="M498 143H613M515 102H588M517 193H580" stroke="#ff66cf" stroke-width="1.25" opacity=".7"/>
+      <circle cx="523" cy="204" r="7" fill="#ffc958"/>
+      <circle cx="568" cy="122" r="4.5" fill="#57e6ff"/>
+    </g>
+    <rect x="259" y="29" width="374" height="337" rx="18" stroke="#9ba4d8" stroke-width="2"/>
+  </g>
+  <rect x="287" y="51" width="84" height="27" rx="13.5" fill="#a90f24"/>
+  <text x="304" y="69" fill="white" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="700">Live Now</text>
+  <text x="287" y="122" fill="white" font-family="Inter, Arial, sans-serif" font-size="39" font-weight="700">World AI</text>
+  <text x="287" y="170" fill="white" font-family="Inter, Arial, sans-serif" font-size="39" font-weight="700">Conference</text>
+  <text x="287" y="218" fill="white" font-family="Inter, Arial, sans-serif" font-size="39" font-weight="700">2024</text>
+  <text x="290" y="263" fill="#eef1ff" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="600">Location: UK</text>
+  <text x="290" y="294" fill="#eef1ff" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="600">May 18 - 19, 2024</text>
+  <text x="290" y="324" fill="#eef1ff" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="600">Virtual Event</text>
+  <rect x="390" y="337" width="132" height="42" rx="7" fill="white"/>
+  <text x="428" y="363" fill="#5b2eff" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700">Book Ticket</text>
+
+  <g clip-path="url(#rightClip)">
+    <rect x="628" y="63" width="234" height="264" rx="16" fill="url(#cardShade)"/>
+    <image href="education.svg" x="628" y="63" width="234" height="264" preserveAspectRatio="xMidYMid slice" opacity=".43"/>
+    <rect x="628" y="63" width="234" height="264" fill="#071044" opacity=".43"/>
+  </g>
+  <rect x="628" y="63" width="234" height="264" rx="16" stroke="#3b4f84" stroke-width="1.8"/>
+  <text x="662" y="160" fill="white" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="700">Future of</text>
+  <text x="662" y="197" fill="white" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="700">Education</text>
+  <text x="662" y="234" fill="white" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="700">Summit</text>
+  <text x="664" y="272" fill="#dce4ff" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="600">Location: India</text>
+  <text x="664" y="298" fill="#dce4ff" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="600">May 25 - 26, 2024</text>
+  <text x="664" y="323" fill="#dce4ff" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="600">Virtual Event</text>
+
+  <circle cx="16" cy="215" r="18" fill="white"/>
+  <text x="10" y="225" fill="#5b2eff" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="700">&lt;</text>
+  <circle cx="884" cy="215" r="18" fill="white"/>
+  <text x="878" y="225" fill="#5b2eff" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="700">&gt;</text>
+  <rect x="417" y="390" width="34" height="6" rx="3" fill="white"/>
+  <rect x="459" y="390" width="17" height="6" rx="3" fill="white" opacity=".28"/>
+  <rect x="482" y="390" width="17" height="6" rx="3" fill="white" opacity=".28"/>
+</svg>

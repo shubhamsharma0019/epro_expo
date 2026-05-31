@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="420" viewBox="0 0 720 420">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#06154b"/>
+      <stop offset=".56" stop-color="#1175a8"/>
+      <stop offset="1" stop-color="#5b2eff"/>
+    </linearGradient>
+  </defs>
+  <rect width="720" height="420" rx="28" fill="url(#g)"/>
+  <circle cx="480" cy="190" r="116" fill="#fff" opacity=".12"/>
+  <circle cx="480" cy="190" r="72" fill="#fff" opacity=".16"/>
+  <path d="M480 116v148M406 190h148" stroke="#bff5ff" stroke-width="18" stroke-linecap="round"/>
+  <g fill="#fff">
+    <text x="54" y="145" font-family="Inter,Arial" font-size="42" font-weight="800">Healthcare</text>
+    <text x="54" y="198" font-family="Inter,Arial" font-size="42" font-weight="800">Innovation</text>
+    <text x="54" y="251" font-family="Inter,Arial" font-size="42" font-weight="800">2024</text>
+  </g>
+</svg>

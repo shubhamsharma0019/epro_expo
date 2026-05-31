@@ -1,0 +1,15 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Speaker extends Model
+{
+    protected $guarded = [];
+
+    public function exhibition()
+    {
+        return $this->belongsTo(Exhibition::class);
+    }
+}

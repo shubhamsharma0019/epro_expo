@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Preview - eproexpo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            DEFAULT: '#5B32F6',
+                            light: '#F4F1FF',
+                        },
+                        textMain: '#1C1364',
+                        textMuted: '#6B7280',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style id="live-preview-styles">
+        :root {
+            --live-primary: #4C10D0;
+            --live-secondary: #00B894;
+            --live-accent: #FF8A00;
+            --live-text: #0F172A;
+        }
+        .speaker-img:hover {
+            border-color: var(--live-primary) !important;
+        }
+    </style>
+</head>
+<body class="bg-[#FAFBFC] text-textMain font-sans flex min-h-screen">
+    <div id="sidebar-container" class="z-50 relative"></div>
+    
+    <main class="lg:ml-[280px] ml-0 flex-1 min-h-screen flex flex-col transition-all duration-300">
+        <!-- Top Nav -->
+        <header class="bg-white flex justify-between items-center px-4 md:px-10 py-4 md:py-6 border-b border-gray-100 shrink-0">
+            <div class="flex items-center gap-4 md:gap-8">
+                <!-- Hamburger Button (Visible only on mobile/tablet) -->
+                <button id="sidebar-toggle-btn" class="lg:hidden text-textMain hover:text-primary transition-colors focus:outline-none">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="hidden xl:flex gap-8">
+                    <a href="#" class="text-[13px] font-medium text-textMain hover:text-primary transition-colors">Explore Events</a>
+                    <a href="#" class="text-[13px] font-medium text-textMain hover:text-primary transition-colors">Exhibitions</a>
+                    <a href="#" class="text-[13px] font-medium text-textMain hover:text-primary transition-colors">Products</a>
+                    <a href="#" class="text-[13px] font-medium text-textMain hover:text-primary transition-colors">Jobs</a>
+                    <a href="#" class="text-[13px] font-medium text-textMain hover:text-primary transition-colors">Resources</a>
+                    <a href="#" class="text-[13px] font-medium text-textMain hover:text-primary transition-colors">Pricing</a>
+                </div>
+            </div>
+            <div class="flex items-center gap-4 md:gap-6">
+                <div class="hidden sm:flex items-center gap-1 text-[13px] font-medium cursor-pointer">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                    EN
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div class="hidden sm:block w-px h-6 bg-gray-200"></div>
+                <div class="flex items-center gap-3">
+                    <img src="https://i.pravatar.cc/150?img=11" alt="John Doe" class="w-8 h-8 md:w-9 md:h-9 rounded-full object-cover">
+                    <div class="hidden sm:block text-left">
+                        <h4 class="text-[13px] font-bold">John Doe</h4>
+                        <p class="text-[11px] text-textMuted font-medium">Organizer</p>
+                    </div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+            </div>
+        </header>
+
+        <div class="px-4 md:px-10 py-8 max-w-[1250px] w-full flex flex-col mx-auto flex-1 pb-20">
+            
+            <!-- Header actions -->
+            <div class="flex justify-between items-center mb-6">
+                <div></div>
+                <div class="flex items-center gap-4 md:gap-8">
+                    <div class="flex items-center gap-2 md:gap-4 text-[#1C1364] font-bold text-[14px]">
+                        Preview Mode
+                        <div class="flex items-center gap-3 text-[var(--live-primary)]">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                            <svg class="text-gray-400" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+                        </div>
+                    </div>
+                    <a href="submit-review.html" style="border-color: var(--live-primary); color: var(--live-primary);" class="bg-white border px-4 py-2 rounded-lg text-[13px] font-bold flex items-center gap-2 hover:bg-gray-50 transition-colors shadow-sm focus:outline-none">
+                        View as Attendee
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Banner -->
+            <div id="preview-banner" class="relative w-full h-[280px] rounded-[16px] overflow-hidden mb-6 shadow-sm bg-cover bg-center bg-no-repeat bg-[#1A0A4A]">
+                <!-- Dynamic Overlay -->
+                <div id="preview-banner-overlay" class="absolute inset-0 bg-gradient-to-r from-[var(--live-primary)] to-transparent opacity-90"></div>
+
+                <!-- Banner Content -->
+                <div class="absolute inset-0 p-6 md:p-10 flex flex-col justify-center z-10">
+                    <div class="text-white mb-6">
+                        <div id="preview-logo-box" class="font-bold text-[18px] leading-tight mb-4 w-12 h-12 flex items-center justify-center bg-white/10 rounded-lg overflow-hidden">
+                            <span>GIS<br>24</span>
+                        </div>
+                        <h1 id="preview-event-name" class="text-2xl md:text-[32px] font-bold tracking-tight mb-2 text-white uppercase">GLOBAL INNOVATION SUMMIT 2024</h1>
+                        <p id="preview-event-date-banner" class="text-[13px] md:text-[16px] font-medium text-gray-200">May 15 - 17, 2024 | San Francisco, CA</p>
+                    </div>
+                    <div class="flex gap-4">
+                        <button style="background-color: var(--live-primary);" class="text-white px-6 md:px-8 py-2.5 md:py-3 rounded-lg text-[13px] md:text-[14px] font-bold hover:opacity-90 transition-opacity shadow-sm focus:outline-none">Buy Tickets</button>
+                        <button class="bg-transparent border border-white text-white px-6 md:px-8 py-2.5 md:py-3 rounded-lg text-[13px] md:text-[14px] font-bold hover:bg-white/10 transition-colors focus:outline-none">Become a Sponsor</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Bar -->
+            <div class="bg-white border border-gray-100 rounded-[12px] p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 items-center justify-between shadow-sm mb-6 divide-y sm:divide-y-0 md:divide-x divide-gray-100">
+                <!-- Item 1 -->
+                <div class="flex items-center gap-4">
+                    <div style="color: var(--live-primary);" class="w-10 h-10 rounded-full flex items-center justify-center shrink-0">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    </div>
+                    <div class="flex flex-col">
+                        <span id="info-days" class="font-bold text-[#1C1364] text-[14px]">3 Days</span>
+                        <span id="info-dates" class="text-[#5B6B8A] text-[12px] font-medium mt-0.5">May 15 - 17, 2024</span>
+                    </div>
+                </div>
+
+                <!-- Item 2 -->
+                <div class="flex items-center gap-4 pt-4 sm:pt-0 md:pl-6">
+                    <div style="color: var(--live-primary);" class="w-10 h-10 rounded-full flex items-center justify-center shrink-0">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    </div>
+                    <div class="flex flex-col">
+                        <span id="info-venue" class="font-bold text-[#1C1364] text-[14px] truncate max-w-[150px]">Convention Center</span>
+                        <span id="info-location" class="text-[#5B6B8A] text-[12px] font-medium mt-0.5 truncate max-w-[150px]">San Francisco, CA, USA</span>
+                    </div>
+                </div>
+
+                <!-- Item 3 -->
+                <div class="flex items-center gap-4 pt-4 sm:pt-4 md:pt-0 md:pl-6">
+                    <div style="color: var(--live-primary);" class="w-10 h-10 rounded-full flex items-center justify-center shrink-0">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    </div>
+                    <div class="flex flex-col">
+                        <span id="info-attendees" class="font-bold text-[#1C1364] text-[14px]">1,500+</span>
+                        <span class="text-[#5B6B8A] text-[12px] font-medium mt-0.5">Expected Attendees</span>
+                    </div>
+                </div>
+
+                <!-- Item 4 -->
+                <div class="flex items-center gap-4 pt-4 sm:pt-4 md:pt-0 md:pl-6">
+                    <div style="color: var(--live-primary);" class="w-10 h-10 rounded-full flex items-center justify-center shrink-0">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="font-bold text-[#1C1364] text-[14px]">40+</span>
+                        <span class="text-[#5B6B8A] text-[12px] font-medium mt-0.5">Speakers</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex items-center gap-6 md:gap-10 border-b border-gray-200 mb-8 px-4 overflow-x-auto whitespace-nowrap scrollbar-hide" style="scrollbar-width: none;">
+                <a href="#" style="color: var(--live-primary); border-color: var(--live-primary);" class="pb-4 font-bold border-b-2 text-[14px]">About</a>
+                <a href="#" class="pb-4 font-bold text-[#1C1364] hover:opacity-85 text-[14px]">Speakers</a>
+                <a href="#" class="pb-4 font-bold text-[#1C1364] hover:opacity-85 text-[14px]">Agenda</a>
+                <a href="#" class="pb-4 font-bold text-[#1C1364] hover:opacity-85 text-[14px]">Sponsors</a>
+                <a href="#" class="pb-4 font-bold text-[#1C1364] hover:opacity-85 text-[14px]">Venue</a>
+                <a href="#" class="pb-4 font-bold text-[#1C1364] hover:opacity-85 text-[14px]">Resources</a>
+            </div>
+
+            <!-- Main Content Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-8">
+                
+                <!-- Left Content: Description & Speakers -->
+                <div class="flex flex-col gap-8">
+                    <!-- About details card -->
+                    <div class="bg-white border border-gray-100 rounded-[16px] p-6 md:p-8 shadow-[0_2px_10px_rgba(0,0,0,0.01)]">
+                        <h3 style="color: var(--live-primary);" class="text-[16px] font-bold mb-4">About the Event</h3>
+                        <p id="preview-about-desc" style="color: var(--live-text);" class="text-[13px] leading-relaxed">Global Innovation Summit brings together technology leaders, innovators, and investors to explore the future of AI, Cloud, and Emerging Technologies.</p>
+                    </div>
+
+                    <!-- Featured Speakers card -->
+                    <div class="bg-white border border-gray-100 rounded-[16px] p-6 md:p-8 shadow-[0_2px_10px_rgba(0,0,0,0.01)] h-fit">
+                        <div class="flex items-center justify-between mb-8">
+                            <h3 class="text-[16px] font-bold text-[#1C1364]">Featured Speakers</h3>
+                            <a href="#" style="color: var(--live-primary);" class="text-[13px] font-bold flex items-center gap-1 hover:underline">
+                                View all speakers
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            </a>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-6">
+                            <!-- Speaker 1 -->
+                            <div class="flex flex-col items-center text-center">
+                                <img src="https://i.pravatar.cc/150?img=5" alt="Dr. Sarah Johnson" class="speaker-img w-20 h-20 md:w-24 md:h-24 rounded-full object-cover mb-4 border-2 border-transparent transition-colors cursor-pointer shadow-sm">
+                                <h4 class="text-[14px] font-bold text-[#1C1364] mb-1">Dr. Sarah Johnson</h4>
+                                <p class="text-[12px] text-[#5B6B8A] font-medium leading-tight">Chair & CEO,<br>TechNova</p>
+                            </div>
+                            <!-- Speaker 2 -->
+                            <div class="flex flex-col items-center text-center">
+                                <img src="https://i.pravatar.cc/150?img=11" alt="Michael Chen" class="speaker-img w-20 h-20 md:w-24 md:h-24 rounded-full object-cover mb-4 border-2 border-transparent transition-colors cursor-pointer shadow-sm">
+                                <h4 class="text-[14px] font-bold text-[#1C1364] mb-1">Michael Chen</h4>
+                                <p class="text-[12px] text-[#5B6B8A] font-medium leading-tight">CTO,<br>CloudSphere</p>
+                            </div>
+                            <!-- Speaker 3 -->
+                            <div class="flex flex-col items-center text-center">
+                                <img src="https://i.pravatar.cc/150?img=9" alt="Emily Rodriguez" class="speaker-img w-20 h-20 md:w-24 md:h-24 rounded-full object-cover mb-4 border-2 border-transparent transition-colors cursor-pointer shadow-sm">
+                                <h4 class="text-[14px] font-bold text-[#1C1364] mb-1">Emily Rodriguez</h4>
+                                <p class="text-[12px] text-[#5B6B8A] font-medium leading-tight">Head of Data,<br>DataWinds</p>
+                            </div>
+                            <!-- Speaker 4 -->
+                            <div class="flex flex-col items-center text-center">
+                                <img src="https://i.pravatar.cc/150?img=12" alt="James Wilson" class="speaker-img w-20 h-20 md:w-24 md:h-24 rounded-full object-cover mb-4 border-2 border-transparent transition-colors cursor-pointer shadow-sm">
+                                <h4 class="text-[14px] font-bold text-[#1C1364] mb-1">James Wilson</h4>
+                                <p class="text-[12px] text-[#5B6B8A] font-medium leading-tight">Founder & CEO,<br>InnovaX</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Content: Tickets -->
+                <div class="bg-white border border-gray-100 rounded-[16px] p-6 md:p-8 shadow-[0_2px_10px_rgba(0,0,0,0.01)] h-fit flex flex-col">
+                    <h3 style="color: var(--live-primary);" class="text-[16px] font-bold mb-6">Tickets</h3>
+                    
+                    <div id="preview-tickets-container" class="flex flex-col gap-6">
+                        <!-- Dynamically generated tickets list -->
+                    </div>
+                </div>
+
+            </div>
+            
+            <!-- Bottom Action -->
+            <div class="flex justify-end gap-3 mt-10 shrink-0">
+                <a href="ticket-setup.html" class="px-8 py-3 border border-gray-200 text-[#1C1364] bg-white rounded-lg text-[14px] font-semibold hover:bg-gray-50 transition-colors shadow-sm inline-block">Back</a>
+                <a href="submit-review.html" style="background-color: var(--live-primary);" class="text-white px-8 py-3 rounded-lg text-[14px] font-semibold shadow-sm hover:opacity-95 transition-opacity inline-block">Continue</a>
+            </div>
+        </div>
+    </main>
+
+    <script src="sidebar.js"></script>
+    <script src="app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set 'Events' as active dynamically after app.js loads the sidebar
+            setTimeout(() => {
+                const navItems = document.querySelectorAll('#sidebar-container a');
+                navItems.forEach(n => {
+                    n.classList.remove('bg-[#F4F1FF]', 'text-[#5B32F6]', 'font-semibold');
+                    n.classList.add('text-[#1C1364]', 'font-medium');
+                    const svg = n.querySelector('svg');
+                    if(svg) svg.classList.replace('text-[#5B32F6]', 'text-[#1C1364]');
+                    
+                    if(n.textContent.trim() === 'Events') {
+                        n.classList.remove('text-[#1C1364]', 'font-medium');
+                        n.classList.add('bg-[#F4F1FF]', 'text-[#5B32F6]', 'font-semibold');
+                        if(svg) svg.classList.replace('text-[#1C1364]', 'text-[#5B32F6]');
+                    }
+                });
+            }, 100);
+
+            // API Details
+            const backendUrl = 'http://localhost:8000/api';
+            const eventId = localStorage.getItem('activeCreatedEventId');
+
+            // Format date range helper
+            function formatDateRange(startStr, endStr) {
+                if (!startStr) return 'Date TBD';
+                try {
+                    const start = new Date(startStr);
+                    const end = new Date(endStr);
+                    const options = { month: 'short', day: 'numeric', year: 'numeric' };
+                    if (start.getMonth() === end.getMonth()) {
+                        return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${end.getDate()}, ${end.getFullYear()}`;
+                    }
+                    return `${start.toLocaleDateString('en-US', options)} - ${end.toLocaleDateString('en-US', options)}`;
+                } catch (e) {
+                    return `${startStr} - ${endStr}`;
+                }
+            }
+
+            // Initials helper
+            function getInitials(name) {
+                const parts = name.split(' ');
+                if (parts.length >= 2) {
+                    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+                }
+                return name.slice(0, 3).toUpperCase();
+            }
+
+            // Days duration helper
+            function calculateDays(startStr, endStr) {
+                if (!startStr || !endStr) return 'TBD';
+                try {
+                    const diffTime = Math.abs(new Date(endStr) - new Date(startStr));
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                    return `${diffDays} Day${diffDays > 1 ? 's' : ''}`;
+                } catch (e) {
+                    return '3 Days';
+                }
+            }
+
+            // Ticket ends in calculator helper
+            function getEndsInText(endStr) {
+                if (!endStr) return '';
+                try {
+                    const diff = new Date(endStr) - new Date();
+                    if (diff <= 0) return 'Sales ended';
+                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    if (days > 0) {
+                        return `Ends in ${days} day${days > 1 ? 's' : ''}`;
+                    }
+                    const hours = Math.floor(diff / (1000 * 60 * 60));
+                    return `Ends in ${hours} hour${hours > 1 ? 's' : ''}`;
+                } catch (e) {
+                    return '';
+                }
+            }
+
+            // Load data
+            if (eventId) {
+                fetch(`${backendUrl}/events/${eventId}`)
+                    .then(res => res.json())
+                    .then(event => {
+                        // Apply CSS variables dynamically
+                        const styleBlock = document.getElementById('live-preview-styles');
+                        styleBlock.innerHTML = `
+                            :root {
+                                --live-primary: ${event.primary_color || '#4C10D0'};
+                                --live-secondary: ${event.secondary_color || '#00B894'};
+                                --live-accent: ${event.accent_color || '#FF8A00'};
+                                --live-text: ${event.text_color || '#0F172A'};
+                            }
+                            .speaker-img:hover {
+                                border-color: var(--live-primary) !important;
+                            }
+                        `;
+
+                        // Info bar values
+                        document.getElementById('info-days').textContent = calculateDays(event.start_date, event.end_date);
+                        document.getElementById('info-dates').textContent = formatDateRange(event.start_date, event.end_date).split('|')[0].trim();
+                        
+                        // Venue details
+                        if (event.venue) {
+                            const venueParts = event.venue.split(',');
+                            document.getElementById('info-venue').textContent = venueParts[0].trim();
+                            document.getElementById('info-location').textContent = venueParts.slice(1).join(',').trim() || event.venue;
+                        }
+
+                        // Logo and banner images
+                        if (event.logo_path) {
+                            document.getElementById('preview-logo-box').innerHTML = `<img src="http://localhost:8000${event.logo_path}" class="w-full h-full object-contain bg-white">`;
+                        } else {
+                            const initials = getInitials(event.name || 'Global Innovation Summit');
+                            document.getElementById('preview-logo-box').innerHTML = `<span>${initials.slice(0,2)}<br>${initials.slice(2,4) || ''}</span>`;
+                        }
+
+                        if (event.banner_path) {
+                            document.getElementById('preview-banner').style.backgroundImage = `url('http://localhost:8000${event.banner_path}')`;
+                        }
+
+                        // Title, dates, description
+                        document.getElementById('preview-event-name').textContent = event.name || 'GLOBAL INNOVATION SUMMIT 2024';
+                        document.getElementById('preview-event-date-banner').textContent = `${formatDateRange(event.start_date, event.end_date)} | ${event.venue || 'San Francisco, CA'}`;
+                        if (event.description) {
+                            document.getElementById('preview-about-desc').textContent = event.description;
+                        }
+
+                        // Calculate total expected attendees
+                        let totalAttendees = 0;
+                        let hasUnlimited = false;
+
+                        // Tickets list preview side bar
+                        const ticketsContainer = document.getElementById('preview-tickets-container');
+                        if (event.tickets && event.tickets.length > 0) {
+                            ticketsContainer.innerHTML = '';
+                            event.tickets.forEach((ticket, idx) => {
+                                const endsIn = getEndsInText(ticket.sales_end);
+                                const isLast = idx === event.tickets.length - 1;
+                                
+                                const qty = parseInt(ticket.quantity);
+                                if (isNaN(qty)) {
+                                    hasUnlimited = true;
+                                } else {
+                                    totalAttendees += qty;
+                                }
+
+                                const ticketEl = document.createElement('div');
+                                ticketEl.className = `flex flex-col ${isLast ? 'mb-6' : 'pb-6 border-b border-gray-100'}`;
+                                ticketEl.innerHTML = `
+                                    <div class="flex items-center justify-between mb-1">
+                                        <span style="color: var(--live-text);" class="font-bold text-[14px]">${ticket.type}</span>
+                                        <span class="font-bold text-[#1C1364] text-[14px]">$${parseFloat(ticket.price).toFixed(2)}</span>
+                                    </div>
+                                    ${endsIn ? `
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-1 text-[12px] font-medium text-[#5B6B8A]">
+                                            Ends in
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                        </div>
+                                        <span class="text-[12px] font-medium text-[#5B6B8A]">${endsIn}</span>
+                                    </div>
+                                    ` : ''}
+                                `;
+                                ticketsContainer.appendChild(ticketEl);
+                            });
+
+                            // Append Buy Tickets button
+                            const buyBtn = document.createElement('button');
+                            buyBtn.style.backgroundColor = 'var(--live-primary)';
+                            buyBtn.className = 'w-full text-white py-3.5 rounded-lg text-[14px] font-bold hover:opacity-95 transition-opacity shadow-sm focus:outline-none';
+                            buyBtn.textContent = 'Buy Tickets';
+                            ticketsContainer.appendChild(buyBtn);
+
+                            // Set total attendees text
+                            document.getElementById('info-attendees').textContent = hasUnlimited ? 'Unlimited' : totalAttendees.toLocaleString() + '+';
+
+                        } else {
+                            ticketsContainer.innerHTML = `
+                                <div class="text-center py-6 text-gray-400 text-xs font-medium">
+                                    No ticket types configured yet.
+                                </div>
+                            `;
+                            document.getElementById('info-attendees').textContent = '0';
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Failed to load event for preview:', err);
+                    });
+            }
+        });
+    </script>
+</body>
+</html>

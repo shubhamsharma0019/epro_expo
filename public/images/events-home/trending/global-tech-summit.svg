@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title desc">
+  <title id="title">Global tech summit stage</title>
+  <desc id="desc">A sharp blue technology conference scene with holographic screens and a digital globe.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#071044"/>
+      <stop offset=".52" stop-color="#062b68"/>
+      <stop offset="1" stop-color="#0aa6ff"/>
+    </linearGradient>
+    <radialGradient id="glow" cx=".73" cy=".38" r=".42">
+      <stop offset="0" stop-color="#67e8f9" stop-opacity=".95"/>
+      <stop offset=".48" stop-color="#2563eb" stop-opacity=".35"/>
+      <stop offset="1" stop-color="#071044" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="blur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+  </defs>
+  <rect width="640" height="360" fill="url(#bg)"/>
+  <rect width="640" height="360" fill="url(#glow)"/>
+  <g opacity=".24" stroke="#93c5fd" stroke-width="1">
+    <path d="M0 248h640M0 292h640M0 336h640M62 0v360M158 0v360M254 0v360M350 0v360M446 0v360M542 0v360"/>
+  </g>
+  <g transform="translate(410 70)">
+    <circle cx="76" cy="76" r="72" fill="#38bdf8" opacity=".16"/>
+    <circle cx="76" cy="76" r="56" fill="none" stroke="#a5f3fc" stroke-width="4"/>
+    <ellipse cx="76" cy="76" rx="56" ry="21" fill="none" stroke="#a5f3fc" stroke-width="2" opacity=".75"/>
+    <ellipse cx="76" cy="76" rx="21" ry="56" fill="none" stroke="#a5f3fc" stroke-width="2" opacity=".75"/>
+    <path d="M30 112c34-22 70-22 104 0" fill="none" stroke="#dbeafe" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="76" cy="76" r="8" fill="#ecfeff"/>
+  </g>
+  <g transform="translate(54 72)">
+    <rect x="0" y="38" width="184" height="104" rx="14" fill="#08255c" stroke="#60a5fa" stroke-width="2"/>
+    <rect x="20" y="62" width="64" height="10" rx="5" fill="#67e8f9"/>
+    <rect x="20" y="84" width="120" height="8" rx="4" fill="#93c5fd" opacity=".8"/>
+    <rect x="20" y="104" width="92" height="8" rx="4" fill="#60a5fa" opacity=".65"/>
+    <path d="M120 128l34-42 36 42" fill="none" stroke="#22d3ee" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g transform="translate(112 214)">
+    <ellipse cx="148" cy="50" rx="156" ry="36" fill="#020617" opacity=".38" filter="url(#blur)"/>
+    <rect x="0" y="14" width="296" height="72" rx="36" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+    <circle cx="58" cy="50" r="19" fill="#22d3ee"/>
+    <circle cx="148" cy="50" r="19" fill="#60a5fa"/>
+    <circle cx="238" cy="50" r="19" fill="#818cf8"/>
+  </g>
+  <g stroke="#bae6fd" stroke-width="2" opacity=".65">
+    <path d="M236 160C290 118 348 118 410 160" fill="none"/>
+    <path d="M232 190c74-40 142-40 204 0" fill="none"/>
+  </g>
+</svg>

@@ -1,0 +1,207 @@
+EproExpo complete platform flow diagram
+Full single-page flow: Company column left, Admin column center, User/Visitor column right. Every step, route, arrow and connection shown.
+Company
+Admin
+User / Visitor
+Website home
+/
+Register / Login
+/company/register
+Admin login
+/admin/login
+Browse public pages
+/events  /exhibitions
+Company dashboard
+/company/dashboard
+Admin dashboard
+/admin/dashboard
+Create
+event
+Book
+booth
+Pending companies
+/admin/companies/pending
+review company
+Company approved
+Company can now proceed
+EVENT SETUP FLOW
+Event basic details
+/events/basic-details
+Event branding
+/events/branding
+Tickets / passes
+/events/tickets
+Speakers
+/events/speakers
+Sessions / agenda
+/events/sessions
+Sponsors
+/events/sponsors
+Resources upload
+/events/resources
+Networking setup
+/events/networking
+Event preview
+/events/preview
+Platform fee payment
+/events/payment
+Submit for review
+Status: Pending Review
+Pending events
+/admin/events/pending
+Approve / Reject
+or Request Changes
+Event: Published
+Visible on /events
+BOOTH BOOKING FLOW
+Pavilions listing
+/exhibitions/pavilions
+Halls listing
+/exhibitions/halls
+Booth size options
+/exhibitions/booth-sizes
+Floor map
+/exhibitions/floor-map
+Booth slots
+/exhibitions/booth-slots
+Booking summary
+/exhibitions/booking-summary
+Add services
+/exhibitions/add-services
+Review and confirm
+/exhibitions/review
+Payment
+/exhibitions/payment
+Booking confirmed
+/exhibitions/booking-confirmed
+BOOTH SETUP FLOW
+Booth setup dashboard
+/booth-setup/dashboard
+Company profile
+/booth-setup/company-profile
+Booth branding
+/booth-setup/branding
+Products
+/booth-setup/products
+Documents
+/booth-setup/documents
+Catalogues
+/booth-setup/catalogues
+Media gallery
+/booth-setup/media-gallery
+Team members
+/booth-setup/team-members
+Meeting slots
+/booth-setup/meeting-slots
+Booth preview
+/booth-setup/preview
+Submit for review
+Status: Pending Review
+Pending booths
+/admin/booths/pending-review
+Approve / Reject
+or Request Changes
+Booth: Published
+Visible in exhibition
+Exhibitions listing
+/exhibitions
+Exhibition details
+/exhibitions/{slug}
+Pass selection
+/passes/select
+Visitor details
+/passes/visitor-details
+Review and confirm
+/passes/review
+Payment
+/passes/payment
+Pass confirmed
+/passes/confirmed
+QR visitor pass
+/passes/e-ticket
+Visitor dashboard
+/visitor/dashboard
+Exhibition lobby
+/exhibitions/{slug}/visit
+Pavilions
+/{slug}/pavilions
+Halls + floor map
+/halls/{slug}/floor-map
+Companies listing
+/{slug}/companies
+Company booth page
+/companies/{companySlug}
+Products / docs / media
+View and download
+Book meeting
+/companies/{slug}/meetings/book
+Send enquiry
+/companies/{slug}/enquiry
+Exhibition sessions
+/{slug}/sessions/{slug}/join
+Events listing
+/events
+Event details
+/events/{eventSlug}
+Ticket selection
+/tickets/select
+Attendee details
+/tickets/attendee-details
+Review and confirm
+/tickets/review
+Payment
+/tickets/payment
+Booking confirmed
+/tickets/confirmed
+E-ticket / QR code
+/tickets/e-ticket
+User dashboard
+/user/dashboard
+Check-in
+/events/{slug}/check-in
+Event lobby
+/attend/lobby
+Agenda
+/attend/agenda
+Live session
+/attend/session/{slug}
+All admin controls
+Companies, payments, reports
+Meetings monitor
+/admin/meetings
+Enquiries monitor
+/admin/enquiries
+Payments / invoices
+/admin/payments
+Reports / analytics
+/admin/reports
+Users / visitors
+/admin/users
+Exhibitions / booths
+/admin/exhibitions
+Pavilions / halls
+/admin/pavilions  /admin/halls
+Notifications
+/admin/notifications
+Settings
+/admin/settings
+Visitor dashboard
+/visitor/dashboard
+My meetings, saved booths,
+brochures, enquiries, sessions
+User dashboard
+/user/dashboard
+My tickets, events, sessions,
+meetings, resources, certificates
+Status lifecycle
+Draft → Pending Review → Published
+or Rejected  or Changes Required
+Meeting: Pending → Confirmed → Completed
+Pass: valid per exhibition only
+Ticket: valid per event only
+Company flow
+Booth / Visitor
+Admin
+Event user
+Payment step
+Approved / confirmed

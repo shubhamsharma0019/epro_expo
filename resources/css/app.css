@@ -1,0 +1,80 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-outfit: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+    --color-navy: #071044;
+    --color-purple: #5b2eff;
+    --color-primary: #3b18ff;
+    --color-primary-light: #f4f2ff;
+    --color-success: #10B981;
+    --color-success-light: #D1FAE5;
+    --color-warning: #F59E0B;
+    --color-warning-light: #FEF3C7;
+    --color-purple-light: #EDE9FE;
+    --color-borderColor: #E7EAF3;
+}
+
+@layer base {
+    .exhibition-app main,
+    .exhibition-app section,
+    .exhibition-app article,
+    .exhibition-app aside,
+    .exhibition-app div {
+        min-width: 0;
+    }
+
+    .exhibition-app img,
+    .exhibition-app video,
+    .exhibition-app canvas,
+    .exhibition-app svg {
+        max-width: 100%;
+    }
+
+    .exhibition-app h1,
+    .exhibition-app h2,
+    .exhibition-app h3,
+    .exhibition-app p,
+    .exhibition-app span,
+    .exhibition-app a,
+    .exhibition-app button {
+        overflow-wrap: anywhere;
+    }
+
+    @media (max-width: 640px) {
+        .exhibition-app section[class*="px-5"] {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+
+        .exhibition-app a[class*="min-w-"],
+        .exhibition-app button[class*="min-w-"] {
+            min-width: 0;
+        }
+
+        .exhibition-app a[class*="h-[58px]"],
+        .exhibition-app button[class*="h-[58px]"],
+        .exhibition-app a[class*="h-[62px]"],
+        .exhibition-app button[class*="h-[62px]"],
+        .exhibition-app a[class*="h-[66px]"],
+        .exhibition-app button[class*="h-[66px]"] {
+            width: 100%;
+            min-height: 3rem;
+            height: auto;
+            padding-top: .85rem;
+            padding-bottom: .85rem;
+            text-align: center;
+        }
+
+        .exhibition-app .border-l {
+            border-left-width: 0;
+            padding-left: 0;
+        }
+    }
+}

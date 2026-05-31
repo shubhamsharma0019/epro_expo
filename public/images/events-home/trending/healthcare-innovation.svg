@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title desc">
+  <title id="title">Healthcare innovation robot</title>
+  <desc id="desc">A blue healthcare technology scene with a humanoid robot holding a glowing medical hologram.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#061735"/>
+      <stop offset=".54" stop-color="#0e7490"/>
+      <stop offset="1" stop-color="#38bdf8"/>
+    </linearGradient>
+    <radialGradient id="orb" cx=".34" cy=".42" r=".38">
+      <stop offset="0" stop-color="#ecfeff" stop-opacity=".9"/>
+      <stop offset=".4" stop-color="#67e8f9" stop-opacity=".35"/>
+      <stop offset="1" stop-color="#071044" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#bg)"/>
+  <rect width="640" height="360" fill="url(#orb)"/>
+  <g opacity=".25" stroke="#cffafe" stroke-width="1.5">
+    <path d="M58 78h160l58 58h96l58-58h152M48 278h170l54-46h110l50 44h150"/>
+    <circle cx="58" cy="78" r="5" fill="#ecfeff"/>
+    <circle cx="276" cy="136" r="5" fill="#ecfeff"/>
+    <circle cx="430" cy="78" r="5" fill="#ecfeff"/>
+    <circle cx="582" cy="78" r="5" fill="#ecfeff"/>
+  </g>
+  <g transform="translate(338 46)">
+    <path d="M91 22c48 0 82 35 82 85v93c0 42-34 76-76 76H84c-42 0-76-34-76-76v-93c0-50 34-85 83-85Z" fill="#dbeafe"/>
+    <path d="M42 108c0-32 19-55 50-55 32 0 51 23 51 55v34c0 34-21 61-51 61s-50-27-50-61v-34Z" fill="#93c5fd"/>
+    <path d="M68 104h50M74 136h38" stroke="#0f172a" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="67" cy="98" r="8" fill="#0f172a"/>
+    <circle cx="120" cy="98" r="8" fill="#0f172a"/>
+    <rect x="52" y="222" width="82" height="48" rx="24" fill="#60a5fa"/>
+    <circle cx="27" cy="170" r="22" fill="#e0f2fe"/>
+    <circle cx="158" cy="170" r="22" fill="#e0f2fe"/>
+  </g>
+  <g transform="translate(122 90)">
+    <circle cx="88" cy="88" r="78" fill="#67e8f9" opacity=".22"/>
+    <circle cx="88" cy="88" r="58" fill="none" stroke="#ecfeff" stroke-width="5"/>
+    <path d="M88 50v76M50 88h76" stroke="#ecfeff" stroke-width="14" stroke-linecap="round"/>
+    <path d="M166 118l66 42M166 58l60-34" stroke="#cffafe" stroke-width="7" stroke-linecap="round"/>
+  </g>
+</svg>

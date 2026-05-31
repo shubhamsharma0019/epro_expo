@@ -1,0 +1,1 @@
+<div class="rounded-xl border border-[#E8E3F0] bg-white p-5"><h3 class="text-[15px] font-bold text-[#1F2A6A]">{{ $name ?? 'John Doe' }}</h3><p class="mt-1 text-[13px] text-[#6A708F]">{{ $email ?? 'john.doe@example.com' }}</p></div>

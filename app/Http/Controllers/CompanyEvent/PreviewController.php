@@ -1,0 +1,16 @@
+<?php
+
+namespace App\Http\Controllers\CompanyEvent;
+
+use App\Models\CompanyEvent\CompanyEvent;
+use Illuminate\View\View;
+
+class PreviewController extends BaseCompanyEventController
+{
+    public function show(?CompanyEvent $companyEvent = null): View
+    {
+        $companyEvent = $this->setupEvent($companyEvent);
+
+        return view('company.event-company-flow.preview', $this->commonData($companyEvent));
+    }
+}

@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Event - eproexpo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            DEFAULT: '#5B32F6',
+                            light: '#F4F1FF',
+                        },
+                        textMain: '#1C1364',
+                        textMuted: '#6B7280',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-white text-textMain font-sans flex min-h-screen">
+    <div id="sidebar-container" class="z-50 relative"></div>
+    
+    <main class="lg:ml-[280px] flex-1 bg-gray-50/50 min-h-screen transition-all duration-300">
+        <!-- Top Nav -->
+        <header class="flex justify-between items-center px-4 md:px-10 py-4 md:py-6 border-b border-gray-100">
+            <div class="flex items-center gap-4 md:gap-8">
+                <!-- Hamburger Button (Visible only on mobile/tablet) -->
+                <button id="sidebar-toggle-btn" class="lg:hidden text-textMain hover:text-primary transition-colors focus:outline-none">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="hidden xl:flex gap-8">
+                    <a href="#" class="text-sm font-medium text-textMain hover:text-primary transition-colors">Explore Events</a>
+                    <a href="#" class="text-sm font-medium text-textMain hover:text-primary transition-colors">Exhibitions</a>
+                    <a href="#" class="text-sm font-medium text-textMain hover:text-primary transition-colors">Products</a>
+                    <a href="#" class="text-sm font-medium text-textMain hover:text-primary transition-colors">Jobs</a>
+                    <a href="#" class="text-sm font-medium text-textMain hover:text-primary transition-colors">Resources</a>
+                    <a href="#" class="text-sm font-medium text-textMain hover:text-primary transition-colors">Pricing</a>
+                </div>
+            </div>
+            <div class="flex items-center gap-4 md:gap-6">
+                <div class="hidden sm:flex items-center gap-1 text-sm font-medium cursor-pointer">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                    EN
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div class="hidden sm:block w-px h-6 bg-gray-200"></div>
+                <div class="flex items-center gap-3">
+                    <img src="https://i.pravatar.cc/150?img=11" alt="John Doe" class="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover">
+                    <div class="hidden sm:block">
+                        <h4 class="text-xs md:text-sm font-semibold">John Doe</h4>
+                        <p class="text-[10px] md:text-xs text-textMuted">Organizer</p>
+                    </div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+            </div>
+        </header>
+
+        <div class="px-4 md:px-10 py-6 md:py-8">
+            <!-- Header Title -->
+            <div class="mb-8">
+                <h1 class="text-[24px] font-bold tracking-tight text-[#1C1364] mb-1">Create New Event</h1>
+                <p class="text-[14px] text-textMuted">Configure and create your offline event.</p>
+            </div>
+
+            <!-- Main Card -->
+            <div class="border border-gray-100 rounded-[20px] p-4 md:p-8 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.01)]">
+                
+                <!-- Section 1 -->
+                <div class="mb-10">
+                    <h3 class="text-[15px] font-bold mb-4">Event Type</h3>
+                    <div class="max-w-md">
+                        <div class="border border-primary/30 bg-gradient-to-br from-primary-light/60 to-primary-light/20 rounded-2xl p-6 relative overflow-hidden transition-all shadow-[0_4px_20px_rgba(91,50,246,0.04)]">
+                            <div class="absolute top-0 right-0 bg-primary text-white text-[10px] font-extrabold px-3.5 py-1.5 rounded-bl-xl uppercase tracking-wider">
+                                Selected
+                            </div>
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 rounded-xl bg-primary text-white flex items-center justify-center shrink-0 shadow-md shadow-primary/20">
+                                    <svg class="w-6 h-6 stroke-[2.2]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="9" cy="7" r="4"></circle>
+                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                    </svg>
+                                </div>
+                                <div class="pr-12">
+                                    <h4 class="text-[15px] font-bold text-textMain mb-1.5">Offline / In-Person Event</h4>
+                                    <p class="text-[13px] text-textMuted leading-relaxed">Host your event at a physical venue. Participants will attend in person at the specified location.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2 -->
+                <div class="mb-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-[15px] font-bold">Start from Template</h3>
+                        <span class="text-[12px] text-textMuted font-medium">Choose a pre-filled layout to save time</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-5">
+                        
+                        <!-- Tech Conference -->
+                        <div class="relative group border border-gray-100 rounded-2xl p-6 flex flex-col hover:shadow-[0_12px_30px_rgba(91,50,246,0.06)] hover:-translate-y-1 hover:border-primary/40 transition-all duration-300 bg-white">
+                            <div class="absolute -top-2.5 left-4 bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[9px] font-extrabold px-2.5 py-0.5 rounded-full shadow-sm uppercase tracking-wider">
+                                Popular
+                            </div>
+                            <div class="w-11 h-11 rounded-xl bg-primary-light text-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                                <svg class="w-5.5 h-5.5 stroke-[2.2]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                            </div>
+                            <h4 class="text-[14px] font-bold text-textMain mb-1.5 group-hover:text-primary transition-colors">Tech Conference</h4>
+                            <p class="text-[12px] text-textMuted leading-relaxed flex-1 mb-5">Ideal for keynotes, speaker panel tracks, and physical tech meetups.</p>
+                            <button onclick="useTemplate('conference')" class="w-full py-2.5 border border-primary-light text-primary text-[12px] font-bold rounded-xl bg-primary-light/40 hover:bg-primary hover:text-white hover:border-primary transition-all duration-200 shadow-sm">Use Template</button>
+                        </div>
+
+                        <!-- Expo / Trade Show -->
+                        <div class="group border border-gray-100 rounded-2xl p-6 flex flex-col hover:shadow-[0_12px_30px_rgba(91,50,246,0.06)] hover:-translate-y-1 hover:border-[#2563EB]/40 transition-all duration-300 bg-white">
+                            <div class="w-11 h-11 rounded-xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                                <svg class="w-5.5 h-5.5 stroke-[2.2]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                            </div>
+                            <h4 class="text-[14px] font-bold text-textMain mb-1.5 group-hover:text-[#2563EB] transition-colors">Expo / Trade Show</h4>
+                            <p class="text-[12px] text-textMuted leading-relaxed flex-1 mb-5">Perfect for exhibition stalls, sponsor lead capture, and vendor showcases.</p>
+                            <button onclick="useTemplate('expo')" class="w-full py-2.5 border border-blue-50 text-[#2563EB] text-[12px] font-bold rounded-xl bg-[#EFF6FF]/50 hover:bg-[#2563EB] hover:text-white hover:border-[#2563EB] transition-all duration-200 shadow-sm">Use Template</button>
+                        </div>
+
+                        <!-- Seminar / Workshop -->
+                        <div class="group border border-gray-100 rounded-2xl p-6 flex flex-col hover:shadow-[0_12px_30px_rgba(91,50,246,0.06)] hover:-translate-y-1 hover:border-[#059669]/40 transition-all duration-300 bg-white">
+                            <div class="w-11 h-11 rounded-xl bg-[#ECFDF5] text-[#059669] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                                <svg class="w-5.5 h-5.5 stroke-[2.2]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                            </div>
+                            <h4 class="text-[14px] font-bold text-textMain mb-1.5 group-hover:text-[#059669] transition-colors">Seminar / Workshop</h4>
+                            <p class="text-[12px] text-textMuted leading-relaxed flex-1 mb-5">Designed for in-person training classes, educational courses, and workshops.</p>
+                            <button onclick="useTemplate('seminar')" class="w-full py-2.5 border border-emerald-50 text-[#059669] text-[12px] font-bold rounded-xl bg-[#ECFDF5]/50 hover:bg-[#059669] hover:text-white hover:border-[#059669] transition-all duration-200 shadow-sm">Use Template</button>
+                        </div>
+
+                        <!-- Networking Event -->
+                        <div class="group border border-gray-100 rounded-2xl p-6 flex flex-col hover:shadow-[0_12px_30px_rgba(91,50,246,0.06)] hover:-translate-y-1 hover:border-[#EA580C]/40 transition-all duration-300 bg-white">
+                            <div class="w-11 h-11 rounded-xl bg-[#FFF7ED] text-[#EA580C] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                                <svg class="w-5.5 h-5.5 stroke-[2.2]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                            </div>
+                            <h4 class="text-[14px] font-bold text-textMain mb-1.5 group-hover:text-[#EA580C] transition-colors">Networking Event</h4>
+                            <p class="text-[12px] text-textMuted leading-relaxed flex-1 mb-5">Focused on community dinners, local meetups, and investor-founder mixers.</p>
+                            <button onclick="useTemplate('networking')" class="w-full py-2.5 border border-orange-50 text-[#EA580C] text-[12px] font-bold rounded-xl bg-[#FFF7ED]/50 hover:bg-[#EA580C] hover:text-white hover:border-[#EA580C] transition-all duration-200 shadow-sm">Use Template</button>
+                        </div>
+
+                        <!-- Custom Event -->
+                        <div class="group border border-gray-100 rounded-2xl p-6 flex flex-col hover:shadow-[0_12px_30px_rgba(91,50,246,0.06)] hover:-translate-y-1 hover:border-gray-400 transition-all duration-300 bg-white">
+                            <div class="w-11 h-11 rounded-xl bg-gray-50 text-gray-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                                <svg class="w-5.5 h-5.5 stroke-[2.2]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><path d="M9 16l2 2 4-4"></path></svg>
+                            </div>
+                            <h4 class="text-[14px] font-bold text-textMain mb-1.5 group-hover:text-gray-700 transition-colors">Custom / Blank</h4>
+                            <p class="text-[12px] text-textMuted leading-relaxed flex-1 mb-5">Start with a completely blank canvas. Hand-select all settings from scratch.</p>
+                            <button onclick="useTemplate('custom')" class="w-full py-2.5 border border-gray-200 text-gray-700 text-[12px] font-bold rounded-xl bg-gray-50 hover:bg-gray-800 hover:text-white hover:border-gray-800 transition-all duration-200 shadow-sm">Use Template</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3 -->
+                <div class="mb-4">
+                    <h3 class="text-[15px] font-bold mb-4">Event Category</h3>
+                    <div id="category-list" class="flex flex-wrap gap-3">
+                        <button onclick="selectCategory('Technology', this)" class="px-5 py-2.5 border-2 border-primary text-primary bg-primary-light/50 text-[13px] font-bold rounded-[12px] shadow-sm flex items-center gap-2 active:scale-95 transition-all duration-200">
+                            <span>💻</span> Technology
+                        </button>
+                        <button onclick="selectCategory('Healthcare', this)" class="px-5 py-2.5 border border-gray-100 text-[#1C1364] text-[13px] font-semibold rounded-[12px] hover:border-primary hover:text-primary transition-all duration-200 bg-white shadow-sm flex items-center gap-2 active:scale-95">
+                            <span>🏥</span> Healthcare
+                        </button>
+                        <button onclick="selectCategory('Education', this)" class="px-5 py-2.5 border border-gray-100 text-[#1C1364] text-[13px] font-semibold rounded-[12px] hover:border-primary hover:text-primary transition-all duration-200 bg-white shadow-sm flex items-center gap-2 active:scale-95">
+                            <span>🎓</span> Education
+                        </button>
+                        <button onclick="selectCategory('Finance', this)" class="px-5 py-2.5 border border-gray-100 text-[#1C1364] text-[13px] font-semibold rounded-[12px] hover:border-primary hover:text-primary transition-all duration-200 bg-white shadow-sm flex items-center gap-2 active:scale-95">
+                            <span>🏦</span> Finance
+                        </button>
+                        <button onclick="selectCategory('Marketing', this)" class="px-5 py-2.5 border border-gray-100 text-[#1C1364] text-[13px] font-semibold rounded-[12px] hover:border-primary hover:text-primary transition-all duration-200 bg-white shadow-sm flex items-center gap-2 active:scale-95">
+                            <span>📢</span> Marketing
+                        </button>
+                        <button onclick="selectCategory('Manufacturing', this)" class="px-5 py-2.5 border border-gray-100 text-[#1C1364] text-[13px] font-semibold rounded-[12px] hover:border-primary hover:text-primary transition-all duration-200 bg-white shadow-sm flex items-center gap-2 active:scale-95">
+                            <span>🏭</span> Manufacturing
+                        </button>
+                        <button onclick="selectCategory('Other', this)" class="px-5 py-2.5 border border-gray-100 text-[#1C1364] text-[13px] font-semibold rounded-[12px] hover:border-primary hover:text-primary transition-all duration-200 bg-white shadow-sm flex items-center gap-2 active:scale-95">
+                            <span>⚙️</span> Other
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Action Area -->
+            <div class="flex justify-end mt-6">
+                <button onclick="useTemplate('custom')" class="w-full sm:w-auto text-center bg-primary text-white px-8 py-3 rounded-lg text-[14px] font-semibold shadow-sm hover:bg-[#4a26d1] transition-colors focus:outline-none">Save & Continue</button>
+            </div>
+            
+        </div>
+    </main>
+
+    <script src="sidebar.js"></script>
+    <script src="app.js"></script>
+    <script>
+        const templates = {
+            conference: {
+                name: "Global Innovation Summit 2026",
+                category: "Technology",
+                subCategory: "AI & Machine Learning",
+                startDate: "May 15, 2026",
+                endDate: "May 17, 2026",
+                timezone: "(GMT +05:30) Asia/Kolkata",
+                venue: "Grand Convention Center, San Francisco, CA, USA",
+                website: "https://globalinnovate.com",
+                description: "Global Innovation Summit brings together technology leaders, innovators, and investors to explore the future of AI, Cloud, and Emerging Technologies.",
+                organizer: {
+                    name: "John Doe",
+                    email: "john.doe@techwave.com",
+                    phone: "+1 (415) 586-0189"
+                }
+            },
+            expo: {
+                name: "International Manufacturing & Trade Expo 2026",
+                category: "Manufacturing",
+                subCategory: "Industrial Automation",
+                startDate: "Sep 10, 2026",
+                endDate: "Sep 13, 2026",
+                timezone: "(GMT -05:00) America/Chicago",
+                venue: "Metropolitan Exhibition Center, Chicago, IL, USA",
+                website: "https://infomanufacturingexpo.com",
+                description: "The premier physical exhibition showcasing state-of-the-art machinery, robotics, logistics solutions, and automation technologies from global manufacturers.",
+                organizer: {
+                    name: "Alice Smith",
+                    email: "alice.smith@industrialshow.com",
+                    phone: "+1 (312) 456-7890"
+                }
+            },
+            seminar: {
+                name: "Hands-on UI/UX Design Boot Camp",
+                category: "Education",
+                subCategory: "Product Design",
+                startDate: "Jul 24, 2026",
+                endDate: "Jul 25, 2026",
+                timezone: "(GMT +05:30) Asia/Kolkata",
+                venue: "Creative Arts Hub, Sector 5, Bangalore, India",
+                website: "https://designbootcamp.in",
+                description: "An intensive interactive in-person workshop focusing on modern design tokens, design systems, user research frameworks, and advanced prototyping methods.",
+                organizer: {
+                    name: "Rohan Sharma",
+                    email: "rohan@creativehub.in",
+                    phone: "+91 98765 43210"
+                }
+            },
+            networking: {
+                name: "Elite Founders & Investors Mixer",
+                category: "Finance",
+                subCategory: "Venture Capital",
+                startDate: "Oct 05, 2026",
+                endDate: "Oct 05, 2026",
+                timezone: "(GMT -04:00) America/New_York",
+                venue: "Skyline Lounge & Rooftop, New York, NY, USA",
+                website: "https://foundersmixer.com",
+                description: "Connect with top-tier venture capitalists, angel investors, and high-growth startup founders during a premium physical networking dinner and pitch mixer.",
+                organizer: {
+                    name: "Emily Vance",
+                    email: "emily@foundersclub.com",
+                    phone: "+1 (212) 987-6543"
+                }
+            },
+            custom: {
+                name: "",
+                category: "Technology",
+                subCategory: "Other",
+                startDate: "",
+                endDate: "",
+                timezone: "(GMT +05:30) Asia/Kolkata",
+                venue: "",
+                website: "",
+                description: "",
+                organizer: {
+                    name: "",
+                    email: "",
+                    phone: ""
+                }
+            }
+        };
+
+        let activeCategory = 'Technology';
+
+        function selectCategory(category, element) {
+            activeCategory = category;
+            
+            // Reset all buttons in the list
+            const buttons = document.querySelectorAll('#category-list button');
+            buttons.forEach(btn => {
+                const emoji = btn.querySelector('span').textContent;
+                btn.className = "px-5 py-2.5 border border-gray-100 text-[#1C1364] text-[13px] font-semibold rounded-[12px] hover:border-primary hover:text-primary transition-all duration-200 bg-white shadow-sm flex items-center gap-2 active:scale-95";
+            });
+            
+            // Set active state on clicked button
+            element.className = "px-5 py-2.5 border-2 border-primary text-primary bg-primary-light/50 text-[13px] font-bold rounded-[12px] shadow-sm flex items-center gap-2 active:scale-95 transition-all duration-200";
+            
+            // Update custom template category
+            templates.custom.category = category;
+        }
+
+        function useTemplate(type) {
+            // If custom, make sure it has the currently selected category
+            if(type === 'custom') {
+                templates.custom.category = activeCategory;
+            }
+            localStorage.setItem('selectedEventTemplate', JSON.stringify(templates[type]));
+            window.location.href = 'event-basic-details.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set 'Events' as active dynamically after app.js loads the sidebar
+            setTimeout(() => {
+                const navItems = document.querySelectorAll('#sidebar-container a');
+                navItems.forEach(n => {
+                    // Reset all
+                    n.classList.remove('bg-[#F4F1FF]', 'text-[#5B32F6]', 'font-semibold');
+                    n.classList.add('text-[#1C1364]', 'font-medium');
+                    const svg = n.querySelector('svg');
+                    if(svg) svg.classList.replace('text-[#5B32F6]', 'text-[#1C1364]');
+                    
+                    // Activate Events
+                    if(n.textContent.trim() === 'Events') {
+                        n.classList.remove('text-[#1C1364]', 'font-medium');
+                        n.classList.add('bg-[#F4F1FF]', 'text-[#5B32F6]', 'font-semibold');
+                        if(svg) svg.classList.replace('text-[#1C1364]', 'text-[#5B32F6]');
+                    }
+                });
+            }, 100);
+        });
+    </script>
+</body>
+</html>

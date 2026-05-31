@@ -1,0 +1,1 @@
+<section class="px-6 py-12"><div class="mx-auto max-w-6xl rounded-2xl border border-[#E8E3F0] bg-white p-7"><p class="text-[18px] font-medium leading-8 text-[#1F2A6A]">A focused event experience with simple discovery, booking, and attendance flow.</p><p class="mt-4 text-[14px] text-[#4E567A]">Event attendee</p></div></section>

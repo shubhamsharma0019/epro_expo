@@ -1,0 +1,1 @@
+<div class="rounded-2xl border border-[#E8E3F0] bg-white p-5"><p class="text-[13px] font-semibold text-[#5B35D5]">{{ $time ?? '09:00 AM' }}</p><h3 class="mt-2 text-[16px] font-semibold text-[#1F2A6A]">{{ $title ?? 'Session Title' }}</h3><p class="mt-1 text-[14px] text-[#4E567A]">Main Stage</p></div>
