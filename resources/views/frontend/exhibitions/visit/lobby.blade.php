@@ -17,6 +17,12 @@
     if ($bookingId) {
         $visitor = \App\Models\Visitor::where('booking_id', $bookingId)->first();
     }
+    if (!$visitor && auth()->check() && isset($exhibition)) {
+        $visitor = \App\Models\Visitor::where('exhibition_id', $exhibition->id)
+            ->where('email', auth()->user()->email)
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
     if (!$visitor && isset($exhibition)) {
         $visitor = \App\Models\Visitor::where('exhibition_id', $exhibition->id)->orderBy('created_at', 'desc')->first();
     }

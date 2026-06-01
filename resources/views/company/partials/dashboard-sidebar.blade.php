@@ -8,9 +8,7 @@
     $boothSetupHrefForSidebar = $sidebarLatestBooking
         ? route('company.booth-setup.index', $sidebarLatestBooking)
         : route('company.booth-booking.pavilions');
-    $meetingHrefForSidebar = $sidebarLatestBooking
-        ? route('company.booth-setup.meetings.edit', $sidebarLatestBooking)
-        : route('company.booth-booking.pavilions');
+    $meetingHrefForSidebar = route('company.meetings.index');
     $sidebarNotificationCount = ($stats['enquiries_count'] ?? $sidebarCompany?->enquiries()->count() ?? 0)
         + ($stats['meetings_count'] ?? $sidebarCompany?->visitorMeetingBookings()->count() ?? 0);
 

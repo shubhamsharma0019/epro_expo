@@ -438,12 +438,8 @@ const prices = {
             };
             localStorage.setItem("eventOrder", JSON.stringify(orderData));
             
-            @auth
-                window.location.href = "{{ url('/events/tickets/attendee-details') }}";
-            @else
-                // Redirect to the protected route which will trigger the login redirect with intended URL
-                window.location.href = "{{ url('/events/tickets/attendee-details') }}";
-            @endauth
+            const targetUrl = "{{ url('/events/tickets/attendee-details') }}?event=" + encodeURIComponent(orderData.eventSlug);
+            window.location.href = targetUrl;
         }
         
         // Initial setup

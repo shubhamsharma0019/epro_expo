@@ -114,7 +114,7 @@
                     <div>
                         <h3 class="text-[14px] font-bold text-[#1C1364] mb-3">Theme Sections</h3>
                         <div class="flex flex-col gap-[10px] mt-1">
-                            @foreach (['Header & Banner', 'Event Details', 'Speakers', 'Sessions', 'Sponsors', 'Footer'] as $section)
+                            @foreach (['Header & Banner', 'Event Details', 'Sponsors', 'Footer'] as $section)
                                 <div class="flex items-center gap-2.5">
                                     <div class="w-[16px] h-[16px] rounded-full bg-[#10B981] text-white flex items-center justify-center shrink-0"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
                                     <span class="text-[13px] text-[#1C1364] font-medium">{{ $section }}</span>
@@ -142,9 +142,9 @@
                 </div>
             </div>
 
-            <div class="flex flex-col">
+            <div class="flex flex-col min-w-0">
                 <h3 class="text-[14px] font-bold text-[#1C1364] mb-3">Live Preview</h3>
-                <div class="border border-gray-200 rounded-[16px] overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.03)] bg-white h-full flex flex-col">
+                <div class="border border-gray-200 rounded-[16px] overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.03)] bg-white h-full flex flex-col min-w-0">
                     <div id="live-banner-preview" class="relative bg-[#1A0A4A] h-[260px] px-8 py-8 flex flex-col justify-between overflow-hidden shrink-0 bg-cover bg-center" @if ($bannerUrl) style="background-image: url('{{ $bannerUrl }}')" @endif>
                         <div class="absolute inset-0 opacity-50">
                             <svg width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 100 100">
@@ -172,38 +172,31 @@
                         </div>
                     </div>
 
-                    <div class="p-8 flex-1">
+                    <div class="p-8 flex-1 min-w-0">
                         <h3 class="text-[15px] font-bold text-[#4C10D0] mb-3">About the Event</h3>
                         <p class="text-[13px] text-[#5B6B8A] leading-relaxed mb-8">{{ $eventSummary }}</p>
 
                         <h3 class="text-[15px] font-bold text-[#4C10D0] mb-5">Event Highlights</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                            <div class="flex items-start gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
+                            <div class="flex items-start gap-3 min-w-0">
                                 <svg class="text-[#4C10D0] shrink-0 mt-0.5" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                                <div>
-                                    <div class="text-[13px] font-bold text-[#1C1364] mb-0.5">{{ $eventDays }} {{ str('Day')->plural($eventDays) }}</div>
-                                    <div class="text-[11px] text-[#5B6B8A] whitespace-nowrap">{{ $eventDate }}</div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="text-[13px] font-bold text-[#1C1364] mb-0.5 truncate">{{ $eventDays }} {{ str('Day')->plural($eventDays) }}</div>
+                                    <div class="text-[11px] text-[#5B6B8A] truncate">{{ $eventDate }}</div>
                                 </div>
                             </div>
-                            <div class="flex items-start gap-3 sm:border-l border-gray-100 sm:pl-4">
+                            <div class="flex items-start gap-3 border-gray-100 pl-4 sm:border-l min-w-0">
                                 <svg class="text-[#4C10D0] shrink-0 mt-0.5" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                                <div>
-                                    <div class="text-[13px] font-bold text-[#1C1364] mb-0.5">{{ $eventVenueName }}</div>
-                                    <div class="text-[11px] text-[#5B6B8A] whitespace-nowrap">{{ $eventLocation }}</div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="text-[13px] font-bold text-[#1C1364] mb-0.5 truncate" title="{{ $eventVenueName }}">{{ $eventVenueName }}</div>
+                                    <div class="text-[11px] text-[#5B6B8A] truncate" title="{{ $eventLocation }}">{{ $eventLocation }}</div>
                                 </div>
                             </div>
-                            <div class="flex items-start gap-3 md:border-l border-gray-100 md:pl-4">
+                            <div class="flex items-start gap-3 border-gray-100 min-w-0 sm:border-none sm:pl-0 md:border-l md:pl-4 xl:border-none xl:pl-0 2xl:border-l 2xl:pl-4">
                                 <svg class="text-[#4C10D0] shrink-0 mt-0.5" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                                <div>
-                                    <div class="text-[13px] font-bold text-[#1C1364] mb-0.5">{{ $eventCapacity }}</div>
-                                    <div class="text-[11px] text-[#5B6B8A] whitespace-nowrap">Expected Attendees</div>
-                                </div>
-                            </div>
-                            <div class="flex items-start gap-3 md:border-l border-gray-100 md:pl-4">
-                                <svg class="text-[#4C10D0] shrink-0 mt-0.5" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                                <div>
-                                    <div class="text-[13px] font-bold text-[#1C1364] mb-0.5">{{ $speakerDisplay }}</div>
-                                    <div class="text-[11px] text-[#5B6B8A]">Speakers</div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="text-[13px] font-bold text-[#1C1364] mb-0.5 truncate">{{ $eventCapacity }}</div>
+                                    <div class="text-[11px] text-[#5B6B8A] truncate">Expected Attendees</div>
                                 </div>
                             </div>
                         </div>

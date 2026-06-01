@@ -10,21 +10,42 @@ class PurchaseController extends Controller
 {
     public function attendeeDetails(Request $request)
     {
-        return view('frontend.events.tickets.attendee-details');
+        $slug = $request->query('event');
+        $dbEvent = null;
+        if ($slug) {
+            $dbEvent = \App\Models\CompanyEvent\CompanyEvent::with('ticketTypes')
+                ->where('slug', $slug)
+                ->first();
+        }
+        return view('frontend.events.tickets.attendee-details', compact('dbEvent', 'slug'));
     }
 
     public function summary(Request $request)
     {
-        return view('frontend.events.tickets.summary');
+        $slug = $request->query('event');
+        $dbEvent = null;
+        if ($slug) {
+            $dbEvent = \App\Models\CompanyEvent\CompanyEvent::with('ticketTypes')
+                ->where('slug', $slug)
+                ->first();
+        }
+        return view('frontend.events.tickets.summary', compact('dbEvent', 'slug'));
     }
 
     public function payment(Request $request)
     {
+        $slug = $request->query('event');
+        $dbEvent = null;
+        if ($slug) {
+            $dbEvent = \App\Models\CompanyEvent\CompanyEvent::with('ticketTypes')
+                ->where('slug', $slug)
+                ->first();
+        }
         $razorpayKey = config('services.razorpay.key');
         $razorpayCurrency = config('services.razorpay.currency', 'INR');
         $razorpayEnabled = filled($razorpayKey) && filled(config('services.razorpay.secret'));
 
-        return view('frontend.events.tickets.payment', compact('razorpayKey', 'razorpayCurrency', 'razorpayEnabled'));
+        return view('frontend.events.tickets.payment', compact('dbEvent', 'slug', 'razorpayKey', 'razorpayCurrency', 'razorpayEnabled'));
     }
 
     public function createRazorpayOrder(Request $request)
@@ -122,9 +143,9 @@ class PurchaseController extends Controller
             'total_amount' => $orderData['totalAmount'],
             'status' => 'confirmed',
             'qr_code_path' => null, // We'll generate QR later
-            'attendee_name' => auth()->user()->name ?? 'Attendee',
-            'attendee_email' => auth()->user()->email ?? '',
-            'attendee_phone' => auth()->user()->phone ?? '',
+            'attendee_name' => $orderData['attendee_name'] ?? auth()->user()->name ?? 'Attendee',
+            'attendee_email' => $orderData['attendee_email'] ?? auth()->user()->email ?? '',
+            'attendee_phone' => $orderData['attendee_phone'] ?? auth()->user()->phone ?? '',
         ]);
 
         return redirect()->route('events.tickets.confirmed', ['order' => $orderNumber]);

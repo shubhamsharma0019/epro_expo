@@ -25,10 +25,10 @@
         @forelse ($boothSizes as $size)
             @php
                 $isSelected = $selectedSizeId === $size->id;
-                $area = (float) $size->area;
-                $cols = $area >= 81 ? 5 : ($area >= 18 ? 4 : 3);
-                $rows = $area >= 81 ? 5 : ($area >= 36 ? 4 : ($area >= 18 ? 3 : 2));
+                $cols = (int) $size->width;
+                $rows = (int) $size->height;
                 $cells = $cols * $rows;
+                $area = (float) $size->area;
                 $shapeClass = $area >= 81
                     ? 'mt-7 h-[110px] w-[110px]'
                     : ($area >= 36 ? 'mt-8 h-[96px] w-[96px]' : 'mt-10 h-[66px] w-[96px]');

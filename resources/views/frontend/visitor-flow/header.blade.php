@@ -12,29 +12,80 @@
         <button class="text-gray-500 hover:text-primary-600 transition">
             <i class="ph ph-envelope-simple text-[22px]"></i>
         </button>
-        @auth
-            <div class="flex items-center gap-3 cursor-pointer pl-4 border-l border-gray-100">
-                <div class="text-right hidden sm:block">
-                    <div class="text-[13px] font-bold text-[#1E293B]">{{ auth()->user()->name }}</div>
-                    <div class="text-[11px] text-gray-500 font-medium">{{ ucfirst(auth()->user()->role ?? 'Visitor') }}</div>
-                </div>
-                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#5A32FA] to-[#246BFF] text-[14px] font-medium text-white shadow-sm">
-                    {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
-                </span>
+@php
+    $activeSlug = $slug ?? request()->route('slug') ?? 'global-tech-expo-2024';
+@endphp
+        <div class="relative inline-block text-left" id="profileDropdownContainer">
+            <button type="button" id="profileDropdownBtn" class="flex items-center gap-3 cursor-pointer pl-4 border-l border-gray-100 hover:opacity-85 transition-opacity focus:outline-none bg-transparent border-0 p-0">
+                @auth
+                    <div class="text-right hidden sm:block">
+                        <div class="text-[13px] font-bold text-[#1E293B]">{{ auth()->user()->name }}</div>
+                        <div class="text-[11px] text-gray-500 font-medium">{{ ucfirst(auth()->user()->role ?? 'Visitor') }}</div>
+                    </div>
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#5A32FA] to-[#246BFF] text-[14px] font-medium text-white shadow-sm">
+                        {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+                    </span>
+                @else
+                    <div class="text-right hidden sm:block">
+                        <div class="text-[13px] font-bold text-[#1E293B]">Guest Visitor</div>
+                        <div class="text-[11px] text-gray-500 font-medium">Guest</div>
+                    </div>
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-gray-400 to-gray-500 text-[14px] font-medium text-white shadow-sm">
+                        G
+                    </span>
+                @endauth
                 <i class="ph ph-caret-down text-[14px] text-gray-400"></i>
+            </button>
+
+            <!-- Dropdown Menu -->
+            <div id="profileDropdownMenu" class="hidden absolute right-0 z-50 mt-2.5 w-48 origin-top-right rounded-xl bg-white py-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.08)] ring-1 ring-black/5 focus:outline-none transition-all duration-200 border border-gray-50">
+                @auth
+                    <a href="{{ route('exhibitions.visitor.dashboard', $activeSlug) }}" class="flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+                        <i class="ph ph-layout text-[16px] text-gray-500"></i>
+                        Visitor Dashboard
+                    </a>
+                    <a href="{{ url('/user/dashboard') }}" class="flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+                        <i class="ph ph-ticket text-[16px] text-gray-500"></i>
+                        My Passes
+                    </a>
+                    <hr class="border-gray-100 my-1">
+                    <form method="POST" action="{{ url('/user/logout') }}" class="w-full">
+                        @csrf
+                        <button type="submit" class="flex w-full items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-red-600 hover:bg-red-50/50 transition-colors text-left bg-transparent border-0 cursor-pointer">
+                            <i class="ph ph-sign-out text-[16px] text-red-500"></i>
+                            Logout
+                        </button>
+                    </form>
+                @else
+                    <a href="{{ url('/user/login') }}" class="flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+                        <i class="ph ph-sign-in text-[16px] text-gray-500"></i>
+                        Login
+                    </a>
+                    <a href="{{ url('/user/register') }}" class="flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+                        <i class="ph ph-user-plus text-[16px] text-gray-500"></i>
+                        Register
+                    </a>
+                @endauth
             </div>
-        @else
-            <div class="flex items-center gap-3 cursor-pointer pl-4 border-l border-gray-100">
-                <div class="text-right hidden sm:block">
-                    <div class="text-[13px] font-bold text-[#1E293B]">Guest Visitor</div>
-                    <div class="text-[11px] text-gray-500 font-medium">Guest</div>
-                </div>
-                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-gray-400 to-gray-500 text-[14px] font-medium text-white shadow-sm">
-                    G
-                </span>
-                <i class="ph ph-caret-down text-[14px] text-gray-400"></i>
-            </div>
-        @endauth
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const btn = document.getElementById('profileDropdownBtn');
+                const menu = document.getElementById('profileDropdownMenu');
+                if (btn && menu) {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        menu.classList.toggle('hidden');
+                    });
+                    document.addEventListener('click', (e) => {
+                        if (!btn.contains(e.target) && !menu.contains(e.target)) {
+                            menu.classList.add('hidden');
+                        }
+                    });
+                }
+            });
+        </script>
     </div>
 </header>
 

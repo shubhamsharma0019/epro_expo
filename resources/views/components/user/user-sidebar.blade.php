@@ -1,15 +1,21 @@
 @php
+    $hideExhibition = request()->is('user/dashboard') || request()->is('user/tickets*') || request()->query('flow') === 'event';
+
     $items = [
         ['Dashboard', '/user/dashboard', 'user/dashboard', 'fa-solid fa-house'],
         ['Event Tickets', '/user/tickets', 'user/tickets*', 'fa-solid fa-ticket'],
-        ['Exhibition Tickets', '/user/exhibition-tickets', 'user/exhibition-tickets*', 'fa-regular fa-id-card'],
-        ['Visit History', '/user/visits', 'user/visits*', 'fa-regular fa-clock'],
-        ['Saved Exhibitions', '/user/saved/exhibitions', 'user/saved*', 'fa-regular fa-bookmark'],
-        ['Visited Booths', '/user/booths/visited', 'user/booths*', 'fa-solid fa-store'],
-        ['Enquiries', '/user/enquiries', 'user/enquiries*', 'fa-regular fa-message'],
-        ['Profile', '/user/profile', 'user/profile', 'fa-regular fa-user'],
-        ['Settings', '/user/settings', 'user/settings', 'fa-solid fa-gear'],
     ];
+
+    if (!$hideExhibition) {
+        $items[] = ['Exhibition Tickets', '/user/exhibition-tickets', 'user/exhibition-tickets*', 'fa-regular fa-id-card'];
+        $items[] = ['Visit History', '/user/visits', 'user/visits*', 'fa-regular fa-clock'];
+        $items[] = ['Saved Exhibitions', '/user/saved/exhibitions', 'user/saved*', 'fa-regular fa-bookmark'];
+        $items[] = ['Visited Booths', '/user/booths/visited', 'user/booths*', 'fa-solid fa-store'];
+    }
+
+    $items[] = ['Enquiries', '/user/enquiries', 'user/enquiries*', 'fa-regular fa-message'];
+    $items[] = ['Profile', '/user/profile', 'user/profile', 'fa-regular fa-user'];
+    $items[] = ['Settings', '/user/settings', 'user/settings', 'fa-solid fa-gear'];
 @endphp
 
 <aside id="user-sidebar" class="fixed inset-y-0 left-0 z-50 w-[280px] shrink-0 -translate-x-full border-r border-[#E7EAF3] bg-white transition-transform duration-200 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:translate-x-0 lg:overflow-y-auto">
@@ -28,6 +34,7 @@
             <span class="truncate font-medium">Back to Home</span>
         </a>
 
+        @if (!$hideExhibition)
         <div class="rounded-[22px] bg-gradient-to-br from-[#071044] via-[#18206B] to-[#5b2eff] p-4 text-white">
             <p class="text-[12px] font-medium text-white/68">Active pass</p>
             <p class="mt-2 text-[15px] font-medium leading-5">Global Tech Expo</p>
@@ -36,6 +43,7 @@
                 <a href="{{ url('/user/exhibition-tickets/1/e-ticket') }}" class="text-[12px] font-medium text-white">Open</a>
             </div>
         </div>
+        @endif
 
         <p class="mb-3 mt-6 px-3 text-[11px] font-medium uppercase tracking-[0.16em] text-[#8A94AD]">Navigation</p>
         <nav class="space-y-1">
@@ -53,6 +61,7 @@
             @endforeach
         </nav>
 
+        @if (!$hideExhibition)
         <p class="mb-3 mt-6 px-3 text-[11px] font-medium uppercase tracking-[0.16em] text-[#8A94AD]">Explore flows</p>
         <div class="space-y-1">
             <a href="{{ url('/events') }}" class="group flex h-[44px] items-center gap-3 rounded-2xl px-3 text-[14px] text-[#34405F] transition hover:bg-[#F8F5FF] hover:text-[#5b2eff]">
@@ -68,6 +77,7 @@
                 <span class="truncate font-medium">Exhibition Flow</span>
             </a>
         </div>
+        @endif
 
         <div class="my-5 h-px bg-[#E7EAF3]"></div>
         <form method="POST" action="{{ url('/user/logout') }}">

@@ -324,5 +324,27 @@
             }
         });
     });
+
+    // Prevent double submission of the ticket type form
+    ticketTypeForm?.addEventListener('submit', () => {
+        const submitBtn = ticketTypeForm.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Saving...';
+            submitBtn.style.opacity = '0.7';
+            submitBtn.style.cursor = 'not-allowed';
+        }
+    });
+
+    // Prevent double submission of settings form
+    document.getElementById('ticket-settings-form')?.addEventListener('submit', () => {
+        const submitBtn = document.getElementById('save-tickets-btn');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Saving...';
+            submitBtn.style.opacity = '0.7';
+            submitBtn.style.cursor = 'not-allowed';
+        }
+    });
 </script>
 @endpush

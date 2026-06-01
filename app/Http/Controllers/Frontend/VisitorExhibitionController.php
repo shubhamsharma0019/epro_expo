@@ -15,12 +15,43 @@ use App\Models\Visitor;
 
 class VisitorExhibitionController extends Controller
 {
-    /**
-     * Check if the visitor has an active pass in session.
-     */
-    private function isPassActive(): bool
+    private function isPassActive(string $slug = null): bool
     {
-        return (bool) session('visitor_pass_active', false);
+        if (session('visitor_pass_active', false)) {
+            return true;
+        }
+
+        $bookingId = request()->query('booking_id') ?: session('selected_visitor_booking_id');
+        if ($bookingId) {
+            $exhibition = Exhibition::where('slug', $slug)->first();
+            $exists = Visitor::where('booking_id', $bookingId)
+                ->when($exhibition, fn($q) => $q->where('exhibition_id', $exhibition->id))
+                ->where('payment_status', 'completed')
+                ->exists();
+            if ($exists) {
+                session(['visitor_pass_active' => true]);
+                session(['selected_visitor_booking_id' => $bookingId]);
+                return true;
+            }
+        }
+
+        if (auth()->check()) {
+            $userEmail = auth()->user()->email;
+            $exhibition = Exhibition::where('slug', $slug)->first();
+            
+            $visitor = Visitor::where('email', $userEmail)
+                ->when($exhibition, fn($q) => $q->where('exhibition_id', $exhibition->id))
+                ->where('payment_status', 'completed')
+                ->first();
+                
+            if ($visitor) {
+                session(['visitor_pass_active' => true]);
+                session(['selected_visitor_booking_id' => $visitor->booking_id]);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function lobby(string $slug): View
@@ -62,7 +93,7 @@ class VisitorExhibitionController extends Controller
 
         return view('frontend.exhibitions.visit.lobby', [
             'slug' => $slug,
-            'isPassActive' => $this->isPassActive(),
+            'isPassActive' => $this->isPassActive($slug),
             'liveBooths' => $liveBooths,
             'exhibition' => $exhibition,
         ]);
@@ -72,7 +103,7 @@ class VisitorExhibitionController extends Controller
     {
         return view('frontend.exhibitions.halls.floor-plan', [
             'slug' => $slug,
-            'isPassActive' => $this->isPassActive()
+            'isPassActive' => $this->isPassActive($slug)
         ]);
     }
 
@@ -84,7 +115,7 @@ class VisitorExhibitionController extends Controller
 
         return view('frontend.exhibitions.dashboard', [
             'slug' => $slug,
-            'isPassActive' => $this->isPassActive()
+            'isPassActive' => $this->isPassActive($slug)
         ]);
     }
 
@@ -96,7 +127,7 @@ class VisitorExhibitionController extends Controller
 
         return view('frontend.exhibitions.booking.my-bookings', [
             'slug' => $slug,
-            'isPassActive' => $this->isPassActive(),
+            'isPassActive' => $this->isPassActive($slug),
             'visitors' => $visitors
         ]);
     }
@@ -105,7 +136,7 @@ class VisitorExhibitionController extends Controller
     {
         return view('frontend.exhibitions.visitor.saved.index', [
             'slug' => $slug,
-            'isPassActive' => $this->isPassActive()
+            'isPassActive' => $this->isPassActive($slug)
         ]);
     }
 
@@ -122,7 +153,7 @@ class VisitorExhibitionController extends Controller
 
         return view('frontend.exhibitions.visitor.meetings.index', [
             'slug' => $slug,
-            'isPassActive' => $this->isPassActive(),
+            'isPassActive' => $this->isPassActive($slug),
             'meetings' => $meetings
         ]);
     }
@@ -158,7 +189,7 @@ class VisitorExhibitionController extends Controller
 
         return view('frontend.exhibitions.visitor.sessions.index', [
             'slug' => $slug,
-            'isPassActive' => $this->isPassActive(),
+            'isPassActive' => $this->isPassActive($slug),
             'sessions' => $sessions,
             'exhibition' => $exhibition,
         ]);
@@ -168,7 +199,7 @@ class VisitorExhibitionController extends Controller
     {
         return view('frontend.exhibitions.visitor.notifications.index', [
             'slug' => $slug,
-            'isPassActive' => $this->isPassActive()
+            'isPassActive' => $this->isPassActive($slug)
         ]);
     }
 
@@ -177,7 +208,7 @@ class VisitorExhibitionController extends Controller
         return view('frontend.exhibitions.visitor.chat.show', [
             'slug' => $slug,
             'companySlug' => $companySlug,
-            'isPassActive' => $this->isPassActive()
+            'isPassActive' => $this->isPassActive($slug)
         ]);
     }
 
@@ -185,7 +216,7 @@ class VisitorExhibitionController extends Controller
     {
         return view('frontend.exhibitions.visitor.halls.index', [
             'slug' => $slug,
-            'isPassActive' => $this->isPassActive()
+            'isPassActive' => $this->isPassActive($slug)
         ]);
     }
 
@@ -194,7 +225,7 @@ class VisitorExhibitionController extends Controller
         return view('frontend.exhibitions.visitor.halls.show', [
             'slug' => $slug,
             'hallSlug' => $hallSlug,
-            'isPassActive' => $this->isPassActive()
+            'isPassActive' => $this->isPassActive($slug)
         ]);
     }
 

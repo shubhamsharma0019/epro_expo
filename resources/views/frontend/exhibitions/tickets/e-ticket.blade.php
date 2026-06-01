@@ -7,7 +7,14 @@
     $exhibition = \App\Models\Exhibition::where('slug', $slug)->first();
     $exhTitle = $exhibition ? ($exhibition->title ?: $exhibition->name) : 'Global Tech Expo 2026';
     
-    $allVisitors = $exhibition ? \App\Models\Visitor::where('exhibition_id', $exhibition->id)->orderBy('created_at', 'desc')->get() : collect();
+    if (auth()->check() && $exhibition) {
+        $allVisitors = \App\Models\Visitor::where('exhibition_id', $exhibition->id)
+            ->where('email', auth()->user()->email)
+            ->orderBy('created_at', 'desc')
+            ->get();
+    } else {
+        $allVisitors = $exhibition ? \App\Models\Visitor::where('exhibition_id', $exhibition->id)->orderBy('created_at', 'desc')->get() : collect();
+    }
     
     $bookingIdParam = request()->query('booking_id');
     if ($bookingIdParam && $allVisitors->isNotEmpty()) {

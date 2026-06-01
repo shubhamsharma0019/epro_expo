@@ -347,18 +347,23 @@
                     @endunless
                     <input type="text" name="visitor_name" value="{{ $userFullName }}" placeholder="Your name" class="mt-4 h-11 w-full rounded-lg border border-[#E7EAF3] px-4 text-[14px] outline-none focus:border-[#5b2eff]" {{ $isPassActive ? 'required' : 'disabled' }}>
                     <input type="email" name="visitor_email" value="{{ $userEmail }}" placeholder="Email" class="mt-3 h-11 w-full rounded-lg border border-[#E7EAF3] px-4 text-[14px] outline-none focus:border-[#5b2eff]" {{ $isPassActive ? 'required' : 'disabled' }}>
-                    @if ($companyMeetings->isNotEmpty())
-                        <select name="company_meeting_id" class="mt-3 h-11 w-full rounded-lg border border-[#E7EAF3] px-4 text-[14px] outline-none focus:border-[#5b2eff]" {{ $isPassActive ? 'required' : 'disabled' }}>
-                            @foreach ($companyMeetings->take(8) as $meeting)
-                                <option value="{{ $meeting->id }}">{{ optional($meeting->start_time)->format('M d | H:i') }} - {{ optional($meeting->end_time)->format('H:i') }}</option>
+                    @if ($meetingSlots->isNotEmpty())
+                        <select name="booth_meeting_slot_id" class="mt-3 h-11 w-full rounded-lg border border-[#E7EAF3] bg-white px-4 text-[14px] outline-none focus:border-[#5b2eff]" {{ $isPassActive ? 'required' : 'disabled' }}>
+                            @foreach ($meetingSlots as $slot)
+                                <option value="{{ $slot->id }}">
+                                    {{ $slot->date ? $slot->date->format('M d') : '' }} | 
+                                    {{ \Carbon\Carbon::parse($slot->start_time)->format('h:i A') }} - 
+                                    {{ \Carbon\Carbon::parse($slot->end_time)->format('h:i A') }} 
+                                    ({{ ucfirst($slot->meeting_type) }})
+                                </option>
                             @endforeach
                         </select>
                     @else
                         <input type="text" name="preferred_time" placeholder="Preferred time (No slots available)" class="mt-3 h-11 w-full rounded-lg border border-[#E7EAF3] px-4 text-[14px] outline-none focus:border-[#5b2eff]" disabled>
-                        <input type="hidden" name="company_meeting_id" value="">
+                        <input type="hidden" name="booth_meeting_slot_id" value="">
                     @endif
                     <textarea name="message" placeholder="Meeting note" class="mt-3 min-h-[120px] w-full rounded-lg border border-[#E7EAF3] p-4 text-[14px] outline-none focus:border-[#5b2eff]" {{ $isPassActive ? '' : 'disabled' }}></textarea>
-                    <button type="submit" class="mt-4 h-11 w-full rounded-lg {{ $isPassActive ? 'bg-gradient-to-r from-[#5b2eff] to-[#4310d8] text-white hover:shadow-lg' : 'bg-[#F4F0FF] text-[#5b2eff]' }} text-[14px] font-bold" {{ $isPassActive && $companyMeetings->isNotEmpty() ? '' : 'disabled' }}>{{ $isPassActive ? 'Request Meeting' : 'Register / Get Pass' }}</button>
+                    <button type="submit" class="mt-4 h-11 w-full rounded-lg {{ $isPassActive ? 'bg-gradient-to-r from-[#5b2eff] to-[#4310d8] text-white hover:shadow-lg' : 'bg-[#F4F0FF] text-[#5b2eff]' }} text-[14px] font-bold" {{ $isPassActive && $meetingSlots->isNotEmpty() ? '' : 'disabled' }}>{{ $isPassActive ? 'Request Meeting' : 'Register / Get Pass' }}</button>
                 </form>
             </aside>
         </div>

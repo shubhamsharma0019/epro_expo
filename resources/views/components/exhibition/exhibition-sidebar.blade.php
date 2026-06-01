@@ -8,6 +8,12 @@
     if ($bookingId) {
         $visitor = \App\Models\Visitor::where('booking_id', $bookingId)->first();
     }
+    if (!$visitor && auth()->check() && $exhibition) {
+        $visitor = \App\Models\Visitor::where('exhibition_id', $exhibition->id)
+            ->where('email', auth()->user()->email)
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
     if (!$visitor && $exhibition) {
         $visitor = \App\Models\Visitor::where('exhibition_id', $exhibition->id)->orderBy('created_at', 'desc')->first();
     }
@@ -83,5 +89,15 @@
             </span>
             <span class="truncate">Back to Website</span>
         </a>
+
+        <form method="POST" action="{{ route('user.logout') }}" class="mt-2">
+            @csrf
+            <button type="submit" class="flex w-full h-[38px] items-center gap-2.5 rounded-lg px-3 text-[13px] font-medium text-rose-600 transition hover:bg-rose-50 hover:text-rose-700">
+                <span class="grid h-7 w-7 shrink-0 place-items-center rounded-md text-rose-600">
+                    <i class="fa-solid fa-power-off text-[14px]"></i>
+                </span>
+                <span class="truncate">Logout</span>
+            </button>
+        </form>
     </div>
 </aside>

@@ -15,20 +15,35 @@
         </p>
     </div>
 
+    @php
+        $totalCount = $bookings->count();
+        $upcomingCount = $bookings->filter(function ($b) {
+            $startDate = $b->exhibition->start_date ?? null;
+            return $startDate && $startDate->isFuture() && $b->booking_status !== 'cancelled' && $b->admin_status !== 'rejected';
+        })->count();
+        $completedCount = $bookings->filter(function ($b) {
+            $endDate = $b->exhibition->end_date ?? null;
+            return $endDate && $endDate->isPast() && $b->booking_status !== 'cancelled' && $b->admin_status !== 'rejected';
+        })->count();
+        $cancelledCount = $bookings->filter(function ($b) {
+            return $b->booking_status === 'cancelled' || $b->admin_status === 'rejected';
+        })->count();
+    @endphp
+
     <div class="mb-6 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div class="overflow-hidden rounded-lg border border-borderColor bg-white shadow-sm">
             <div class="flex min-w-max items-center">
                 <button type="button" class="h-[56px] border-b-2 border-purple px-8 text-[15px] font-semibold text-purple">
-                    All (4)
+                    All ({{ $totalCount }})
                 </button>
                 <button type="button" class="h-[56px] px-8 text-[15px] font-medium text-[#34405F]">
-                    Upcoming (2)
+                    Upcoming ({{ $upcomingCount }})
                 </button>
                 <button type="button" class="h-[56px] px-8 text-[15px] font-medium text-[#34405F]">
-                    Completed (1)
+                    Completed ({{ $completedCount }})
                 </button>
                 <button type="button" class="h-[56px] px-8 text-[15px] font-medium text-[#34405F]">
-                    Cancelled (1)
+                    Cancelled ({{ $cancelledCount }})
                 </button>
             </div>
         </div>
@@ -48,117 +63,104 @@
     </div>
 
     <div class="space-y-5">
-        @foreach ([
-            [
-                'type' => 'exhibition',
-                'image' => 'innovation-pavilion.png',
-                'title' => 'Innovation Pavilion',
-                'hall' => 'Hall 1 - Tech & Innovation',
-                'booth' => 'Booth 12A (10m × 3m)',
-                'date' => 'May 16 - May 19, 2024',
-                'days' => '4 Days',
-                'status' => 'Confirmed',
-                'statusClass' => 'bg-[#EAF9F0] text-[#16A34A]',
-                'id' => 'EXPO2024-INV-12A-001',
-                'amount' => '₹657.80',
-                'invoice' => true,
-                'detailsUrl' => '/company/bookings/1',
-            ],
-            [
-                'type' => 'event',
-                'image' => 'banner_bg.png',
-                'title' => 'Global Tech Summit 2024',
-                'hall' => 'Jio World Convention Centre, Mumbai',
-                'booth' => 'General Pass x 2 Tickets',
-                'date' => 'May 15 - May 17, 2024',
-                'days' => '3 Days',
-                'status' => 'Confirmed',
-                'statusClass' => 'bg-[#EAF9F0] text-[#16A34A]',
-                'id' => 'EVT-240515-000123',
-                'amount' => '₹98.00',
-                'invoice' => true,
-                'detailsUrl' => '/company/bookings/2',
-            ],
-            [
-                'type' => 'exhibition',
-                'image' => 'healthcare-pavilion.png',
-                'title' => 'Healthcare Pavilion',
-                'hall' => 'Hall 2 - Healthcare',
-                'booth' => 'Booth 25B (9m × 3m)',
-                'date' => 'Jun 10 - Jun 13, 2024',
-                'days' => '4 Days',
-                'status' => 'Completed',
-                'statusClass' => 'bg-[#E8F3FF] text-[#0B7AE8]',
-                'id' => 'EXPO2024-HLC-25B-002',
-                'amount' => '₹1,099.00',
-                'invoice' => true,
-                'detailsUrl' => '/company/bookings/3',
-            ],
-            [
-                'type' => 'exhibition',
-                'image' => 'business-pavilion.png',
-                'title' => 'Business Pavilion',
-                'hall' => 'Hall 3 - Business',
-                'booth' => 'Booth 18C (10m × 3m)',
-                'date' => 'Apr 25 - Apr 28, 2024',
-                'days' => '4 Days',
-                'status' => 'Cancelled',
-                'statusClass' => 'bg-[#FFE9E9] text-[#DC2626]',
-                'id' => 'EXPO2024-BUS-18C-003',
-                'amount' => '₹499.00',
-                'invoice' => false,
-                'detailsUrl' => '/company/bookings/4',
-            ],
-        ] as $booking)
+        @forelse ($bookings as $bookingItem)
+            @php
+                $status = 'Pending';
+                $statusClass = 'bg-yellow-50 text-yellow-700';
+                
+                if ($bookingItem->booking_status === 'cancelled' || $bookingItem->admin_status === 'rejected') {
+                    $status = 'Cancelled';
+                    $statusClass = 'bg-[#FFE9E9] text-[#DC2626]';
+                } elseif ($bookingItem->payment_status === 'paid' && $bookingItem->booking_status === 'confirmed') {
+                    if ($bookingItem->admin_status === 'approved') {
+                        $status = 'Confirmed';
+                        $statusClass = 'bg-[#EAF9F0] text-[#16A34A]';
+                    } elseif ($bookingItem->admin_status === 'pending') {
+                        $status = 'Pending Approval';
+                        $statusClass = 'bg-orange-50 text-orange-700';
+                    }
+                }
+
+                $exhibition = $bookingItem->exhibition;
+                $pavilion = $bookingItem->pavilion;
+                $hall = $bookingItem->hall;
+                $booth = $bookingItem->booth;
+                $boothSize = $bookingItem->boothSize;
+
+                $title = $pavilion->title ?? $exhibition->title ?? 'Exhibition Booth';
+                $hallName = $hall->title ?? 'N/A';
+                $boothName = 'Booth ' . ($booth->booth_number ?? 'N/A');
+                if ($boothSize) {
+                    $boothName .= ' (' . $boothSize->width . 'm × ' . $boothSize->height . 'm)';
+                }
+
+                $startDate = $exhibition->start_date ?? null;
+                $endDate = $exhibition->end_date ?? null;
+                $dateStr = 'N/A';
+                $daysStr = '0 Days';
+                if ($startDate && $endDate) {
+                    $dateStr = $startDate->format('M d') . ' - ' . $endDate->format('M d, Y');
+                    $days = $startDate->diffInDays($endDate) + 1;
+                    $daysStr = $days . ' ' . ($days === 1 ? 'Day' : 'Days');
+                }
+
+                $imagePath = asset('assets/images/pavilions/innovation-pavilion.png');
+                if ($pavilion && $pavilion->image) {
+                    $imagePath = asset('assets/images/pavilions/' . $pavilion->image);
+                } elseif ($exhibition && $exhibition->banner_image) {
+                    $imagePath = asset('storage/' . $exhibition->banner_image);
+                }
+            @endphp
+
             <div class="rounded-xl border border-borderColor bg-white p-5 shadow-sm sm:p-6">
                 <div class="grid grid-cols-1 gap-6 xl:grid-cols-[190px_minmax(0,1fr)_380px] xl:items-center">
                     <img
-                        src="{{ $booking['type'] === 'event' ? asset('images/events/' . $booking['image']) : asset('assets/images/pavilions/' . $booking['image']) }}"
-                        alt="{{ $booking['title'] }}"
+                        src="{{ $imagePath }}"
+                        alt="{{ $title }}"
                         class="h-[138px] w-full rounded-md object-cover xl:w-[170px]"
                     >
 
                     <div class="min-w-0">
                         <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                            <h2 class="text-[21px] font-semibold text-navy">{{ $booking['title'] }}</h2>
-                            <span class="w-fit rounded-md px-3 py-1.5 text-[13px] font-semibold {{ $booking['statusClass'] }}">
-                                {{ $booking['status'] }}
+                            <h2 class="text-[21px] font-semibold text-navy">{{ $title }}</h2>
+                            <span class="w-fit rounded-md px-3 py-1.5 text-[13px] font-semibold {{ $statusClass }}">
+                                {{ $status }}
                             </span>
                         </div>
 
                         <div class="space-y-3 text-[15px] font-medium text-[#34405F]">
                             <p class="flex items-center gap-3">
-                                <i class="fa-regular {{ $booking['type'] === 'event' ? 'fa-map' : 'fa-building' }} w-4 text-purple"></i>
-                                {{ $booking['hall'] }}
+                                <i class="fa-regular fa-building w-4 text-purple"></i>
+                                {{ $hallName }}
                             </p>
                             <p class="flex items-center gap-3">
-                                <i class="fa-solid {{ $booking['type'] === 'event' ? 'fa-ticket' : 'fa-shop' }} w-4 text-purple"></i>
-                                {{ $booking['booth'] }}
+                                <i class="fa-solid fa-shop w-4 text-purple"></i>
+                                {{ $boothName }}
                             </p>
                             <p class="flex items-center gap-3">
                                 <i class="fa-regular fa-calendar-days w-4 text-purple"></i>
-                                {{ $booking['date'] }} <span>&bull;</span> {{ $booking['days'] }}
+                                {{ $dateStr }} <span>&bull;</span> {{ $daysStr }}
                             </p>
                         </div>
                     </div>
 
                     <div class="border-t border-borderColor pt-5 xl:border-l xl:border-t-0 xl:py-3 xl:pl-7">
                         <p class="text-[14px] font-medium text-[#5A6480]">Booking ID</p>
-                        <p class="mt-2 break-words text-[17px] font-semibold text-navy">{{ $booking['id'] }}</p>
+                        <p class="mt-2 break-words text-[17px] font-semibold text-navy">BOOK-{{ str_pad((string) $bookingItem->id, 5, '0', STR_PAD_LEFT) }}</p>
 
                         <div class="my-5 border-t border-borderColor"></div>
 
                         <p class="text-[14px] font-medium text-[#5A6480]">Amount</p>
-                        <p class="mt-2 text-[26px] font-semibold leading-none text-navy">{{ $booking['amount'] }}</p>
+                        <p class="mt-2 text-[26px] font-semibold leading-none text-navy">₹{{ number_format($bookingItem->total_amount, 2) }}</p>
 
                         <div class="mt-5 flex flex-col gap-3">
-                            <a href="{{ url($booking['detailsUrl']) }}"
-                                class="inline-flex h-[48px] items-center justify-center gap-3 rounded-md border border-purple px-5 text-[15px] font-semibold text-purple">
+                            <a href="{{ url('/company/bookings/' . $bookingItem->id) }}"
+                                class="inline-flex h-[48px] items-center justify-center gap-3 rounded-md border border-purple px-5 text-[15px] font-semibold text-purple hover:bg-[#F8F7FF] transition-colors">
                                 View Details
                                 <i class="fa-solid fa-chevron-right text-[12px]"></i>
                             </a>
 
-                            @if ($booking['invoice'])
+                            @if ($bookingItem->payment_status === 'paid')
                                 <button type="button" class="inline-flex h-[48px] items-center justify-center gap-3 rounded-md bg-gradient-to-r from-[#5b2eff] to-[#4310d8] px-5 text-[15px] font-semibold text-white">
                                     Download Invoice
                                     <i class="fa-solid fa-download text-[13px]"></i>
@@ -169,10 +171,10 @@
                                 </button>
                             @endif
 
-                            @if ($booking['type'] === 'exhibition' && $booking['status'] === 'Confirmed')
-                                <a href="{{ url('/company/profile') }}"
-                                    class="inline-flex h-[48px] items-center justify-center gap-3 rounded-md border border-borderColor px-5 text-[15px] font-semibold text-navy">
-                                    Booth Microsite
+                            @if ($status === 'Confirmed')
+                                <a href="{{ route('company.booth-setup.index', $bookingItem->id) }}"
+                                    class="inline-flex h-[48px] items-center justify-center gap-3 rounded-md border border-borderColor px-5 text-[15px] font-semibold text-navy hover:bg-gray-50 transition-colors">
+                                    Setup Booth
                                     <i class="fa-solid fa-store text-[13px]"></i>
                                 </a>
                             @endif
@@ -180,13 +182,17 @@
                     </div>
                 </div>
             </div>
-        @endforeach
+        @empty
+            <div class="rounded-xl border border-borderColor bg-white p-8 text-center text-gray-500 font-medium">
+                No bookings found. You can <a href="{{ url('/company/booth-booking/pavilions') }}" class="text-purple font-semibold hover:underline">book a booth here</a>.
+            </div>
+        @endforelse
     </div>
 
     <div class="rounded-b-xl border border-t-0 border-borderColor bg-white px-6 py-5 shadow-sm">
         <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <p class="text-[14px] font-medium text-[#34405F]">
-                Showing 1 to 4 of 4 bookings
+                Showing 1 to {{ $totalCount }} of {{ $totalCount }} bookings
             </p>
 
             <div class="flex items-center justify-center gap-3">

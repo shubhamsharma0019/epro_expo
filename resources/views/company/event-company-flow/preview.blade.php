@@ -98,33 +98,33 @@
     </div>
 
     <div class="bg-white border border-gray-100 rounded-[12px] p-6 grid grid-cols-1 gap-6 shadow-sm mb-6 md:grid-cols-3">
-        <div class="flex items-center gap-4">
-            <div class="w-10 h-10 rounded-full flex items-center justify-center" style="color: {{ $primaryColor }}">
+        <div class="flex items-center gap-4 min-w-0">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style="color: {{ $primaryColor }}">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
             </div>
-            <div class="flex min-w-0 flex-col">
-                <span class="font-bold text-[#1C1364] text-[14px]">{{ $eventDays }} {{ str('Day')->plural($eventDays) }}</span>
+            <div class="flex min-w-0 flex-col flex-1">
+                <span class="font-bold text-[#1C1364] text-[14px] truncate">{{ $eventDays }} {{ str('Day')->plural($eventDays) }}</span>
                 <span class="text-[#5B6B8A] text-[12px] font-medium mt-0.5 truncate">{{ $eventDate }}</span>
             </div>
         </div>
 
-        <div class="flex items-center gap-4 md:border-l md:border-gray-100 md:pl-6">
-            <div class="w-10 h-10 rounded-full flex items-center justify-center" style="color: {{ $primaryColor }}">
+        <div class="flex items-center gap-4 md:border-l md:border-gray-100 md:pl-6 min-w-0">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style="color: {{ $primaryColor }}">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
             </div>
-            <div class="flex min-w-0 flex-col">
-                <span class="font-bold text-[#1C1364] text-[14px] truncate">{{ $eventVenueName }}</span>
-                <span class="text-[#5B6B8A] text-[12px] font-medium mt-0.5 truncate">{{ $eventLocation }}</span>
+            <div class="flex min-w-0 flex-col flex-1">
+                <span class="font-bold text-[#1C1364] text-[14px] truncate" title="{{ $eventVenueName }}">{{ $eventVenueName }}</span>
+                <span class="text-[#5B6B8A] text-[12px] font-medium mt-0.5 truncate" title="{{ $eventLocation }}">{{ $eventLocation }}</span>
             </div>
         </div>
 
-        <div class="flex items-center gap-4 md:border-l md:border-gray-100 md:pl-6">
-            <div class="w-10 h-10 rounded-full flex items-center justify-center" style="color: {{ $primaryColor }}">
+        <div class="flex items-center gap-4 md:border-l md:border-gray-100 md:pl-6 min-w-0">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style="color: {{ $primaryColor }}">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
             </div>
-            <div class="flex flex-col">
-                <span class="font-bold text-[#1C1364] text-[14px]">{{ $eventCapacity }}</span>
-                <span class="text-[#5B6B8A] text-[12px] font-medium mt-0.5">Expected Attendees</span>
+            <div class="flex min-w-0 flex-col flex-1">
+                <span class="font-bold text-[#1C1364] text-[14px] truncate">{{ $eventCapacity }}</span>
+                <span class="text-[#5B6B8A] text-[12px] font-medium mt-0.5 truncate">Expected Attendees</span>
             </div>
         </div>
 

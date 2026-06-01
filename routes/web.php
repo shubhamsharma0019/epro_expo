@@ -62,6 +62,7 @@ Route::prefix('user')->name('user.')->group(function () {
     Route::get('/register', [UserAuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [UserAuthController::class, 'register'])->name('register.store');
     Route::post('/logout', [UserAuthController::class, 'logout'])->name('logout');
+    Route::get('/logout', [UserAuthController::class, 'logout'])->name('logout.get');
 
     Route::get('/dashboard', function () {
         return view('user.dashboard');
@@ -369,6 +370,27 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
     Route::get('/{slug}/booths/{companySlug}', [ExhibitionBoothController::class, 'show'])->name('booths.show');
 
     Route::get('/{slug}', function ($slug) {
+        \Illuminate\Support\Facades\Log::info('Accessing exhibition: ' . $slug . ', Auth Check: ' . (auth()->check() ? 'YES (' . auth()->user()->email . ')' : 'NO'));
+        if (!auth()->check()) {
+            session(['url.intended' => url('/exhibitions/' . $slug)]);
+            return redirect()->route('user.login');
+        }
+
+        $exhibition = \App\Models\Exhibition::where('slug', $slug)->first()
+            ?? \App\Models\Exhibition::where('id', $slug)->first();
+
+        if ($exhibition) {
+            $userEmail = auth()->user()->email;
+            $hasPass = \App\Models\Visitor::where('exhibition_id', $exhibition->id)
+                ->where('email', $userEmail)
+                ->where('payment_status', 'completed')
+                ->exists();
+
+            if ($hasPass) {
+                return redirect()->route('exhibitions.visitor.dashboard', $slug);
+            }
+        }
+
         session(['activeExhibitionSlug' => $slug]);
         
         $exhibition = \App\Models\Exhibition::query()

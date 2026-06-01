@@ -35,87 +35,34 @@
     ];
 
     if ($selectedBoothAvailable) {
-        $requiredSpaces = max(1, (int) round(($selectedArea ?: 9) / 9));
-        $boothMetrics = function ($booth) {
-            $isCenterFeatureBooth = in_array((int) ($booth->position_y ?? 0), [122], true);
-            $width = $isCenterFeatureBooth ? 86 : 48;
-            $height = $isCenterFeatureBooth ? 70 : 44;
-            $left = min((int) ($booth->position_x ?? 0), 700 - $width);
-            $top = min((int) ($booth->position_y ?? 0), 350 - $height);
+        $selectedSpaceBooths = collect($booths)
+            ->filter(fn ($booth) => $booth->status === 'available')
+            ->filter(function ($booth) use ($selectedRectLeft, $selectedRectRight, $selectedRectTop, $selectedRectBottom) {
+                $isCenterFeatureBooth = in_array((int) ($booth->position_y ?? 0), [122], true);
+                $width = $isCenterFeatureBooth ? 86 : 48;
+                $height = $isCenterFeatureBooth ? 70 : 44;
+                $centerX = (int) ($booth->position_x ?? 0) + ($width / 2);
+                $centerY = (int) ($booth->position_y ?? 0) + ($height / 2);
 
-            return [
-                'left' => $left,
-                'top' => $top,
-                'right' => $left + $width,
-                'bottom' => $top + $height,
-                'width' => $width,
-                'height' => $height,
-            ];
-        };
-        $touchScore = function ($a, $b) {
-            $horizontalOverlap = $a['top'] <= $b['bottom'] && $a['bottom'] >= $b['top'];
-            $verticalOverlap = $a['left'] <= $b['right'] && $a['right'] >= $b['left'];
-            $horizontalGap = max($b['left'] - $a['right'], $a['left'] - $b['right'], 0);
-            $verticalGap = max($b['top'] - $a['bottom'], $a['top'] - $b['bottom'], 0);
-
-            if ($horizontalOverlap && $horizontalGap <= 32) {
-                return $horizontalGap;
-            }
-
-            if ($verticalOverlap && $verticalGap <= 32) {
-                return $verticalGap + 20;
-            }
-
-            return null;
-        };
-        $maxJoinGap = 32;
-
-        $selectedSpaceBooths = collect([$selectedBooth]);
-        $candidateBooths = collect($booths)
-            ->filter(fn ($booth) => $booth->status === 'available' && $selectedBooth && $booth->id !== $selectedBooth->id)
+                return $centerX >= $selectedRectLeft && $centerX <= $selectedRectRight
+                    && $centerY >= $selectedRectTop && $centerY <= $selectedRectBottom;
+            })
             ->values();
 
-        while ($selectedSpaceBooths->count() < $requiredSpaces && $candidateBooths->isNotEmpty()) {
-            $best = null;
-
-            foreach ($candidateBooths as $candidate) {
-                $candidateMetrics = $boothMetrics($candidate);
-                $candidateScore = null;
-
-                foreach ($selectedSpaceBooths as $selectedSpaceBooth) {
-                    $score = $touchScore($boothMetrics($selectedSpaceBooth), $candidateMetrics);
-                    $candidateScore = $score === null ? $candidateScore : min($candidateScore ?? $score, $score);
-                }
-
-                if ($candidateScore !== null && (! $best || $candidateScore < $best['score'])) {
-                    $best = ['booth' => $candidate, 'score' => $candidateScore];
-                }
-            }
-
-            if (! $best) {
-                break;
-            }
-
-            $selectedSpaceBooths->push($best['booth']);
-            $candidateBooths = $candidateBooths->reject(fn ($booth) => $booth->id === $best['booth']->id)->values();
-        }
-
-        if ($selectedSpaceBooths->isNotEmpty()) {
-            $selectedSpaceBounds = [
-                'left' => $selectedSpaceBooths->map(fn ($booth) => $boothMetrics($booth)['left'])->min(),
-                'top' => $selectedSpaceBooths->map(fn ($booth) => $boothMetrics($booth)['top'])->min(),
-                'right' => $selectedSpaceBooths->map(fn ($booth) => $boothMetrics($booth)['right'])->max(),
-                'bottom' => $selectedSpaceBooths->map(fn ($booth) => $boothMetrics($booth)['bottom'])->max(),
-            ];
-        }
+        $selectedSpaceBounds = [
+            'left' => $selectedRectLeft,
+            'top' => $selectedRectTop,
+            'right' => $selectedRectRight,
+            'bottom' => $selectedRectBottom,
+        ];
     }
 
     $requiredSpaces = $selectedBoothAvailable ? max(1, (int) round(($selectedArea ?: 9) / 9)) : 1;
     $hasEnoughSelectedSpaces = $selectedBoothAvailable && $selectedSpaceBooths->count() >= $requiredSpaces;
     $selectedSpaceLeft = max((int) $selectedSpaceBounds['left'], 0);
     $selectedSpaceTop = max((int) $selectedSpaceBounds['top'], 0);
-    $selectedSpaceWidth = min((int) $selectedSpaceBounds['right'] - $selectedSpaceLeft, 700 - $selectedSpaceLeft);
-    $selectedSpaceHeight = min((int) $selectedSpaceBounds['bottom'] - $selectedSpaceTop, 350 - $selectedSpaceTop);
+    $selectedSpaceWidth = $selectedVisual['width'];
+    $selectedSpaceHeight = $selectedVisual['height'];
     $selectedSpaceNumbers = $selectedSpaceBooths->pluck('booth_number')->values()->all();
     $companyLogoUrl = $currentCompany?->logo ? asset($currentCompany->logo) : null;
     $companyInitial = strtoupper(substr($currentCompany?->company_name ?? $currentCompany?->name ?? 'C', 0, 1));
@@ -452,96 +399,36 @@
             const selectedHeight = Number(selectedButton.dataset.selectedHeight);
             const selectedLeft = Math.min(parseInt(selectedButton.style.left, 10) || 0, 700 - selectedWidth);
             const selectedTop = Math.min(parseInt(selectedButton.style.top, 10) || 0, 350 - selectedHeight);
-            const requiredSpaces = Math.max(1, Number(selectedButton.dataset.selectedSpaces || 1));
-            const includedNumbers = [];
-            const includedBounds = [];
-            const selectedItems = [selectedButton];
-            let candidateItems = buttons.filter((item) => item.dataset.status === 'available' && item !== selectedButton);
-            const rectFor = (item) => {
+            const selectedRight = selectedLeft + selectedWidth;
+            const selectedBottom = selectedTop + selectedHeight;
+
+            const selectedItems = buttons.filter((item) => {
+                if (item.dataset.status !== 'available') {
+                    return false;
+                }
                 const left = parseInt(item.style.left, 10) || 0;
                 const top = parseInt(item.style.top, 10) || 0;
                 const width = Number(item.dataset.defaultWidth);
                 const height = Number(item.dataset.defaultHeight);
+                const centerX = left + (width / 2);
+                const centerY = top + (height / 2);
 
-                return {
-                    left,
-                    top,
-                    right: left + width,
-                    bottom: top + height,
-                };
-            };
-            const touchScore = (a, b) => {
-                const horizontalOverlap = a.top <= b.bottom && a.bottom >= b.top;
-                const verticalOverlap = a.left <= b.right && a.right >= b.left;
-                const horizontalGap = Math.max(b.left - a.right, a.left - b.right, 0);
-                const verticalGap = Math.max(b.top - a.bottom, a.top - b.bottom, 0);
+                return centerX >= selectedLeft && centerX <= selectedRight
+                    && centerY >= selectedTop && centerY <= selectedBottom;
+            });
 
-                if (horizontalOverlap && horizontalGap <= 32) {
-                    return horizontalGap;
-                }
-
-                if (verticalOverlap && verticalGap <= 32) {
-                    return verticalGap + 20;
-                }
-
-                return null;
-            };
-
-            while (selectedItems.length < requiredSpaces && candidateItems.length) {
-                let best = null;
-
-                candidateItems.forEach((candidate) => {
-                    const candidateRect = rectFor(candidate);
-                    let candidateScore = null;
-
-                    selectedItems.forEach((selectedItem) => {
-                        const score = touchScore(rectFor(selectedItem), candidateRect);
-                        candidateScore = score === null ? candidateScore : Math.min(candidateScore ?? score, score);
-                    });
-
-                    if (candidateScore !== null && (!best || candidateScore < best.score)) {
-                        best = { item: candidate, score: candidateScore };
-                    }
-                });
-
-                if (!best) {
-                    break;
-                }
-
-                selectedItems.push(best.item);
-                candidateItems = candidateItems.filter((item) => item !== best.item);
-            }
-
-            buttons.forEach((item) => {
-                if (!selectedItems.includes(item)) {
-                    return;
-                }
-
-                const itemLeft = parseInt(item.style.left, 10) || 0;
-                const itemTop = parseInt(item.style.top, 10) || 0;
-                const itemWidth = Number(item.dataset.defaultWidth);
-                const itemHeight = Number(item.dataset.defaultHeight);
+            const includedNumbers = [];
+            selectedItems.forEach((item) => {
                 includedNumbers.push(item.dataset.number);
-                includedBounds.push({
-                    left: itemLeft,
-                    top: itemTop,
-                    right: itemLeft + itemWidth,
-                    bottom: itemTop + itemHeight,
-                });
                 item.classList.add('hidden');
                 item.classList.remove('flex');
             });
 
-            if (selectedOverlay && includedBounds.length) {
-                const overlayLeft = Math.min(...includedBounds.map((item) => item.left));
-                const overlayTop = Math.min(...includedBounds.map((item) => item.top));
-                const overlayRight = Math.max(...includedBounds.map((item) => item.right));
-                const overlayBottom = Math.max(...includedBounds.map((item) => item.bottom));
-
-                selectedOverlay.style.left = `${overlayLeft}px`;
-                selectedOverlay.style.top = `${overlayTop}px`;
-                selectedOverlay.style.width = `${overlayRight - overlayLeft}px`;
-                selectedOverlay.style.height = `${overlayBottom - overlayTop}px`;
+            if (selectedOverlay && selectedItems.length) {
+                selectedOverlay.style.left = `${selectedLeft}px`;
+                selectedOverlay.style.top = `${selectedTop}px`;
+                selectedOverlay.style.width = `${selectedWidth}px`;
+                selectedOverlay.style.height = `${selectedHeight}px`;
                 selectedOverlay.classList.remove('hidden');
                 selectedOverlay.classList.add('flex');
             }

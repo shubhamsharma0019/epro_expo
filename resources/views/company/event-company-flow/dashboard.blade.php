@@ -160,26 +160,12 @@
 
         <div class="border border-gray-200 rounded-xl bg-white relative mt-10">
             <h3 class="absolute -top-3 left-6 bg-white px-2 font-semibold text-[15px]">At a Glance</h3>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 py-8 px-6 md:px-12">
+            <div class="grid grid-cols-2 gap-6 py-8 px-6 md:px-12">
                 <div class="flex items-center gap-4">
                     <svg class="w-10 h-10 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                     <div>
                         <h4 class="text-[13px] text-gray-500 font-medium mb-1">Published</h4>
                         <p class="text-2xl font-bold">{{ number_format($stats['published_events'] ?? 0) }}</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-4">
-                    <svg class="w-10 h-10 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                    <div>
-                        <h4 class="text-[13px] text-gray-500 font-medium mb-1">Speakers</h4>
-                        <p class="text-2xl font-bold">{{ number_format($stats['speakers'] ?? 0) }}</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-4">
-                    <svg class="w-10 h-10 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                    <div>
-                        <h4 class="text-[13px] text-gray-500 font-medium mb-1">Sessions</h4>
-                        <p class="text-2xl font-bold">{{ number_format($stats['sessions'] ?? 0) }}</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-4">

@@ -39,14 +39,60 @@
                 <i class="fa-regular fa-bell text-[18px]"></i>
                 <span class="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-[#246BFF] ring-2 ring-white"></span>
             </button>
-            <a href="{{ url('/user/profile') }}" class="flex h-12 items-center gap-3 rounded-full border border-[#E7EAF3] bg-white py-1 pl-1 pr-2 shadow-sm transition hover:border-[#5b2eff] sm:pr-4">
-                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#5b2eff] to-[#246BFF] text-[14px] font-medium text-white">{{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}</span>
-                <span class="hidden max-w-[150px] min-w-0 sm:block">
-                    <span class="block truncate text-[14px] font-medium leading-5 text-[#071044]">{{ auth()->user()->name ?? 'Unknown User' }}</span>
-                    <span class="block truncate text-[12px] font-medium leading-4 text-[#7A849D]">Visitor</span>
-                </span>
-                <i class="fa-solid fa-chevron-down hidden text-[10px] text-[#8A94AD] sm:block"></i>
-            </a>
+            <div class="relative inline-block text-left" id="userTopbarDropdownContainer">
+                <button type="button" id="userTopbarDropdownBtn" class="flex items-center gap-3 cursor-pointer pl-4 border-l border-[#E7EAF3] hover:opacity-85 transition-opacity focus:outline-none bg-transparent border-0 p-0">
+                    <div class="text-right hidden sm:block">
+                        <div class="text-[13px] font-bold text-[#1E293B]">{{ auth()->user()->name ?? 'Unknown User' }}</div>
+                        <div class="text-[11px] text-gray-500 font-medium">Visitor</div>
+                    </div>
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#5b2eff] to-[#246BFF] text-[14px] font-medium text-white shadow-sm">
+                        {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+                    </span>
+                    <i class="fa-solid fa-caret-down text-[14px] text-gray-400"></i>
+                </button>
+
+                <!-- Dropdown Menu -->
+                <div id="userTopbarDropdownMenu" class="hidden absolute right-0 z-50 mt-2.5 w-48 origin-top-right rounded-xl bg-white py-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.08)] ring-1 ring-black/5 focus:outline-none transition-all duration-200 border border-[#E7EAF3]">
+                    <a href="{{ route('exhibitions.visitor.dashboard', 'global-tech-expo-2024') }}" class="flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+                        <i class="fa-solid fa-gauge text-[14px] text-gray-500 w-4 text-center"></i>
+                        Visitor Dashboard
+                    </a>
+                    <a href="{{ url('/user/dashboard') }}" class="flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+                        <i class="fa-solid fa-ticket text-[14px] text-gray-500 w-4 text-center"></i>
+                        My Passes
+                    </a>
+                    <a href="{{ url('/user/profile') }}" class="flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+                        <i class="fa-solid fa-user text-[14px] text-gray-500 w-4 text-center"></i>
+                        My Profile
+                    </a>
+                    <hr class="border-[#E7EAF3] my-1">
+                    <form method="POST" action="{{ url('/user/logout') }}" class="w-full">
+                        @csrf
+                        <button type="submit" class="flex w-full items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-red-600 hover:bg-red-50/50 transition-colors text-left bg-transparent border-0 cursor-pointer">
+                            <i class="fa-solid fa-right-from-bracket text-[14px] text-red-500 w-4 text-center"></i>
+                            Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    const btn = document.getElementById('userTopbarDropdownBtn');
+                    const menu = document.getElementById('userTopbarDropdownMenu');
+                    if (btn && menu) {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            menu.classList.toggle('hidden');
+                        });
+                        document.addEventListener('click', (e) => {
+                            if (!btn.contains(e.target) && !menu.contains(e.target)) {
+                                menu.classList.add('hidden');
+                            }
+                        });
+                    }
+                });
+            </script>
         </div>
     </div>
 

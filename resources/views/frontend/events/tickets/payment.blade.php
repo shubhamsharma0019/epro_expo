@@ -1,6 +1,6 @@
 @extends('layouts.frontend')
 
-@section('title', 'Payment - Global Tech Summit 2024')
+@section('title', 'Payment - ' . (isset($dbEvent) ? $dbEvent->title : 'Global Tech Summit 2024'))
 
 @section('content')
 <main class="mx-auto w-full max-w-[1248px] flex-1 px-[24px] pt-6 pb-12">
@@ -14,14 +14,16 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#07105C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
-                <a href="{{ url('/events/listings/global-tech-summit-2024') }}" class="hover:text-[#351EEA]">Global Tech Summit 2024</a>
+                @if (isset($dbEvent))
+                    <a href="{{ route('events.listings.show', $dbEvent->slug) }}" class="hover:text-[#351EEA]">{{ $dbEvent->title }}</a>
+                @else
+                    <a href="{{ url('/events/listings/global-tech-summit-2024') }}" class="hover:text-[#351EEA]">Global Tech Summit 2024</a>
+                @endif
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#07105C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
                 <span>Payment</span>
             </div>
-
-            
 
             <div class="grid grid-cols-1 gap-[18px] lg:grid-cols-[1fr_457px]">
                 <!-- Left payment column -->
@@ -77,7 +79,7 @@
 
                                 <div class="mt-[13px]">
                                     <label class="mb-2 block text-[14px] font-medium text-[#070A50]">Card Holder Name</label>
-                                    <input value="John Doe" class="h-[43px] w-full rounded-md border border-[#DBDDEA] bg-white px-3 text-[14px] font-medium text-[#07105C] outline-none focus:border-[#7C55FF]" />
+                                    <input value="John Doe" id="cardHolderName" class="h-[43px] w-full rounded-md border border-[#DBDDEA] bg-white px-3 text-[14px] font-medium text-[#07105C] outline-none focus:border-[#7C55FF]" />
                                 </div>
                             </form>
                         </div>
@@ -129,21 +131,21 @@
 
                         <div class="rounded-md bg-[#FBFAFF] p-4 shadow-[0_18px_36px_rgba(31,42,107,0.04)]">
                             <div class="flex gap-4">
-                                <img src="{{ asset('images/events/banner_bg.png') }}" alt="Global Tech Summit" class="h-[69px] w-[74px] shrink-0 rounded object-cover" />
+                                <img src="{{ $dbEvent && $dbEvent->branding?->banner_path ? asset('storage/' . $dbEvent->branding->banner_path) : asset('images/events/banner_bg.png') }}" alt="Event image" class="h-[69px] w-[74px] shrink-0 rounded object-cover bg-gray-200" />
                                 <div class="min-w-0 pt-1">
-                                    <h3 class="truncate text-[15px] font-bold text-[#07105C]">Global Tech Summit 2024</h3>
+                                    <h3 class="truncate text-[15px] font-bold text-[#07105C]">{{ $dbEvent ? $dbEvent->title : 'Global Tech Summit 2024' }}</h3>
                                     <p class="mt-3 flex items-center gap-2 text-[13px] font-medium text-[#20266F]">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                         </svg>
-                                        May 15 - May 17, 2024
+                                        {{ $dbEvent && $dbEvent->starts_at ? ($dbEvent->starts_at->format('M d') . ' - ' . ($dbEvent->ends_at ? $dbEvent->ends_at->format('M d, Y') : $dbEvent->starts_at->format('Y'))) : 'May 15 - May 17, 2024' }}
                                     </p>
                                     <p class="mt-2 flex items-start gap-2 text-[13px] font-medium leading-[20px] text-[#20266F]">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                         </svg>
-                                        <span>Jio World Convention Centre,<br />Mumbai</span>
+                                        <span>{{ $dbEvent ? $dbEvent->venue_name . ',' : 'Jio World Convention Centre,' }}<br />{{ $dbEvent ? $dbEvent->city : 'Mumbai' }}</span>
                                     </p>
                                 </div>
                             </div>
@@ -155,8 +157,8 @@
                                 <a href="{{ url('/events/tickets/select') }}" class="text-[13px] font-bold text-[#351EEA]">Edit</a>
                             </div>
                             <div class="flex items-center justify-between text-[14px] font-medium text-[#07105C]">
-                                <span>General Pass &times; 2</span>
-                                <span>₹98.00</span>
+                                <span id="right-pass-name">General Pass &times; 2</span>
+                                <span id="right-pass-total">₹98.00</span>
                             </div>
                         </div>
 
@@ -164,38 +166,23 @@
 
                         <div class="flex items-center justify-between text-[14px] font-medium text-[#07105C]">
                             <span>Total Tickets</span>
-                            <span>2</span>
+                            <span id="right-total-tickets">2</span>
                         </div>
 
                         <div class="mt-[29px] flex items-center justify-between">
                             <span class="text-[18px] font-bold text-[#07105C]">Total Amount</span>
-                            <span class="text-[27px] font-extrabold tracking-[-0.04em] text-[#07105C]">₹98.00</span>
+                            <span class="text-[27px] font-extrabold tracking-[-0.04em] text-[#07105C]" id="right-total-amount">₹98.00</span>
                         </div>
                     </div>
 
                     <div class="rounded-lg border border-[#E5E3F0] bg-white px-6 pb-6 pt-5 shadow-[0_1px_4px_rgba(31,42,107,0.02)]">
                         <div class="mb-[18px] flex items-center justify-between">
-                            <h2 class="text-[15px] font-bold text-[#070A50]">Attendee Details (2)</h2>
+                            <h2 class="text-[15px] font-bold text-[#070A50]" id="right-attendees-title">Attendee Details (2)</h2>
                             <a href="{{ url('/events/tickets/attendee-details') }}" class="text-[13px] font-bold text-[#351EEA]">Edit</a>
                         </div>
 
-                        <div class="space-y-[26px]">
-                            <div class="flex items-start gap-4">
-                                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F2EFFC] text-[12px] font-bold text-[#07105C]">JD</div>
-                                <div>
-                                    <h3 class="text-[14px] font-bold text-[#07105C]">John Doe</h3>
-                                    <p class="mt-1 text-[13px] font-medium text-[#07105C]">john.doe@example.com</p>
-                                    <p class="mt-2 text-[13px] font-medium text-[#07105C]">+91 98765 43210</p>
-                                </div>
-                            </div>
-                            <div class="flex items-start gap-4">
-                                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F2EFFC] text-[12px] font-bold text-[#07105C]">JS</div>
-                                <div>
-                                    <h3 class="text-[14px] font-bold text-[#07105C]">Jane Smith</h3>
-                                    <p class="mt-1 text-[13px] font-medium text-[#07105C]">jane.smith@example.com</p>
-                                    <p class="mt-2 text-[13px] font-medium text-[#07105C]">+91 987 654 3210</p>
-                                </div>
-                            </div>
+                        <div class="space-y-[26px]" id="right-attendees-list">
+                            <!-- Populated dynamically via JavaScript -->
                         </div>
                     </div>
 
@@ -218,7 +205,6 @@
             </div>
         </main>
 @endsection
-
 
 @push('scripts')
 @if (isset($razorpayEnabled) && $razorpayEnabled)
@@ -254,7 +240,7 @@ const options = document.querySelectorAll('.payment-option');
         if (cardNumber) {
             cardNumber.addEventListener('input', (event) => {
                 let value = event.target.value.replace(/\D/g, '').slice(0, 16);
-                event.target.value = value.replace(/(.{4})/g, '₹1 ').trim();
+                event.target.value = value.replace(/(.{4})/g, '$1 ').trim();
             });
         }
 
@@ -353,5 +339,58 @@ const options = document.querySelectorAll('.payment-option');
             document.body.appendChild(form);
             form.submit();
         }
+
+        // Initialize UI from localStorage
+        document.addEventListener("DOMContentLoaded", () => {
+            const orderData = JSON.parse(localStorage.getItem("eventOrder"));
+            if (!orderData) return;
+
+            const qty = orderData.quantity || 1;
+            const currency = orderData.priceCurrency || (orderData.eventSlug && orderData.eventSlug !== 'global-tech-summit-2024' ? 'INR' : '₹');
+            const currencySymbol = currency === 'USD' ? '$' : (currency === 'INR' || currency === '₹' ? '₹' : currency + ' ');
+
+            // Update Right Side Summary Card
+            document.getElementById("right-pass-name").innerHTML = `${orderData.passName} &times; ${qty}`;
+            document.getElementById("right-pass-total").innerText = `${currencySymbol}${orderData.totalAmount.toFixed(2)}`;
+            document.getElementById("right-total-tickets").innerText = qty;
+            document.getElementById("right-total-amount").innerText = `${currencySymbol}${orderData.totalAmount.toFixed(2)}`;
+
+            // Update Pay Button Text
+            document.getElementById("payBtn").innerText = `Pay ${currencySymbol}${orderData.totalAmount.toFixed(2)}`;
+
+            // Update Attendee Details
+            document.getElementById("right-attendees-title").innerText = `Attendee Details (${qty})`;
+            const attendees = orderData.attendees || [];
+            const rightAttendeesList = document.getElementById("right-attendees-list");
+            let attendeesHtml = '';
+
+            for (let i = 0; i < qty; i++) {
+                const att = attendees[i] || {
+                    name: orderData.attendee_name || 'Attendee',
+                    email: orderData.attendee_email || 'N/A',
+                    phone: orderData.attendee_phone || 'N/A'
+                };
+                
+                const initials = att.name ? att.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'A';
+
+                attendeesHtml += `
+                <div class="flex items-start gap-4">
+                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F2EFFC] text-[12px] font-bold text-[#07105C]">${initials}</div>
+                    <div>
+                        <h3 class="text-[14px] font-bold text-[#07105C]">${att.name}</h3>
+                        <p class="mt-1 text-[13px] font-medium text-[#07105C]">${att.email}</p>
+                        <p class="mt-2 text-[13px] font-medium text-[#07105C]">${att.phone}</p>
+                    </div>
+                </div>
+                `;
+            }
+            rightAttendeesList.innerHTML = attendeesHtml;
+
+            // Fill card holder name if logged in
+            const cardHolder = document.getElementById("cardHolderName");
+            if (cardHolder && orderData.attendee_name) {
+                cardHolder.value = orderData.attendee_name;
+            }
+        });
 </script>
 @endpush

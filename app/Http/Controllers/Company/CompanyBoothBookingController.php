@@ -1540,70 +1540,34 @@ class CompanyBoothBookingController extends Controller
             return collect();
         }
 
-        $requiredSpaces = $this->boothUnitsForSize($selectedSize);
-        $boothMetrics = function ($booth) {
-            $isCenterFeatureBooth = in_array((int) ($booth->position_y ?? 0), [122], true);
-            $width = $isCenterFeatureBooth ? 86 : 48;
-            $height = $isCenterFeatureBooth ? 70 : 44;
-            $left = min((int) ($booth->position_x ?? 0), 700 - $width);
-            $top = min((int) ($booth->position_y ?? 0), 350 - $height);
-
-            return [
-                'left' => $left,
-                'top' => $top,
-                'right' => $left + $width,
-                'bottom' => $top + $height,
-            ];
-        };
-        $touchScore = function ($a, $b) {
-            $horizontalOverlap = $a['top'] <= $b['bottom'] && $a['bottom'] >= $b['top'];
-            $verticalOverlap = $a['left'] <= $b['right'] && $a['right'] >= $b['left'];
-            $horizontalGap = max($b['left'] - $a['right'], $a['left'] - $b['right'], 0);
-            $verticalGap = max($b['top'] - $a['bottom'], $a['top'] - $b['bottom'], 0);
-
-            if ($horizontalOverlap && $horizontalGap <= 32) {
-                return $horizontalGap;
-            }
-
-            if ($verticalOverlap && $verticalGap <= 32) {
-                return $verticalGap + 20;
-            }
-
-            return null;
+        $selectedArea = (float) ($selectedSize?->area ?: $anchorBooth->boothSize?->area ?: 9);
+        $selectedVisual = match (true) {
+            $selectedArea >= 81 => ['width' => 150, 'height' => 130],
+            $selectedArea >= 36 => ['width' => 120, 'height' => 110],
+            $selectedArea >= 18 => ['width' => 96, 'height' => 76],
+            $selectedArea >= 12 => ['width' => 72, 'height' => 56],
+            default => ['width' => 48, 'height' => 44],
         };
 
-        $selectedBooths = collect([$anchorBooth]);
-        $candidateBooths = $hall->booths()
+        $selectedRectLeft = min((int) ($anchorBooth->position_x ?? 0), 700 - $selectedVisual['width']);
+        $selectedRectTop = min((int) ($anchorBooth->position_y ?? 0), 350 - $selectedVisual['height']);
+        $selectedRectRight = $selectedRectLeft + $selectedVisual['width'];
+        $selectedRectBottom = $selectedRectTop + $selectedVisual['height'];
+
+        return $hall->booths()
             ->where('status', 'available')
-            ->whereKeyNot($anchorBooth->id)
-            ->get();
+            ->get()
+            ->filter(function ($booth) use ($selectedRectLeft, $selectedRectRight, $selectedRectTop, $selectedRectBottom) {
+                $isCenterFeatureBooth = in_array((int) ($booth->position_y ?? 0), [122], true);
+                $width = $isCenterFeatureBooth ? 86 : 48;
+                $height = $isCenterFeatureBooth ? 70 : 44;
+                $centerX = (int) ($booth->position_x ?? 0) + ($width / 2);
+                $centerY = (int) ($booth->position_y ?? 0) + ($height / 2);
 
-        while ($selectedBooths->count() < $requiredSpaces && $candidateBooths->isNotEmpty()) {
-            $best = null;
-
-            foreach ($candidateBooths as $candidate) {
-                $candidateMetrics = $boothMetrics($candidate);
-                $candidateScore = null;
-
-                foreach ($selectedBooths as $selectedBooth) {
-                    $score = $touchScore($boothMetrics($selectedBooth), $candidateMetrics);
-                    $candidateScore = $score === null ? $candidateScore : min($candidateScore ?? $score, $score);
-                }
-
-                if ($candidateScore !== null && (! $best || $candidateScore < $best['score'])) {
-                    $best = ['booth' => $candidate, 'score' => $candidateScore];
-                }
-            }
-
-            if (! $best) {
-                break;
-            }
-
-            $selectedBooths->push($best['booth']);
-            $candidateBooths = $candidateBooths->reject(fn ($booth) => $booth->id === $best['booth']->id)->values();
-        }
-
-        return $selectedBooths->values();
+                return $centerX >= $selectedRectLeft && $centerX <= $selectedRectRight
+                    && $centerY >= $selectedRectTop && $centerY <= $selectedRectBottom;
+            })
+            ->values();
     }
 
     private function bookedBoothGroupsForHall(Hall $hall, $booths): \Illuminate\Support\Collection
