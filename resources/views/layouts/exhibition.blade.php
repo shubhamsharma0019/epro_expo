@@ -13,21 +13,24 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @include('frontend.shared.partials.responsive-fixes')
 </head>
 
-<body class="exhibition-app bg-white font-sans text-navy overflow-x-hidden antialiased">
+<body class="exhibition-app bg-white font-sans text-navy overflow-x-hidden antialiased lg:h-screen lg:overflow-hidden">
 
-    <div class="w-full min-h-screen bg-white flex flex-col lg:flex-row">
+    <div class="w-full min-h-screen bg-white flex flex-col lg:flex-row lg:h-screen lg:overflow-hidden">
 
         <div id="exhibition-sidebar-overlay" class="fixed inset-0 z-40 hidden bg-[#071044]/40 lg:hidden"></div>
 
         @include('components.exhibition.exhibition-sidebar')
 
-        <main class="flex-1 min-w-0 bg-white">
+        <main class="flex-1 min-w-0 bg-white flex flex-col lg:h-screen lg:overflow-hidden">
 
             @include('components.exhibition.exhibition-topbar')
 
-            @yield('content')
+            <div class="flex-1 overflow-y-auto">
+                @yield('content')
+            </div>
 
         </main>
 

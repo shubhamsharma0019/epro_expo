@@ -2,11 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Models\Company;
-use App\Models\CompanyEvent\CompanyEvent;
-use App\Models\CompanyEvent\CompanyEventBranding;
-use App\Models\CompanyEvent\CompanyEventPublishRequest;
-use App\Models\CompanyEvent\CompanyEventTicketType;
+use App\Domain\Company\Models\Company;
+use App\Domain\Event\Models\CompanyEvent\CompanyEvent;
+use App\Domain\Event\Models\CompanyEvent\CompanyEventBranding;
+use App\Domain\Event\Models\CompanyEvent\CompanyEventPublishRequest;
+use App\Domain\Event\Models\CompanyEvent\CompanyEventTicketType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -127,24 +127,56 @@ class CompanyEventFlowDetailTest extends TestCase
         $response = $this->post(route('company.event-company-flow.submit.store', $event->id), [
             'company_notes' => 'Our event is fully configured.',
         ]);
-        // Should redirect to payment route
-        $response->assertRedirect(route('company.event-company-flow.payment.show', $event->id));
+        $response->assertRedirect(route('company.event-company-flow.dashboard'));
 
         $event->refresh();
-        $this->assertEquals('submitted', $event->status);
+        $this->assertEquals('pending_review', $event->status);
 
-        // 8. Redirect to Payment and execute mock payment
+        // 8. Admin reviews and approves the event
+        $admin = \App\Domain\Admin\Models\Admin::create([
+            'name' => 'Admin User',
+            'email' => 'admin@example.com',
+            'password' => Hash::make('password'),
+            'status' => 'active',
+            'role' => 'admin',
+        ]);
+        $this->session(['admin_id' => $admin->id]);
+        $publishRequest = CompanyEventPublishRequest::where('company_event_id', $event->id)->firstOrFail();
+        $response = $this->get(route('admin.event-approvals.show', $publishRequest->id));
+        $response->assertStatus(200);
+
+        $response = $this->post(route('admin.event-approvals.approve', $publishRequest->id));
+        $response->assertRedirect();
+
+        $event->refresh();
+        $this->assertEquals('published', $event->status);
+
+        // Verify dashboard reflects the approved event as "Published" count = 1
+        $this->session(['company_id' => $this->company->id]);
+        $response = $this->get(route('company.event-company-flow.dashboard'));
+        $response->assertStatus(200);
+        $response->assertSee('Published');
+        $response->assertSee('1');
+
+        // 9. Log back in as company to pay the publishing fee
         $response = $this->get(route('company.event-company-flow.payment.show', $event->id));
         $response->assertStatus(200);
         $response->assertSee('Acme Global Summit 2026');
-        $response->assertSee('$149.00');
 
         $response = $this->post(route('company.event-company-flow.payment.pay', $event->id));
         $response->assertRedirect(route('company.event-company-flow.dashboard'));
 
+        // 10. Log in as admin and publish the event
+        $this->session(['admin_id' => $admin->id]);
+        $response = $this->post(route('admin.event-approvals.publish', $publishRequest->id));
+        $response->assertRedirect();
+
         $event->refresh();
         $this->assertEquals('published', $event->status);
         $this->assertNotNull($event->published_at);
+
+        // Restore company session
+        $this->session(['company_id' => $this->company->id]);
 
         // 9. Visit public event listings and verify the user-created event is listed
         $response = $this->get(route('events.listings.index'));
@@ -157,15 +189,23 @@ class CompanyEventFlowDetailTest extends TestCase
         $response->assertSee('Acme Global Summit 2026');
         $response->assertSee('Silicon Valley Center');
         $response->assertSee('Accelerating Innovation');
-        $response->assertSee('$99.00'); // Minimum price check
+        $response->assertSee('Rs. 99.00'); // Minimum price check
 
         // 11. Navigate to ticket booking screen and verify actual database ticket types load
+        $visitorUser = \App\Domain\Shared\Models\User::create([
+            'name' => 'Visitor User',
+            'email' => 'visitor@example.com',
+            'password' => Hash::make('password'),
+            'role' => 'user',
+        ]);
+        $this->actingAs($visitorUser);
+
         $response = $this->get(route('events.tickets.select', ['event' => $event->slug]));
         $response->assertStatus(200);
         $response->assertSee('Acme Global Summit 2026');
         $response->assertSee('Regular Pass');
         $response->assertSee('VIP Pass');
-        $response->assertSee('$99.00');
-        $response->assertSee('$299.00');
+        $response->assertSee('INR 99.00');
+        $response->assertSee('INR 299.00');
     }
 }

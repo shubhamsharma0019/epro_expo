@@ -10,32 +10,40 @@
     <style>
         * { box-sizing: border-box; }
         body { margin: 0; min-height: 100vh; font-family: Inter, sans-serif; color: #071044; background: #EEF3FF; }
-        .page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 34px 18px; background: linear-gradient(135deg, #EEF3FF 0%, #FFF5EE 100%); }
+        .page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 18px; background: linear-gradient(135deg, #EEF3FF 0%, #FFF5EE 100%); }
         .shell { width: min(1080px, 100%); display: grid; grid-template-columns: 1fr 430px; gap: 24px; }
         .story, .card { border-radius: 24px; background: #fff; border: 1px solid #E7EAF3; box-shadow: 0 24px 70px rgba(7,16,68,.12); }
-        .story { min-height: 620px; padding: 46px; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; position: relative; }
+        .story { min-height: 560px; padding: 38px 46px; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; position: relative; }
         .story:after { content: ""; position: absolute; width: 360px; height: 360px; right: -90px; bottom: -110px; border-radius: 50%; background: linear-gradient(135deg, #5b2eff, #FF8A00); opacity: .14; }
-        .story h1 { max-width: 560px; margin: 0; font-size: clamp(38px, 5vw, 58px); line-height: 1.04; font-weight: 650; }
-        .story p { max-width: 520px; margin: 18px 0 0; color: #5A6480; font-size: 16px; line-height: 1.75; font-weight: 600; }
+        .story h1 { max-width: 560px; margin: 0; font-size: clamp(36px, 5vw, 54px); line-height: 1.04; font-weight: 650; }
+        .story p { max-width: 520px; margin: 16px 0 0; color: #5A6480; font-size: 16px; line-height: 1.65; font-weight: 600; }
         .event-strip { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
         .event-strip div { border-radius: 18px; background: #F8F9FD; border: 1px solid #E7EAF3; padding: 18px; }
         .event-strip strong { display: block; color: #071044; font-size: 20px; }
         .event-strip span { display: block; margin-top: 8px; color: #5A6480; font-size: 12px; font-weight: 700; }
-        .card { padding: 38px; display: flex; flex-direction: column; justify-content: center; }
+        .card { padding: 30px 38px; display: flex; flex-direction: column; justify-content: center; }
         .card h2 { margin: 0; font-size: 34px; font-weight: 650; }
-        .card p { margin: 12px 0 30px; color: #5A6480; font-size: 15px; line-height: 1.7; font-weight: 600; }
-        .field { display: block; margin-bottom: 18px; }
+        .card p { margin: 10px 0 24px; color: #5A6480; font-size: 15px; line-height: 1.6; font-weight: 600; }
+        .field { display: block; margin-bottom: 14px; }
         .field span { display: block; margin-bottom: 8px; color: #34405F; font-size: 13px; font-weight: 750; }
-        .field input { width: 100%; height: 56px; border: 1px solid #E7EAF3; border-radius: 14px; background: #F8F9FD; padding: 0 18px; font-size: 15px; font-weight: 600; outline: none; }
+        .field input { width: 100%; height: 52px; border: 1px solid #E7EAF3; border-radius: 14px; background: #F8F9FD; padding: 0 18px; font-size: 15px; font-weight: 600; outline: none; }
         .field input:focus { border-color: #5b2eff; background: #fff; }
-        .row { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 24px; color: #5A6480; font-size: 14px; font-weight: 650; }
+        .row { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 18px; color: #5A6480; font-size: 14px; font-weight: 650; }
         .row a { color: #5b2eff; text-decoration: none; }
         .error { border-radius: 12px; background: #FEF2F2; padding: 13px 16px; color: #DC2626; font-size: 14px; font-weight: 700; }
-        .btn { width: 100%; height: 56px; border: 0; border-radius: 14px; background: linear-gradient(90deg, #5b2eff, #4310d8); color: #fff; font-size: 16px; font-weight: 750; cursor: pointer; }
-        .signup { text-align: center; margin-top: 24px !important; font-size: 14px !important; }
+        .btn { width: 100%; height: 54px; border: 0; border-radius: 14px; background: linear-gradient(90deg, #5b2eff, #4310d8); color: #fff; font-size: 16px; font-weight: 750; cursor: pointer; }
+        .signup { text-align: center; margin-top: 16px !important; font-size: 14px !important; }
         .signup a { color: #5b2eff; font-weight: 750; text-decoration: none; }
-        @media (max-width: 940px) { .shell { grid-template-columns: 1fr; } .story { min-height: 440px; } }
-        @media (max-width: 620px) { .event-strip { grid-template-columns: 1fr; } .story, .card { padding: 28px; } }
+        @media (max-width: 940px) { 
+            .shell { grid-template-columns: 1fr; gap: 20px; } 
+            .story { min-height: auto; gap: 28px; padding: 30px; } 
+        }
+        @media (max-width: 620px) { 
+            .event-strip { grid-template-columns: 1fr; gap: 10px; } 
+            .story { padding: 24px 20px; gap: 20px; } 
+            .card { padding: 24px 20px; } 
+            .story h1 { font-size: 28px; } 
+        }
     </style>
 </head>
 <body>
@@ -65,7 +73,7 @@
                     @if ($errors->any())<p class="error">{{ $errors->first() }}</p>@endif
                     <button type="submit" class="btn">Open Event Dashboard</button>
                 </form>
-                <p class="signup">Need a company account? <a href="{{ route('company.register') }}">Register company</a></p>
+                <p class="signup">Need a company account? <a href="{{ route('company.event-company.register') }}">Register company</a></p>
                 <p class="signup">Booking a booth? <a href="{{ route('company.login') }}">Use exhibition company login</a></p>
             </div>
         </section>

@@ -1,1 +1,1 @@
-@include('exhibition.halls.show')
+@include('frontend.exhibition.halls.show')

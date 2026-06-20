@@ -23,6 +23,9 @@ class BoothMeetingAvailabilityRequest extends FormRequest
             'buffer_time' => ['nullable', 'integer', 'min:0', 'max:120'],
             'assigned_team_member_id' => ['nullable', 'integer', 'exists:booth_team_members,id'],
             'timezone' => ['nullable', 'string', 'max:100'],
+            'max_capacity' => ['nullable', 'integer', 'min:1'],
+            'allow_one_to_one' => ['nullable', 'in:0,1,true,false'],
+            'allow_one_to_many' => ['nullable', 'in:0,1,true,false'],
         ];
     }
 }

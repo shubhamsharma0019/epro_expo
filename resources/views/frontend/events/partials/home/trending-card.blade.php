@@ -1,11 +1,12 @@
 @php
     $eventSlug = $event['slug'] ?? \Illuminate\Support\Str::slug($event['title']);
-    $eventImage = $event['imageUrl'] ?? ($assetBase . '/' . $event['image']);
+    $fallbackEventImage = asset('images/events-home/trending/global-tech-summit.svg');
+    $eventImage = $event['imageUrl'] ?? ($assetBase . '/' . ($event['image'] ?? 'trending/global-tech-summit.svg'));
 @endphp
 
 <article class="overflow-hidden rounded-[9px] border border-[#E8EAF3] bg-white shadow-[0_8px_18px_rgba(31,42,106,0.06)]">
     <a href="{{ url('/events/listings/' . $eventSlug) }}" class="relative block aspect-[16/9] overflow-hidden bg-[#071044]">
-        <img src="{{ $eventImage }}" alt="{{ $event['title'] }}" class="block h-full w-full object-cover">
+        <img src="{{ $eventImage }}" alt="{{ $event['title'] }}" class="block h-full w-full object-cover" onerror="this.onerror=null;this.src='{{ $fallbackEventImage }}';">
         <span class="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-[5px] px-2.5 py-1 text-[10px] font-extrabold leading-none shadow-[0_8px_16px_rgba(7,16,68,0.18)] {{ $event['badgeClass'] }}">
             <span class="h-1.5 w-1.5 rounded-full bg-current opacity-80"></span>
             {{ $event['badge'] }}
@@ -27,9 +28,9 @@
             <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.4"/><path d="M2.8 8h10.4M8 2.5c1.6 1.5 2.4 3.3 2.4 5.5S9.6 12 8 13.5C6.4 12 5.6 10.2 5.6 8S6.4 4 8 2.5Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
             {{ $event['type'] }}
         </p>
-        <div class="mt-7 flex items-center justify-between">
-            <span class="text-[18px] font-extrabold text-[#071044]">{{ $event['price'] }}</span>
-            <a href="{{ url('/events/listings/' . $eventSlug) }}" class="rounded-[7px] bg-gradient-to-r from-[#5b2eff] to-[#4310d8] px-5 py-2.5 text-[12px] font-extrabold text-white shadow-[0_8px_14px_rgba(91,46,255,0.22)]">View Event</a>
+        <div class="mt-5 grid gap-3">
+            <span class="truncate text-[18px] font-extrabold text-[#071044]">{{ $event['price'] }}</span>
+            <a href="{{ url('/events/listings/' . $eventSlug) }}" class="inline-flex h-9 w-full items-center justify-center rounded-[7px] bg-gradient-to-r from-[#5b2eff] to-[#4310d8] px-5 text-[12px] font-extrabold text-white shadow-[0_8px_14px_rgba(91,46,255,0.22)]">View Event</a>
         </div>
     </div>
 </article>

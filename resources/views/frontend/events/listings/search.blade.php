@@ -3,7 +3,7 @@
 @section('title', 'Search Events')
 
 @section('content')
-<main class="px-[44px] pt-8 pb-10">
+<main class="px-4 md:px-[44px] pt-8 pb-10">
     <div class="mb-6">
         <h1 class="text-[22px] font-extrabold tracking-[-0.02em] text-[#212D6B]">Search Events</h1>
         <p class="mt-2 text-[14px] text-[#4E567A]">Find events by keyword, city, category, or date.</p>

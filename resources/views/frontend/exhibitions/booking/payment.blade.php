@@ -45,20 +45,20 @@
                     <div>
                         <p class="mb-5 text-[16px] font-medium text-navy">Payment Method</p>
 
-                        <div class="mb-8 grid grid-cols-2 gap-0 min-[1180px]:grid-cols-4">
-                            <button type="button" class="flex h-[62px] items-center justify-center gap-2 rounded-l-md border border-purple text-[15px] font-semibold text-purple">
+                        <div class="mb-8 grid grid-cols-2 gap-2 min-[1180px]:grid-cols-4 min-[1180px]:gap-0">
+                            <button type="button" class="flex h-[62px] items-center justify-center gap-2 rounded-md min-[1180px]:rounded-r-none min-[1180px]:rounded-l-md border border-purple text-[15px] font-semibold text-purple">
                                 <i class="fa-regular fa-credit-card text-[22px]"></i>
                                 Card
                             </button>
-                            <button type="button" class="flex h-[62px] items-center justify-center gap-2 border-y border-r border-borderColor text-[15px] font-semibold text-navy">
+                            <button type="button" class="flex h-[62px] items-center justify-center gap-2 rounded-md min-[1180px]:rounded-none border border-borderColor min-[1180px]:border-y min-[1180px]:border-r text-[15px] font-semibold text-navy">
                                 <i class="fa-brands fa-google-play text-[22px] text-[#8A90A8]"></i>
                                 UPI
                             </button>
-                            <button type="button" class="flex h-[62px] items-center justify-center gap-2 border-y border-r border-borderColor text-[15px] font-semibold text-navy">
+                            <button type="button" class="flex h-[62px] items-center justify-center gap-2 rounded-md min-[1180px]:rounded-none border border-borderColor min-[1180px]:border-y min-[1180px]:border-r text-[15px] font-semibold text-navy">
                                 <i class="fa-solid fa-building-columns text-[20px] text-[#8A90A8]"></i>
                                 Net Banking
                             </button>
-                            <button type="button" class="flex h-[62px] items-center justify-center gap-2 rounded-r-md border-y border-r border-borderColor text-[15px] font-semibold text-navy">
+                            <button type="button" class="flex h-[62px] items-center justify-center gap-2 rounded-md min-[1180px]:rounded-l-none min-[1180px]:rounded-r-md border border-borderColor min-[1180px]:border-y min-[1180px]:border-r text-[15px] font-semibold text-navy">
                                 <i class="fa-regular fa-wallet text-[22px] text-[#8A90A8]"></i>
                                 Wallet
                             </button>

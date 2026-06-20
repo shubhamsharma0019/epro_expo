@@ -1,0 +1,34 @@
+<?php
+
+namespace App\Domain\Booth\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class BoothMeetingSlot extends Model
+{
+    use HasFactory;
+
+    protected $guarded = ['id'];
+
+    protected function casts(): array
+    {
+        return [
+            'date' => 'date',
+            'max_capacity' => 'integer',
+            'allow_one_to_one' => 'boolean',
+            'allow_one_to_many' => 'boolean',
+        ];
+    }
+
+    public function boothBooking(): BelongsTo
+    {
+        return $this->belongsTo(BoothBooking::class);
+    }
+
+    public function teamMember(): BelongsTo
+    {
+        return $this->belongsTo(BoothTeamMember::class, 'team_member_id');
+    }
+}

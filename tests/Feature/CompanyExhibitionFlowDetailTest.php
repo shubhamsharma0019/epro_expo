@@ -2,18 +2,18 @@
 
 namespace Tests\Feature;
 
-use App\Models\Admin;
-use App\Models\Booth;
-use App\Models\BoothBooking;
-use App\Models\BoothSize;
-use App\Models\Company;
-use App\Models\CompanyMeeting;
-use App\Models\Enquiry;
-use App\Models\Exhibition;
-use App\Models\Hall;
-use App\Models\Pavilion;
-use App\Models\Service;
-use App\Models\VisitorMeetingBooking;
+use App\Domain\Admin\Models\Admin;
+use App\Domain\Booth\Models\Booth;
+use App\Domain\Booth\Models\BoothBooking;
+use App\Domain\Booth\Models\BoothSize;
+use App\Domain\Company\Models\Company;
+use App\Domain\Company\Models\CompanyMeeting;
+use App\Domain\Company\Models\Enquiry;
+use App\Domain\Event\Models\Exhibition;
+use App\Domain\Event\Models\Hall;
+use App\Domain\Event\Models\Pavilion;
+use App\Domain\Company\Models\Service;
+use App\Domain\Visitor\Models\VisitorMeetingBooking;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
@@ -60,6 +60,8 @@ class CompanyExhibitionFlowDetailTest extends TestCase
             'start_date' => '2026-06-12',
             'end_date' => '2026-06-14',
             'status' => 'active',
+            'approval_status' => 'approved',
+            'publish_status' => 'published',
         ]);
 
         $this->pavilion = Pavilion::create([
@@ -224,6 +226,23 @@ class CompanyExhibitionFlowDetailTest extends TestCase
         $response->assertStatus(200);
         $response->assertDontSee('Booking Pending Approval');
 
+        // Verify bookings index, details and invoice views
+        $response = $this->get('/company/bookings');
+        $response->assertStatus(200);
+        $response->assertSee('Download Invoice');
+
+        $response = $this->get('/company/bookings/' . $booking->id);
+        $response->assertStatus(200);
+        $response->assertSee('Download Invoice');
+        $response->assertSee('View Payment Receipt');
+
+        $response = $this->get('/company/bookings/' . $booking->id . '/invoice');
+        $response->assertStatus(200);
+        $response->assertSee('INVOICE');
+        $response->assertSee('EXPO-');
+        $response->assertSee('Billed To');
+        $response->assertSee('Acme Technologies');
+
         // 10. Walk through booth setup page-by-page and save info
         // Setup Step 1: Profile
         $response = $this->post(route('company.booth-setup.profile.update', $booking->id), [
@@ -350,7 +369,18 @@ class CompanyExhibitionFlowDetailTest extends TestCase
         $response = $this->post(route('company.booth-setup.publish.submit', $booking->id));
         $response->assertRedirect(route('company.dashboard'));
 
-        // Verify booth is published immediately and visible on company dashboard / website.
+        // Verify booth setup status is pending review
+        $booking->refresh();
+        $this->assertEquals('published', $booking->booth_setup_status);
+
+        // Log in as admin and approve the booth publish request
+        $this->session(['admin_id' => $this->admin->id]);
+        $publishRequest = \App\Domain\Booth\Models\BoothPublishRequest::where('booth_booking_id', $booking->id)->firstOrFail();
+        $response = $this->post(route('admin.booth-approvals.approve', $publishRequest->id));
+        $response->assertRedirect();
+
+        // Log back in as company and verify setup is marked as published
+        $this->session(['company_id' => $this->company->id]);
         $booking->refresh();
         $this->assertEquals('published', $booking->booth_setup_status);
 
@@ -380,10 +410,19 @@ class CompanyExhibitionFlowDetailTest extends TestCase
         $response->assertSee('Acme Technologies Inc');
 
         // 11. Admin record should exist as already approved.
-        $publishRequest = \App\Models\BoothPublishRequest::where('booth_booking_id', $booking->id)->firstOrFail();
+        $publishRequest = \App\Domain\Booth\Models\BoothPublishRequest::where('booth_booking_id', $booking->id)->firstOrFail();
         $this->assertEquals('approved', $publishRequest->status);
 
         // 12. Visitor Flow
+        // Create a user and log in to pass the auth middleware
+        $visitorUser = \App\Domain\Shared\Models\User::create([
+            'name' => 'Visitor User',
+            'email' => 'visitor@example.com',
+            'password' => \Illuminate\Support\Facades\Hash::make('password'),
+            'role' => 'user',
+        ]);
+        $this->actingAs($visitorUser);
+
         // Visit the pass select page
         $response = $this->get(route('exhibitions.tickets.select', $this->exhibition->slug));
         $response->assertStatus(200);
@@ -416,5 +455,24 @@ class CompanyExhibitionFlowDetailTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Acme AI Masterclass');
         $response->assertSee('Acme Technologies Inc');
+    }
+
+    public function test_company_analytics_page_renders_successfully(): void
+    {
+        $response = $this->withSession([
+            'company_id' => $this->company->id,
+            'company_logged_in' => true
+        ])->get(route('company.analytics'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Booth Analytics');
+        $response->assertSee('Booth Views');
+        $response->assertSee('Product Views');
+        $response->assertSee('Brochure Downloads');
+        $response->assertSee('Meeting Requests');
+        $response->assertSee('Enquiries');
+        $response->assertSee('Session Attendees');
+        $response->assertSee('Traffic Sources');
+        $response->assertSee('Recent Activities');
     }
 }

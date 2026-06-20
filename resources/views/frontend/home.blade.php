@@ -1,1 +1,1 @@
-@include('frontend.home.index')
+@include('frontend.home.index', ['home' => $home ?? []])

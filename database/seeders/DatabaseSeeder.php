@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
+use App\Domain\Shared\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -15,10 +15,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        if (! filter_var(env('APP_SEED_BASE', false), FILTER_VALIDATE_BOOLEAN)) {
+            return;
+        }
+
         // User::factory(10)->create();
 
         User::updateOrCreate(
-            ['email' => 'test@example.com'],
+            ['email' => 'user@example.com'],
             [
                 'name' => 'Test User',
                 'password' => \Illuminate\Support\Facades\Hash::make('password'),
@@ -26,7 +30,7 @@ class DatabaseSeeder extends Seeder
         );
 
         // Seed default Admin
-        \App\Models\Admin::updateOrCreate(
+        \App\Domain\Admin\Models\Admin::updateOrCreate(
             ['email' => 'admin@example.com'],
             [
                 'name' => 'Admin User',
@@ -37,8 +41,8 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // Seed default Company
-        $company = \App\Models\Company::updateOrCreate(
+        // Optional demo company login (does not replace real MySQL data).
+        \App\Domain\Company\Models\Company::updateOrCreate(
             ['email' => 'company@example.com'],
             [
                 'company_name' => 'TechNova Solutions',
@@ -53,22 +57,118 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // Seed exhibitions, pavilions, halls, booths
+        // Mock exhibition + event for flow testing (distinct from global-tech-expo-2024).
+        if (filter_var(env('MOCK_FLOW_SEED', false), FILTER_VALIDATE_BOOLEAN)) {
+            $this->call(MockFlowDemoSeeder::class);
+        }
+
+        // Demo pavilion/exhibitor data only when explicitly enabled (never required for production).
+        if (! filter_var(env('APP_SEED_DEMO', false), FILTER_VALIDATE_BOOLEAN)) {
+            return;
+        }
+
+        $company = \App\Domain\Company\Models\Company::where('email', 'company@example.com')->firstOrFail();
+
         $this->call(CompanyPavilionDemoSeeder::class);
 
+        // Keep the public mock event available inside the default company dashboard too.
+        $digitalLeadershipEvent = \App\Domain\Event\Models\CompanyEvent\CompanyEvent::where('slug', 'digital-leadership-forum-2026')->first();
+        if ($digitalLeadershipEvent && $digitalLeadershipEvent->company_id !== $company->id) {
+            $digitalLeadershipEvent->update(['company_id' => $company->id]);
+
+            \App\Domain\Event\Models\CompanyEvent\CompanyEventBranding::where('company_event_id', $digitalLeadershipEvent->id)
+                ->update(['company_id' => $company->id]);
+            \App\Domain\Event\Models\CompanyEvent\CompanyEventTicketType::where('company_event_id', $digitalLeadershipEvent->id)
+                ->update(['company_id' => $company->id]);
+            \App\Domain\Event\Models\CompanyEvent\CompanyEventSession::where('company_event_id', $digitalLeadershipEvent->id)
+                ->update(['company_id' => $company->id]);
+            \App\Domain\Event\Models\CompanyEvent\CompanyEventSpeaker::where('company_event_id', $digitalLeadershipEvent->id)
+                ->update(['company_id' => $company->id]);
+            \App\Domain\Event\Models\CompanyEvent\CompanyEventPublishRequest::where('company_event_id', $digitalLeadershipEvent->id)
+                ->update(['company_id' => $company->id]);
+        }
+
+        $bootCampEvent = \App\Domain\Event\Models\CompanyEvent\CompanyEvent::updateOrCreate(
+            ['slug' => 'hands-on-ui-ux-design-boot-camp'],
+            [
+                'company_id' => $company->id,
+                'title' => 'Hands-on UI/UX Design Boot Camp',
+                'event_type' => 'in_person',
+                'category' => 'Education',
+                'sub_category' => 'Product Design',
+                'event_mode' => 'in_person',
+                'status' => 'published',
+                'publish_status' => 'published',
+                'starts_at' => '2026-07-24 10:00:00',
+                'ends_at' => '2026-07-25 17:00:00',
+                'timezone' => 'Asia/Kolkata',
+                'venue_name' => 'Creative Arts Hub',
+                'venue_address' => 'Sector 5, Bangalore, India',
+                'city' => 'Bangalore',
+                'country' => 'India',
+                'website' => 'https://designbootcamp.in',
+                'summary' => 'An intensive in-person workshop for product design teams.',
+                'description' => 'An intensive interactive in-person workshop focusing on modern design tokens, design systems, user research frameworks, and advanced prototyping methods.',
+                'highlights' => [
+                    '2 days hands-on boot camp',
+                    'In-person UI/UX workshop experience',
+                    'Design systems, research, and prototyping sessions',
+                    'Creative Arts Hub, Bangalore',
+                ],
+                'capacity' => 0,
+                'visibility' => 'public',
+                'published_at' => now(),
+                'is_home_featured' => true,
+            ]
+        );
+
+        \App\Domain\Event\Models\CompanyEvent\CompanyEventBranding::updateOrCreate(
+            ['company_event_id' => $bootCampEvent->id],
+            [
+                'company_id' => $company->id,
+                'logo_path' => 'company-events/seeded/hands-on-uiux-logo.jpg',
+                'banner_path' => 'company-events/seeded/hands-on-uiux-banner.jpg',
+                'primary_color' => '#4C10D0',
+                'secondary_color' => '#00B894',
+                'accent_color' => '#FF8A00',
+                'headline' => 'Hands-on UI/UX Design Boot Camp',
+                'tagline' => 'Practical design systems, research, and prototyping for product teams.',
+                'cta_label' => 'Explore Event',
+            ]
+        );
+
+        \App\Domain\Event\Models\CompanyEvent\CompanyEventTicketType::updateOrCreate(
+            [
+                'company_event_id' => $bootCampEvent->id,
+                'name' => 'Workshop Pass',
+            ],
+            [
+                'company_id' => $company->id,
+                'description' => 'Access to the hands-on UI/UX design boot camp sessions.',
+                'price' => 0,
+                'currency' => 'INR',
+                'quantity_total' => 100,
+                'quantity_sold' => 0,
+                'sales_start_at' => now()->subDay(),
+                'sales_end_at' => $bootCampEvent->starts_at,
+                'status' => 'active',
+                'benefits' => ['Hands-on workshop access', 'Design systems sessions', 'Research and prototyping practice'],
+            ]
+        );
+
         // Create an approved booking for this company to start in active state
-        $exhibition = \App\Models\Exhibition::where('slug', 'global-tech-expo-2024')->first();
+        $exhibition = \App\Domain\Event\Models\Exhibition::where('slug', 'global-tech-expo-2024')->first();
         if ($exhibition) {
             $pavilion = $exhibition->pavilions()->first();
             $hall = $pavilion ? $pavilion->halls()->first() : null;
-            $size = \App\Models\BoothSize::first();
+            $size = \App\Domain\Booth\Models\BoothSize::first();
             $booth = $hall ? $hall->booths()->where('status', 'available')->first() : null;
 
             if ($hall && $size && $booth) {
                 // Book booth
                 $booth->update(['status' => 'booked']);
 
-                $booking = \App\Models\BoothBooking::create([
+                $booking = \App\Domain\Booth\Models\BoothBooking::create([
                     'company_id' => $company->id,
                     'exhibition_id' => $exhibition->id,
                     'pavilion_id' => $pavilion->id,
@@ -87,7 +187,7 @@ class DatabaseSeeder extends Seeder
                 ]);
 
                 // Create a basic profile for this booth
-                \App\Models\BoothProfile::create([
+                \App\Domain\Booth\Models\BoothProfile::create([
                     'booth_booking_id' => $booking->id,
                     'company_id' => $company->id,
                     'booth_title' => 'TechNova AI Studio',
@@ -101,7 +201,7 @@ class DatabaseSeeder extends Seeder
                 ]);
 
                 // Seed some default enquiries
-                \App\Models\Enquiry::create([
+                \App\Domain\Company\Models\Enquiry::create([
                     'company_id' => $company->id,
                     'name' => 'Priya Mehta',
                     'email' => 'priya@example.com',
@@ -111,7 +211,7 @@ class DatabaseSeeder extends Seeder
                     'status' => 'new',
                 ]);
 
-                \App\Models\Enquiry::create([
+                \App\Domain\Company\Models\Enquiry::create([
                     'company_id' => $company->id,
                     'name' => 'Rahul Shah',
                     'email' => 'rahul@example.com',
@@ -122,7 +222,7 @@ class DatabaseSeeder extends Seeder
                 ]);
 
                 // Seed a default meeting slot & booking
-                $meeting = \App\Models\CompanyMeeting::create([
+                $meeting = \App\Domain\Company\Models\CompanyMeeting::create([
                     'company_id' => $company->id,
                     'title' => 'Product Walkthrough',
                     'meeting_type' => 'one_on_one',
@@ -132,7 +232,7 @@ class DatabaseSeeder extends Seeder
                     'description' => 'Discussion regarding AI Workflow Studio integrations.',
                 ]);
 
-                \App\Models\VisitorMeetingBooking::create([
+                \App\Domain\Visitor\Models\VisitorMeetingBooking::create([
                     'company_meeting_id' => $meeting->id,
                     'company_id' => $company->id,
                     'visitor_name' => 'Priya Mehta',
@@ -146,9 +246,10 @@ class DatabaseSeeder extends Seeder
 
         // Seed visitor flow tables
         // 1. Update/create exhibitions for visitor flow
-        \App\Models\Exhibition::updateOrCreate(
-            ['id' => 1],
+        \App\Domain\Event\Models\Exhibition::updateOrCreate(
+            ['slug' => 'global-tech-expo-2024'],
             [
+                'name' => 'Global Tech Summit 2024',
                 'title' => 'Global Tech Expo 2024',
                 'slug' => 'global-tech-expo-2024',
                 'description' => 'A premium exhibition for technology, business, healthcare, education, sustainability, and mobility companies.',
@@ -164,9 +265,10 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        \App\Models\Exhibition::updateOrCreate(
-            ['id' => 2],
+        \App\Domain\Event\Models\Exhibition::updateOrCreate(
+            ['slug' => 'future-of-ai-expo'],
             [
+                'name' => 'Future of AI Expo',
                 'title' => 'Future of AI Expo',
                 'slug' => 'future-of-ai-expo',
                 'description' => 'Explore deep neural structures, machine learning platforms, and automation algorithms.',
@@ -182,9 +284,10 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        \App\Models\Exhibition::updateOrCreate(
-            ['id' => 3],
+        \App\Domain\Event\Models\Exhibition::updateOrCreate(
+            ['slug' => 'sustainability-world-expo'],
             [
+                'name' => 'Sustainability World Expo',
                 'title' => 'Sustainability World Expo',
                 'slug' => 'sustainability-world-expo',
                 'description' => 'Innovations in green architecture, eco-friendly systems, and global sustainability standards.',
@@ -199,6 +302,8 @@ class DatabaseSeeder extends Seeder
                 'banner_url' => 'https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&w=800&q=80',
             ]
         );
+
+        $visitorFlowExhibitionId = \App\Domain\Event\Models\Exhibition::where('slug', 'global-tech-expo-2024')->value('id') ?? 1;
 
         // 2. Visitor Pavilions
         $pavilions = [
@@ -270,7 +375,7 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($pavilions as $p) {
-            \App\Models\VisitorPavilion::updateOrCreate(['id' => $p['id']], $p);
+            \App\Domain\Visitor\Models\VisitorPavilion::updateOrCreate(['id' => $p['id']], $p);
         }
 
         // 3. Visitor Halls
@@ -326,14 +431,14 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($halls as $h) {
-            \App\Models\VisitorHall::updateOrCreate(['id' => $h['id']], $h);
+            \App\Domain\Visitor\Models\VisitorHall::updateOrCreate(['id' => $h['id']], $h);
         }
 
         // 4. Exhibitors
         $exhibitors = [
             [
                 'id' => 101,
-                'exhibition_id' => 1,
+                'exhibition_id' => $visitorFlowExhibitionId,
                 'hall_name' => 'Hall 1 - AI & IA',
                 'booth_number' => 'Booth 101',
                 'name' => 'TechNext Solutions Pvt. Ltd.',
@@ -352,7 +457,7 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'id' => 102,
-                'exhibition_id' => 1,
+                'exhibition_id' => $visitorFlowExhibitionId,
                 'hall_name' => 'Hall 1 - AI & IA',
                 'booth_number' => 'Booth 102',
                 'name' => 'InnovaAI Labs',
@@ -371,7 +476,7 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'id' => 103,
-                'exhibition_id' => 1,
+                'exhibition_id' => $visitorFlowExhibitionId,
                 'hall_name' => 'Hall 1 - AI & IA',
                 'booth_number' => 'Booth 103',
                 'name' => 'DataMind Analytics',
@@ -390,7 +495,7 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'id' => 104,
-                'exhibition_id' => 1,
+                'exhibition_id' => $visitorFlowExhibitionId,
                 'hall_name' => 'Hall 1 - AI & IA',
                 'booth_number' => 'Booth 104',
                 'name' => 'CloudSphere Tech',
@@ -410,18 +515,18 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($exhibitors as $e) {
-            \App\Models\Exhibitor::updateOrCreate(['id' => $e['id']], $e);
+            \App\Domain\Company\Models\Exhibitor::updateOrCreate(['id' => $e['id']], $e);
         }
 
         // 5. Ticket Tiers
         $tiers = [
-            ['id' => 1, 'exhibition_id' => 1, 'name' => 'Free Visitor Pass', 'price' => 0.00, 'benefits' => 'Access to AI & Automation pavilions, standard sessions entry, digital certificate'],
-            ['id' => 2, 'exhibition_id' => 1, 'name' => 'Business Pass', 'price' => 999.00, 'benefits' => 'Access to all pavilions, B2B matchmaking lounges, standard speaker sessions, catalog book'],
-            ['id' => 3, 'exhibition_id' => 1, 'name' => 'VIP All-Access Pass', 'price' => 2499.00, 'benefits' => 'Priority check-in, VIP lounge access, invite-only keynote, VIP networking dinner']
+            ['id' => 1, 'exhibition_id' => $visitorFlowExhibitionId, 'name' => 'Free Visitor Pass', 'price' => 0.00, 'benefits' => 'Access to AI & Automation pavilions, standard sessions entry, digital certificate'],
+            ['id' => 2, 'exhibition_id' => $visitorFlowExhibitionId, 'name' => 'Business Pass', 'price' => 999.00, 'benefits' => 'Access to all pavilions, B2B matchmaking lounges, standard speaker sessions, catalog book'],
+            ['id' => 3, 'exhibition_id' => $visitorFlowExhibitionId, 'name' => 'VIP All-Access Pass', 'price' => 2499.00, 'benefits' => 'Priority check-in, VIP lounge access, invite-only keynote, VIP networking dinner'],
         ];
 
         foreach ($tiers as $t) {
-            \App\Models\TicketTier::updateOrCreate(['id' => $t['id']], $t);
+            \App\Domain\Event\Models\TicketTier::updateOrCreate(['id' => $t['id']], $t);
         }
 
         // Clean and Seed products and videos
@@ -436,7 +541,7 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($products as $p) {
-            \App\Models\VisitorProduct::create($p);
+            \App\Domain\Visitor\Models\VisitorProduct::create($p);
         }
 
         // 7. Demo Videos
@@ -460,7 +565,7 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($videos as $v) {
-            \App\Models\DemoVideo::create($v);
+            \App\Domain\Company\Models\DemoVideo::create($v);
         }
     }
 }

@@ -3,7 +3,7 @@
 @section('title', 'Attendee Details - ' . (isset($dbEvent) ? $dbEvent->title : 'Global Tech Summit 2024'))
 
 @section('content')
-<main class="px-[44px] pt-6 pb-12 flex-1 max-w-[1200px] w-full mx-auto">
+<main class="px-4 md:px-[44px] pt-6 pb-12 flex-1 max-w-[1200px] w-full mx-auto">
             <!-- Breadcrumbs -->
             <div class="mb-8 flex items-center gap-2 text-[14px] text-[#6A708F]">
                 <a href="{{ url('/events') }}" class="hover:text-[#5B35D5] transition">Home</a>
@@ -30,9 +30,14 @@
                 
                 <!-- Left Column: Attendee Forms -->
                 <div class="lg:col-span-8">
-                    <div class="mb-6">
-                        <h2 class="text-[22px] font-bold text-[#1F2A6A]">Attendee Information</h2>
-                        <p class="mt-2 text-[15px] text-[#4E567A]">Enter details of the attendees for this booking.</p>
+                    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                            <h2 class="text-[22px] font-bold text-[#1F2A6A]">Attendee Information</h2>
+                            <p class="mt-2 text-[15px] text-[#4E567A]">Enter details of the attendees for this booking.</p>
+                        </div>
+                        <button type="button" onclick="addAttendee()" class="rounded-xl border border-[#B9A8F3] px-5 py-3 text-[14px] font-bold text-[#5B35D5] transition hover:bg-[#F4F0FF] hover:border-[#5B35D5]">
+                            Add Attendee
+                        </button>
                     </div>
 
                     <div id="attendees-container" class="space-y-6">
@@ -128,27 +133,121 @@
         phone: @json(auth()->user()->phone ?? '')
     };
 
-    function renderAttendeeCards(qty) {
+    const ticketStockByType = {
+        @if (isset($dbEvent))
+            @foreach ($dbEvent->ticketTypes as $ticketType)
+                '{{ Str::slug($ticketType->name) }}': {{ max(0, (int) ($ticketType->quantity_total ?? 0) - (int) ($ticketType->quantity_sold ?? 0)) ?: 'Number.MAX_SAFE_INTEGER' }},
+            @endforeach
+        @endif
+    };
+    const ticketPriceByType = {
+        @if (isset($dbEvent))
+            @foreach ($dbEvent->ticketTypes as $ticketType)
+                '{{ Str::slug($ticketType->name) }}': {{ (float) $ticketType->price }},
+            @endforeach
+        @endif
+    };
+    const ticketCurrencyByType = {
+        @if (isset($dbEvent))
+            @foreach ($dbEvent->ticketTypes as $ticketType)
+                '{{ Str::slug($ticketType->name) }}': @json($ticketType->currency),
+            @endforeach
+        @endif
+    };
+
+    function getCurrencySymbol(orderData) {
+        const currency = orderData?.priceCurrency || (orderData?.eventSlug && orderData.eventSlug !== 'global-tech-summit-2024' ? 'INR' : '₹');
+        return currency === 'USD' ? '$' : (currency === 'INR' || currency === '₹' ? '₹' : currency + ' ');
+    }
+
+    function readAttendeesFromForm() {
+        const orderData = JSON.parse(localStorage.getItem("eventOrder"));
+        const qty = orderData ? orderData.quantity : 1;
+        const attendees = [];
+
+        for (let i = 1; i <= qty; i++) {
+            attendees.push({
+                name: document.getElementById(`attendee-name-${i}`)?.value.trim() || '',
+                email: document.getElementById(`attendee-email-${i}`)?.value.trim() || '',
+                phone: document.getElementById(`attendee-phone-${i}`)?.value.trim() || '',
+                company: document.getElementById(`attendee-company-${i}`)?.value.trim() || '',
+                jobTitle: document.getElementById(`attendee-title-${i}`)?.value.trim() || ''
+            });
+        }
+
+        return attendees;
+    }
+
+    function syncOrderQuantity(qty, attendees = null) {
+        const orderData = JSON.parse(localStorage.getItem("eventOrder"));
+        if (!orderData) return null;
+
+        if (ticketPriceByType[orderData.passType] !== undefined) {
+            orderData.price = Number(ticketPriceByType[orderData.passType]);
+        }
+        if (ticketCurrencyByType[orderData.passType]) {
+            orderData.priceCurrency = ticketCurrencyByType[orderData.passType];
+        }
+
+        orderData.quantity = Math.max(1, qty);
+        orderData.totalAmount = Number(orderData.price || 0) * orderData.quantity;
+        orderData.attendees = attendees ?? readAttendeesFromForm().slice(0, orderData.quantity);
+
+        localStorage.setItem("eventOrder", JSON.stringify(orderData));
+        updateOrderSummary(orderData);
+
+        return orderData;
+    }
+
+    function updateOrderSummary(orderData = null) {
+        orderData = orderData || JSON.parse(localStorage.getItem("eventOrder"));
+        if (!orderData) return;
+
+        const qty = orderData.quantity || 1;
+        const currencySymbol = getCurrencySymbol(orderData);
+
+        const passLabel = document.getElementById("summary-pass-qty-label");
+        if (passLabel) {
+            passLabel.innerHTML = `${orderData.passName} &times; ${qty}`;
+        }
+
+        const passTotal = document.getElementById("summary-pass-total");
+        if (passTotal) {
+            passTotal.innerText = `${currencySymbol}${(Number(orderData.price || 0) * qty).toFixed(2)}`;
+        }
+
+        const totalAmount = document.getElementById("summary-total-amount");
+        if (totalAmount) {
+            totalAmount.innerText = `${currencySymbol}${Number(orderData.totalAmount || 0).toFixed(2)}`;
+        }
+    }
+
+    function renderAttendeeCards(qty, existingAttendees = null) {
         const container = document.getElementById('attendees-container');
         if (!container) return;
+
+        const savedAttendees = existingAttendees ?? (JSON.parse(localStorage.getItem("eventOrder"))?.attendees || []);
         
         let html = '';
         for (let i = 1; i <= qty; i++) {
             const isFirst = (i === 1);
-            const nameVal = isFirst ? loggedInUser.name : '';
-            const emailVal = isFirst ? loggedInUser.email : '';
-            const phoneVal = isFirst ? loggedInUser.phone : '';
+            const saved = savedAttendees[i - 1] || {};
+            const nameVal = saved.name ?? (isFirst ? loggedInUser.name : '');
+            const emailVal = saved.email ?? (isFirst ? loggedInUser.email : '');
+            const phoneVal = saved.phone ?? (isFirst ? loggedInUser.phone : '');
+            const companyVal = saved.company ?? '';
+            const jobTitleVal = saved.jobTitle ?? '';
             
             html += `
             <div class="rounded-[16px] border border-[#E8E3F0] bg-white p-7 shadow-[0_2px_10px_rgba(31,42,107,0.02)] attendee-card" data-index="${i}">
                 <div class="mb-5 flex items-center justify-between">
                     <h3 class="text-[16px] font-bold text-[#1F2A6A]">Attendee ${i}</h3>
-                    ${!isFirst ? `
-                    <button type="button" onclick="clearAttendeeFields(${i})" class="flex items-center gap-1.5 text-[14px] font-semibold text-[#E03137] hover:text-[#C92A2F] transition">
+                    ${qty > 1 ? `
+                    <button type="button" onclick="deleteAttendee(${i})" class="flex items-center gap-1.5 text-[14px] font-semibold text-[#E03137] hover:text-[#C92A2F] transition">
                         <svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
-                        Clear
+                        Delete
                     </button>
                     ` : ''}
                 </div>
@@ -180,13 +279,13 @@
                     <!-- Company -->
                     <div class="flex flex-col gap-2">
                         <label class="text-[13px] font-bold text-[#1F2A6A]">Company (Optional)</label>
-                        <input type="text" id="attendee-company-${i}" class="attendee-company rounded-xl border border-[#E8E3F0] bg-[#FAFAFC] px-4 py-3 text-[14px] text-[#1F2A6A] outline-none transition focus:border-[#5B35D5] focus:bg-white" />
+                        <input type="text" id="attendee-company-${i}" value="${companyVal}" class="attendee-company rounded-xl border border-[#E8E3F0] bg-[#FAFAFC] px-4 py-3 text-[14px] text-[#1F2A6A] outline-none transition focus:border-[#5B35D5] focus:bg-white" />
                     </div>
                     
                     <!-- Job Title -->
                     <div class="flex flex-col gap-2 md:col-span-1">
                         <label class="text-[13px] font-bold text-[#1F2A6A]">Job Title (Optional)</label>
-                        <input type="text" id="attendee-title-${i}" class="attendee-title rounded-xl border border-[#E8E3F0] bg-[#FAFAFC] px-4 py-3 text-[14px] text-[#1F2A6A] outline-none transition focus:border-[#5B35D5] focus:bg-white" />
+                        <input type="text" id="attendee-title-${i}" value="${jobTitleVal}" class="attendee-title rounded-xl border border-[#E8E3F0] bg-[#FAFAFC] px-4 py-3 text-[14px] text-[#1F2A6A] outline-none transition focus:border-[#5B35D5] focus:bg-white" />
                     </div>
                 </div>
             </div>
@@ -194,6 +293,34 @@
         }
         container.innerHTML = html;
         updateRightPreview();
+    }
+
+    function addAttendee() {
+        const orderData = JSON.parse(localStorage.getItem("eventOrder"));
+        if (!orderData) return;
+
+        const maxQty = ticketStockByType[orderData.passType] || Number.MAX_SAFE_INTEGER;
+        if ((orderData.quantity || 1) >= maxQty) {
+            alert("No more tickets are available for this pass.");
+            return;
+        }
+
+        const attendees = readAttendeesFromForm();
+        attendees.push({ name: '', email: '', phone: '', company: '', jobTitle: '' });
+
+        syncOrderQuantity((orderData.quantity || 1) + 1, attendees);
+        renderAttendeeCards(attendees.length, attendees);
+    }
+
+    function deleteAttendee(index) {
+        const orderData = JSON.parse(localStorage.getItem("eventOrder"));
+        if (!orderData || (orderData.quantity || 1) <= 1) return;
+
+        const attendees = readAttendeesFromForm();
+        attendees.splice(index - 1, 1);
+
+        syncOrderQuantity(attendees.length, attendees);
+        renderAttendeeCards(attendees.length, attendees);
     }
 
     function clearAttendeeFields(i) {
@@ -290,13 +417,16 @@
         orderData.attendee_company = attendees[0].company;
         orderData.attendee_job_title = attendees[0].jobTitle;
         
-        // Save all attendees
-        orderData.attendees = attendees;
-        
-        localStorage.setItem("eventOrder", JSON.stringify(orderData));
+        const syncedOrderData = syncOrderQuantity(qty, attendees) || orderData;
+        syncedOrderData.attendee_name = attendees[0].name;
+        syncedOrderData.attendee_email = attendees[0].email;
+        syncedOrderData.attendee_phone = attendees[0].phone;
+        syncedOrderData.attendee_company = attendees[0].company;
+        syncedOrderData.attendee_job_title = attendees[0].jobTitle;
+        localStorage.setItem("eventOrder", JSON.stringify(syncedOrderData));
         
         // Proceed to summary page with event query param
-        const eventParam = orderData.eventSlug ? `?event=${encodeURIComponent(orderData.eventSlug)}` : '';
+        const eventParam = syncedOrderData.eventSlug ? `?event=${encodeURIComponent(syncedOrderData.eventSlug)}` : '';
         window.location.href = "{{ url('/events/tickets/summary') }}" + eventParam;
     }
 
@@ -306,8 +436,10 @@
         if (orderData) {
             const qty = orderData.quantity || 1;
             
+            const syncedOrderData = syncOrderQuantity(qty, orderData.attendees || []);
+            
             // Render forms for quantity of attendees
-            renderAttendeeCards(qty);
+            renderAttendeeCards(syncedOrderData.quantity, syncedOrderData.attendees);
             
             // Set tickets summary in right column
             const passLabel = document.getElementById("summary-pass-qty-label");
@@ -327,6 +459,7 @@
             if (totalAmount) {
                 totalAmount.innerText = `${currencySymbol}${(orderData.totalAmount).toFixed(2)}`;
             }
+            updateOrderSummary(syncedOrderData);
         } else {
             // Default fallback
             renderAttendeeCards(1);

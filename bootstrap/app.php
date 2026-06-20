@@ -12,11 +12,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->validateCsrfTokens(except: ['company/logout', 'company/event-company/login']);
+
         $middleware->alias([
             'company' => \App\Http\Middleware\CompanyMiddleware::class,
+            'company.event' => \App\Http\Middleware\EnsureCompanyEventFlow::class,
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();
+
+

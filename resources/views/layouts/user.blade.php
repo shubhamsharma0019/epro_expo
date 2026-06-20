@@ -8,6 +8,7 @@
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @include('frontend.shared.partials.responsive-fixes')
     <style>
         .user-app {
             font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -25,14 +26,16 @@
         }
     </style>
 </head>
-<body class="user-app bg-[#F5F7FC] font-sans text-navy overflow-x-hidden antialiased">
-    <div class="flex min-h-screen w-full flex-col bg-[#F5F7FC] lg:flex-row">
+<body class="user-app bg-[#F5F7FC] font-sans text-navy overflow-x-hidden antialiased lg:h-screen lg:overflow-hidden">
+    <div class="flex min-h-screen w-full flex-col bg-[#F5F7FC] lg:flex-row lg:h-screen lg:overflow-hidden">
         <div id="user-sidebar-overlay" class="fixed inset-0 z-40 hidden bg-[#071044]/40 lg:hidden"></div>
         @include('components.user.user-sidebar')
-        <main class="flex-1 min-w-0 bg-[#F5F7FC]">
+        <main class="flex-1 min-w-0 bg-[#F5F7FC] flex flex-col lg:h-screen lg:overflow-hidden">
             @include('components.user.user-topbar')
-            @yield('content')
-            @include('components.user.user-footer')
+            <div class="flex-1 overflow-y-auto">
+                @yield('content')
+                @include('components.user.user-footer')
+            </div>
         </main>
     </div>
     <script>

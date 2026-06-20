@@ -101,7 +101,7 @@
         </div>
 
         <div class="mt-8 grid grid-cols-1 gap-0 xl:grid-cols-[minmax(0,1.7fr)_minmax(360px,1fr)]">
-            <div class="rounded-l-xl border border-borderColor bg-white p-5 shadow-sm">
+            <div class="rounded-t-xl xl:rounded-l-xl xl:rounded-tr-none border border-borderColor bg-white p-5 shadow-sm">
                 <div class="rounded-xl border border-borderColor bg-[#FBFCFF] p-6">
                     <div class="flex gap-5">
                         <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#F4F0FF] text-[26px] font-semibold text-purple">
@@ -133,7 +133,7 @@
                 </div>
             </div>
 
-            <div class="rounded-r-xl border border-l-0 border-borderColor bg-white p-5 shadow-sm">
+            <div class="rounded-b-xl xl:rounded-r-xl xl:rounded-bl-none border xl:border-l-0 border-borderColor bg-white p-5 shadow-sm">
                 <div class="h-full rounded-xl border border-[#DCEFE6] bg-[#F6FFFA] p-6">
                     <div class="flex gap-5">
                         <span class="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-[#BFE8CF] bg-[#EAF9F0] text-[#16A34A]">

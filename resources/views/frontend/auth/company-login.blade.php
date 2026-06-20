@@ -37,14 +37,14 @@
         .signup { text-align: center; margin-top: 24px !important; font-size: 14px !important; }
         .signup a { color: #5b2eff; font-weight: 750; text-decoration: none; }
         @media (max-width: 940px) { .shell { grid-template-columns: 1fr; } .story { min-height: 440px; } }
-        @media (max-width: 620px) { .booth-strip { grid-template-columns: 1fr; } .story, .card { padding: 28px; } }
+        @media (max-width: 620px) { .booth-strip { grid-template-columns: 1fr; } .story, .card { padding: 28px; } .story-brand { margin-bottom: 22px; } }
     </style>
 </head>
 <body>
     <main class="page">
         <section class="shell">
             <div class="story">
-                <x-shared.brand-logo href="{{ route('home') }}" mark-class="h-11 w-11 rounded-[16px] text-[20px]" title-class="text-[24px] text-[#071044]" subtitle-class="text-[11px] text-[#8A94AD]" />
+                <x-shared.brand-logo href="{{ route('home') }}" class="story-brand" mark-class="h-11 w-11 rounded-[16px] text-[20px]" title-class="text-[24px] text-[#071044]" subtitle-class="text-[11px] text-[#8A94AD]" />
                 <div>
                     <h1>Manage booth bookings like a modern exhibitor.</h1>
                     <p>Access pavilions, halls, booth slots, products, catalogues, enquiries, and meetings from your company workspace.</p>
@@ -73,3 +73,4 @@
     </main>
 </body>
 </html>
+

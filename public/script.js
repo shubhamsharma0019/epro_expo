@@ -63,46 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const scrollableWrapper = document.querySelector('main div.overflow-y-auto');
         if (scrollableWrapper) {
             scrollableWrapper.classList.remove('px-12', 'px-8', 'p-8');
-            scrollableWrapper.classList.add('px-4', 'py-6', 'md:px-12', 'md:py-8', 'pb-24', 'md:pb-8');
-        }
-
-        // Create and append mobile bottom navigation dynamically
-        if (!document.getElementById('mobile-bottom-nav')) {
-            const bottomNav = document.createElement('div');
-            bottomNav.id = 'mobile-bottom-nav';
-            bottomNav.className = 'md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-100 flex justify-around items-center h-16 z-50 shadow-[0_-4px_12px_rgba(0,0,0,0.03)] px-2';
-            
-            const navItems = [
-                { name: 'Home', inactiveIcon: 'ph ph-house', activeIcon: 'ph-fill ph-house', path: 'home.html', key: 'home' },
-                { name: 'Lobby', inactiveIcon: 'ph ph-monitor-play', activeIcon: 'ph-fill ph-monitor-play', path: 'lobby.html', key: 'lobby' },
-                { name: 'Exhibitions', inactiveIcon: 'ph ph-image', activeIcon: 'ph-fill ph-image', path: 'exhibitions.html', key: 'exhibition' },
-                { name: 'Visits', inactiveIcon: 'ph ph-map-pin', activeIcon: 'ph-fill ph-map-pin', path: 'my-visits.html', key: 'visit' },
-                { name: 'Tickets', inactiveIcon: 'ph ph-ticket', activeIcon: 'ph-fill ph-ticket', path: 'my-tickets.html', key: 'ticket' }
-            ];
-            
-            const currentPath = window.location.pathname;
-            const filename = currentPath.split('/').pop().toLowerCase() || 'home.html';
-            
-            bottomNav.innerHTML = navItems.map(item => {
-                const isActive = filename.includes(item.key) || (item.key === 'home' && filename === 'home.html');
-                const activeClass = isActive ? 'text-primary-600 font-bold' : 'text-gray-400 font-medium';
-                const iconClass = isActive ? item.activeIcon : item.inactiveIcon;
-                
-                return `
-                    <a href="${item.path}" class="flex flex-col items-center justify-center flex-1 py-1 gap-1 text-[10px] ${activeClass} transition-all duration-200">
-                        <i class="${iconClass} text-[20px]"></i>
-                        <span>${item.name}</span>
-                    </a>
-                `;
-            }).join('');
-            
-            document.body.appendChild(bottomNav);
-            
-            // Add padding-bottom to main so content isn't cut off by bottom nav
-            const mainElement = document.querySelector('main');
-            if (mainElement) {
-                mainElement.classList.add('pb-16', 'md:pb-0');
-            }
+            scrollableWrapper.classList.add('px-4', 'py-6', 'md:px-12', 'md:py-8', 'pb-8');
         }
 
         console.log('Components loaded and responsive features initialized successfully.');

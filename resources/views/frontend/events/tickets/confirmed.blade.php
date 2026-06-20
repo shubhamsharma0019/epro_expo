@@ -60,15 +60,15 @@
                     <h2 class="mb-6 text-[19px] font-extrabold tracking-[-0.015em] text-[#071044]">Order Summary</h2>
 
                     <div class="space-y-5 text-[18px]">
-                        <div class="grid grid-cols-[260px_1fr] items-start gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-[260px_1fr] items-start gap-2 sm:gap-4">
                             <p class="font-medium text-[#323A68]">Event</p>
                             <p class="font-semibold text-[#071044]">{{ $eventName }}</p>
                         </div>
-                        <div class="grid grid-cols-[260px_1fr] items-start gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-[260px_1fr] items-start gap-2 sm:gap-4">
                             <p class="font-medium text-[#323A68]">Date</p>
                             <p class="font-semibold text-[#071044]">{{ $dateInfo }}</p>
                         </div>
-                        <div class="grid grid-cols-[260px_1fr] items-start gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-[260px_1fr] items-start gap-2 sm:gap-4">
                             <p class="font-medium text-[#323A68]">Pass Type</p>
                             <p class="font-semibold text-[#071044]">{{ $ticket->ticket_name }}</p>
                         </div>
@@ -77,26 +77,26 @@
                     <div class="my-5 h-px w-full bg-[#DEE3F3]"></div>
 
                     <div class="space-y-5 text-[18px]">
-                        <div class="grid grid-cols-[260px_1fr] items-center gap-4">
+                        <div class="flex justify-between sm:grid sm:grid-cols-[260px_1fr] sm:gap-4 sm:items-center">
                             <p class="font-extrabold text-[#202B63]">Total Amount</p>
-                            <p class="text-right text-[23px] font-extrabold tracking-[-0.02em] text-[#071044]">${{ number_format($ticket->total_amount, 2) }}</p>
+                            <p class="sm:text-left text-right text-[23px] font-extrabold tracking-[-0.02em] text-[#071044]">${{ number_format($ticket->total_amount, 2) }}</p>
                         </div>
-                        <div class="grid grid-cols-[260px_1fr] items-center gap-4">
+                        <div class="flex justify-between sm:grid sm:grid-cols-[260px_1fr] sm:gap-4 sm:items-center">
                             <p class="font-extrabold text-[#202B63]">Total Tickets</p>
-                            <p class="text-right text-[19px] font-extrabold text-[#071044]">{{ $ticket->quantity }}</p>
+                            <p class="sm:text-left text-right text-[19px] font-extrabold text-[#071044]">{{ $ticket->quantity }}</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="mx-auto mt-7 grid max-w-[748px] grid-cols-2 gap-6">
-                    <a href="{{ url('/user/tickets/' . $ticket->id . '/e-ticket') }}"
-                        class="flex h-[66px] items-center justify-center rounded-lg bg-gradient-to-r from-[#5B2EFF] to-[#4310D8] text-[20px] font-extrabold text-white shadow-[0_14px_30px_rgba(91,46,255,0.18)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_36px_rgba(91,46,255,0.25)]">
+                <div class="mx-auto mt-7 grid max-w-[748px] grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                    <a href="{{ route('frontend.user.tickets.e-ticket', $ticket->id) }}"
+                        class="flex h-[66px] items-center justify-center rounded-lg bg-gradient-to-r from-[#5B2EFF] to-[#4310D8] text-[16px] sm:text-[20px] font-extrabold text-white shadow-[0_14px_30px_rgba(91,46,255,0.18)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_36px_rgba(91,46,255,0.25)]">
                         View E-Ticket
                     </a>
-                    <a href="{{ url('/user/tickets') }}"
-                        class="flex h-[66px] items-center justify-center rounded-lg border border-[#907BFF] bg-white text-[20px] font-extrabold text-[#4320D6] transition hover:bg-[#F7F4FF]">
-                        Go to My Bookings
+                    <a href="{{ route('events.profile.index') }}"
+                        class="flex h-[66px] items-center justify-center rounded-lg border border-[#907BFF] bg-white text-[16px] sm:text-[20px] font-extrabold text-[#4320D6] transition hover:bg-[#F7F4FF]">
+                        Go to Dashboard
                     </a>
                 </div>
             </section>

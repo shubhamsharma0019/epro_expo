@@ -120,19 +120,33 @@
                     Terms and Conditions
                 </h2>
 
+                <div class="mb-6 h-[220px] overflow-y-auto rounded-lg border border-borderColor bg-[#FBFAFF] p-4 text-[14px] leading-6 text-[#5A6480]">
+                    <h3 class="mb-1.5 font-bold text-navy">1. Booth Booking and Allocation</h3>
+                    <p class="mb-4">Booths are allocated on a first-come, first-served basis upon receipt of full payment. The organizer reserves the right to alter the layout or relocate booths if necessary for event optimization.</p>
+                    
+                    <h3 class="mb-1.5 font-bold text-navy">2. Payment Terms</h3>
+                    <p class="mb-4">All bookings must be paid in full to confirm the reservation. Failure to complete the payment within the designated timeframe may result in cancellation of the booking draft and release of the selected space.</p>
+                    
+                    <h3 class="mb-1.5 font-bold text-navy">3. Cancellation and Refund Policy</h3>
+                    <p class="mb-4">Cancellations made more than 30 days before the exhibition start date will receive a 50% refund. No refunds will be provided for cancellations made within 30 days of the event, or for no-shows.</p>
+                    
+                    <h3 class="mb-1.5 font-bold text-navy">4. Liability and Insurance</h3>
+                    <p class="mb-4 font-semibold">Exhibitors must maintain adequate insurance coverage. The organizer is not liable for any loss, damage, theft of exhibitor property, or injury to personnel during the event.</p>
+                </div>
+
                 <div class="space-y-6 sm:space-y-9">
                     <label class="flex cursor-pointer items-start gap-4 text-[16px] text-navy sm:items-center sm:gap-5 sm:text-[19px]">
-                        <input type="checkbox" class="h-7 w-7 rounded border-[#8FA0C7] text-purple">
+                        <input type="checkbox" class="h-7 w-7 circular-checkbox">
                         <span>I agree to the terms and conditions.</span>
                     </label>
 
                     <label class="flex cursor-pointer items-start gap-4 text-[16px] text-navy sm:items-center sm:gap-5 sm:text-[19px]">
-                        <input type="checkbox" class="h-7 w-7 rounded border-[#8FA0C7] text-purple">
+                        <input type="checkbox" class="h-7 w-7 circular-checkbox">
                         <span>I understand the cancellation policy.</span>
                     </label>
 
                     <label class="flex cursor-pointer items-start gap-4 text-[16px] text-navy sm:items-center sm:gap-5 sm:text-[19px]">
-                        <input type="checkbox" checked class="h-7 w-7 rounded border-[#8FA0C7] text-purple">
+                        <input type="checkbox" checked class="h-7 w-7 circular-checkbox">
                         <span>I confirm all details are correct.</span>
                     </label>
                 </div>

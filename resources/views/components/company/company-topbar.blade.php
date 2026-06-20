@@ -4,10 +4,26 @@
     $topbarTitle = str_replace('EproExpo ', '', $topbarTitle);
 
     $quickLinks = [
-        ['Pavilions', '/company/booth-booking/pavilions', 'fa-regular fa-building'],
-        ['Book Booths', '/company/booth-booking/pavilions', 'fa-regular fa-clipboard'],
+        ['Exhibitions', '/company/exhibitions', 'fa-solid fa-globe'],
+        ['Book Booths', '/company/exhibitions', 'fa-regular fa-clipboard'],
         ['My Bookings', '/company/bookings', 'fa-regular fa-bookmark'],
     ];
+    $topbarCompany = session('company_id') ? \App\Domain\Company\Models\Company::find(session('company_id')) : null;
+    $topbarName = $topbarCompany?->contact_person_name
+        ?? $topbarCompany?->owner_name
+        ?? $topbarCompany?->company_name
+        ?? $topbarCompany?->name
+        ?? 'Company';
+    $topbarIndustry = $topbarCompany?->industry ?: 'Exhibitor';
+    $topbarInitials = collect(explode(' ', trim((string) $topbarName)))
+        ->filter()
+        ->take(2)
+        ->map(fn ($word) => strtoupper(substr($word, 0, 1)))
+        ->implode('') ?: 'C';
+    $topbarLogo = $topbarCompany?->logo ?: $topbarCompany?->boothProfiles()->latest()->first()?->company_logo;
+    $topbarLogoUrl = $topbarLogo
+        ? (str_starts_with($topbarLogo, 'http') ? $topbarLogo : asset(str_starts_with($topbarLogo, 'storage/') ? $topbarLogo : 'storage/' . ltrim($topbarLogo, '/')))
+        : null;
 @endphp
 
 <header class="sticky top-0 z-30 border-b border-[#E7EAF3] bg-white/96 backdrop-blur-xl">
@@ -48,10 +64,16 @@
                 <span class="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-[#246BFF] ring-2 ring-white"></span>
             </button>
             <a href="{{ url('/company/profile') }}" class="flex h-12 items-center gap-3 rounded-full border border-[#E7EAF3] bg-white py-1 pl-1 pr-2 shadow-sm transition hover:border-[#5b2eff] sm:pr-4">
-                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#5b2eff] to-[#246BFF] text-[14px] font-medium text-white">TS</span>
+                <span id="company-topbar-avatar" class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#5b2eff] to-[#246BFF] text-[14px] font-medium text-white">
+                    @if ($topbarLogoUrl)
+                        <img src="{{ $topbarLogoUrl }}" alt="{{ $topbarName }}" class="h-full w-full object-cover" onerror="this.remove(); this.parentElement.textContent='{{ $topbarInitials }}';">
+                    @else
+                        {{ $topbarInitials }}
+                    @endif
+                </span>
                 <span class="hidden max-w-[150px] min-w-0 sm:block">
-                    <span class="block truncate text-[14px] font-medium leading-5 text-[#071044]">John Doe</span>
-                    <span class="block truncate text-[12px] font-medium leading-4 text-[#7A849D]">Exhibitor</span>
+                    <span class="block truncate text-[14px] font-medium leading-5 text-[#071044]">{{ $topbarName }}</span>
+                    <span class="block truncate text-[12px] font-medium leading-4 text-[#7A849D]">{{ $topbarIndustry }}</span>
                 </span>
                 <i class="fa-solid fa-chevron-down hidden text-[10px] text-[#8A94AD] sm:block"></i>
             </a>

@@ -182,7 +182,7 @@
 
     <div class="mt-7 flex justify-end">
         <a id="continue-btn" href="{{ url('/exhibitions/booths/slots?size=3x3') }}"
-            class="inline-flex h-[58px] min-w-[250px] items-center justify-center gap-4 rounded-md bg-gradient-to-r from-[#5b2eff] to-[#4310d8] px-8 text-[18px] font-semibold text-white shadow-[0_10px_20px_rgba(91,46,255,0.18)]">
+            class="inline-flex h-[58px] w-full sm:w-auto sm:min-w-[250px] items-center justify-center gap-4 rounded-md bg-gradient-to-r from-[#5b2eff] to-[#4310d8] px-8 text-[18px] font-semibold text-white shadow-[0_10px_20px_rgba(91,46,255,0.18)]">
             Continue
             <i class="fa-solid fa-arrow-right text-[15px]"></i>
         </a>

@@ -2,17 +2,19 @@
 
 namespace Tests\Feature;
 
-use App\Models\Booth;
-use App\Models\BoothBooking;
-use App\Models\BoothBookingSummary;
-use App\Models\BoothSize;
-use App\Models\Company;
-use App\Models\Exhibition;
-use App\Models\Hall;
-use App\Models\Pavilion;
-use App\Models\Service;
+use App\Domain\Booth\Models\Booth;
+use App\Domain\Booth\Models\BoothBooking;
+use App\Domain\Booth\Models\BoothBookingSummary;
+use App\Domain\Booth\Models\BoothSize;
+use App\Domain\Company\Models\Company;
+use App\Domain\Event\Models\Exhibition;
+use App\Domain\Event\Models\Hall;
+use App\Domain\Event\Models\Pavilion;
+use App\Domain\Company\Models\Service;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -100,7 +102,7 @@ class CompanyBoothBookingDaysFlowTest extends TestCase
                 'size_id' => $size->id,
                 'days_count' => 3,
             ])
-            ->assertRedirect('/company/booth-booking/summary');
+            ->assertRedirect(route('company.booth-booking.summary', ['exhibition' => $exhibition->slug]));
 
         $this->withSession([
             'company_id' => $company->id,
@@ -191,7 +193,7 @@ class CompanyBoothBookingDaysFlowTest extends TestCase
             ->post(route('company.booth-booking.services.toggle'), [
                 'service_id' => $service->id,
             ])
-            ->assertRedirect('/company/booth-booking/services');
+            ->assertRedirect(route('company.booth-booking.services', ['exhibition' => $exhibition->slug]));
 
         $booking->refresh();
         $this->assertSame('99.00', (string) $booking->services_amount);
@@ -211,7 +213,7 @@ class CompanyBoothBookingDaysFlowTest extends TestCase
                 'service_id' => $service->id,
                 'quantity' => 3,
             ])
-            ->assertRedirect('/company/booth-booking/services');
+            ->assertRedirect(route('company.booth-booking.services', ['exhibition' => $exhibition->slug]));
 
         $booking->refresh();
         $this->assertSame('297.00', (string) $booking->services_amount);
@@ -238,7 +240,7 @@ class CompanyBoothBookingDaysFlowTest extends TestCase
             'company_booth_booking' => ['booth_booking_id' => $booking->id],
         ])
             ->post(route('company.booth-booking.services.continue'))
-            ->assertRedirect('/company/booth-booking/review');
+            ->assertRedirect(route('company.booth-booking.review', ['exhibition' => $exhibition->slug]));
 
         $this->withSession([
             'company_id' => $company->id,
@@ -531,4 +533,100 @@ class CompanyBoothBookingDaysFlowTest extends TestCase
             ->get(route('company.booth-setup.index', $booking))
             ->assertForbidden();
     }
+    public function test_team_member_create_page_renders_and_uploads_photo(): void
+    {
+        Storage::fake('public');
+
+        $company = Company::create([
+            'company_name' => 'Team Company',
+            'contact_person_name' => 'Tushar',
+            'email' => 'team@example.com',
+            'phone' => '9999999999',
+            'password' => Hash::make('password'),
+            'status' => 'approved',
+        ]);
+
+        $exhibition = Exhibition::create([
+            'title' => 'Team Expo',
+            'slug' => 'team-expo',
+            'start_date' => '2026-06-12',
+            'end_date' => '2026-06-14',
+            'status' => 'active',
+        ]);
+
+        $pavilion = Pavilion::create([
+            'exhibition_id' => $exhibition->id,
+            'title' => 'Team Pavilion',
+            'slug' => 'team-pavilion',
+            'status' => 'active',
+        ]);
+
+        $hall = Hall::create([
+            'pavilion_id' => $pavilion->id,
+            'title' => 'Team Hall',
+            'slug' => 'team-hall',
+            'status' => 'active',
+        ]);
+
+        $size = BoothSize::create([
+            'title' => '3m x 3m',
+            'width' => 3,
+            'height' => 3,
+            'area' => 9,
+            'price' => 499,
+            'status' => 'active',
+        ]);
+
+        $booth = Booth::create([
+            'hall_id' => $hall->id,
+            'booth_size_id' => $size->id,
+            'booth_number' => 'T01',
+            'price' => 499,
+            'status' => 'booked',
+        ]);
+
+        $booking = BoothBooking::create([
+            'company_id' => $company->id,
+            'exhibition_id' => $exhibition->id,
+            'pavilion_id' => $pavilion->id,
+            'hall_id' => $hall->id,
+            'booth_size_id' => $size->id,
+            'booth_id' => $booth->id,
+            'amount' => 499,
+            'services_amount' => 0,
+            'total_amount' => 499,
+            'payment_status' => 'paid',
+            'booking_status' => 'confirmed',
+            'admin_status' => 'approved',
+            'paid_at' => now(),
+        ]);
+
+        $this->withSession(['company_id' => $company->id])
+            ->get(route('company.booth-setup.team-members.create', $booking))
+            ->assertOk()
+            ->assertSee('Save Team Member')
+            ->assertSee('Upload photo');
+
+        $this->withSession(['company_id' => $company->id])
+            ->post(route('company.booth-setup.team-members.store', $booking), [
+                'photo' => new UploadedFile(public_path('assets/exhibition/images/avatar.png'), 'member.png', 'image/png', null, true),
+                'name' => 'Tushar Sharma',
+                'designation' => 'Sales Lead',
+                'email' => 'tushar@example.com',
+                'phone' => '9876543210',
+                'expertise_tags' => 'Sales, Demo',
+                'availability_start_date' => '2026-06-12',
+                'availability_end_date' => '2026-06-14',
+                'availability_start_time' => '10:00',
+                'availability_end_time' => '18:00',
+                'status' => 'active',
+            ])
+            ->assertRedirect(route('company.booth-setup.team-members.index', $booking));
+
+        $member = \App\Domain\Booth\Models\BoothTeamMember::firstOrFail();
+        $this->assertSame(['Sales', 'Demo'], $member->expertise_tags);
+        Storage::disk('public')->assertExists($member->photo);
+    }
 }
+
+

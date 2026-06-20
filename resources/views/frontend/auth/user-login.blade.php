@@ -10,6 +10,13 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-white font-sans text-[#020617] antialiased">
+@php
+    $flowContext = $flowContext ?? request('flow');
+    $isEventTicketFlow = $flowContext === 'event_ticket';
+    $isExhibitionTicketFlow = $flowContext === 'exhibition_ticket';
+    $eventSlug = $eventSlug ?? request('event');
+    $exhibitionSlug = $exhibitionSlug ?? request('exhibition');
+@endphp
 <main class="grid min-h-screen w-full overflow-hidden bg-white lg:grid-cols-[0.92fr_1.08fr]">
     <section class="relative hidden overflow-hidden bg-[#EFF6FF] p-8 lg:flex lg:flex-col lg:justify-between">
         <a href="{{ route('home') }}" class="flex items-center gap-2">
@@ -23,9 +30,9 @@
         </a>
 
         <div>
-            <p class="mb-3 text-[12px] font-bold uppercase tracking-[0.18em] text-[#2563EB]">Visitor Login</p>
-            <h1 class="max-w-[460px] text-[46px] font-extrabold leading-[1.04] tracking-[-0.03em] text-[#020617]">Manage your tickets, passes, visits and enquiries.</h1>
-            <p class="mt-5 max-w-[390px] text-[15px] font-medium leading-7 text-[#64748B]">Sign in to continue your expo journey and keep every event touchpoint in one focused dashboard.</p>
+            <p class="mb-3 text-[12px] font-bold uppercase tracking-[0.18em] text-[#2563EB]">{{ $isEventTicketFlow ? 'Event Ticket Login' : ($isExhibitionTicketFlow ? 'Visitor Pass Login' : 'Visitor Login') }}</p>
+            <h1 class="max-w-[460px] text-[46px] font-extrabold leading-[1.04] tracking-[-0.03em] text-[#020617]">{{ $isEventTicketFlow ? 'Login to continue your event ticket booking.' : ($isExhibitionTicketFlow ? 'Login to access your visitor dashboard.' : 'Manage your tickets, passes, visits and enquiries.') }}</h1>
+            <p class="mt-5 max-w-[390px] text-[15px] font-medium leading-7 text-[#64748B]">{{ $isEventTicketFlow ? 'Sign in first, then continue the same event ticket booking flow with your own account and dashboard.' : ($isExhibitionTicketFlow ? 'Existing visitors land on their exhibition dashboard first, while new visitors can still register and continue the pass flow.' : 'Sign in to continue your expo journey and keep every event touchpoint in one focused dashboard.') }}</p>
         </div>
 
         <div class="rounded-[14px] bg-white p-5 shadow-[0_12px_32px_rgba(15,23,42,0.05)]">
@@ -58,10 +65,11 @@
 
             <p class="text-[12px] font-bold uppercase tracking-[0.18em] text-[#2563EB]">Welcome Back</p>
             <h2 class="mt-3 text-[34px] font-extrabold tracking-[-0.03em] text-[#020617]">User Login</h2>
-            <p class="mt-3 text-[14px] font-medium leading-6 text-[#64748B]">Access your visitor dashboard, booked tickets, saved booths and enquiries.</p>
+            <p class="mt-3 text-[14px] font-medium leading-6 text-[#64748B]">{{ $isEventTicketFlow ? 'Login first, then continue the same ticket booking process for this event.' : ($isExhibitionTicketFlow ? 'Existing visitor accounts go to the exhibition dashboard first, and new visitors can create an account to continue the pass flow.' : 'Access your visitor dashboard, booked tickets, saved booths and enquiries.') }}</p>
 
-            <form method="POST" action="{{ url('/user/login') }}" class="mt-8 space-y-5">
+            <form method="POST" action="{{ $isEventTicketFlow ? route('events.visitor.login.store') : ($isExhibitionTicketFlow ? route('exhibitions.visitor.login.store') : url('/user/login')) }}" class="mt-8 space-y-5">
                 @csrf
+                <input type="hidden" name="flow_context" value="{{ $flowContext }}">
                 <label class="block">
                     <span class="text-[13px] font-bold text-[#334155]">Email</span>
                     <input name="email" type="email" value="{{ old('email') }}" required class="mt-2 h-[52px] w-full rounded-[8px] border border-[#E2E8F0] bg-[#F8FAFC] px-4 text-[14px] font-semibold outline-none transition focus:border-[#2563EB] focus:bg-white">
@@ -86,7 +94,7 @@
                 </button>
             </form>
 
-            <p class="mt-7 text-center text-[14px] font-medium text-[#64748B]">New visitor? <a href="{{ url('/user/register') }}" class="font-bold text-[#2563EB]">Create account</a></p>
+            <p class="mt-7 text-center text-[14px] font-medium text-[#64748B]">New visitor? <a href="{{ $isEventTicketFlow ? route('events.visitor.register', array_filter(['event' => $eventSlug])) : ($isExhibitionTicketFlow ? route('exhibitions.visitor.register', array_filter(['exhibition' => $exhibitionSlug])) : url('/user/register')) }}" class="font-bold text-[#2563EB]">Create account</a></p>
         </div>
     </section>
 </main>

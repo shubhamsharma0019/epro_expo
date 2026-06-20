@@ -3,7 +3,7 @@
 @section('title', 'Review & Confirm - ' . (isset($dbEvent) ? $dbEvent->title : 'Global Tech Summit 2024'))
 
 @section('content')
-<main class="px-[44px] pt-6 pb-12 flex-1 max-w-[1200px] w-full mx-auto">
+<main class="px-4 md:px-[44px] pt-6 pb-12 flex-1 max-w-[1200px] w-full mx-auto">
             <!-- Breadcrumbs -->
             <div class="mb-8 flex items-center gap-2 text-[14px] text-[#6A708F]">
                 <a href="{{ url('/events') }}" class="hover:text-[#5B35D5] transition">Home</a>
@@ -86,13 +86,13 @@
                                 <h3 class="text-[16px] font-bold text-[#1F2A6A]">Tickets</h3>
                             </div>
                             
-                            <div class="flex items-start justify-between">
+                            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                 <div>
                                     <h4 class="text-[15px] font-semibold text-[#1F2A6A]" id="left-pass-name">General Pass</h4>
                                     <p class="mt-1 text-[13px] text-[#6A708F]" id="left-pass-desc">Access to all sessions</p>
                                 </div>
-                                <div class="flex flex-col items-end gap-1">
-                                    <div class="flex items-center gap-10">
+                                <div class="flex flex-col items-end gap-1 border-t border-gray-100 pt-3 sm:border-t-0 sm:pt-0">
+                                    <div class="flex items-center gap-6 min-[400px]:gap-10">
                                         <span class="text-[14px] font-medium text-[#1F2A6A]" id="left-pass-price-qty">₹49.00 &times; 2</span>
                                         <span class="text-[15px] font-bold text-[#1F2A6A] w-24 text-right" id="left-pass-total">₹98.00</span>
                                     </div>

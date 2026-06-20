@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\VisitorFlow\ExhibitionApiController;
+use App\Domain\Visitor\Controllers\ExhibitionApiController;
 
 Route::get('/exhibitions', [ExhibitionApiController::class, 'getExhibitions']);
 Route::get('/exhibitions/{id}', [ExhibitionApiController::class, 'getExhibition']);

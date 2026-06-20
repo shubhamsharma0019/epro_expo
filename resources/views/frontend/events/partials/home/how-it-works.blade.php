@@ -7,7 +7,7 @@
                 <span class="z-10 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#6A35FF] to-[#3F18CC] text-[14px] font-extrabold text-white shadow-[0_7px_16px_rgba(91,46,255,0.28)]">{{ $index + 1 }}</span>
                 <div>
                     <h3 class="text-[17px] font-extrabold leading-tight text-[#232752]">{{ $step[0] }}</h3>
-                    <p class="mt-2 max-w-[260px] text-[14px] font-semibold leading-[1.55] text-[#555D83]">{{ $step[1] }}</p>
+                    <p class="mt-2 max-w-md text-[14px] font-semibold leading-[1.55] text-[#555D83]">{{ $step[1] }}</p>
                 </div>
             </div>
         @endforeach

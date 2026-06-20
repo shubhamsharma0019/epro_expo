@@ -12,6 +12,7 @@
 
     {{-- Vite --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @include('frontend.shared.partials.responsive-fixes')
 </head>
 
 <body class="min-h-screen bg-white font-[Inter] text-[#071044] antialiased">

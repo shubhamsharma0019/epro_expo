@@ -11,13 +11,15 @@
     <div class="mt-3 overflow-hidden rounded-[10px] border border-[#ECEAF4] bg-white">
         @if (count($slots) > 0)
             @foreach ($slots as $slot)
-                <div class="grid grid-cols-[1fr_auto_auto] items-center gap-4 border-b border-[#ECEAF4] px-4 py-3.5 last:border-b-0">
-                    <div>
+                <div class="flex flex-col gap-3 min-[450px]:flex-row min-[450px]:items-center min-[450px]:justify-between border-b border-[#ECEAF4] px-4 py-3.5 last:border-b-0">
+                    <div class="min-w-0 flex-1">
                         <p class="text-[13px] font-extrabold leading-tight text-[#252A57]">{{ $slot['time'] }}</p>
                         <p class="mt-1 text-[12px] font-extrabold text-[#1CA65E]">{{ $slot['seats'] }}</p>
                     </div>
-                    <span class="min-w-10 text-right text-[17px] font-extrabold text-[#252A57]">{{ $slot['price'] }}</span>
-                    <a href="{{ $slot['href'] }}" class="rounded-[7px] border border-[#E1DDF1] bg-white px-5 py-2.5 text-[12px] font-extrabold text-[#5b2eff] shadow-[0_5px_12px_rgba(31,42,106,0.04)] transition hover:border-[#B9A8F3] hover:bg-[#F8F6FF]">Select</a>
+                    <div class="flex items-center justify-between gap-4 min-[450px]:justify-end">
+                        <span class="text-[17px] font-extrabold text-[#252A57]">{{ $slot['price'] }}</span>
+                        <a href="{{ $slot['href'] }}" class="rounded-[7px] border border-[#E1DDF1] bg-white px-5 py-2.5 text-[12px] font-extrabold text-[#5b2eff] shadow-[0_5px_12px_rgba(31,42,106,0.04)] transition hover:border-[#B9A8F3] hover:bg-[#F8F6FF]">Select</a>
+                    </div>
                 </div>
             @endforeach
         @else

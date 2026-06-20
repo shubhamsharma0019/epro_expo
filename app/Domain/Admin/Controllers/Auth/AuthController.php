@@ -1,0 +1,97 @@
+<?php
+
+namespace App\Domain\Admin\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use App\Domain\Admin\Models\Admin;
+use App\Support\AdminAudit;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Session;
+use Illuminate\View\View;
+
+class AuthController extends Controller
+{
+    public function showLogin(): View
+    {
+        return view('backend.admin.auth.login');
+    }
+
+    public function login(Request $request): RedirectResponse
+    {
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required', 'string'],
+        ]);
+
+        $admin = Admin::where('email', $credentials['email'])->first();
+
+        if (! $admin || ! Hash::check($credentials['password'], $admin->password)) {
+            return back()->withErrors([
+                'email' => 'The provided credentials do not match our records.',
+            ])->onlyInput('email');
+        }
+
+        if ($admin->status !== 'active') {
+            return back()->withErrors([
+                'email' => 'This admin account is not active.',
+            ])->onlyInput('email');
+        }
+
+        $request->session()->regenerate();
+        Session::put('admin_id', $admin->id);
+
+        AdminAudit::log('admin_logged_in', 'auth', 'admin', $admin->id);
+
+        return redirect('/admin/dashboard');
+    }
+
+    public function showRegister(): View
+    {
+        return view('backend.admin.auth.register');
+    }
+
+    public function register(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:admins,email'],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $admin = Admin::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'phone' => $data['phone'] ?? null,
+            'password' => Hash::make($data['password']),
+            'role' => 'admin',
+            'status' => 'active',
+        ]);
+
+        $request->session()->regenerate();
+        Session::put('admin_id', $admin->id);
+
+        AdminAudit::log('admin_registered', 'auth', 'admin', $admin->id, [
+            'email' => $admin->email,
+        ]);
+
+        return redirect('/admin/dashboard');
+    }
+
+    public function logout(Request $request): RedirectResponse
+    {
+        $adminId = Session::get('admin_id');
+        if ($adminId) {
+            AdminAudit::log('admin_logged_out', 'auth', 'admin', $adminId);
+        }
+
+        Session::forget('admin_id');
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/admin/login');
+    }
+}

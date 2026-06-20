@@ -25,6 +25,7 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @include('frontend.shared.partials.responsive-fixes')
 </head>
 <body class="event-home bg-[#fbfbff] font-['Inter',sans-serif] text-[#071044] antialiased">
     @include('frontend.events.partials.home.header')
@@ -34,7 +35,6 @@
         @include('frontend.events.partials.home.categories')
         @include('frontend.events.partials.home.trending')
         @include('frontend.events.partials.home.discovery')
-        @include('frontend.events.partials.home.tickets')
     </main>
 
     @include('frontend.events.partials.home.footer')

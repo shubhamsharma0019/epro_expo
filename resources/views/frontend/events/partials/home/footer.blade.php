@@ -12,12 +12,8 @@
             <span>Global Reach</span>
             <span>24/7 Support</span>
         </div>
-        <div class="flex items-center gap-5 text-[13px] font-semibold">
+        <div class="flex items-center text-[13px] font-semibold">
             <span>www.eproexpo.com</span>
-            <span>in</span>
-            <span>t</span>
-            <span>f</span>
-            <span>yt</span>
         </div>
     </div>
 </footer>

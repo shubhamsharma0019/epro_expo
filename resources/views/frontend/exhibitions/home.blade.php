@@ -185,7 +185,7 @@
                         @endforeach
                     </div>
 
-                    <a href="{{ route('company.dashboard') }}" class="mt-7 flex h-[48px] w-full items-center justify-center rounded-lg bg-gradient-to-r from-[#5b2eff] to-[#4310d8] text-[14px] font-extrabold text-white shadow-[0_9px_20px_rgba(91,46,255,0.25)]">
+                    <a href="{{ route('company.home') }}" class="mt-7 flex h-[48px] w-full items-center justify-center rounded-lg bg-gradient-to-r from-[#5b2eff] to-[#4310d8] text-[14px] font-extrabold text-white shadow-[0_9px_20px_rgba(91,46,255,0.25)]">
                         Start Exhibition Flow
                     </a>
                 </aside>
@@ -335,7 +335,7 @@
         <div class="mt-6 overflow-hidden rounded-[20px] border border-[#E7EAF3] bg-[#071044] shadow-[0_14px_34px_rgba(7,16,68,.12)]">
             <div class="grid grid-cols-1 lg:grid-cols-[1.05fr_1fr_1fr]">
                 @foreach ([
-                    ['01', 'Dashboard', 'Start from the exhibitor workspace, then book a new booth.', route('company.dashboard'), 'Open dashboard', 'images/exhibitions/hero-book-exhibition.png', 'object-[55%_50%]'],
+                    ['01', 'Choose Pavilion', 'Start with pavilions, then continue through hall, booth, slot, and payment.', route('company.booth-booking.pavilions'), 'Explore pavilions', 'images/exhibitions/hero-book-exhibition.png', 'object-[55%_50%]'],
                     ['02', 'Choose Pavilion', 'Start with the right category, traffic level, and audience fit.', route('company.booth-booking.pavilions'), 'Explore pavilions', 'images/exhibitions/pavilion-innovation-card.png', 'object-center'],
                     ['03', 'Pick Booth Space', 'Compare hall layout, booth sizes, duration, and available slots.', route('company.booth-booking.sizes'), 'Select booth', 'images/exhibitions/info-custom-booth.png', 'object-center'],
                 ] as [$step, $title, $desc, $href, $label, $image, $position])

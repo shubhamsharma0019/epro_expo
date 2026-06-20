@@ -1,1 +1,0 @@
-@include('company.dashboard.index')

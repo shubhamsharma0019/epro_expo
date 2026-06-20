@@ -3,7 +3,7 @@
 @section('title', 'Payment - ' . (isset($dbEvent) ? $dbEvent->title : 'Global Tech Summit 2024'))
 
 @section('content')
-<main class="mx-auto w-full max-w-[1248px] flex-1 px-[24px] pt-6 pb-12">
+<main class="mx-auto w-full max-w-[1248px] flex-1 px-4 md:px-[24px] pt-6 pb-12">
             <!-- Breadcrumbs -->
             <div class="mb-5 flex items-center gap-2 text-[14px] font-medium text-[#07105C]">
                 <a href="{{ url('/events') }}" class="hover:text-[#351EEA]">Home</a>
@@ -38,12 +38,14 @@
 
                         <!-- Card option expanded -->
                         <div data-payment-option="Card / Debit Card" class="payment-option rounded-lg border border-[#7C55FF] bg-white px-4 py-4">
-                            <div class="flex items-center gap-5">
-                                <button type="button" class="payment-radio flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full border-2 border-[#351EEA]">
-                                    <span class="h-[7px] w-[7px] rounded-full bg-[#351EEA]"></span>
-                                </button>
-                                <span class="w-[155px] text-[15px] font-bold text-[#070A50]">Card / Debit Card</span>
-                                <div class="flex items-center gap-3">
+                            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                <div class="flex items-center gap-5">
+                                    <button type="button" class="payment-radio flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full border-2 border-[#351EEA]">
+                                        <span class="h-[7px] w-[7px] rounded-full bg-[#351EEA]"></span>
+                                    </button>
+                                    <span class="text-[15px] font-bold text-[#070A50]">Card / Debit Card</span>
+                                </div>
+                                <div class="flex items-center gap-3 flex-wrap pl-10 sm:pl-0">
                                     <span class="inline-flex h-6 w-[42px] items-center justify-center rounded border border-[#E2E6F2] bg-white text-[13px] font-black italic tracking-tighter text-[#14227D]">VISA</span>
                                     <span class="relative inline-flex h-6 w-[42px] items-center justify-center rounded border border-[#E2E6F2] bg-white">
                                         <span class="absolute left-[10px] h-[15px] w-[15px] rounded-full bg-[#EB001B] opacity-90 mix-blend-multiply"></span>

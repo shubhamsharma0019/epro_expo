@@ -1,5 +1,5 @@
-<section class="relative overflow-visible lg:min-h-[535px]">
-    <div class="absolute right-0 top-0 z-0 hidden h-[520px] w-[780px] lg:block">
+<section class="relative overflow-visible lg:min-h-[560px]">
+    <div class="absolute z-0 hidden lg:block" style="left: 52%; right: 0; top: 0; height: 520px;">
         @include('frontend.events.partials.home.hero-carousel')
     </div>
 

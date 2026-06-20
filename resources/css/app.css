@@ -78,3 +78,69 @@
         }
     }
 }
+
+/* Premium Custom Scrollbar for Exhibition Sidebar */
+#exhibition-sidebar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(91, 46, 255, 0.25) transparent;
+}
+
+#exhibition-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+#exhibition-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#exhibition-sidebar::-webkit-scrollbar-thumb {
+    background-color: rgba(91, 46, 255, 0.25);
+    border-radius: 10px;
+}
+
+#exhibition-sidebar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(91, 46, 255, 0.5);
+}
+
+/* Premium Circular Checkboxes */
+input[type="checkbox"].circular-checkbox {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border: 2px solid #8FA0C7;
+    border-radius: 50%;
+    outline: none;
+    cursor: pointer;
+    background-color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+input[type="checkbox"].circular-checkbox:checked {
+    background-color: #5b2eff;
+    border-color: #5b2eff;
+    box-shadow: 0 0 0 4px rgba(91, 46, 255, 0.15);
+}
+
+input[type="checkbox"].circular-checkbox::after {
+    content: '';
+    display: block;
+    width: 6px;
+    height: 11px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg) scale(0);
+    transition: transform 0.15s ease;
+    margin-top: -2px; /* Centers the visual gravity of the checkmark */
+}
+
+input[type="checkbox"].circular-checkbox:checked::after {
+    transform: rotate(45deg) scale(1);
+}
+
+input[type="checkbox"].circular-checkbox:focus {
+    border-color: #5b2eff;
+}
+

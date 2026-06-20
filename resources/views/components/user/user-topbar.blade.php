@@ -22,25 +22,11 @@
             @endforeach
         </div>
 
-        <div class="min-w-0 flex-1">
-            <label class="relative block max-w-[620px]">
-                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-[14px] text-[#7A849D]"></i>
-                <input type="search" placeholder="Search events, booths, tickets..." class="h-12 w-full rounded-full border border-[#E2E7F3] bg-[#F7F9FE] pl-11 pr-20 text-[14px] font-medium text-[#071044] outline-none transition placeholder:text-[#8A94AD] focus:border-[#5b2eff] focus:bg-white focus:ring-4 focus:ring-[#5b2eff]/10">
-                <span class="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-full border border-[#E7EAF3] bg-white px-2.5 py-1 text-[11px] font-medium text-[#8A94AD] sm:inline-flex">Ctrl K</span>
-            </label>
-        </div>
+        <div class="min-w-0 flex-1"></div>
 
         <div class="flex shrink-0 items-center gap-2 sm:gap-3">
-            <a href="{{ url('/user/tickets') }}" class="hidden h-11 items-center justify-center gap-2 rounded-full border border-[#E7EAF3] bg-white px-4 text-[13px] font-medium text-[#071044] shadow-sm transition hover:border-[#5b2eff] hover:text-[#5b2eff] md:inline-flex">
-                <i class="fa-solid fa-ticket text-[12px]"></i>
-                Tickets
-            </a>
-            <button type="button" class="relative flex h-11 w-11 items-center justify-center rounded-full border border-[#E7EAF3] bg-white text-[#071044] shadow-sm transition hover:border-[#5b2eff] hover:text-[#5b2eff]">
-                <i class="fa-regular fa-bell text-[18px]"></i>
-                <span class="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-[#246BFF] ring-2 ring-white"></span>
-            </button>
             <div class="relative inline-block text-left" id="userTopbarDropdownContainer">
-                <button type="button" id="userTopbarDropdownBtn" class="flex items-center gap-3 cursor-pointer pl-4 border-l border-[#E7EAF3] hover:opacity-85 transition-opacity focus:outline-none bg-transparent border-0 p-0">
+                <button type="button" id="userTopbarDropdownBtn" class="flex items-center gap-3 cursor-pointer hover:opacity-85 transition-opacity focus:outline-none bg-transparent border-0 p-0">
                     <div class="text-right hidden sm:block">
                         <div class="text-[13px] font-bold text-[#1E293B]">{{ auth()->user()->name ?? 'Unknown User' }}</div>
                         <div class="text-[11px] text-gray-500 font-medium">Visitor</div>

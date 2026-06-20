@@ -86,7 +86,7 @@
                             <i class="{{ $detailService?->icon ?: 'fa-regular fa-star' }} text-[15px]"></i>
                         </span>
 
-                        <div>
+                        <div class="min-w-0">
                             <h3 class="text-[20px] font-semibold text-navy sm:text-[25px]">{{ $detailService?->title ?? 'Featured Listing' }}</h3>
                             <p class="mt-4 max-w-[480px] text-[16px] leading-7 text-[#5A6480] sm:mt-5 sm:text-[21px] sm:leading-8">
                                 {{ $detailService?->description ?? 'Highlight your company at the top of exhibitor list and get more visibility.' }}

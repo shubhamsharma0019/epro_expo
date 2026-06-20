@@ -23,7 +23,7 @@
             'status' => 'Upcoming',
             'date' => 'Jun 02, 2024',
             'time' => '02:00 PM - 05:30 PM',
-            'venue' => 'Toronto Digital Hub, Canada',
+            'venue' => 'Toronto Digital Hub, India',
             'booking' => 'EVT-240602-000457',
             'seat' => 'VIP B-08',
             'price' => '₹49.00',

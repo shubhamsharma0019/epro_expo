@@ -6,7 +6,7 @@ $app = require_once __DIR__ . '/bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
-$exhibitions = \App\Models\Exhibition::query()
+$exhibitions = \App\Domain\Event\Models\Exhibition::query()
     ->with([
         'boothBookings' => fn ($query) => $query
             ->with(['boothProfile', 'boothProducts', 'boothCatalogues'])
@@ -19,7 +19,7 @@ $exhibitions = \App\Models\Exhibition::query()
     ->orderBy('start_date')
     ->get();
 
-$companyEvents = \App\Models\CompanyEvent\CompanyEvent::with('branding')
+$companyEvents = \App\Domain\Event\Models\CompanyEvent\CompanyEvent::with('branding')
     ->whereIn('status', ['published', 'pending_review', 'submitted', 'draft'])
     ->get()
     ->map(function ($event) {

@@ -1,4 +1,6 @@
 @php
+    $exhibitionSlug = session('company_booth_booking.exhibition_slug');
+    $exQuery = $exhibitionSlug ? ['exhibition' => $exhibitionSlug] : [];
     $steps = $steps ?? [
         ['Pavilion', '/company/booth-booking/pavilions'],
         ['Hall', '/company/booth-booking/halls'],
@@ -21,9 +23,13 @@
             @php
                 $isDone = $activeIndex !== false && $index < $activeIndex;
                 $isActive = $label === $active;
+                $url = url($href);
+                if (!empty($exQuery)) {
+                    $url .= '?' . http_build_query($exQuery);
+                }
             @endphp
 
-            <a href="{{ url($href) }}" class="flex shrink-0 items-center gap-3 {{ $isActive ? 'rounded-full bg-[#F4F0FF] px-4 py-2 text-purple' : '' }}">
+            <a href="{{ $url }}" class="flex shrink-0 items-center gap-3 {{ $isActive ? 'rounded-full bg-[#F4F0FF] px-4 py-2 text-purple' : '' }}">
                 <span class="flex h-8 w-8 items-center justify-center rounded-full {{ $isDone || $isActive ? 'bg-gradient-to-r from-[#5b2eff] to-[#4310d8] text-white' : 'border border-[#8FA0C7] bg-white text-navy' }} text-[14px] font-semibold">
                     @if ($isDone)
                         <i class="fa-solid fa-check text-[12px]"></i>

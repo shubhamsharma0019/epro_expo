@@ -14,15 +14,16 @@
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @include('frontend.shared.partials.responsive-fixes')
 </head>
 
 <body class="h-screen overflow-hidden bg-gray-50 font-outfit text-gray-900 antialiased">
     <div id="company-sidebar-overlay" class="fixed inset-0 z-40 hidden bg-gray-900/40 lg:hidden"></div>
     <div class="flex h-screen overflow-hidden">
-        @include('company.partials.dashboard-sidebar')
+        @include('backend.company.partials.dashboard-sidebar')
 
         <div class="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
-            @include('company.partials.dashboard-topbar')
+            @include('backend.company.partials.dashboard-topbar')
 
             <main class="min-w-0 flex-1 overflow-y-auto bg-gray-50">
                 @yield('content')

@@ -1,6 +1,6 @@
 @php
-    $slug = $slug ?? 'innovation-expo';
+    $slug = $slug ?? '';
     $isPassActive = $isPassActive ?? false;
 @endphp
 
-@include('frontend.exhibitions.visitor.companies.index', ['slug' => $slug, 'isPassActive' => $isPassActive])
+@include('frontend.visitor-exhibition.booths.companies', ['slug' => $slug, 'isPassActive' => $isPassActive, 'booths' => $booths ?? collect()])

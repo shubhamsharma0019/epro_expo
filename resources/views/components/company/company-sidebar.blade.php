@@ -1,18 +1,17 @@
 @php
     $items = [
         ['Dashboard', '/company/dashboard', 'company/dashboard', 'fa-solid fa-house'],
-        ['Pavilions', '/company/booth-booking/pavilions', 'company/booth-booking/pavilions', 'fa-regular fa-building'],
-        ['Halls', '/company/booth-booking/halls', 'company/booth-booking/halls', 'fa-regular fa-calendar'],
-        ['Book Booths', '/company/booth-booking/pavilions', 'company/booth-booking*', 'fa-regular fa-clipboard'],
+        ['Exhibitions', '/company/exhibitions', 'company/exhibitions*', 'fa-solid fa-globe'],
+        ['Book Booths', '/company/exhibitions', 'company/booth-booking*', 'fa-regular fa-clipboard'],
         ['My Bookings', '/company/bookings', 'company/bookings*', 'fa-regular fa-bookmark'],
         ['Leads', '/company/enquiries', 'company/enquiries*', 'fa-solid fa-users'],
-        ['Invoices', '/company/bookings', 'company/bookings*', 'fa-regular fa-file-lines'],
+        ['Invoices', '/company/payments-invoices', 'company/payments-invoices', 'fa-regular fa-file-lines'],
         ['Profile', '/company/profile', 'company/profile', 'fa-regular fa-user'],
         ['Support', '/company/meetings', 'company/meetings*', 'fa-solid fa-headphones'],
         ['Settings', '/company/settings', 'company/settings', 'fa-solid fa-gear'],
     ];
 
-    $sidebarCompany = \App\Models\Company::find(session('company_id'));
+    $sidebarCompany = \App\Domain\Company\Models\Company::find(session('company_id'));
     $activeBoothBooking = $sidebarCompany?->boothBookings()
         ->with(['hall', 'booth'])
         ->where('payment_status', 'paid')
@@ -45,7 +44,7 @@
             <p class="text-[12px] font-medium">No active booth</p>
             <p class="mt-2 text-[13px] leading-5">Book a booth to unlock full features.</p>
             <div class="mt-4 flex items-center justify-between gap-3">
-                <a href="{{ url('/company/booth-booking/pavilions') }}" class="text-[12px] font-bold text-[#5b2eff]">Book Now</a>
+                <a href="{{ url('/company/exhibitions') }}" class="text-[12px] font-bold text-[#5b2eff]">Book Now</a>
             </div>
         </div>
         @endif
