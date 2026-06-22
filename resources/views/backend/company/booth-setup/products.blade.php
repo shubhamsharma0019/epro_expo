@@ -17,8 +17,7 @@
 
 <section class="px-4 py-6 sm:px-6 lg:px-8">
     <div class="mx-auto w-full max-w-[1400px] rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
-        <h1 class="mb-2 text-[28px] font-bold tracking-tight text-[#1E1B4B]">Products</h1>
-        <p class="mb-8 text-[15px] text-[#6B7280]">Add products or services to showcase in your booth.</p>
+        <h1 class="mb-8 text-[28px] font-bold tracking-tight text-[#1E1B4B]">Products</h1>
 
         @if (session('status'))
             <div class="mb-6 rounded-xl border border-green-200 bg-green-50 px-5 py-4 text-sm font-medium text-green-700">{{ session('status') }}</div>

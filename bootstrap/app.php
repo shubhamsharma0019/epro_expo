@@ -21,7 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\Throwable $exception, \Illuminate\Http\Request $request) {
+            return \App\Support\DatabaseOutageResponse::forRequest($request, $exception);
+        });
     })->create();
 
 

@@ -3,7 +3,8 @@
 use Illuminate\Support\Facades\Route;
 
 $eventHomeHandler = function () {
-        $publishedEvents = \App\Support\LiveContent::companyEventPageQuery()
+    return \App\Support\DbGuard::whenAvailable(function () {
+        $publishedEvents = \App\Support\LiveContent::databaseCompanyEventsQuery()
             ->with(['branding', 'ticketTypes'])
             ->latest('updated_at')
             ->take(6)
@@ -75,7 +76,7 @@ $eventHomeHandler = function () {
             'lifestyle' => 'lifestyle.svg',
         ];
 
-        $categories = \App\Support\LiveContent::companyEventPageQuery()
+        $categories = \App\Support\LiveContent::databaseCompanyEventsQuery()
             ->whereNotNull('category')
             ->selectRaw('category, count(*) as total')
             ->groupBy('category')
@@ -93,7 +94,7 @@ $eventHomeHandler = function () {
                 ];
             })->values()->all();
 
-        $totalCountryEvents = \App\Support\LiveContent::companyEventPageQuery()->count();
+        $totalCountryEvents = \App\Support\LiveContent::databaseCompanyEventsQuery()->count();
         $countries = $totalCountryEvents > 0 ? [[
             'flag' => 'in.svg',
             'name' => 'India',
@@ -154,6 +155,16 @@ $eventHomeHandler = function () {
         ] : null;
 
         return view('frontend.events.home', compact('events', 'categories', 'countries', 'tickets', 'slots', 'sampleTicket'));
+    }, function () {
+        return view('frontend.events.home', [
+            'events' => [],
+            'categories' => [],
+            'countries' => [],
+            'tickets' => [],
+            'slots' => [],
+            'sampleTicket' => null,
+        ]);
+    });
 };
 
 Route::get('/eventsdynamic', $eventHomeHandler)->name('events.dynamic');
@@ -174,11 +185,21 @@ Route::prefix('events')->name('events.')->group(function () use ($eventHomeHandl
 
 
     Route::get('/listings', function (\Illuminate\Http\Request $request) {
+        if (! \App\Support\DbGuard::available()) {
+            return view('frontend.events.listings.index', [
+                'dbEvents' => collect(),
+                'status' => 'upcoming',
+                'statusCounts' => ['upcoming' => 0, 'ongoing' => 0, 'past' => 0],
+                'categories' => collect(),
+                'countries' => collect(['India']),
+            ]);
+        }
+
         $status = in_array($request->string('status')->toString(), ['upcoming', 'ongoing', 'past'], true)
             ? $request->string('status')->toString()
             : 'upcoming';
 
-        $baseQuery = \App\Support\LiveContent::companyEventPageQuery()
+        $baseQuery = \App\Support\LiveContent::databaseCompanyEventsQuery()
             ->with('branding')
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->string('search')->toString();
@@ -209,7 +230,7 @@ Route::prefix('events')->name('events.')->group(function () use ($eventHomeHandl
             ->get();
 
         $statusCounts = [
-            'upcoming' => (clone \App\Support\LiveContent::companyEventPageQuery())
+            'upcoming' => (clone \App\Support\LiveContent::databaseCompanyEventsQuery())
                 ->when($request->filled('search'), function ($query) use ($request) {
                     $search = $request->string('search')->toString();
                     $query->where(function ($query) use ($search) {
@@ -225,7 +246,7 @@ Route::prefix('events')->name('events.')->group(function () use ($eventHomeHandl
                 ->when($request->filled('country') && strtolower($request->string('country')->toString()) !== 'india', fn ($query) => $query->where('country', $request->string('country')->toString()))
                 ->whereDate('starts_at', '>=', now()->toDateString())
                 ->count(),
-            'ongoing' => (clone \App\Support\LiveContent::companyEventPageQuery())
+            'ongoing' => (clone \App\Support\LiveContent::databaseCompanyEventsQuery())
                 ->when($request->filled('search'), function ($query) use ($request) {
                     $search = $request->string('search')->toString();
                     $query->where(function ($query) use ($search) {
@@ -245,7 +266,7 @@ Route::prefix('events')->name('events.')->group(function () use ($eventHomeHandl
                         ->orWhereDate('ends_at', '>=', now()->toDateString());
                 })
                 ->count(),
-            'past' => (clone \App\Support\LiveContent::companyEventPageQuery())
+            'past' => (clone \App\Support\LiveContent::databaseCompanyEventsQuery())
                 ->when($request->filled('search'), function ($query) use ($request) {
                     $search = $request->string('search')->toString();
                     $query->where(function ($query) use ($search) {
@@ -263,7 +284,7 @@ Route::prefix('events')->name('events.')->group(function () use ($eventHomeHandl
                 ->count(),
         ];
 
-        $categories = \App\Support\LiveContent::companyEventPageQuery()
+        $categories = \App\Support\LiveContent::databaseCompanyEventsQuery()
             ->whereNotNull('category')
             ->distinct()
             ->orderBy('category')

@@ -10,8 +10,7 @@
         <!-- Header Section -->
         <div class="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start sm:gap-6 mb-8">
             <div>
-                <h1 class="text-[28px] font-bold text-[#1E1B4B] tracking-tight mb-2">Booth Analytics</h1>
-                <p class="text-[#6B7280] text-[15px]">Track performance and engagement for your booth.</p>
+                <h1 class="text-[28px] font-bold text-[#1E1B4B] tracking-tight">Booth Analytics</h1>
             </div>
             <div class="flex flex-wrap items-center gap-3">
                 <!-- Date Picker -->

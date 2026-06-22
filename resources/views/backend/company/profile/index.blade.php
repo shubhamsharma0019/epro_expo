@@ -21,7 +21,6 @@
 <section class="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
     <div class="mb-6">
         <h1 class="text-[28px] font-bold leading-tight text-gray-900 sm:text-[34px]">Manage Company Profile</h1>
-        <p class="mt-2 text-[15px] font-medium leading-7 text-gray-500">Keep your exhibitor profile, booth microsite, and contact details up to date.</p>
     </div>
 
     @if (session('status'))

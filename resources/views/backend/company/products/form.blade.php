@@ -1,7 +1,6 @@
 <section class="max-w-[900px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
     <div class="mb-8">
         <h1 class="text-[34px] font-semibold leading-[42px] tracking-[-0.8px] text-navy">{{ $mode }} Product</h1>
-        <p class="mt-3 text-[16px] font-medium leading-7 text-[#34405F]">Product information will appear on your booth profile.</p>
     </div>
     <form class="rounded-xl border border-borderColor bg-white p-6 shadow-sm sm:p-8">
         <div class="grid grid-cols-1 gap-5">

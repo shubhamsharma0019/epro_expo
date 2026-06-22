@@ -96,6 +96,140 @@ class CompanyExhibitionFlowDetailTest extends TestCase
         ]);
     }
 
+    public function test_company_exhibition_browse_deduplicates_exhibitions_by_title(): void
+    {
+        $this->session(['company_id' => $this->company->id]);
+
+        Exhibition::create([
+            'title' => 'Global Tech Expo 2024',
+            'slug' => 'global-tech-expo-2024-copy',
+            'start_date' => '2026-06-12',
+            'end_date' => '2026-06-14',
+            'status' => 'active',
+            'approval_status' => 'approved',
+            'publish_status' => 'published',
+        ]);
+
+        $response = $this->get(route('company.exhibitions.index'));
+
+        $response->assertStatus(200);
+        $this->assertSame(1, substr_count($response->getContent(), '<h2 class="text-[21px] font-semibold text-navy">Global Tech Expo 2024</h2>'));
+    }
+
+    public function test_company_exhibition_browse_search_filters_results(): void
+    {
+        $this->session(['company_id' => $this->company->id]);
+
+        $secondExhibition = Exhibition::create([
+            'title' => 'Future of AI Expo',
+            'slug' => 'future-of-ai-expo',
+            'start_date' => '2026-07-10',
+            'end_date' => '2026-07-12',
+            'status' => 'active',
+            'approval_status' => 'approved',
+            'publish_status' => 'published',
+        ]);
+
+        Pavilion::create([
+            'exhibition_id' => $secondExhibition->id,
+            'title' => 'Robotics Pavilion',
+            'slug' => 'robotics-pavilion',
+            'status' => 'active',
+        ]);
+
+        $response = $this->get(route('company.exhibitions.index', ['search' => 'future']));
+
+        $response->assertStatus(200);
+        $response->assertSee('Future of AI Expo');
+        $response->assertDontSee('Global Tech Expo 2024');
+        $response->assertSee('value="future"', false);
+
+        $response = $this->get(route('company.exhibitions.index', ['search' => 'robotics']));
+
+        $response->assertStatus(200);
+        $response->assertSee('Future of AI Expo');
+        $response->assertDontSee('Global Tech Expo 2024');
+    }
+
+    public function test_company_pavilion_search_filters_and_preserves_selected_exhibition(): void
+    {
+        $this->session(['company_id' => $this->company->id]);
+
+        Pavilion::create([
+            'exhibition_id' => $this->exhibition->id,
+            'title' => 'Robotics Pavilion',
+            'slug' => 'robotics-pavilion',
+            'description' => 'Automation systems',
+            'status' => 'active',
+        ]);
+
+        $response = $this->get(route('company.booth-booking.pavilions', [
+            'exhibition' => $this->exhibition->slug,
+            'search' => 'robotics',
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertSee('Robotics Pavilion');
+        $response->assertDontSee('Innovation Pavilion');
+        $response->assertSee('name="exhibition" value="global-tech-expo-2024"', false);
+        $response->assertSee('value="robotics"', false);
+    }
+
+    public function test_company_pavilion_search_works_across_all_live_exhibitions(): void
+    {
+        $this->session(['company_id' => $this->company->id]);
+
+        $secondExhibition = Exhibition::create([
+            'title' => 'Future of AI Expo',
+            'slug' => 'future-of-ai-expo',
+            'start_date' => '2026-07-10',
+            'end_date' => '2026-07-12',
+            'status' => 'active',
+            'approval_status' => 'approved',
+            'publish_status' => 'published',
+        ]);
+
+        Pavilion::create([
+            'exhibition_id' => $secondExhibition->id,
+            'title' => 'Deep Learning Pavilion',
+            'slug' => 'deep-learning-pavilion',
+            'description' => 'Neural network models',
+            'status' => 'active',
+        ]);
+
+        $response = $this->get(route('company.booth-booking.pavilions', ['search' => 'deep']));
+
+        $response->assertStatus(200);
+        $response->assertSee('Deep Learning Pavilion');
+        $response->assertDontSee('Innovation Pavilion');
+        $response->assertSee('value="deep"', false);
+        $response->assertDontSee('name="exhibition"', false);
+    }
+
+    public function test_company_hall_search_filters_results_without_footfall_labels(): void
+    {
+        $this->session(['company_id' => $this->company->id]);
+
+        Hall::create([
+            'pavilion_id' => $this->pavilion->id,
+            'title' => 'Hall 2 - Machine Automation',
+            'slug' => 'hall-2-machine-automation',
+            'description' => 'Robotics and machinery booths',
+            'status' => 'active',
+        ]);
+
+        $response = $this->get(route('company.booth-booking.halls', [
+            'pavilion' => $this->pavilion->id,
+            'search' => 'machine',
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertSee('Hall 2 - Machine Automation');
+        $response->assertDontSee('Hall 1 - AI Solutions');
+        $response->assertDontSee('High Footfall');
+        $response->assertDontSee('Medium Footfall');
+        $response->assertSee('value="machine"', false);
+    }
     public function test_complete_exhibition_and_booth_booking_flow(): void
     {
         // Set company session

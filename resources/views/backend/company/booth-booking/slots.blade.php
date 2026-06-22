@@ -13,23 +13,20 @@
 
 <section class="max-w-[1500px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
     <div class="mb-7">
-        <h1 class="text-[32px] font-semibold leading-[40px] tracking-[-0.8px] text-navy">
+        <h1 class="text-[24px] font-semibold leading-tight tracking-[-0.8px] text-navy sm:text-[32px] sm:leading-[40px]">
             Book Slots as Booths
         </h1>
     </div>
 
     <div class="mb-6">
-        <h2 class="text-[25px] font-semibold leading-[32px] tracking-[-0.5px] text-navy">
+        <h2 class="text-[20px] font-semibold leading-tight tracking-[-0.5px] text-navy sm:text-[25px] sm:leading-[32px]">
             Select Booth Days (Activate Your Booth)
         </h2>
-        <p class="mt-3 text-[16px] font-medium leading-7 text-[#34405F]">
-            Choose one or more exhibition days when you want your booth to be active.
-            <span class="block text-[14px] text-[#5A6480]">
-                {{ optional($hall->pavilion)->title ?? 'Pavilion' }} / {{ $hall->title }} / Booth {{ $booth->booth_number }}
-                @if ($selectedSize)
-                    / {{ $selectedSize->title }}
-                @endif
-            </span>
+        <p class="mt-3 text-[14px] font-medium text-[#5A6480]">
+            {{ optional($hall->pavilion)->title ?? 'Pavilion' }} / {{ $hall->title }} / Booth {{ $booth->booth_number }}
+            @if ($selectedSize)
+                / {{ $selectedSize->title }}
+            @endif
         </p>
     </div>
 
@@ -156,32 +153,8 @@
         </div>
     </div>
 
-    <div class="mt-7 rounded-xl border border-[#DCD3FF] bg-white px-6 py-5 shadow-sm">
-        <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-            <div class="flex items-start gap-5">
-                <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-purple text-[18px] font-semibold text-purple">
-                    i
-                </span>
-                <div>
-                    <h2 class="text-[20px] font-semibold text-navy">Need Custom Days?</h2>
-                    <p class="mt-2 text-[16px] font-medium text-[#34405F]">Request custom days or longer duration.</p>
-                </div>
-            </div>
-
-            <form method="POST" action="{{ route('company.booth-booking.slots.custom') }}">
-                @csrf
-                <input type="hidden" name="hall_id" value="{{ $hall->id }}">
-                <input type="hidden" name="booth_id" value="{{ $booth->id }}">
-                <input type="hidden" name="size_id" value="{{ $selectedSize?->id }}">
-                <button type="submit" class="inline-flex h-[58px] min-w-[230px] items-center justify-center rounded-md border border-[#B9A7FF] px-7 text-[16px] font-semibold text-purple">
-                    Request Custom Days
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <div class="mt-7 rounded-xl border border-borderColor bg-white px-6 py-5 shadow-sm">
-        <div class="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+    <div class="mt-7 rounded-xl border border-borderColor bg-white px-5 py-5 shadow-sm sm:px-6">
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
             <div>
                 <h2 class="text-[18px] font-semibold text-navy">Selected Days ({{ $selectedSlots->count() }})</h2>
                 <div class="mt-3 flex flex-wrap gap-2">
@@ -209,14 +182,14 @@
                 </div>
             </div>
 
-            <form method="POST" action="{{ route('company.booth-booking.slots.continue') }}" class="lg:mt-[86px]">
+            <form method="POST" action="{{ route('company.booth-booking.slots.continue') }}" class="w-full lg:w-auto">
                 @csrf
                 <input type="hidden" name="hall_id" value="{{ $hall->id }}">
                 <input type="hidden" name="booth_id" value="{{ $booth->id }}">
                 <input type="hidden" name="size_id" value="{{ $selectedSize?->id }}">
                 <input id="continue-days-count" type="hidden" name="days_count" value="{{ $bookingDaysCount }}">
                 <button type="submit"
-                    class="inline-flex h-[58px] w-full items-center justify-center gap-4 rounded-md bg-gradient-to-r from-[#5b2eff] to-[#4310d8] px-8 text-[18px] font-semibold text-white shadow-[0_10px_20px_rgba(91,46,255,0.18)] disabled:cursor-not-allowed disabled:opacity-60 lg:min-w-[220px]"
+                    class="inline-flex h-[58px] w-full items-center justify-center gap-4 rounded-md bg-gradient-to-r from-[#5b2eff] to-[#4310d8] px-8 text-[18px] font-semibold text-white shadow-[0_10px_20px_rgba(91,46,255,0.18)] transition disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto lg:min-w-[220px]"
                 >
                     Continue
                     <i class="fa-solid fa-arrow-right text-[15px]"></i>

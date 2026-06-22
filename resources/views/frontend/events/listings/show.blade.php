@@ -13,9 +13,18 @@
         $price = $minPrice !== null
             ? (($currencySymbols[$currency] ?? $currency . ' ') . number_format((float) $minPrice, 2))
             : 'Free';
+        $country = trim((string) $dbEvent->country);
+        $addressParts = collect(explode(',', (string) $dbEvent->venue_address))->map(fn ($part) => trim($part));
+        $city = trim((string) $dbEvent->city);
+
+        if (strtolower($country) === 'india') {
+            $addressParts = $addressParts->reject(fn ($part) => in_array(strtolower($part), ['chicago', 'il', 'usa', 'united states', 'united states of america'], true));
+            $city = strtolower($city) === 'chicago' ? '' : $city;
+        }
+
         $eventVenue = collect([$dbEvent->venue_name])
-            ->merge(collect(explode(',', (string) $dbEvent->venue_address))->map(fn ($part) => trim($part)))
-            ->merge([$dbEvent->city, $dbEvent->country])
+            ->merge($addressParts)
+            ->merge([$city, $country])
             ->filter()
             ->unique(fn ($part) => strtolower($part))
             ->join(', ');
@@ -80,7 +89,7 @@
                 'tagline' => 'Innovate. Connect. Transform.',
                 'date' => 'May 15 - May 17, 2024',
                 'venue' => 'Jio World Convention Centre, Mumbai',
-                'price' => '₹49.00',
+                'price' => 'Rs. 49.00',
                 'image' => asset('images/events-home/trending/global-tech-summit.svg'),
                 'description' => 'Global Tech Summit 2024 brings together industry leaders, innovators, and enthusiasts to explore the latest trends, products, and opportunities.',
                 'website' => 'www.globaltechsummit.com',
@@ -95,7 +104,7 @@
                 'tagline' => 'Explore the next generation of intelligent products.',
                 'date' => 'May 18 - May 19, 2024',
                 'venue' => 'London Tech Arena, UK',
-                'price' => '₹29.00',
+                'price' => 'Rs. 29.00',
                 'image' => asset('images/events-home/trending/world-ai-conference.svg'),
                 'description' => 'World AI Conference 2024 brings together industry leaders, innovators, and enthusiasts to explore the latest trends, products, and opportunities.',
                 'website' => 'www.worldai.com',
@@ -110,7 +119,7 @@
                 'tagline' => 'Growth, content, performance, and brand strategy.',
                 'date' => 'May 21, 2024',
                 'venue' => 'Toronto Digital Hub, Canada',
-                'price' => '₹19.00',
+                'price' => 'Rs. 19.00',
                 'image' => asset('images/events-home/trending/digital-marketing-summit.svg'),
                 'description' => 'Digital Marketing Summit brings together industry leaders, innovators, and enthusiasts to explore the latest trends, products, and opportunities.',
                 'website' => 'www.digitalmarketing.com',
@@ -125,7 +134,7 @@
                 'tagline' => 'Modern healthcare, diagnostics, and patient experience.',
                 'date' => 'May 18 - May 20, 2024',
                 'venue' => 'Berlin MedTech Centre, Germany',
-                'price' => '₹39.00',
+                'price' => 'Rs. 39.00',
                 'image' => asset('images/events-home/trending/healthcare-innovation.svg'),
                 'description' => 'Healthcare Innovation 2024 brings together industry leaders, innovators, and enthusiasts to explore the latest trends, products, and opportunities.',
                 'website' => 'www.healthcare-innovation.de',
@@ -140,7 +149,7 @@
                 'tagline' => 'Learning technology, classrooms, and skills for tomorrow.',
                 'date' => 'May 25 - May 26, 2024',
                 'venue' => 'India Expo Centre, Greater Noida',
-                'price' => '₹24.00',
+                'price' => 'Rs. 24.00',
                 'image' => asset('images/events-home/trending/future-education.svg'),
                 'description' => 'Future of Education Summit brings together industry leaders, innovators, and enthusiasts to explore the latest trends, products, and opportunities.',
                 'website' => 'www.futureeducation.in',
@@ -155,7 +164,7 @@
                 'tagline' => 'Climate, circular business, and clean growth.',
                 'date' => 'May 27 - May 28, 2024',
                 'venue' => 'Sydney Convention Centre, Australia',
-                'price' => '₹19.00',
+                'price' => 'Rs. 19.00',
                 'image' => asset('images/events-home/trending/sustainability-forum.svg'),
                 'description' => 'Sustainability Forum 2024 brings together industry leaders, innovators, and enthusiasts to explore the latest trends, products, and opportunities.',
                 'website' => 'www.sustainabilityforum.au',
@@ -170,7 +179,7 @@
                 'tagline' => 'AI products, demos, and automation showcases.',
                 'date' => 'Jun 10 - Jun 12, 2024',
                 'venue' => 'Pragati Maidan, New Delhi',
-                'price' => '₹29.00',
+                'price' => 'Rs. 29.00',
                 'image' => 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80',
                 'description' => 'Future of AI Expo brings together industry leaders, innovators, and enthusiasts to explore the latest trends, products, and opportunities.',
                 'website' => 'www.futureaiexpo.com',
@@ -185,7 +194,7 @@
                 'tagline' => 'Clean energy, climate action, and sustainable business.',
                 'date' => 'Jun 20, 2024',
                 'venue' => 'BEC, Bangalore',
-                'price' => '₹19.00',
+                'price' => 'Rs. 19.00',
                 'image' => 'https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&w=1200&q=80',
                 'description' => 'Sustainability Forum brings together industry leaders, innovators, and enthusiasts to explore the latest trends, products, and opportunities.',
                 'website' => 'www.sustainabilityforum.in',
@@ -200,7 +209,7 @@
                 'tagline' => 'Healthcare leaders, product innovation, and care delivery.',
                 'date' => 'Jul 01 - Jul 02, 2024',
                 'venue' => 'HICC, Hyderabad',
-                'price' => '₹39.00',
+                'price' => 'Rs. 39.00',
                 'image' => 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80',
                 'description' => 'Healthcare Innovation Summit brings together industry leaders, innovators, and enthusiasts to explore the latest trends, products, and opportunities.',
                 'website' => 'www.healthinnovation.in',

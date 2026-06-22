@@ -28,13 +28,66 @@ class CompanyEventFlowDetailTest extends TestCase
             'phone' => '9876543210',
             'password' => Hash::make('password'),
             'status' => 'approved',
+            'account_type' => 'event',
         ]);
+    }
+
+    public function test_company_can_create_multiple_events_and_see_them_on_dashboard(): void
+    {
+        $this->session(['company_id' => $this->company->id, 'company_flow_context' => 'event_company']);
+
+        $firstPayload = [
+            'title' => 'Manufacturing Expo 2026',
+            'category' => 'Manufacturing',
+            'sub_category' => 'Industrial Automation',
+            'event_type' => 'in_person',
+            'event_mode' => 'in_person',
+            'starts_at' => '2026-09-10 09:00:00',
+            'ends_at' => '2026-09-13 18:00:00',
+            'timezone' => 'America/Chicago',
+            'venue_address' => 'Chicago, IL, USA',
+            'summary' => 'A physical exhibition for machinery and automation.',
+        ];
+
+        $secondPayload = [
+            'title' => 'Founders Mixer 2026',
+            'category' => 'Finance',
+            'sub_category' => 'Venture Capital',
+            'event_type' => 'in_person',
+            'event_mode' => 'in_person',
+            'starts_at' => '2026-10-05 18:00:00',
+            'ends_at' => '2026-10-05 22:00:00',
+            'timezone' => 'America/New_York',
+            'venue_address' => 'New York, NY, USA',
+            'summary' => 'A premium networking dinner and pitch mixer.',
+        ];
+
+        $this->post(route('company.event-company-flow.create.store'), $firstPayload)
+            ->assertRedirect();
+
+        $this->post(route('company.event-company-flow.create.store'), $secondPayload)
+            ->assertRedirect();
+
+        $this->assertDatabaseCount('company_events', 2);
+        $this->assertDatabaseHas('company_events', [
+            'company_id' => $this->company->id,
+            'title' => 'Manufacturing Expo 2026',
+        ]);
+        $this->assertDatabaseHas('company_events', [
+            'company_id' => $this->company->id,
+            'title' => 'Founders Mixer 2026',
+        ]);
+
+        $this->get(route('company.event-company-flow.dashboard', ['all' => 'true']))
+            ->assertStatus(200)
+            ->assertSee('Manufacturing Expo 2026')
+            ->assertSee('Founders Mixer 2026');
     }
 
     public function test_complete_company_event_and_visitor_booking_flow(): void
     {
         // 1. Company Login (set session)
-        $this->session(['company_id' => $this->company->id]);
+        $this->session(['company_id' => $this->company->id, 'company_flow_context' => 'event_company']);
 
         // 2. Access Event Dashboard
         $response = $this->get(route('company.event-company-flow.dashboard'));
@@ -132,6 +185,13 @@ class CompanyEventFlowDetailTest extends TestCase
         $event->refresh();
         $this->assertEquals('pending_review', $event->status);
 
+        $response = $this->get(route('events.listings.index'));
+        $response->assertStatus(200);
+        $response->assertDontSee('Acme Global Summit 2026');
+
+        $response = $this->get(route('events.listings.show', $event->slug));
+        $response->assertNotFound();
+
         // 8. Admin reviews and approves the event
         $admin = \App\Domain\Admin\Models\Admin::create([
             'name' => 'Admin User',
@@ -152,7 +212,7 @@ class CompanyEventFlowDetailTest extends TestCase
         $this->assertEquals('published', $event->status);
 
         // Verify dashboard reflects the approved event as "Published" count = 1
-        $this->session(['company_id' => $this->company->id]);
+        $this->session(['company_id' => $this->company->id, 'company_flow_context' => 'event_company']);
         $response = $this->get(route('company.event-company-flow.dashboard'));
         $response->assertStatus(200);
         $response->assertSee('Published');
@@ -176,7 +236,7 @@ class CompanyEventFlowDetailTest extends TestCase
         $this->assertNotNull($event->published_at);
 
         // Restore company session
-        $this->session(['company_id' => $this->company->id]);
+        $this->session(['company_id' => $this->company->id, 'company_flow_context' => 'event_company']);
 
         // 9. Visit public event listings and verify the user-created event is listed
         $response = $this->get(route('events.listings.index'));

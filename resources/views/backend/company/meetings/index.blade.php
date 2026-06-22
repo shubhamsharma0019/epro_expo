@@ -7,7 +7,6 @@
 <section class="max-w-[1200px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
     <div class="mb-8">
         <h1 class="text-[34px] font-semibold leading-[42px] tracking-[-0.8px] text-navy">Manage Meetings</h1>
-        <p class="mt-3 text-[16px] font-medium leading-7 text-[#34405F]">Track scheduled buyer meetings and booth appointments.</p>
     </div>
 
     <div class="mb-6 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">

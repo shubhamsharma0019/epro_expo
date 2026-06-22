@@ -23,6 +23,7 @@
     }
     $requiredSpaces = $requiredSpaces ?? 1;
     $hasEnoughSelectedSpaces = $hasEnoughSelectedSpaces ?? false;
+    $sizeAvailableInHall = $sizeAvailableInHall ?? true;
     $selectedVisual = $selectedVisual ?? ['width' => 48, 'height' => 44, 'font' => 14];
     $selectedSpaceBounds = $selectedSpaceBounds ?? ['left' => 0, 'top' => 0, 'width' => 48, 'height' => 44];
     $selectedSpaceSegments = $selectedSpaceSegments ?? [];
@@ -50,8 +51,8 @@
             <h1 class="text-[26px] font-semibold leading-[32px] tracking-[-0.4px] text-navy sm:text-[32px] sm:leading-[40px] sm:tracking-[-0.8px]">
                 {{ $hall->title }}
             </h1>
-            <p class="mt-3 max-w-[760px] text-[15px] font-medium leading-6 text-[#34405F] sm:mt-4 sm:text-[16px] sm:leading-7">
-                {{ optional($hall->pavilion)->title ?? 'Pavilion' }} booth layout plan. Click on any booth to view details and availability.
+            <p class="mt-3 text-[14px] font-medium text-[#5A6480] sm:mt-4">
+                {{ optional($hall->pavilion)->title ?? 'Pavilion' }}
             </p>
         </div>
 
@@ -80,7 +81,17 @@
         </div>
     @endif
 
-    <div class="grid min-w-0 grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+    @if ($selectedSize && ! $sizeAvailableInHall)
+        <div class="mb-4 flex items-start gap-3 rounded-lg border border-[#F4D38A] bg-[#FFF8EC] px-5 py-4 text-[14px] font-semibold text-[#92660C]">
+            <i class="fa-solid fa-triangle-exclamation mt-0.5 text-[16px]"></i>
+            <span>Selected booth size is not available in this hall. Please choose another size or hall.</span>
+        </div>
+    @endif
+
+    {{-- relative + z-[1] creates an explicit stacking context here so the zoom-animated
+         floor-map canvas (and its child stacking contexts) stay bounded at z-level 1.
+         The popup is appended to <body> with z-[2000], which always wins. --}}
+    <div class="relative z-[1] grid min-w-0 grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
         <div class="min-w-0">
             <div id="floor-map-shell" class="max-w-full overflow-hidden rounded-xl border border-borderColor bg-white p-3 shadow-sm sm:p-5">
                 <div class="mx-auto w-full max-w-[720px]">
@@ -90,7 +101,7 @@
                         <div class="h-px flex-1 bg-[#9AA3B8]"></div>
                     </div>
 
-                    <div id="floor-map-viewport" class="w-full">
+                    <div id="floor-map-viewport" class="w-full overflow-x-auto">
                     <div id="floor-map-scale-wrap" class="mx-auto overflow-hidden">
                     <div id="floor-map-canvas" class="w-[720px] transition-transform">
                     <div class="relative w-full min-h-[400px] rounded-md border border-[#BFC8DE] bg-white">
@@ -100,7 +111,7 @@
                                 @if ($segmentIndex === 0) id="selected-space-overlay" @endif
                                 data-selected-overlay-segment
                                 style="display: {{ $selectedBoothAvailable && $selectedFootprint->count() > 1 ? 'flex' : 'none' }}; left: {{ (int) ($segment['left'] ?? 0) }}px; top: {{ (int) ($segment['top'] ?? 0) }}px; width: {{ max((int) ($segment['width'] ?? 48), 48) }}px; height: {{ max((int) ($segment['height'] ?? 44), 44) }}px;"
-                                class="absolute z-30 items-center justify-center gap-2 rounded bg-[#4B18D9] px-2 text-center text-[13px] font-bold text-white shadow-md"
+                                class="absolute z-30 items-center justify-center gap-2 rounded-md bg-[#4B18D9] px-2 text-center text-[13px] font-bold text-white shadow-md ring-1 ring-black/10"
                             >
                                 @if ($segmentIndex === 0)
                                     <span class="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/95 text-[12px] font-extrabold text-[#4B18D9]">
@@ -115,7 +126,7 @@
                             </div>
                         @endforeach
 
-                        @foreach ($bookedBoothGroups as $group)
+                        @foreach ($bookedBoothGroups as $groupIndex => $group)
                             @php
                                 $groupSegments = $group['segments'] ?? [[
                                     'left' => $group['left'],
@@ -123,24 +134,46 @@
                                     'width' => $group['width'],
                                     'height' => $group['height'],
                                 ]];
+                                // Payload consumed by the booth-click popup. Everything here is
+                                // loaded dynamically from the database (company + booking + hall).
+                                $boothPopupPayload = [
+                                    'company_name' => $group['company_name'],
+                                    'logo_url' => $group['logo_url'],
+                                    'exhibition_name' => $group['exhibition_name'] ?? null,
+                                    'hall_name' => $group['hall_name'] ?? null,
+                                    'pavilion_name' => $group['pavilion_name'] ?? null,
+                                    'booth_numbers' => $group['booth_numbers'],
+                                    'size_title' => $group['size_title'] ?? null,
+                                    'booth_count' => $group['booth_count'] ?? count($group['booth_numbers']),
+                                    'status' => $group['status'] ?? 'Confirmed',
+                                    'contact_person' => $group['contact_person'] ?? null,
+                                    'email' => $group['email'] ?? null,
+                                    'phone' => $group['phone'] ?? null,
+                                    'website' => $group['website'] ?? null,
+                                    'category' => $group['category'] ?? null,
+                                    'location' => $group['location'] ?? null,
+                                ];
                             @endphp
                             @foreach ($groupSegments as $segmentIndex => $segment)
-                                <div
+                                <button
+                                    type="button"
+                                    data-booked-group="{{ $groupIndex }}"
+                                    @if ($segmentIndex === 0) data-booked-payload='@json($boothPopupPayload)' @endif
                                     style="position: absolute; left: {{ (int) ($segment['left'] ?? 0) }}px; top: {{ (int) ($segment['top'] ?? 0) }}px; width: {{ max((int) ($segment['width'] ?? 48), 48) }}px; height: {{ max((int) ($segment['height'] ?? 44), 44) }}px;"
-                                    class="absolute z-20 flex items-center justify-center gap-2 rounded bg-[#777777] px-2 text-center text-[12px] font-bold text-white shadow-md"
-                                    title="{{ $group['company_name'] }} - {{ implode(', ', $group['booth_numbers']) }}"
+                                    class="absolute z-20 flex cursor-pointer items-center justify-center gap-2 rounded-md bg-[#777777] px-2 text-center text-[12px] font-bold text-white shadow-md ring-1 ring-black/10 transition hover:bg-[#5f5f5f]"
+                                    title="{{ $group['company_name'] }} - {{ implode(', ', $group['booth_numbers']) }} (click for details)"
                                 >
                                     @if ($segmentIndex === 0)
-                                        <span class="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/95 text-[12px] font-extrabold text-[#4B5563]">
+                                        <span class="pointer-events-none flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/95 text-[12px] font-extrabold text-[#4B5563]">
                                             @if ($group['logo_url'])
                                                 <img src="{{ $group['logo_url'] }}" alt="{{ $group['company_name'] }}" class="h-full w-full object-cover" onerror="this.remove(); this.parentElement.textContent='{{ strtoupper(substr($group['company_name'], 0, 1)) }}';">
                                             @else
                                                 {{ strtoupper(substr($group['company_name'], 0, 1)) }}
                                             @endif
                                         </span>
-                                        <span class="min-w-0 truncate">{{ count($group['booth_numbers']) > 1 ? count($group['booth_numbers']) . ' booths' : 'Booth ' . ($group['booth_numbers'][0] ?? '') }}</span>
+                                        <span class="pointer-events-none min-w-0 truncate">{{ count($group['booth_numbers']) > 1 ? count($group['booth_numbers']) . ' booths' : 'Booth ' . ($group['booth_numbers'][0] ?? '') }}</span>
                                     @endif
-                                </div>
+                                </button>
                             @endforeach
                         @endforeach
 
@@ -202,7 +235,7 @@
                                 data-footprint-height="{{ $footprint['height'] ?? $visual['height'] }}"
                                 data-footprint-segments='@json($footprint['segments'] ?? [])'
                                 data-grouped-booking="0"
-                                class="absolute z-10 {{ $isHiddenGroupedBooking || ($selectedBoothAvailable && $isIncludedInSelectedSpace && count($selectedFootprintIds) > 1) ? 'hidden' : 'flex' }} shrink-0 items-center justify-center rounded font-semibold shadow-sm transition hover:scale-105 {{ $stateClasses[$state] ?? $stateClasses['available'] }}"
+                                class="absolute z-10 {{ $isHiddenGroupedBooking || ($selectedBoothAvailable && $isIncludedInSelectedSpace && count($selectedFootprintIds) > 1) ? 'hidden' : 'flex' }} shrink-0 items-center justify-center rounded-md font-semibold shadow-sm ring-1 ring-black/5 transition hover:scale-[1.04] {{ $stateClasses[$state] ?? $stateClasses['available'] }}"
                             >
                                 {{ str_replace('B', '', $booth->booth_number) }}
                             </button>
@@ -242,7 +275,7 @@
             </div>
             <div class="mb-8">
                 <p class="mb-4 text-[15px] font-semibold text-[#34405F]">Price</p>
-                <p id="booth-detail-price" class="text-[20px] font-semibold text-navy">?{{ number_format((float) $detailPrice, 2) }}</p>
+                <p id="booth-detail-price" class="text-[20px] font-semibold text-navy">&#8377;{{ number_format((float) $detailPrice, 2) }}</p>
             </div>
             <form method="POST" action="{{ route('company.booth-booking.floor-plan.select') }}">
                 @csrf
@@ -254,6 +287,64 @@
                 </button>
             </form>
         </aside>
+    </div>
+
+    {{-- Compact booked-booth card popup.
+         Outer wrapper uses inline styles so Tailwind JIT purging cannot remove critical
+         position/z-index values. Appended to <body> by JS so it escapes the zoomed
+         canvas stacking context entirely. --}}
+    <div id="booth-popup"
+         style="position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;padding:1rem;">
+        {{-- Translucent backdrop --}}
+        <div id="booth-popup-overlay"
+             style="position:absolute;inset:0;background:rgba(15,23,42,0.32);"></div>
+
+        {{-- Card: 320px wide, auto height --}}
+        <div id="booth-popup-card"
+             style="position:relative;z-index:10;width:100%;max-width:320px;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.18),0 4px 16px rgba(0,0,0,0.08);transform:scale(0.94);opacity:0;transition:transform 0.16s ease,opacity 0.16s ease;">
+
+            {{-- Header --}}
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:18px 18px 14px;border-bottom:1px solid #F3F4F6;">
+                <span id="booth-popup-logo"
+                      style="display:flex;align-items:center;justify-content:center;width:44px;height:44px;min-width:44px;border-radius:12px;background:#EEE9FF;font-size:17px;font-weight:800;color:#4B18D9;overflow:hidden;">
+                </span>
+                <div style="min-width:0;flex:1;padding-top:2px;">
+                    <h3 id="booth-popup-company"
+                        style="margin:0;font-size:14px;font-weight:700;color:#0F172A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></h3>
+                    <p id="booth-popup-exhibition"
+                       style="margin:3px 0 0;font-size:11px;color:#6B7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></p>
+                </div>
+                <button id="booth-popup-close" type="button"
+                        style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;min-width:26px;border-radius:50%;border:none;background:transparent;cursor:pointer;color:#9CA3AF;"
+                        onmouseover="this.style.background='#F3F4F6';this.style.color='#374151';"
+                        onmouseout="this.style.background='transparent';this.style.color='#9CA3AF';"
+                        aria-label="Close">
+                    <i class="fa-solid fa-xmark" style="font-size:12px;"></i>
+                </button>
+            </div>
+
+            {{-- Body --}}
+            <div style="padding:14px 18px 16px;display:flex;flex-direction:column;gap:10px;">
+                <div style="display:flex;align-items:flex-start;gap:10px;">
+                    <span style="min-width:58px;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#9CA3AF;padding-top:2px;">Booth(s)</span>
+                    <span id="booth-popup-booths" style="font-size:13px;font-weight:600;color:#0F172A;"></span>
+                </div>
+                <div style="display:flex;align-items:flex-start;gap:10px;">
+                    <span style="min-width:58px;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#9CA3AF;padding-top:2px;">Hall</span>
+                    <span id="booth-popup-hall" style="font-size:13px;font-weight:600;color:#0F172A;"></span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span style="min-width:58px;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#9CA3AF;">Status</span>
+                    <span id="booth-popup-status"
+                          style="display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;"></span>
+                </div>
+                <div id="booth-popup-contact-row" style="display:none;align-items:flex-start;gap:10px;">
+                    <span style="min-width:58px;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#9CA3AF;padding-top:2px;">Contact</span>
+                    <span id="booth-popup-contact" style="font-size:13px;font-weight:600;color:#0F172A;"></span>
+                </div>
+            </div>
+
+        </div>
     </div>
 
 </section>
@@ -497,7 +588,7 @@
                 status.className = `rounded-md border px-3 py-2 text-[13px] font-semibold ${isAvailable ? 'border-[#BFE8CF] bg-[#EAF9F0] text-[#16A34A]' : 'border-borderColor bg-gray-100 text-[#4B5563]'}`;
                 size.textContent = `${button.dataset.size} (${button.dataset.area})`;
                 location.innerHTML = button.dataset.location;
-                price.textContent = `?${button.dataset.price}`;
+                price.textContent = `\u20B9${button.dataset.price}`;
                 setSelectState(isAvailable, button.dataset.id, hasEnoughSpaces);
             });
         });
@@ -506,6 +597,126 @@
         if (initiallySelected) {
             applySelectedFootprint(initiallySelected);
         }
+
+        // ---- Booked booth details popup ----
+        const popup = document.getElementById('booth-popup');
+        const popupOverlay = document.getElementById('booth-popup-overlay');
+        const popupClose = document.getElementById('booth-popup-close');
+        const groupButtons = Array.from(document.querySelectorAll('[data-booked-group]'));
+
+        // The floor map uses CSS `zoom`, which creates a stacking context that can paint
+        // over a fixed modal nested inside it. Re-parent the popup to <body> so it always
+        // renders above the whole page regardless of the map's transforms/zoom.
+        if (popup && popup.parentElement !== document.body) {
+            document.body.appendChild(popup);
+        }
+
+        const popupCard = document.getElementById('booth-popup-card');
+
+        const val = (v) => (v && String(v).trim() !== '' ? String(v).trim() : null);
+
+        const setText = (id, value, fallback = 'Not available') => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = val(value) ?? fallback;
+        };
+
+        const openPopup = (payload) => {
+            if (!popup) return;
+
+            // Logo / initial
+            const initial = (payload.company_name || 'C').trim().charAt(0).toUpperCase();
+            const logo = document.getElementById('booth-popup-logo');
+            if (logo) {
+                logo.innerHTML = payload.logo_url
+                    ? `<img src="${payload.logo_url}" alt="${payload.company_name || ''}" class="h-full w-full object-cover" onerror="this.remove();this.parentElement.textContent='${initial}';">`
+                    : initial;
+            }
+
+            setText('booth-popup-company', payload.company_name, 'Booked Company');
+            setText('booth-popup-exhibition', payload.exhibition_name, '');
+
+            // Booth numbers
+            const numbers = Array.isArray(payload.booth_numbers) ? payload.booth_numbers : [];
+            const boothLabels = numbers.map((n) => (String(n).toUpperCase().startsWith('B') ? n : `Booth ${n}`));
+            setText('booth-popup-booths', boothLabels.join(', ') || null);
+
+            setText('booth-popup-hall', payload.hall_name);
+
+            // Status badge – colour coded via inline styles (immune to Tailwind JIT purge)
+            const statusEl = document.getElementById('booth-popup-status');
+            if (statusEl) {
+                const raw = val(payload.status) ?? 'Confirmed';
+                const low = raw.toLowerCase();
+                let bg, color, dot;
+                if (low.includes('confirm')) {
+                    bg = '#DCFCE7'; color = '#15803D'; dot = '#22C55E';
+                } else if (low.includes('pending') || low.includes('review')) {
+                    bg = '#FEF3C7'; color = '#92400E'; dot = '#F59E0B';
+                } else {
+                    bg = '#F3F4F6'; color = '#4B5563'; dot = '#9CA3AF';
+                }
+                statusEl.style.background = bg;
+                statusEl.style.color      = color;
+                statusEl.innerHTML = `<span style="width:6px;height:6px;border-radius:50%;background:${dot};display:inline-block;"></span>${raw}`;
+            }
+
+            // Contact – show row only when present
+            const contactRow = document.getElementById('booth-popup-contact-row');
+            const contactVal = val(payload.contact_person);
+            if (contactRow) contactRow.style.display = contactVal ? 'flex' : 'none';
+            if (contactVal) setText('booth-popup-contact', contactVal);
+
+            // Hide canvas to prevent zoom stacking-context bleed-through
+            if (canvas) canvas.style.visibility = 'hidden';
+
+            popup.style.display = 'flex';
+
+            // Animate card in (two rAF frames so transition is registered)
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                if (popupCard) {
+                    popupCard.style.transform = 'scale(1)';
+                    popupCard.style.opacity   = '1';
+                }
+            }));
+        };
+
+        const closePopup = () => {
+            if (!popup) return;
+
+            if (popupCard) {
+                popupCard.style.transform = 'scale(0.94)';
+                popupCard.style.opacity   = '0';
+            }
+
+            // Wait for CSS transition to finish before hiding
+            setTimeout(() => {
+                popup.style.display = 'none';
+                if (canvas) canvas.style.visibility = '';
+            }, 160);
+        };
+
+        groupButtons.forEach((groupButton) => {
+            groupButton.addEventListener('click', () => {
+                const groupIndex = groupButton.dataset.bookedGroup;
+                // The payload lives on the first segment of each group.
+                const payloadHost = document.querySelector(`[data-booked-group="${groupIndex}"][data-booked-payload]`) || groupButton;
+                let payload = {};
+                try {
+                    payload = JSON.parse(payloadHost.dataset.bookedPayload || '{}');
+                } catch (error) {
+                    payload = {};
+                }
+                openPopup(payload);
+            });
+        });
+
+        popupClose?.addEventListener('click', closePopup);
+        popupOverlay?.addEventListener('click', closePopup);
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                closePopup();
+            }
+        });
 
         updateFitScale();
     })();

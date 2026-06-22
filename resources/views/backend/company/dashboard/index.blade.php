@@ -112,9 +112,6 @@
             <h2 class="mb-1 flex items-center gap-2 text-[24px] font-bold leading-tight text-gray-900 sm:text-[28px]">
                 Welcome back, {{ $contactName }}!
             </h2>
-            <p class="text-[14px] leading-6 text-gray-500 sm:text-[15px]">
-                {{ $companyDisplayName }} | {{ $currentCompany->email ?? 'No email available' }} | {{ ucfirst($currentCompany->status ?? 'pending') }}
-            </p>
         </div>
 
         <div class="relative w-full sm:min-w-[240px] lg:w-auto">
@@ -318,16 +315,16 @@
 
                     <div class="mt-4 flex flex-col gap-2 sm:flex-row">
                         @if ($itemCanSetup)
-                            <a href="{{ route('company.booth-setup.index', $bookingItem) }}" class="inline-flex h-10 flex-1 items-center justify-center rounded-lg bg-primary px-4 text-[13px] font-bold text-white">
+                            <a href="{{ route('company.booth-setup.index', $bookingItem) }}" class="inline-flex h-11 flex-1 items-center justify-center rounded-xl bg-primary px-4 text-[13px] font-bold text-white shadow-sm transition-colors hover:bg-blue-700">
                                 {{ $itemIsLive ? 'Manage Booth' : 'Continue Setup' }}
                             </a>
                         @else
-                            <a href="{{ url('/company/bookings') }}" class="inline-flex h-10 flex-1 items-center justify-center rounded-lg bg-gray-100 px-4 text-[13px] font-bold text-gray-600">
+                            <a href="{{ url('/company/bookings') }}" class="inline-flex h-11 flex-1 items-center justify-center rounded-xl bg-gray-100 px-4 text-[13px] font-bold text-gray-600 transition-colors hover:bg-gray-200">
                                 View Status
                             </a>
                         @endif
                         @if ($itemPublicHref)
-                            <a href="{{ $itemPublicHref }}" target="_blank" class="inline-flex h-10 flex-1 items-center justify-center rounded-lg border border-primary px-4 text-[13px] font-bold text-primary">
+                            <a href="{{ $itemPublicHref }}" target="_blank" class="inline-flex h-11 flex-1 items-center justify-center rounded-xl border border-primary px-4 text-[13px] font-bold text-primary transition-colors hover:bg-blue-50">
                                 View Live
                             </a>
                         @endif

@@ -1,7 +1,6 @@
 <section class="max-w-[900px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
     <div class="mb-8">
         <h1 class="text-[34px] font-semibold leading-[42px] tracking-[-0.8px] text-navy">{{ $mode }} Document</h1>
-        <p class="mt-3 text-[16px] font-medium leading-7 text-[#34405F]">Attach documents for visitors and booth reviewers.</p>
     </div>
     <form class="rounded-xl border border-borderColor bg-white p-6 shadow-sm sm:p-8">
         <input type="text" value="{{ $mode === 'Edit' ? 'Company Profile.pdf' : '' }}" placeholder="Document title" class="h-[52px] w-full rounded-md border border-borderColor px-4 text-[15px] font-medium outline-none focus:border-purple">

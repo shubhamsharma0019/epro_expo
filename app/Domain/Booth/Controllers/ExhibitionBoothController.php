@@ -4,7 +4,9 @@ namespace App\Domain\Booth\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Domain\Booth\Models\BoothBooking;
+use App\Domain\Booth\Models\BoothView;
 use App\Domain\Event\Models\Exhibition;
+use App\Support\DbGuard;
 use App\Support\LiveContent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
@@ -23,7 +25,15 @@ class ExhibitionBoothController extends Controller
             session(['selected_visitor_booking_id' => request()->query('booking_id')]);
         }
 
-        $exhibition = LiveContent::exhibitionQuery()->where('slug', $slug)->first()
+        if (! DbGuard::available()) {
+            return view(request()->routeIs('exhibitions.visitor.companies') ? 'frontend.visitor-exhibition.booths.companies' : 'frontend.exhibitions.booths.index', [
+                'slug' => $slug,
+                'booths' => collect(),
+                'isPassActive' => false,
+            ]);
+        }
+
+        $exhibition = LiveContent::findLiveExhibitionBySlug($slug)
             ?: Exhibition::where('slug', $slug)->first();
 
         $booths = BoothBooking::query()
@@ -113,6 +123,8 @@ class ExhibitionBoothController extends Controller
             ]);
         }
 
+        $this->recordBoothView($booking);
+
         return view('frontend.visitor-exhibition.booths.show', [
             'slug' => $slug,
             'companySlug' => $companySlug,
@@ -136,6 +148,40 @@ class ExhibitionBoothController extends Controller
                 ->get(),
             'sessions' => $booking->boothSessions,
         ]);
+    }
+
+    /**
+     * Log a booth view for analytics. Deduped per session per company and
+     * wrapped so any failure can never break the visitor-facing booth page.
+     */
+    private function recordBoothView(BoothBooking $booking): void
+    {
+        try {
+            if (! $booking->company_id || ! DbGuard::available()) {
+                return;
+            }
+
+            $visitorId = auth()->id();
+
+            // Avoid inflating counts on refreshes within the same session.
+            $sessionKey = 'booth_view_logged_' . $booking->company_id;
+            if (session()->has($sessionKey)) {
+                return;
+            }
+
+            BoothView::create([
+                'company_id' => $booking->company_id,
+                'booth_profile_id' => $booking->boothProfile?->id,
+                'visitor_id' => $visitorId,
+                'ip_address' => request()->ip(),
+                'user_agent' => Str::limit((string) request()->userAgent(), 500, ''),
+                'viewed_at' => now(),
+            ]);
+
+            session([$sessionKey => now()->timestamp]);
+        } catch (\Throwable $e) {
+            // Analytics tracking is best-effort; never disrupt the page render.
+        }
     }
 
     public function exhibitorEnquiryForm(): View

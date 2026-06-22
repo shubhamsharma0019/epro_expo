@@ -34,11 +34,10 @@
     $organizerEmail = $currentCompany?->email ?? '';
     $organizerPhone = $currentCompany?->phone ?? '';
 @endphp
-<div class="px-4 sm:px-6 md:px-10 py-6 md:py-8 max-w-[1100px]">
+<div class="mx-auto w-full max-w-[1280px] px-4 py-6 sm:px-6 md:px-10 md:py-8">
             <!-- Header Title -->
             <div class="mb-10">
-                <h1 class="text-[22px] font-bold tracking-tight text-textMain mb-1">Event Basic Details</h1>
-                <p class="text-[14px] text-textMuted text-[#5B6B8A]">Fill in the essential information about your event.</p>
+                <h1 class="text-[22px] font-bold tracking-tight text-textMain">Event Basic Details</h1>
             </div>
 
             <!-- Form Card -->

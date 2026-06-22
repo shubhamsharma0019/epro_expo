@@ -10,9 +10,6 @@
         <h1 class="text-[36px] font-semibold leading-[44px] tracking-[-0.8px] text-navy">
             My Bookings
         </h1>
-        <p class="mt-3 text-[16px] font-medium leading-7 text-[#34405F]">
-            View and manage all your booth and event bookings.
-        </p>
     </div>
 
     @php

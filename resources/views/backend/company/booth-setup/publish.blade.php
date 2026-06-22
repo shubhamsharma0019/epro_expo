@@ -55,8 +55,7 @@
 <div class="p-4 sm:p-6 lg:p-8">
     <div class="w-full max-w-[1400px] mx-auto bg-white border border-gray-100 rounded-2xl p-5 shadow-sm lg:p-8">
         <div class="mb-8">
-            <h1 class="text-[28px] font-bold text-[#1E1B4B] tracking-tight mb-2">Publish Booth</h1>
-            <p class="text-[#6B7280] text-[15px]">Complete all requirements below before activating your booth.</p>
+            <h1 class="text-[28px] font-bold text-[#1E1B4B] tracking-tight">Publish Booth</h1>
         </div>
 
         @if (session('status'))

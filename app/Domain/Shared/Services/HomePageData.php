@@ -5,9 +5,9 @@ namespace App\Domain\Shared\Services;
 use App\Domain\Booth\Models\BoothBooking;
 use App\Domain\Company\Models\Company;
 use App\Domain\Event\Models\Exhibition;
+use App\Support\DbGuard;
 use App\Support\LiveContent;
 use App\Support\WebsiteContent;
-use Illuminate\Support\Facades\Schema;
 
 class HomePageData
 {
@@ -138,56 +138,60 @@ class HomePageData
 
     private function featuredExhibitions()
     {
-        $query = LiveContent::exhibitionQuery()->latest();
+        return DbGuard::whenAvailable(function () {
+            $query = LiveContent::databaseExhibitionsQuery()->latest();
 
-        if (Schema::hasColumn('exhibitions', 'is_home_featured')) {
-            $featured = (clone $query)->where('is_home_featured', true)->take(6)->get();
-            if ($featured->isNotEmpty()) {
-                return $featured;
+            if (DbGuard::hasColumn('exhibitions', 'is_home_featured')) {
+                $featured = (clone $query)->where('is_home_featured', true)->take(6)->get();
+                if ($featured->isNotEmpty()) {
+                    return $featured;
+                }
             }
-        }
 
-        return $query->take(6)->get();
+            return $query->take(6)->get();
+        }, collect());
     }
 
     private function featuredEvents()
     {
-        $query = LiveContent::companyEventQuery()->with('branding')->latest('starts_at');
+        return DbGuard::whenAvailable(function () {
+            $query = LiveContent::databaseCompanyEventsQuery()->with('branding')->latest('starts_at');
 
-        if (Schema::hasColumn('company_events', 'is_home_featured')) {
-            $featured = (clone $query)->where('is_home_featured', true)->take(6)->get();
-            if ($featured->isNotEmpty()) {
-                return $featured;
+            if (DbGuard::hasColumn('company_events', 'is_home_featured')) {
+                $featured = (clone $query)->where('is_home_featured', true)->take(6)->get();
+                if ($featured->isNotEmpty()) {
+                    return $featured;
+                }
             }
-        }
 
-        return $query->take(6)->get();
+            return $query->take(6)->get();
+        }, collect());
     }
 
     private function upcomingEvents()
     {
-        return LiveContent::companyEventQuery()
+        return DbGuard::whenAvailable(fn () => LiveContent::databaseCompanyEventsQuery()
             ->with('branding')
             ->where('starts_at', '>=', now())
             ->orderBy('starts_at')
             ->take(6)
-            ->get();
+            ->get(), collect());
     }
 
     private function exhibitionCategories(): array
     {
-        if (! Schema::hasTable('exhibitions')) {
+        if (! DbGuard::hasTable('exhibitions')) {
             return [];
         }
 
-        $fromEvents = LiveContent::companyEventQuery()
+        $fromEvents = DbGuard::whenAvailable(fn () => LiveContent::databaseCompanyEventsQuery()
             ->whereNotNull('category')
             ->where('category', '!=', '')
             ->distinct()
             ->pluck('category')
             ->filter()
             ->values()
-            ->all();
+            ->all(), []);
 
         $fromCms = WebsiteContent::sectionOrDefaults('home', 'exhibition_category', []);
 
@@ -200,21 +204,23 @@ class HomePageData
 
     private function featuredCompanies()
     {
-        $query = Company::query()->where('status', 'approved');
+        return DbGuard::whenAvailable(function () {
+            $query = Company::query()->where('status', 'approved');
 
-        if (Schema::hasColumn('companies', 'is_home_featured')) {
-            $featured = (clone $query)->where('is_home_featured', true)->take(8)->get();
-            if ($featured->isNotEmpty()) {
-                return $featured;
+            if (DbGuard::hasColumn('companies', 'is_home_featured')) {
+                $featured = (clone $query)->where('is_home_featured', true)->take(8)->get();
+                if ($featured->isNotEmpty()) {
+                    return $featured;
+                }
             }
-        }
 
-        return $query->latest()->take(8)->get();
+            return $query->latest()->take(8)->get();
+        }, collect());
     }
 
     private function boothHighlights()
     {
-        return BoothBooking::query()
+        return DbGuard::whenAvailable(fn () => BoothBooking::query()
             ->with(['company', 'exhibition', 'hall', 'booth', 'boothProfile'])
             ->where('payment_status', 'paid')
             ->whereIn('booking_status', ['confirmed', 'active'])
@@ -226,33 +232,40 @@ class HomePageData
             ->filter(fn ($booking) => filled(
                 $booking->boothProfile?->company_name ?: $booking->company?->company_name ?: $booking->company?->name
             ))
-            ->values();
+            ->values(), collect());
     }
 
     public function platformCounts(): array
     {
-        return [
-            'events' => Schema::hasTable('company_events')
-                ? LiveContent::companyEventQuery()->count()
+        return DbGuard::whenAvailable(fn () => [
+            'exhibitions' => DbGuard::hasTable('exhibitions')
+                ? LiveContent::databaseExhibitionsQuery()->count()
                 : 0,
-            'exhibitions' => Schema::hasTable('exhibitions')
-                ? LiveContent::exhibitionQuery()->count()
-                : 0,
-            'companies' => Schema::hasTable('companies')
+            'companies' => DbGuard::hasTable('companies')
                 ? Company::where('status', 'approved')->count()
                 : 0,
-            'booths' => Schema::hasTable('booth_bookings')
+            'events' => DbGuard::hasTable('company_events')
+                ? LiveContent::databaseCompanyEventsQuery()->count()
+                : 0,
+            'booths' => DbGuard::hasTable('booth_bookings')
                 ? BoothBooking::query()
                     ->where('payment_status', 'paid')
                     ->where('admin_status', 'approved')
                     ->whereIn('booth_setup_status', ['published', 'approved', 'live'])
                     ->count()
                 : 0,
-            'halls' => Schema::hasTable('halls')
+            'halls' => DbGuard::hasTable('halls')
                 ? \App\Domain\Event\Models\Hall::where('status', 'active')->count()
                 : 0,
             'sessions' => $this->sessionCount(),
-        ];
+        ], [
+            'events' => 0,
+            'exhibitions' => 0,
+            'companies' => 0,
+            'booths' => 0,
+            'halls' => 0,
+            'sessions' => 0,
+        ]);
     }
 
     private function applyLiveStatValues(array $stats, array $counts): array
@@ -278,15 +291,15 @@ class HomePageData
     {
         $total = 0;
 
-        if (Schema::hasTable('agenda_sessions')) {
+        if (DbGuard::hasTable('agenda_sessions')) {
             $total += \App\Domain\Event\Models\AgendaSession::count();
         }
 
-        if (Schema::hasTable('booth_sessions')) {
+        if (DbGuard::hasTable('booth_sessions')) {
             $total += \App\Domain\Booth\Models\BoothSession::count();
         }
 
-        if (Schema::hasTable('company_event_sessions')) {
+        if (DbGuard::hasTable('company_event_sessions')) {
             $total += \App\Domain\Event\Models\CompanyEvent\CompanyEventSession::count();
         }
 

@@ -127,10 +127,67 @@ Route::prefix('company')->name('company.')->group(function () {
                 'icon' => 'ph ph-calendar-check',
             ]);
 
+        // Booth booking status notifications (pending approval, approved, cancelled, draft).
+        $bookings = $company->boothBookings()
+            ->with(['exhibition', 'booth'])
+            ->latest()
+            ->take(15)
+            ->get()
+            ->map(function ($booking) {
+                $exhibitionName = $booking->exhibition?->title ?: 'your exhibition';
+                $boothLabel = $booking->booth ? 'Booth ' . $booking->booth->booth_number : 'Your booth';
+                $time = $booking->paid_at ?? $booking->updated_at ?? $booking->created_at;
+
+                if (($booking->admin_status === 'rejected') || ($booking->booking_status === 'cancelled')) {
+                    return [
+                        'title' => 'Booth booking cancelled',
+                        'message' => $boothLabel . ' for ' . $exhibitionName . ' was cancelled or rejected.',
+                        'time' => $time,
+                        'icon' => 'ph ph-x-circle',
+                    ];
+                }
+
+                if ($booking->admin_status === 'approved') {
+                    return [
+                        'title' => 'Booth booking approved',
+                        'message' => $boothLabel . ' for ' . $exhibitionName . ' has been approved. You can start your booth setup.',
+                        'time' => $time,
+                        'icon' => 'ph ph-seal-check',
+                    ];
+                }
+
+                if ($booking->payment_status === 'paid' && in_array($booking->booking_status, ['confirmed', 'active'], true)) {
+                    return [
+                        'title' => 'Booth booking pending approval',
+                        'message' => $boothLabel . ' for ' . $exhibitionName . ' is awaiting organizer approval.',
+                        'time' => $time,
+                        'icon' => 'ph ph-hourglass-medium',
+                    ];
+                }
+
+                if ($booking->booking_status === 'draft') {
+                    return [
+                        'title' => 'Incomplete booth booking',
+                        'message' => 'Finish booking ' . $boothLabel . ' for ' . $exhibitionName . ' to confirm your space.',
+                        'time' => $time,
+                        'icon' => 'ph ph-warning-circle',
+                    ];
+                }
+
+                return null;
+            })
+            ->filter()
+            ->values();
+
         $notifications = $enquiries
             ->concat($meetings)
+            ->concat($bookings)
+            ->filter(fn ($notification) => ! empty($notification['time']))
             ->sortByDesc('time')
             ->values();
+
+        // Mark notifications as seen so the topbar bell badge clears.
+        session(['company_notifications_seen_at' => now()]);
 
         return view('backend.company.notifications.index', compact('company', 'notifications'));
     })->middleware('company')->name('notifications');
@@ -166,9 +223,7 @@ Route::prefix('company')->name('company.')->group(function () {
         Route::post('/slots/continue', [CompanyBoothBookingController::class, 'continueFromSlots'])->name('slots.continue');
         Route::post('/slots/custom', [CompanyBoothBookingController::class, 'requestCustomSlot'])->name('slots.custom');
 
-        Route::get('/customize', function () {
-            return view('backend.company.booth-booking.customize');
-        })->name('customize');
+        Route::get('/customize', [CompanyBoothBookingController::class, 'customize'])->name('customize');
 
         Route::get('/summary', [CompanyBoothBookingController::class, 'summary'])->name('summary');
 
@@ -291,22 +346,11 @@ Route::prefix('company')->name('company.')->group(function () {
     });
 
     foreach (['products', 'documents', 'catalogues', 'media'] as $module) {
-        Route::prefix($module)->name($module . '.')->middleware('company')->group(function () use ($module) {
-            Route::get('/', function () use ($module) {
-                return view('backend.company.' . $module . '.index');
-            })->name('index');
-
-            Route::get('/create', function () use ($module) {
-                return view('backend.company.' . $module . '.create');
-            })->name('create');
-
-            Route::get('/{id}/edit', function ($id) use ($module) {
-                return view('backend.company.' . $module . '.edit', compact('id'));
-            })->name('edit');
-
-            Route::get('/{id}', function ($id) use ($module) {
-                return view('backend.company.' . $module . '.show', compact('id'));
-            })->name('show');
+        Route::prefix($module)->name($module . '.')->middleware('company')->group(function () use ($module, $latestSetupRedirect) {
+            Route::get('/', fn () => $latestSetupRedirect('/' . ($module === 'media' ? 'media' : $module)))->name('index');
+            Route::get('/create', fn () => $latestSetupRedirect('/' . ($module === 'media' ? 'media/create' : $module . '/create')))->name('create');
+            Route::get('/{id}/edit', fn ($id) => $latestSetupRedirect('/' . ($module === 'media' ? 'media/' . $id . '/edit' : $module . '/' . $id . '/edit')))->name('edit');
+            Route::get('/{id}', fn ($id) => $latestSetupRedirect('/' . ($module === 'media' ? 'media/' . $id : $module . '/' . $id)))->name('show');
         });
     }
 

@@ -11,8 +11,7 @@
         <section class="px-4 py-6 sm:px-6 lg:px-8">
             <div class="mx-auto w-full max-w-[1400px] rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6 lg:p-8">
                 
-                <h1 class="text-[28px] font-bold text-[#1E1B4B] tracking-tight mb-2">Company Profile</h1>
-                <p class="text-[#6B7280] text-[15px] mb-8">Add your company information to help attendees know you better.</p>
+                <h1 class="text-[28px] font-bold text-[#1E1B4B] tracking-tight mb-8">Company Profile</h1>
                 @if (session('status'))
                     <div class="mb-6 rounded-xl border border-green-200 bg-green-50 px-5 py-4 text-sm font-medium text-green-700">{{ session('status') }}</div>
                 @endif

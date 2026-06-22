@@ -16,33 +16,13 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
     });
 
     Route::get('/', function () {
-        $dynamicExhibitions = \App\Support\LiveContent::exhibitionPageQuery()
-            ->with([
-                'boothBookings' => fn ($query) => $query
-                    ->with(['boothProfile', 'boothProducts', 'boothCatalogues', 'company'])
-                    ->publiclyVisible(),
-            ])
-            ->orderBy('start_date')
-            ->orderBy('id')
-            ->get()
-            ->unique(fn ($exhibition) => strtolower(trim((string) ($exhibition->title ?: $exhibition->name))))
-            ->values();
+        $dynamicExhibitions = \App\Support\LiveContent::exhibitionsForVisitorIndex();
 
         return view('frontend.exhibitions.index', compact('dynamicExhibitions'));
     })->name('index');
 
     Route::get('/home', function () {
-        $liveBooths = \App\Support\LiveContent::boothBookingQuery()
-            ->with(['company', 'exhibition', 'hall', 'booth', 'boothProfile'])
-            ->withCount([
-                'boothProducts as published_products_count' => fn ($query) => $query->where('status', 'published'),
-                'boothCatalogues as public_catalogues_count' => fn ($query) => $query->where('visibility', 'public')->where('status', 'active'),
-            ])
-            ->latest()
-            ->take(6)
-            ->get()
-            ->filter(fn ($booking) => filled($booking->boothProfile?->company_name ?: $booking->company?->company_name ?: $booking->company?->name))
-            ->values();
+        $liveBooths = \App\Support\LiveContent::homeFeaturedBooths();
 
         return view('frontend.exhibitions.home', compact('liveBooths'));
     })->name('home');
@@ -53,7 +33,7 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
             return redirect()->route('exhibitions.visitor.dashboard', $slug);
         }
 
-        $exhibition = \App\Support\LiveContent::exhibitionQuery()->orderBy('start_date')->first();
+        $exhibition = \App\Support\LiveContent::firstLiveExhibition();
         if ($exhibition) {
             return redirect()->route('exhibitions.visitor.dashboard', $exhibition->slug);
         }
@@ -69,23 +49,13 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
     })->name('booking-dashboard');
 
     Route::get('/browse', function () {
-        $dynamicExhibitions = \App\Support\LiveContent::exhibitionPageQuery()
-            ->with([
-                'boothBookings' => fn ($query) => $query
-                    ->with(['boothProfile', 'boothProducts', 'boothCatalogues', 'company'])
-                    ->publiclyVisible(),
-            ])
-            ->orderBy('start_date')
-            ->orderBy('id')
-            ->get()
-            ->unique(fn ($exhibition) => strtolower(trim((string) ($exhibition->title ?: $exhibition->name))))
-            ->values();
+        $dynamicExhibitions = \App\Support\LiveContent::exhibitionsForVisitorIndex();
 
         return view('frontend.exhibitions.index', compact('dynamicExhibitions'));
     })->name('browse');
 
     Route::get('/pavilions', function () {
-        $exhibition = \App\Support\LiveContent::exhibitionQuery()->orderBy('start_date')->first();
+        $exhibition = \App\Support\LiveContent::firstLiveExhibition();
         if ($exhibition) {
             return redirect()->route('exhibitions.visitor.companies', $exhibition->slug);
         }
@@ -98,7 +68,7 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
     })->name('pavilions.index');
 
     Route::get('/pavilions/show', function () {
-        $exhibition = \App\Support\LiveContent::exhibitionQuery()->orderBy('start_date')->first();
+        $exhibition = \App\Support\LiveContent::firstLiveExhibition();
 
         abort_unless($exhibition, 404);
 
@@ -106,13 +76,13 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
     })->name('pavilions.show');
 
     Route::get('/pavilions/{slug}', function ($slug) {
-        $exhibition = \App\Support\LiveContent::exhibitionQuery()->where('slug', $slug)->first();
+        $exhibition = \App\Support\LiveContent::findLiveExhibitionBySlug($slug);
 
         if ($exhibition) {
             return redirect()->route('exhibitions.visitor.companies', $exhibition->slug);
         }
 
-        $fallbackExhibition = \App\Support\LiveContent::exhibitionQuery()->orderBy('start_date')->first();
+        $fallbackExhibition = \App\Support\LiveContent::firstLiveExhibition();
 
         abort_unless($fallbackExhibition, 404);
 
@@ -123,11 +93,14 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
     })->name('pavilions.show.slug');
 
     Route::get('/halls', function () {
-        return view('frontend.exhibitions.halls.index');
+        $exhibition = \App\Support\LiveContent::firstLiveExhibition();
+        abort_unless($exhibition, 404);
+
+        return redirect()->route('exhibitions.visitor-halls.index', $exhibition->slug);
     })->name('halls.index');
 
     Route::get('/halls/show', function () {
-        $exhibition = \App\Support\LiveContent::exhibitionQuery()->orderBy('start_date')->first();
+        $exhibition = \App\Support\LiveContent::firstLiveExhibition();
 
         abort_unless($exhibition, 404);
 
@@ -135,11 +108,17 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
     })->name('halls.show');
 
     Route::get('/halls/floor-plan', function () {
-        return view('frontend.exhibitions.halls.floor-plan');
+        $exhibition = \App\Support\LiveContent::firstLiveExhibition();
+        abort_unless($exhibition, 404);
+
+        return redirect()->route('exhibitions.visitor.floor-map', $exhibition->slug);
     })->name('halls.floor-plan');
 
     Route::get('/halls/floor-plan/view', function () {
-        return view('frontend.exhibitions.halls.floor-plan');
+        $exhibition = \App\Support\LiveContent::firstLiveExhibition();
+        abort_unless($exhibition, 404);
+
+        return redirect()->route('exhibitions.visitor.floor-map', $exhibition->slug);
     })->name('halls.floor-plan.view');
 
     Route::get('/halls/{slug}', function ($slug) {
@@ -147,23 +126,26 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
     })->name('halls.show.slug');
 
     Route::get('/booths/sizes', function () {
-        return view('frontend.exhibitions.booths.sizes');
+        return redirect('/company/booth-booking/sizes');
     })->name('booths.sizes');
 
     Route::get('/booths/slots', function () {
-        return view('frontend.exhibitions.booths.slots');
+        return redirect('/company/booth-booking/slots');
     })->name('booths.slots');
 
     Route::get('/booths/customize', function () {
-        return view('frontend.exhibitions.booths.customize');
+        return redirect('/company/booth-booking/customize');
     })->name('booths.customize');
 
     Route::get('/booths/details', function () {
-        return view('frontend.exhibitions.booths.details');
+        $exhibition = \App\Support\LiveContent::firstLiveExhibition();
+        abort_unless($exhibition, 404);
+
+        return redirect()->route('exhibitions.booths.index', $exhibition->slug);
     })->name('booths.details');
 
     Route::get('/booking/summary', function () {
-        return view('frontend.exhibitions.booking.summary');
+        return redirect('/company/booth-booking/summary');
     })->name('booking.summary');
 
     Route::get('/booking/services', [ExhibitionBookingController::class, 'services'])->name('booking.services');
@@ -172,46 +154,87 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
     Route::get('/booking/review', [ExhibitionBookingController::class, 'review'])->name('booking.review');
 
     Route::get('/booking/payment', function () {
-        return view('frontend.exhibitions.booking.payment');
+        $bookingId = session('selected_visitor_booking_id');
+        $slug = session('activeExhibitionSlug')
+            ?: \App\Support\LiveContent::firstLiveExhibitionSlug();
+
+        if ($bookingId && $slug) {
+            return redirect()->route('exhibitions.tickets.e-ticket', [
+                'slug' => $slug,
+                'booking_id' => $bookingId,
+            ]);
+        }
+
+        return redirect('/exhibitions/booking/review');
     })->name('booking.payment');
 
     Route::get('/booking/confirmed', function () {
-        return view('frontend.exhibitions.booking.confirmed');
+        $bookingId = session('selected_visitor_booking_id');
+        $slug = session('activeExhibitionSlug')
+            ?: \App\Support\LiveContent::firstLiveExhibitionSlug();
+
+        if ($bookingId && $slug) {
+            return redirect()->route('exhibitions.tickets.confirmed', $slug);
+        }
+
+        return redirect()->route('exhibitions.index');
     })->name('booking.confirmed');
 
     Route::get('/booking/my-bookings', function () {
-        $visitors = collect();
-        if (auth()->check()) {
-            $visitors = \App\Domain\Visitor\Models\Visitor::where('email', auth()->user()->email)
+        $visitors = \App\Support\DbGuard::whenAvailable(function () {
+            if (! auth()->check()) {
+                return collect();
+            }
+
+            return \App\Domain\Visitor\Models\Visitor::where('email', auth()->user()->email)
                 ->with('exhibition')
                 ->orderBy('created_at', 'desc')
                 ->get();
-        }
+        }, collect());
+
         return view('frontend.exhibitions.booking.my-bookings', compact('visitors'));
     })->name('booking.my-bookings');
 
     Route::get('/exhibitors/booth-profile', function () {
-        return view('frontend.exhibitions.exhibitors.booth-profile');
+        $exhibition = \App\Support\LiveContent::firstLiveExhibition();
+        abort_unless($exhibition, 404);
+
+        return redirect()->route('exhibitions.booths.index', $exhibition->slug);
     })->name('exhibitors.booth-profile');
 
     Route::get('/exhibitors/products', function () {
-        return view('frontend.exhibitions.exhibitors.products');
+        $exhibition = \App\Support\LiveContent::firstLiveExhibition();
+        abort_unless($exhibition, 404);
+
+        return redirect()->route('exhibitions.booths.index', $exhibition->slug);
     })->name('exhibitors.products');
 
     Route::get('/exhibitors/documents', function () {
-        return view('frontend.exhibitions.exhibitors.documents');
+        $exhibition = \App\Support\LiveContent::firstLiveExhibition();
+        abort_unless($exhibition, 404);
+
+        return redirect()->route('exhibitions.booths.index', $exhibition->slug);
     })->name('exhibitors.documents');
 
     Route::get('/exhibitors/catalogues', function () {
-        return view('frontend.exhibitions.exhibitors.catalogues');
+        $exhibition = \App\Support\LiveContent::firstLiveExhibition();
+        abort_unless($exhibition, 404);
+
+        return redirect()->route('exhibitions.booths.index', $exhibition->slug);
     })->name('exhibitors.catalogues');
 
     Route::get('/exhibitors/media-gallery', function () {
-        return view('frontend.exhibitions.exhibitors.media-gallery');
+        $exhibition = \App\Support\LiveContent::firstLiveExhibition();
+        abort_unless($exhibition, 404);
+
+        return redirect()->route('exhibitions.booths.index', $exhibition->slug);
     })->name('exhibitors.media-gallery');
 
     Route::get('/exhibitors/meetings', function () {
-        return view('frontend.exhibitions.exhibitors.meetings');
+        $exhibition = \App\Support\LiveContent::firstLiveExhibition();
+        abort_unless($exhibition, 404);
+
+        return redirect()->route('exhibitions.visitor.meetings', $exhibition->slug);
     })->name('exhibitors.meetings');
 
     Route::get('/exhibitors/enquiries', [ExhibitionBoothController::class, 'exhibitorEnquiryForm'])->name('exhibitors.enquiries');
@@ -312,60 +335,11 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
     Route::get('/{slug}/booths/{companySlug}', [ExhibitionBoothController::class, 'show'])->name('booths.show');
 
     Route::get('/{slug}', function ($slug) {
-        $exhibition = \App\Support\LiveContent::exhibitionPageQuery()
-            ->with([
-                'boothBookings' => fn ($query) => $query
-                    ->with(['boothProfile', 'boothBranding', 'company', 'boothProducts', 'boothCatalogues', 'boothSessions', 'boothTeamMembers'])
-                    ->publiclyVisible(),
-            ])
-            ->where('slug', $slug)
-            ->firstOrFail();
+        $context = \App\Support\LiveContent::exhibitionShowContext($slug);
 
-        $speakers = \App\Domain\Event\Models\Speaker::query()
-            ->where('exhibition_id', $exhibition->id)
-            ->orderBy('name')
-            ->get();
+        abort_unless($context, 404);
 
-        $agenda = \App\Domain\Event\Models\AgendaSession::query()
-            ->where('exhibition_id', $exhibition->id)
-            ->orderBy('start_time')
-            ->get();
-
-        $sponsors = \App\Domain\Event\Models\Sponsor::query()
-            ->where('exhibition_id', $exhibition->id)
-            ->orderBy('name')
-            ->get();
-
-        $faqs = \App\Domain\Event\Models\Faq::query()
-            ->where('exhibition_id', $exhibition->id)
-            ->orderBy('id')
-            ->get();
-
-        if ($faqs->isEmpty()) {
-            $title = $exhibition->title ?: $exhibition->name;
-            $date = $exhibition->start_date && $exhibition->end_date
-                ? $exhibition->start_date->format('M d') . ' - ' . $exhibition->end_date->format('d, Y')
-                : 'The event date will be updated soon.';
-            $venue = $exhibition->venue ?: ($exhibition->location ?: 'The venue will be updated soon.');
-            $exhibitorCount = $exhibition->boothBookings
-                ->map(fn ($booking) => $booking->company_id ?: $booking->boothProfile?->company_name ?: $booking->company?->company_name ?: $booking->company?->name)
-                ->filter()
-                ->unique()
-                ->count();
-
-            $faqs = collect([
-                (object) ['question' => 'When is ' . $title . '?', 'answer' => $date, 'icon' => 'ph-calendar-blank'],
-                (object) ['question' => 'Where is the exhibition hosted?', 'answer' => $venue, 'icon' => 'ph-map-pin'],
-                (object) ['question' => 'How can visitors attend?', 'answer' => 'Visitors can get a visitor pass from this exhibition page and then follow the visitor flow to explore companies, floor map, sessions, meetings and booth details.', 'icon' => 'ph-ticket'],
-                (object) ['question' => 'How many companies are participating?', 'answer' => $exhibitorCount > 0 ? $exhibitorCount . ' companies are currently visible for visitors.' : 'Participating companies will appear here once approved booths are published.', 'icon' => 'ph-buildings'],
-            ]);
-        }
-
-        $halls = \App\Domain\Event\Models\Hall::whereHas('pavilion', fn($q) => $q->where('exhibition_id', $exhibition->id))
-            ->where('status', 'active')
-            ->get();
-
-        return view('frontend.exhibitions.show', compact('slug', 'exhibition', 'speakers', 'agenda', 'sponsors', 'faqs', 'halls'));
+        return view('frontend.exhibitions.show', ['slug' => $slug] + $context);
     })->name('show');
 
 });

@@ -246,6 +246,6 @@ class WebsiteContent
 
     private static function tableExists(): bool
     {
-        return Schema::hasTable('website_content_items');
+        return DbGuard::hasTable('website_content_items');
     }
 }

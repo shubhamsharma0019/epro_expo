@@ -17,15 +17,10 @@ class AdminBoothBookingController extends Controller
     {
         $status = (string) $request->query('status', 'all');
         $search = trim((string) $request->query('search', ''));
-        $latestPaidBookingId = BoothBooking::query()
-            ->where('payment_status', 'paid')
-            ->latest()
-            ->value('id');
 
         $query = BoothBooking::query()
             ->with(['company', 'exhibition', 'pavilion', 'hall', 'booth', 'boothSize'])
             ->where('payment_status', 'paid')
-            ->when($latestPaidBookingId, fn ($builder) => $builder->whereKey($latestPaidBookingId))
             ->when($status === 'pending', fn ($builder) => $builder->where('admin_status', 'pending'))
             ->when($status === 'approved', fn ($builder) => $builder->where('admin_status', 'approved'))
             ->when($status === 'rejected', fn ($builder) => $builder->where('admin_status', 'rejected'))

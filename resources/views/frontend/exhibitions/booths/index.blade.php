@@ -5,14 +5,6 @@
 @section('content')
 @php
     $boothCards = ($booths ?? collect())->filter(fn ($booking) => filled($booking->boothProfile?->company_name ?: $booking->company?->company_name ?: $booking->company?->name));
-    $demoBoothCards = [
-        ['technova-solutions', 'TechNova Solutions', 'AI automation and analytics', 'Innovation Pavilion', '12 Products', '3 Catalogues'],
-        ['cloudbridge', 'CloudBridge', 'Cloud migration and SaaS tools', 'Business Solutions Hall', '8 Products', '2 Catalogues'],
-        ['greenloop-energy', 'GreenLoop Energy', 'Clean energy products', 'Sustainability Pavilion', '9 Products', '4 Catalogues'],
-        ['mednext', 'MedNext Systems', 'Healthcare devices and workflow tools', 'Healthcare Pavilion', '10 Products', '5 Catalogues'],
-        ['finlytics', 'Finlytics', 'Finance analytics and risk dashboards', 'Business Solutions Hall', '7 Products', '2 Catalogues'],
-        ['edusphere', 'EduSphere', 'Learning technology and virtual classrooms', 'Innovation Pavilion', '6 Products', '3 Catalogues'],
-    ];
 @endphp
 <section class="bg-[#FBFAFF] px-5 py-8 sm:px-8 lg:px-10">
     <div class="mx-auto max-w-[1500px]">
@@ -31,55 +23,41 @@
             </div>
         </div>
 
-        <div class="mt-7 grid gap-5 md:grid-cols-3">
-            @foreach ($boothCards as $booking)
-                @php
-                    $company = $booking->boothProfile?->company_name ?: $booking->company?->company_name ?: $booking->company?->name;
-                    $companySlug = \Illuminate\Support\Str::slug($company);
-                    $copy = $booking->boothProfile?->tagline ?: $booking->boothProfile?->about_company ?: 'Visit this booth to explore company products, documents, catalogues and meeting options.';
-                    $location = collect([$booking->pavilion?->title, $booking->hall?->title])->filter()->implode(' / ') ?: 'Exhibition booth';
-                @endphp
-                <article class="rounded-[16px] border border-[#E7EAF3] bg-white p-6 shadow-[0_8px_22px_rgba(7,16,68,0.05)]">
-                    <div class="flex items-start gap-4">
-                        <div class="grid h-14 w-14 shrink-0 place-items-center rounded-xl bg-[#F4F0FF] text-[20px] font-bold text-[#5b2eff]">{{ substr($company, 0, 1) }}</div>
-                        <div class="min-w-0">
-                            <h2 class="text-[20px] font-bold text-[#071044]">{{ $company }}</h2>
-                            <p class="mt-1 text-[12px] font-bold text-[#5b2eff]">{{ $location }}</p>
+        @if ($boothCards->isEmpty())
+            <div class="mt-7 rounded-[16px] border border-[#E7EAF3] bg-white p-10 text-center shadow-[0_8px_22px_rgba(7,16,68,0.05)]">
+                <p class="text-[18px] font-bold text-[#071044]">No published booths yet</p>
+                <p class="mt-3 text-[14px] font-medium leading-6 text-[#5A6480]">Approved and published exhibitor booths will appear here once companies complete booth setup.</p>
+            </div>
+        @else
+            <div class="mt-7 grid gap-5 md:grid-cols-3">
+                @foreach ($boothCards as $booking)
+                    @php
+                        $company = $booking->boothProfile?->company_name ?: $booking->company?->company_name ?: $booking->company?->name;
+                        $companySlug = \Illuminate\Support\Str::slug($company);
+                        $copy = $booking->boothProfile?->tagline ?: $booking->boothProfile?->about_company ?: 'Visit this booth to explore company products, documents, catalogues and meeting options.';
+                        $location = collect([$booking->pavilion?->title, $booking->hall?->title])->filter()->implode(' / ') ?: 'Exhibition booth';
+                    @endphp
+                    <article class="rounded-[16px] border border-[#E7EAF3] bg-white p-6 shadow-[0_8px_22px_rgba(7,16,68,0.05)]">
+                        <div class="flex items-start gap-4">
+                            <div class="grid h-14 w-14 shrink-0 place-items-center rounded-xl bg-[#F4F0FF] text-[20px] font-bold text-[#5b2eff]">{{ substr($company, 0, 1) }}</div>
+                            <div class="min-w-0">
+                                <h2 class="text-[20px] font-bold text-[#071044]">{{ $company }}</h2>
+                                <p class="mt-1 text-[12px] font-bold text-[#5b2eff]">{{ $location }}</p>
+                            </div>
                         </div>
-                    </div>
-                    <p class="mt-4 line-clamp-3 text-[14px] font-medium leading-6 text-[#5A6480]">{{ $copy }}</p>
-                    <div class="mt-4 grid grid-cols-2 gap-3">
-                        <div class="rounded-lg bg-[#FBFAFF] p-3 text-[12px] font-bold text-[#34405F]">{{ $booking->published_products_count ?? 0 }} Products</div>
-                        <div class="rounded-lg bg-[#FBFAFF] p-3 text-[12px] font-bold text-[#34405F]">{{ $booking->public_catalogues_count ?? 0 }} Catalogues</div>
-                    </div>
-                    <div class="mt-5 flex gap-2">
-                        <a href="{{ route('exhibitions.booths.show', [$slug, $companySlug]) }}" class="inline-flex h-10 flex-1 items-center justify-center rounded-lg bg-gradient-to-r from-[#5b2eff] to-[#4310d8] px-4 text-[13px] font-bold text-white">Visit Booth</a>
-                        <button class="inline-flex h-10 items-center justify-center rounded-lg border border-[#E7EAF3] px-4 text-[13px] font-bold text-[#071044] hover:bg-[#F4F0FF]">Save</button>
-                    </div>
-                </article>
-            @endforeach
-
-            @foreach ($demoBoothCards as [$companySlug, $company, $copy, $location, $productsCount, $cataloguesCount])
-                <article class="rounded-[16px] border border-[#E7EAF3] bg-white p-6 shadow-[0_8px_22px_rgba(7,16,68,0.05)]">
-                    <div class="flex items-start gap-4">
-                        <div class="grid h-14 w-14 shrink-0 place-items-center rounded-xl bg-[#F4F0FF] text-[20px] font-bold text-[#5b2eff]">{{ substr($company, 0, 1) }}</div>
-                        <div class="min-w-0">
-                            <h2 class="text-[20px] font-bold text-[#071044]">{{ $company }}</h2>
-                            <p class="mt-1 text-[12px] font-bold text-[#5b2eff]">{{ $location }}</p>
+                        <p class="mt-4 line-clamp-3 text-[14px] font-medium leading-6 text-[#5A6480]">{{ $copy }}</p>
+                        <div class="mt-4 grid grid-cols-2 gap-3">
+                            <div class="rounded-lg bg-[#FBFAFF] p-3 text-[12px] font-bold text-[#34405F]">{{ $booking->published_products_count ?? 0 }} Products</div>
+                            <div class="rounded-lg bg-[#FBFAFF] p-3 text-[12px] font-bold text-[#34405F]">{{ $booking->public_catalogues_count ?? 0 }} Catalogues</div>
                         </div>
-                    </div>
-                    <p class="mt-4 line-clamp-3 text-[14px] font-medium leading-6 text-[#5A6480]">{{ $copy }}</p>
-                    <div class="mt-4 grid grid-cols-2 gap-3">
-                        <div class="rounded-lg bg-[#FBFAFF] p-3 text-[12px] font-bold text-[#34405F]">{{ $productsCount }}</div>
-                        <div class="rounded-lg bg-[#FBFAFF] p-3 text-[12px] font-bold text-[#34405F]">{{ $cataloguesCount }}</div>
-                    </div>
-                    <div class="mt-5 flex gap-2">
-                        <a href="{{ route('exhibitions.booths.show', [$slug, $companySlug]) }}" class="inline-flex h-10 flex-1 items-center justify-center rounded-lg bg-gradient-to-r from-[#5b2eff] to-[#4310d8] px-4 text-[13px] font-bold text-white">Visit Booth</a>
-                        <button class="inline-flex h-10 items-center justify-center rounded-lg border border-[#E7EAF3] px-4 text-[13px] font-bold text-[#071044] hover:bg-[#F4F0FF]">Save</button>
-                    </div>
-                </article>
-            @endforeach
-        </div>
+                        <div class="mt-5 flex gap-2">
+                            <a href="{{ route('exhibitions.booths.show', [$slug, $companySlug]) }}" class="inline-flex h-10 flex-1 items-center justify-center rounded-lg bg-gradient-to-r from-[#5b2eff] to-[#4310d8] px-4 text-[13px] font-bold text-white">Visit Booth</a>
+                            <button class="inline-flex h-10 items-center justify-center rounded-lg border border-[#E7EAF3] px-4 text-[13px] font-bold text-[#071044] hover:bg-[#F4F0FF]">Save</button>
+                        </div>
+                    </article>
+                @endforeach
+            </div>
+        @endif
     </div>
 </section>
 @endsection

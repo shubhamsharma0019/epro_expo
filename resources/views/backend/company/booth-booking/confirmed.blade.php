@@ -13,12 +13,12 @@
     $selectedBoothCount = isset($booking) ? collect($booking->selected_booth_ids ?: [$booking->booth_id])->filter()->unique()->count() : 0;
     $boothLabel = $selectedBoothCount > 1
         ? $selectedBoothCount . ' linked booths'
-        : 'Booth ' . ($booking->booth->booth_number ?? '--');
+        : 'Booth ' . ($booking?->booth?->booth_number ?? '--');
 @endphp
 
 <section class="max-w-[1500px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
     <div class="rounded-xl border border-borderColor bg-white px-6 py-7 shadow-sm sm:px-8">
-        <h1 class="mb-6 text-[34px] font-semibold leading-[42px] tracking-[-0.8px] text-navy">
+        <h1 class="mb-6 text-[26px] font-semibold leading-tight tracking-[-0.8px] text-navy sm:text-[34px] sm:leading-[42px]">
             Booking Confirmed
         </h1>
 
@@ -63,19 +63,19 @@
                 <div class="lg:border-r lg:border-borderColor">
                     <i class="fa-regular fa-building mb-4 text-[36px] text-purple"></i>
                     <h3 class="mb-3 text-[16px] font-semibold text-navy">Pavilion</h3>
-                    <p class="text-[16px] text-[#34405F]">{{ $booking->pavilion->title ?? 'Pavilion' }}</p>
+                    <p class="text-[16px] text-[#34405F]">{{ $booking?->pavilion?->title ?? 'Not available' }}</p>
                 </div>
                 <div class="lg:border-r lg:border-borderColor">
                     <i class="fa-solid fa-torii-gate mb-4 text-[36px] text-purple"></i>
                     <h3 class="mb-3 text-[16px] font-semibold text-navy">Hall</h3>
-                    <p class="text-[16px] text-[#34405F]">{{ $booking->hall->title ?? 'Hall' }}</p>
+                    <p class="text-[16px] text-[#34405F]">{{ $booking?->hall?->title ?? 'Not available' }}</p>
                 </div>
                 <div class="lg:border-r lg:border-borderColor">
                     <i class="fa-solid fa-shop mb-4 text-[36px] text-purple"></i>
                     <h3 class="mb-3 text-[16px] font-semibold text-navy">Booth</h3>
                     <p class="text-[16px] text-[#34405F]">
                         {{ $boothLabel }}
-                        @if ($booking->boothSize)
+                        @if ($booking?->boothSize)
                             ({{ $booking->boothSize->title }})
                         @endif
                     </p>
@@ -113,7 +113,7 @@
                 </div>
 
                 <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-                    <a href="{{ url('/company/bookings/' . ($booking->id ?? 1)) }}"
+                    <a href="{{ $booking?->id ? url('/company/bookings/' . $booking->id) : url('/company/bookings') }}"
                         class="inline-flex h-[62px] items-center justify-center gap-4 rounded-md border border-purple px-6 text-[20px] font-semibold text-purple">
                         <i class="fa-regular fa-clipboard text-[24px]"></i>
                         View Booking Details

@@ -42,8 +42,7 @@
 <div class="p-8">
     <div class="w-full max-w-[1400px] mx-auto border border-gray-100 rounded-2xl p-8 bg-white shadow-sm">
         <div class="mb-8">
-            <h1 class="text-[28px] font-bold text-[#1E1B4B] tracking-tight mb-2">Setup Meeting Availability</h1>
-            <p class="text-[#6B7280] text-[15px]">Define your available time slots for meetings during the event.</p>
+            <h1 class="text-[28px] font-bold text-[#1E1B4B] tracking-tight">Setup Meeting Availability</h1>
         </div>
 
         @if (session('status'))

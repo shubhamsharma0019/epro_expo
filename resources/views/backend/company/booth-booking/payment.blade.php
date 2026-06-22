@@ -15,9 +15,6 @@
         <h1 class="text-[28px] font-semibold leading-tight tracking-[-0.5px] text-navy sm:text-[34px]">
             Payment
         </h1>
-        <p class="mt-2 max-w-[760px] text-[15px] leading-6 text-[#5A6480] sm:text-[16px]">
-            Complete your booking through Razorpay. Your booth is confirmed only after backend payment verification.
-        </p>
     </div>
 
     @if ($errors->any())

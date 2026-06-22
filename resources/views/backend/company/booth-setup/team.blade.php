@@ -14,10 +14,10 @@
 @endphp
 
 <section class="px-4 py-6 sm:px-6 lg:px-8">
-    <div class="mx-auto w-full max-w-[1400px] rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
-        <div class="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-start">
+    <div class="mx-auto w-full max-w-[1400px] rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6 lg:p-8">
+        <div class="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-start lg:mb-8">
             <div>
-                <h1 class="mb-2 text-[28px] font-bold tracking-tight text-[#1E1B4B]">Team Members</h1>
+                <h1 class="mb-2 text-[22px] font-bold tracking-tight text-[#1E1B4B] sm:text-[28px]">Team Members</h1>
                 <p class="text-[15px] text-[#6B7280]">Add your team members who will represent your company at the event.</p>
             </div>
             <a href="{{ route('company.booth-setup.team-members.create', $booking) }}" class="flex items-center justify-center rounded-lg bg-[#4C1D95] px-6 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-[#3b1774]">
@@ -68,29 +68,40 @@
             </form>
         @endif
 
-        <div class="overflow-hidden rounded-xl border border-gray-100 bg-white">
-            <div class="grid min-w-[1000px] grid-cols-12 items-center gap-4 border-b border-gray-100 p-6">
-                <div class="col-span-4 text-[14px] font-bold text-[#1E1B4B]">Member</div>
-                <div class="col-span-2 text-[14px] font-bold text-[#1E1B4B]">Role & Expertise</div>
-                <div class="col-span-3 text-[14px] font-bold text-[#1E1B4B]">Contact</div>
-                <div class="col-span-2 text-[14px] font-bold text-[#1E1B4B]">Availability</div>
-                <div class="col-span-1 text-center text-[14px] font-bold text-[#1E1B4B]">Actions</div>
-            </div>
-            <div class="overflow-x-auto">
+        <div class="overflow-x-auto rounded-xl border border-gray-100 bg-white">
+            <div class="lg:min-w-[1000px]">
+                <div class="hidden grid-cols-12 items-center gap-4 border-b border-gray-100 p-6 lg:grid">
+                    <div class="col-span-4 text-[14px] font-bold text-[#1E1B4B]">Member</div>
+                    <div class="col-span-2 text-[14px] font-bold text-[#1E1B4B]">Role & Expertise</div>
+                    <div class="col-span-3 text-[14px] font-bold text-[#1E1B4B]">Contact</div>
+                    <div class="col-span-2 text-[14px] font-bold text-[#1E1B4B]">Availability</div>
+                    <div class="col-span-1 text-center text-[14px] font-bold text-[#1E1B4B]">Actions</div>
+                </div>
                 @forelse ($teamMembers as $member)
-                    <div class="grid min-w-[1000px] grid-cols-12 items-center gap-4 border-b border-gray-100 p-6 last:border-b-0">
-                        <div class="col-span-4 flex items-center pr-4">
+                    <div class="flex flex-col gap-4 border-b border-gray-100 p-4 last:border-b-0 lg:grid lg:grid-cols-12 lg:items-center lg:gap-4 lg:p-6">
+                        <div class="flex items-center pr-4 lg:col-span-4">
                             <div class="mr-4 h-12 w-12 flex-shrink-0 overflow-hidden rounded-full bg-gray-100"><img src="{{ $member->photo ? asset('storage/' . $member->photo) : asset('assets/exhibition/images/avatar.png') }}" alt="{{ $member->name }}" class="h-full w-full object-cover"></div>
                             <div><h4 class="mb-0.5 text-[14px] font-bold text-[#1E1B4B]">{{ $member->name }}</h4><p class="text-[13px] text-[#6B7280]">{{ $member->designation }}</p></div>
                         </div>
-                        <div class="col-span-2 flex flex-col items-start gap-2">
-                            @foreach (collect($member->expertise_tags ?? [])->take(2) as $tag)
+                        <div class="flex flex-wrap items-start gap-2 lg:col-span-2 lg:flex-col">
+                            <span class="mr-1 text-[13px] font-semibold text-[#1E1B4B] lg:hidden">Expertise:</span>
+                            @forelse (collect($member->expertise_tags ?? [])->take(2) as $tag)
                                 <span class="inline-flex rounded-md bg-[#F5F3FF] px-3 py-1 text-[11px] font-bold text-[#6D28D9]">{{ $tag }}</span>
-                            @endforeach
+                            @empty
+                                <span class="text-[13px] text-[#6B7280]">-</span>
+                            @endforelse
                         </div>
-                        <div class="col-span-3 pr-2"><p class="mb-1.5 text-[13px] text-[#4B5563]">{{ $member->email }}</p><p class="text-[13px] text-[#4B5563]">{{ $member->phone ?: '-' }}</p></div>
-                        <div class="col-span-2 pr-2"><p class="mb-1.5 text-[13px] text-[#4B5563]">{{ optional($member->availability_start_date)->format('M d') }} - {{ optional($member->availability_end_date)->format('M d, Y') }}</p><p class="text-[13px] text-[#4B5563]">{{ $member->availability_start_time ?: '--' }} - {{ $member->availability_end_time ?: '--' }}</p></div>
-                        <div class="col-span-1 flex justify-center gap-2">
+                        <div class="pr-2 lg:col-span-3">
+                            <span class="mr-1 text-[13px] font-semibold text-[#1E1B4B] lg:hidden">Contact:</span>
+                            <p class="mb-1.5 text-[13px] text-[#4B5563]">{{ $member->email }}</p>
+                            <p class="text-[13px] text-[#4B5563]">{{ $member->phone ?: '-' }}</p>
+                        </div>
+                        <div class="pr-2 lg:col-span-2">
+                            <span class="mr-1 text-[13px] font-semibold text-[#1E1B4B] lg:hidden">Availability:</span>
+                            <p class="mb-1.5 text-[13px] text-[#4B5563]">{{ optional($member->availability_start_date)->format('M d') }} - {{ optional($member->availability_end_date)->format('M d, Y') }}</p>
+                            <p class="text-[13px] text-[#4B5563]">{{ $member->availability_start_time ?: '--' }} - {{ $member->availability_end_time ?: '--' }}</p>
+                        </div>
+                        <div class="flex gap-2 lg:col-span-1 lg:justify-center">
                             <a href="{{ route('company.booth-setup.team-members.edit', [$booking, $member]) }}" class="flex h-8 w-8 items-center justify-center rounded border border-gray-200 text-[#6D28D9] hover:bg-gray-50"><i class="ph ph-pencil-simple"></i></a>
                             <form method="POST" action="{{ route('company.booth-setup.team-members.destroy', [$booking, $member]) }}" onsubmit="return confirm('Delete this team member?');">@csrf @method('DELETE')<button class="flex h-8 w-8 items-center justify-center rounded border border-gray-200 text-[#EF4444] hover:bg-red-50"><i class="ph ph-trash"></i></button></form>
                         </div>

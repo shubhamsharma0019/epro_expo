@@ -11,13 +11,13 @@
         ->join('') ?: 'C';
 
     $eventFlowItems = [
-        ['Dashboard', route('company.event-company-flow.dashboard'), ['backend.company.event-company-flow.home', 'backend.company.event-company-flow.dashboard*'], 'ph ph-squares-four'],
-        ['Create Event', route('company.event-company-flow.create'), ['backend.company.event-company-flow.create*'], 'ph ph-calendar-plus'],
-        ['Basic Details', route('company.event-company-flow.basic'), ['backend.company.event-company-flow.basic*'], 'ph ph-note-pencil'],
-        ['Branding', route('company.event-company-flow.branding'), ['backend.company.event-company-flow.branding*'], 'ph ph-palette'],
-        ['Tickets / Passes', route('company.event-company-flow.tickets'), ['backend.company.event-company-flow.tickets*'], 'ph ph-ticket'],
-        ['Preview', route('company.event-company-flow.preview'), ['backend.company.event-company-flow.preview*'], 'ph ph-eye'],
-        ['Submit Review', route('company.event-company-flow.submit'), ['backend.company.event-company-flow.submit*', 'backend.company.event-company-flow.payment*'], 'ph ph-paper-plane-tilt'],
+        ['Dashboard', route('company.event-company-flow.dashboard'), ['company.event-company-flow.home', 'company.event-company-flow.dashboard*'], 'ph ph-squares-four'],
+        ['Create Event', route('company.event-company-flow.create'), ['company.event-company-flow.create*'], 'ph ph-calendar-plus'],
+        ['Basic Details', route('company.event-company-flow.basic'), ['company.event-company-flow.basic*'], 'ph ph-note-pencil'],
+        ['Branding', route('company.event-company-flow.branding'), ['company.event-company-flow.branding*'], 'ph ph-palette'],
+        ['Tickets / Passes', route('company.event-company-flow.tickets'), ['company.event-company-flow.tickets*'], 'ph ph-ticket'],
+        ['Preview', route('company.event-company-flow.preview'), ['company.event-company-flow.preview*'], 'ph ph-eye'],
+        ['Submit Review', route('company.event-company-flow.submit'), ['company.event-company-flow.submit*', 'company.event-company-flow.payment*'], 'ph ph-paper-plane-tilt'],
     ];
 @endphp
 

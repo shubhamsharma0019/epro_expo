@@ -9,7 +9,13 @@
         <div class="overflow-hidden rounded-xl border border-borderColor bg-white shadow-sm">
             @php
                 $imageUrl = $exhibition->banner_image ? asset($exhibition->banner_image) : asset('images/exhibitions/hero-pavilion-scene.png');
-                $dates = \Carbon\Carbon::parse($exhibition->start_date)->format('M d') . ' - ' . \Carbon\Carbon::parse($exhibition->end_date)->format('M d, Y');
+                $dates = ($exhibition->start_date && $exhibition->end_date)
+                    ? \Carbon\Carbon::parse($exhibition->start_date)->format('M d') . ' - ' . \Carbon\Carbon::parse($exhibition->end_date)->format('M d, Y')
+                    : 'Not available';
+                $hallIds = \App\Domain\Event\Models\Hall::whereIn('pavilion_id', $exhibition->pavilions->pluck('id'))->pluck('id');
+                $totalBoothCapacity = $hallIds->isNotEmpty()
+                    ? \App\Domain\Booth\Models\Booth::whereIn('hall_id', $hallIds)->count()
+                    : 0;
             @endphp
             <img src="{{ $imageUrl }}" alt="{{ $exhibition->title }}" class="h-[280px] w-full object-cover">
             <div class="p-6 sm:p-8">
@@ -22,8 +28,8 @@
                         Open for exhibitors
                     @endif
                 </span>
-                <h1 class="mt-5 text-[34px] font-semibold leading-[42px] tracking-[-0.8px] text-navy">{{ $exhibition->title }}</h1>
-                <p class="mt-4 text-[16px] font-medium leading-7 text-[#34405F]">{{ $exhibition->description }}</p>
+                <h1 class="mt-5 break-words text-[28px] font-semibold leading-[36px] tracking-[-0.8px] text-navy sm:text-[34px] sm:leading-[42px]">{{ $exhibition->title ?? 'Not available' }}</h1>
+                <p class="mt-4 text-[16px] font-medium leading-7 text-[#34405F]">{{ $exhibition->description ?: 'No description available.' }}</p>
 
                 <div class="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
                     <div class="rounded-xl border border-borderColor p-5">
@@ -35,7 +41,7 @@
                         <p class="mt-2 text-[14px] font-medium text-[#5A6480]">Zones</p>
                     </div>
                     <div class="rounded-xl border border-borderColor p-5">
-                        <p class="text-[22px] font-semibold text-navy">1,200+ Booths</p>
+                        <p class="text-[22px] font-semibold text-navy">{{ $totalBoothCapacity > 0 ? number_format($totalBoothCapacity) . ' Booths' : 'Not available' }}</p>
                         <p class="mt-2 text-[14px] font-medium text-[#5A6480]">Capacity</p>
                     </div>
                 </div>

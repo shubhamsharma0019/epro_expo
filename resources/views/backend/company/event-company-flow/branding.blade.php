@@ -40,8 +40,7 @@
 
     <div class="px-4 sm:px-6 md:px-10 py-8 max-w-[1250px]">
         <div class="mb-10">
-            <h1 class="text-[24px] font-bold tracking-tight text-[#1C1364] mb-1">Event Branding</h1>
-            <p class="text-[14px] text-[#5B6B8A]">Customize how your event looks across the platform.</p>
+            <h1 class="text-[24px] font-bold tracking-tight text-[#1C1364]">Event Branding</h1>
         </div>
 
         <div class="grid grid-cols-1 xl:grid-cols-[380px_1fr] gap-10">

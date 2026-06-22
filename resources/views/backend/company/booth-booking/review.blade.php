@@ -7,22 +7,18 @@
 
 <section class="max-w-[1500px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
     <div class="rounded-xl border border-borderColor bg-white px-6 py-7 shadow-sm sm:px-8">
-        <h1 class="mb-6 text-[34px] font-semibold leading-[42px] tracking-[-0.8px] text-navy">
+        <h1 class="mb-6 text-[26px] font-semibold leading-tight tracking-[-0.8px] text-navy sm:mb-8 sm:text-[34px] sm:leading-[42px]">
             Review and Confirm
         </h1>
-
-        <p class="mb-8 text-[22px] leading-8 text-[#5A6480]">
-            Review your details before confirming.
-        </p>
 
         <form method="GET" action="{{ url('/company/booth-booking/payment') }}">
             <input type="hidden" name="exhibition" value="{{ session('company_booth_booking.exhibition_slug') }}">
 
         <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
-            <div class="rounded-xl border border-borderColor bg-white p-8 shadow-sm">
-                <div class="mb-8 flex items-center justify-between gap-5">
-                    <h2 class="text-[26px] font-semibold text-navy">Review Your Order</h2>
-                    <a href="{{ url('/company/booth-booking/services?' . http_build_query(array_filter(['exhibition' => session('company_booth_booking.exhibition_slug')]))) }}" class="text-[18px] font-semibold text-purple">
+            <div class="rounded-xl border border-borderColor bg-white p-5 shadow-sm sm:p-8">
+                <div class="mb-6 flex items-center justify-between gap-5 sm:mb-8">
+                    <h2 class="text-[22px] font-semibold text-navy sm:text-[26px]">Review Your Order</h2>
+                    <a href="{{ url('/company/booth-booking/services?' . http_build_query(array_filter(['exhibition' => session('company_booth_booking.exhibition_slug')]))) }}" class="text-[16px] font-semibold text-purple sm:text-[18px]">
                         Edit
                     </a>
                 </div>
@@ -79,40 +75,51 @@
                 </div>
             </div>
 
-            <div class="rounded-xl border border-borderColor bg-white p-6 sm:p-8 shadow-sm">
-                <h2 class="mb-6 sm:mb-9 text-[22px] sm:text-[26px] font-semibold text-navy">
-                    Terms and Conditions
-                </h2>
-
-                <div class="mb-6 h-[220px] overflow-y-auto rounded-lg border border-borderColor bg-[#FBFAFF] p-4 text-[14px] leading-6 text-[#5A6480]">
-                    <h3 class="mb-1.5 font-bold text-navy">1. Booth Booking and Allocation</h3>
-                    <p class="mb-4">Booths are allocated on a first-come, first-served basis upon receipt of full payment. The organizer reserves the right to alter the layout or relocate booths if necessary for event optimization.</p>
-                    
-                    <h3 class="mb-1.5 font-bold text-navy">2. Payment Terms</h3>
-                    <p class="mb-4">All bookings must be paid in full to confirm the reservation. Failure to complete the payment within the designated timeframe may result in cancellation of the booking draft and release of the selected space.</p>
-                    
-                    <h3 class="mb-1.5 font-bold text-navy">3. Cancellation and Refund Policy</h3>
-                    <p class="mb-4">Cancellations made more than 30 days before the exhibition start date will receive a 50% refund. No refunds will be provided for cancellations made within 30 days of the event, or for no-shows.</p>
-                    
-                    <h3 class="mb-1.5 font-bold text-navy">4. Liability and Insurance</h3>
-                    <p class="mb-4 font-semibold">Exhibitors must maintain adequate insurance coverage. The organizer is not liable for any loss, damage, theft of exhibitor property, or injury to personnel during the event.</p>
+            <div class="rounded-xl border border-borderColor bg-white p-5 shadow-sm sm:p-8">
+                <div class="mb-2 flex items-center gap-3">
+                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#f5f2ff] text-purple">
+                        <i class="fa-solid fa-file-contract text-[15px]"></i>
+                    </span>
+                    <h2 class="text-[22px] font-semibold text-navy sm:text-[26px]">Terms and Conditions</h2>
                 </div>
+                <p class="mb-5 text-[13.5px] font-medium leading-6 text-[#5A6480] sm:text-[14px]">
+                    Please review and accept each term to confirm your exhibition booth booking.
+                </p>
 
-                <div class="space-y-6 sm:space-y-9">
-                    <label class="flex cursor-pointer items-center gap-4 sm:gap-5 text-[16px] sm:text-[19px] text-navy">
-                        <input type="checkbox" name="terms_accepted" required class="h-6 w-6 sm:h-7 sm:w-7 circular-checkbox">
-                        <span>I agree to the terms and conditions.</span>
-                    </label>
+                @php
+                    $exhibitionTerms = [
+                        'booking_payment_allocation' => [
+                            'title' => 'Booking, Payment & Booth Allocation',
+                            'body' => 'All booth bookings, exhibition/event registrations, and payments are subject to availability and confirmation. Booth allocation will be managed according to the selected package, hall availability, and platform booking policies.',
+                        ],
+                        'cancellation_event_management' => [
+                            'title' => 'Cancellation, Modifications & Event Management',
+                            'body' => 'Any cancellation, modification, rescheduling, or refund request will be handled according to the platform\'s event and exhibition policies. Organizers reserve the right to make necessary changes to schedules, layouts, or event arrangements when required.',
+                        ],
+                        'participant_responsibilities' => [
+                            'title' => 'Participant Responsibilities & Platform Usage',
+                            'body' => 'Companies, exhibitors, and visitors are responsible for providing accurate information and complying with all event, exhibition, and platform guidelines. Any misuse, false information, or violation of platform policies may result in booking cancellation or restricted access.',
+                        ],
+                    ];
+                @endphp
 
-                    <label class="flex cursor-pointer items-center gap-4 sm:gap-5 text-[16px] sm:text-[19px] text-navy">
-                        <input type="checkbox" name="cancellation_policy_accepted" required class="h-6 w-6 sm:h-7 sm:w-7 circular-checkbox">
-                        <span>I understand the cancellation policy.</span>
-                    </label>
-
-                    <label class="flex cursor-pointer items-center gap-4 sm:gap-5 text-[16px] sm:text-[19px] text-navy">
-                        <input type="checkbox" name="details_confirmed" required checked class="h-6 w-6 sm:h-7 sm:w-7 circular-checkbox">
-                        <span>I confirm all details are correct.</span>
-                    </label>
+                <div class="space-y-2.5">
+                    @foreach ($exhibitionTerms as $termKey => $term)
+                        <label data-term-row class="flex cursor-pointer items-start gap-3 rounded-xl border border-borderColor bg-[#FBFAFF] p-3.5 transition-all duration-200 hover:border-[#c7bcff] sm:gap-4 sm:p-4">
+                            <input
+                                type="radio"
+                                name="acknowledged_terms[{{ $termKey }}]"
+                                value="1"
+                                required
+                                data-term-radio
+                                class="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-[#5b2eff]"
+                            >
+                            <span class="min-w-0">
+                                <span class="block text-[15px] font-semibold text-navy">{{ $term['title'] }}</span>
+                                <span class="mt-1 block text-[13px] leading-6 text-[#5A6480]">{{ $term['body'] }}</span>
+                            </span>
+                        </label>
+                    @endforeach
                 </div>
             </div>
         </div>
@@ -135,5 +142,23 @@
     </div>
 
 </section>
+
+@push('scripts')
+<script>
+    (() => {
+        // Highlight a term row once its radio is acknowledged.
+        document.querySelectorAll('[data-term-radio]').forEach((radio) => {
+            radio.addEventListener('change', () => {
+                const row = radio.closest('[data-term-row]');
+                if (!row) {
+                    return;
+                }
+                row.classList.remove('border-borderColor', 'bg-[#FBFAFF]', 'hover:border-[#c7bcff]');
+                row.classList.add('border-[#5b2eff]', 'bg-[#f5f2ff]', 'shadow-[0_4px_12px_rgba(91,46,255,0.10)]');
+            });
+        });
+    })();
+</script>
+@endpush
 
 @endsection

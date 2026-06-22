@@ -75,7 +75,7 @@
                     <label class="field"><span>Country</span><input name="country" value="{{ old('country') }}"></label>
                     <label class="field"><span>Password</span><input name="password" type="password" required></label>
                     <label class="field"><span>Confirm Password</span><input name="password_confirmation" type="password" required></label>
-                    @if ($errors->any())<p class="error">{{ $errors->first() }}</p>@endif
+                    @if (isset($errors) && $errors->any())<p class="error">{{ $errors->first() }}</p>@endif
                     <button type="submit" class="btn">{{ $isEventCompanyFlow ? 'Register Event Company' : 'Register Company' }}</button>
                 </form>
 

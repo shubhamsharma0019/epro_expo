@@ -58,9 +58,16 @@
                         @php
                             $eventBanner = $event->branding?->banner_path ? asset('storage/' . $event->branding->banner_path) : 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&h=350&fit=crop';
                             $eventDates = $event->starts_at ? $event->starts_at->format('M d') . ($event->ends_at ? ' - ' . $event->ends_at->format('d, Y') : $event->starts_at->format(', Y')) : 'Date TBD';
-                            $eventLocation = collect([$event->venue_name, $event->city, 'India'])
+                            $eventCountry = trim((string) ($event->country ?: 'India'));
+                            $eventCity = trim((string) $event->city);
+
+                            if (strtolower($eventCountry) === 'india' && strtolower($eventCity) === 'chicago') {
+                                $eventCity = '';
+                            }
+
+                            $eventLocation = collect([$event->venue_name, $eventCity, $eventCountry])
                                 ->filter()
-                                ->unique()
+                                ->unique(fn ($part) => strtolower($part))
                                 ->join(', ');
                         @endphp
                         <article

@@ -50,7 +50,6 @@
 
         <div class="mb-8">
             <h1 class="text-[28px] font-bold tracking-tight text-[#1E1B4B]">Booth Branding</h1>
-            <p class="mt-2 text-[15px] text-[#6B7280]">Customize the look and feel of your virtual booth.</p>
         </div>
 
         @if (session('status'))

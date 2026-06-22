@@ -8,7 +8,6 @@
     <div class="mb-8 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div>
             <h1 class="text-[34px] font-semibold leading-[42px] tracking-[-0.8px] text-navy">Manage Catalogues</h1>
-            <p class="mt-3 text-[16px] font-medium leading-7 text-[#34405F]">Maintain downloadable catalogues for buyers and visitors.</p>
         </div>
         <a href="{{ url('/company/catalogues/create') }}" class="inline-flex h-[52px] items-center justify-center rounded-md bg-gradient-to-r from-[#5b2eff] to-[#4310d8] px-6 text-[15px] font-semibold text-white">Add Catalogue</a>
     </div>

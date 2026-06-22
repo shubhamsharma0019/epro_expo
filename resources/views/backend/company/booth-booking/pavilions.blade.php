@@ -35,26 +35,25 @@
             </h1>
         </div>
 
-        <p class="max-w-[720px] text-[15px] leading-6 text-[#5A6480] sm:text-[16px] sm:leading-7">
-            @if (! empty($selectedExhibition))
-                Booking for <strong>{{ $selectedExhibition->title }}</strong> — choose a pavilion below.
-            @else
-                Explore our pavilions and choose the right one for your brand.
-            @endif
-        </p>
     </div>
 
     <!-- SEARCH + VIEW BUTTONS -->
     <div class="mb-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
-        <div class="relative w-full sm:max-w-[420px]">
+        <form id="pavilion-search-form" method="GET" action="{{ url('/company/booth-booking/pavilions') }}" class="relative w-full sm:max-w-[420px]">
+            <input type="hidden" name="view" value="{{ $viewMode }}">
+            @if ($selectedExhibition)
+                <input type="hidden" name="exhibition" value="{{ $selectedExhibition->slug }}">
+            @endif
             <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-[#5A6480] text-[16px]"></i>
-            <form id="pavilion-search-form" method="GET" action="{{ url('/company/booth-booking/pavilions') }}">
-                <input type="hidden" name="view" value="{{ $viewMode }}">
-                <input id="pavilion-search-input" type="text" name="search" value="{{ $search ?? '' }}" placeholder="Search pavilions..."
-                    class="h-[48px] w-full rounded-md border border-borderColor pl-11 pr-4 text-[14px] font-medium outline-none placeholder:text-[#6B7280] focus:border-purple">
-            </form>
-        </div>
+            <input id="pavilion-search-input" type="search" name="search" value="{{ $search ?? '' }}" placeholder="Search pavilions..."
+                class="h-[48px] w-full rounded-md border border-borderColor pl-11 {{ ($search ?? '') !== '' ? 'pr-12' : 'pr-4' }} text-[14px] font-medium outline-none placeholder:text-[#6B7280] focus:border-purple">
+            @if (($search ?? '') !== '')
+                <a href="{{ url('/company/booth-booking/pavilions?' . http_build_query(array_filter(['view' => $viewMode, 'exhibition' => $selectedExhibition?->slug]))) }}" class="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-[#5A6480] hover:bg-gray-100" aria-label="Clear pavilion search">
+                    <i class="fa-solid fa-xmark text-[13px]"></i>
+                </a>
+            @endif
+        </form>
 
         <div class="inline-flex shrink-0 items-center gap-1 self-start rounded-lg border border-borderColor bg-[#F8FAFC] p-1 sm:gap-2 sm:self-auto sm:border-0 sm:bg-transparent sm:p-0">
             <a href="{{ $viewUrl('grid') }}" class="{{ $viewButtonClass('grid') }}" aria-label="Grid view">

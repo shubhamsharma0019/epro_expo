@@ -14,7 +14,14 @@ class BoothFloorMap
             return 1;
         }
 
-        $area = (float) ($selectedSize->area ?: ((float) $selectedSize->width * (float) $selectedSize->height));
+        $width = (float) $selectedSize->width;
+        $height = (float) $selectedSize->height;
+
+        if ($width > 0 && $height > 0) {
+            return max(1, (int) ceil($width / 3) * (int) ceil($height / 3));
+        }
+
+        $area = (float) ($selectedSize->area ?: 0);
 
         return max(1, (int) ceil($area / 9));
     }
@@ -34,20 +41,13 @@ class BoothFloorMap
     {
         $booth->loadMissing('boothSize');
 
-        [$fallbackLeft, $fallbackTop] = self::fallbackPositionForBooth($booth);
-        $left = max((int) ($booth->position_x ?? $fallbackLeft), 0);
-        $top = max((int) ($booth->position_y ?? $fallbackTop), 0);
+        [$left, $top] = self::fallbackPositionForBooth($booth);
 
-        if ($left < 18 || $top < 24) {
-            $left = $fallbackLeft;
-            $top = $fallbackTop;
-        }
+        $width = 60;
+        $height = 68;
 
-        $width = 48;
-        $height = 44;
-
-        $left = min($left, 700 - $width);
-        $top = min($top, 350 - $height);
+        $left = min($left, 720 - $width - 16);
+        $top = min($top, 400 - $height - 16);
 
         return [
             'left' => $left,
@@ -67,13 +67,13 @@ class BoothFloorMap
         $column = $index % $columns;
         $row = intdiv($index, $columns);
 
-        return [18 + ($column * 60), 30 + ($row * 58)];
+        return [16 + ($column * 68), 30 + ($row * 88)];
     }
 
     public static function boundsForFootprint(Collection $footprint): array
     {
         if ($footprint->isEmpty()) {
-            return ['left' => 0, 'top' => 0, 'width' => 48, 'height' => 44];
+            return ['left' => 0, 'top' => 0, 'width' => 60, 'height' => 68];
         }
 
         $metrics = $footprint->map(fn (Booth $booth) => self::metricsForBooth($booth));
@@ -86,8 +86,8 @@ class BoothFloorMap
         return [
             'left' => $left,
             'top' => $top,
-            'width' => max(48, $right - $left),
-            'height' => max(44, $bottom - $top),
+            'width' => max(60, $right - $left),
+            'height' => max(68, $bottom - $top),
         ];
     }
     public static function segmentsForFootprint(Collection $footprint): array
@@ -147,8 +147,8 @@ class BoothFloorMap
                     'numbers' => $segment['numbers'],
                     'left' => max((int) $segment['left'] - 4, 0),
                     'top' => max((int) $segment['top'] - 4, 0),
-                    'width' => max(48, (int) ($segment['right'] - $segment['left']) + 8),
-                    'height' => max(44, (int) ($segment['bottom'] - $segment['top']) + 8),
+                    'width' => max(60, (int) ($segment['right'] - $segment['left']) + 8),
+                    'height' => max(68, (int) ($segment['bottom'] - $segment['top']) + 8),
                 ];
             })
             ->values()

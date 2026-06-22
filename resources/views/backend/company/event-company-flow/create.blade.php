@@ -65,8 +65,7 @@
 <div class="px-4 py-6 sm:px-6 md:px-10 md:py-8">
             <!-- Header Title -->
             <div class="mb-8">
-                <h1 class="text-[22px] sm:text-[24px] font-bold tracking-tight text-[#1C1364] mb-1">Create New Event</h1>
-                <p class="text-[14px] text-textMuted">Configure and create your offline event.</p>
+                <h1 class="text-[22px] sm:text-[24px] font-bold tracking-tight text-[#1C1364]">Create New Event</h1>
             </div>
 
             <!-- Main Card -->

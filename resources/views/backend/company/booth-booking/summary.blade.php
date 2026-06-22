@@ -8,9 +8,6 @@
         <h1 class="text-[26px] sm:text-[34px] font-semibold leading-tight sm:leading-[42px] tracking-[-0.8px] text-navy">
             Booking Summary
         </h1>
-        <p class="mt-2 sm:mt-3 text-[14px] sm:text-[16px] font-medium leading-relaxed sm:leading-7 text-[#34405F]">
-            Review your selected pavilion, hall, booth, days, and total before adding services.
-        </p>
     </div>
 
     <div class="grid grid-cols-1 gap-6 sm:gap-8 xl:grid-cols-[minmax(0,1fr)_360px]">

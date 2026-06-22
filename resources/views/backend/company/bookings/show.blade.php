@@ -27,8 +27,7 @@
 <section class="max-w-[1500px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
     <div class="w-full mx-auto space-y-6">
         <div class="mb-8">
-            <h1 class="text-[28px] font-bold text-[#1E1B4B] mb-2 tracking-tight">Booking Details</h1>
-            <p class="text-gray-500 text-[15px]">View your booking information and invoice details.</p>
+            <h1 class="text-[28px] font-bold text-[#1E1B4B] tracking-tight">Booking Details</h1>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">

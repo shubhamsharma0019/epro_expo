@@ -18,8 +18,41 @@
             : asset(str_starts_with($eventFlowLogo, 'storage/') ? $eventFlowLogo : 'storage/' . ltrim($eventFlowLogo, '/'));
     }
 
-    $eventFlowNotificationCount = ($stats['enquiries_count'] ?? $eventFlowCompany?->enquiries()->count() ?? 0)
-        + ($stats['meetings_count'] ?? $eventFlowCompany?->visitorMeetingBookings()->count() ?? 0);
+    // Only count notifications newer than the last time the user opened the
+    // notifications page, so the red badge clears once they have seen them.
+    $eventFlowNotificationsSeenAt = session('company_notifications_seen_at');
+
+    $eventFlowEnquiryCount = $eventFlowCompany
+        ? $eventFlowCompany->enquiries()
+            ->when($eventFlowNotificationsSeenAt, fn ($query) => $query->where('created_at', '>', $eventFlowNotificationsSeenAt))
+            ->count()
+        : 0;
+
+    $eventFlowMeetingCount = $eventFlowCompany
+        ? $eventFlowCompany->visitorMeetingBookings()
+            ->when($eventFlowNotificationsSeenAt, fn ($query) => $query->where('created_at', '>', $eventFlowNotificationsSeenAt))
+            ->count()
+        : 0;
+
+    // Booth booking notifications (pending approval, approved, cancelled/rejected, draft)
+    // — kept in sync with the notifications page logic.
+    $eventFlowBoothNotificationCount = $eventFlowCompany
+        ? $eventFlowCompany->boothBookings()
+            ->where(function ($query) {
+                $query->where('admin_status', 'rejected')
+                    ->orWhere('booking_status', 'cancelled')
+                    ->orWhere('admin_status', 'approved')
+                    ->orWhere(function ($paid) {
+                        $paid->where('payment_status', 'paid')
+                            ->whereIn('booking_status', ['confirmed', 'active']);
+                    })
+                    ->orWhere('booking_status', 'draft');
+            })
+            ->when($eventFlowNotificationsSeenAt, fn ($query) => $query->where('updated_at', '>', $eventFlowNotificationsSeenAt))
+            ->count()
+        : 0;
+
+    $eventFlowNotificationCount = $eventFlowEnquiryCount + $eventFlowMeetingCount + $eventFlowBoothNotificationCount;
 @endphp
 
 <header class="z-40 flex h-[72px] shrink-0 min-w-0 items-center justify-between gap-4 border-b border-gray-100 bg-white px-4 sm:px-6 lg:hidden">
@@ -54,7 +87,7 @@
         <a href="{{ route('company.notifications', ['flow' => 'event']) }}" class="relative grid h-9 w-9 place-items-center rounded-xl text-gray-500 transition-colors hover:bg-[#F8F9FA] hover:text-[#1C1364]">
             <i class="ph ph-bell text-2xl"></i>
             @if ($eventFlowNotificationCount > 0)
-                <span class="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[9px] font-bold leading-none text-white">{{ $eventFlowNotificationCount }}</span>
+                <span class="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[9px] font-bold leading-none text-white">{{ $eventFlowNotificationCount > 99 ? '99+' : $eventFlowNotificationCount }}</span>
             @endif
         </a>
 

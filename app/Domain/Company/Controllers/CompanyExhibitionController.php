@@ -10,19 +10,39 @@ use Illuminate\View\View;
 
 class CompanyExhibitionController extends Controller
 {
-    public function index(): View|RedirectResponse
+    public function index(Request $request): View|RedirectResponse
     {
         $companyId = session('company_id');
         if (! $companyId) {
             return redirect('/company/login');
         }
 
-        $exhibitions = LiveContent::exhibitionQuery()
-            ->with(['boothBookings' => function ($query) use ($companyId) {
-                $query->where('company_id', $companyId)->where('payment_status', 'paid');
-            }])
+        $search = trim((string) $request->query('search', ''));
+
+        $exhibitions = LiveContent::databaseExhibitionsQuery()
+            ->with([
+                'pavilions',
+                'boothBookings' => function ($query) use ($companyId) {
+                    $query->where('company_id', $companyId)->where('payment_status', 'paid');
+                },
+            ])
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('title', 'like', "%{$search}%")
+                        ->orWhere('name', 'like', "%{$search}%")
+                        ->orWhere('description', 'like', "%{$search}%")
+                        ->orWhere('venue', 'like', "%{$search}%")
+                        ->orWhere('location', 'like', "%{$search}%")
+                        ->orWhereHas('pavilions', function ($query) use ($search) {
+                            $query->where('title', 'like', "%{$search}%")
+                                ->orWhere('description', 'like', "%{$search}%");
+                        });
+                });
+            })
             ->latest()
-            ->get();
+            ->get()
+            ->unique(fn ($exhibition) => strtolower(trim($exhibition->title ?: $exhibition->slug)))
+            ->values();
 
         $exhibitions->each(function ($exhibition) {
             $userBooking = $exhibition->boothBookings->first();
@@ -41,7 +61,7 @@ class CompanyExhibitionController extends Controller
             }
         });
 
-        return view('backend.company.exhibitions.index', compact('exhibitions'));
+        return view('backend.company.exhibitions.index', compact('exhibitions', 'search'));
     }
 
     public function show(string $slug): View|RedirectResponse
@@ -51,7 +71,7 @@ class CompanyExhibitionController extends Controller
             return redirect('/company/login');
         }
 
-        $exhibition = LiveContent::exhibitionQuery()
+        $exhibition = LiveContent::databaseExhibitionsQuery()
             ->where('slug', $slug)
             ->with(['pavilions', 'boothBookings' => function ($query) use ($companyId) {
                 $query->where('company_id', $companyId)->where('payment_status', 'paid');

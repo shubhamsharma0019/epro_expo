@@ -4,57 +4,6 @@
 
 @section('content')
 @php
-    $fallbackExhibitions = [
-        [
-            'slug' => 'global-tech-expo-2026',
-            'title' => 'Global Tech Expo 2026',
-            'date' => 'June 12 - 14, 2026',
-            'time' => '10:00 AM - 7:00 PM IST',
-            'location' => 'Virtual + New Delhi',
-            'category' => 'Technology',
-            'status' => 'Live registration',
-            'visitors' => '24,000+',
-            'companies' => '420',
-            'halls' => '14',
-            'sessions' => '80+',
-            'pass' => 'Free visitor pass available',
-            'image' => 'images/exhibitions/hero-pavilion-scene.png',
-            'accent' => '#5b2eff',
-        ],
-        [
-            'slug' => 'healthcare-innovation-expo',
-            'title' => 'Healthcare Innovation Expo',
-            'date' => 'July 8 - 10, 2026',
-            'time' => '11:00 AM - 6:00 PM IST',
-            'location' => 'Virtual',
-            'category' => 'Healthcare',
-            'status' => 'Early access',
-            'visitors' => '18,500+',
-            'companies' => '260',
-            'halls' => '9',
-            'sessions' => '45+',
-            'pass' => 'Business pass opens soon',
-            'image' => 'assets/images/pavilions/healthcare-pavilion.png',
-            'accent' => '#0F9F8F',
-        ],
-        [
-            'slug' => 'sustainable-business-fair',
-            'title' => 'Sustainable Business Fair',
-            'date' => 'August 3 - 5, 2026',
-            'time' => '9:30 AM - 5:30 PM IST',
-            'location' => 'Hybrid',
-            'category' => 'Sustainability',
-            'status' => 'Coming soon',
-            'visitors' => '16,200+',
-            'companies' => '210',
-            'halls' => '8',
-            'sessions' => '38+',
-            'pass' => 'Notify me for passes',
-            'image' => 'assets/images/pavilions/sustainability-pavilion.png',
-            'accent' => '#2C7A4B',
-        ],
-    ];
-
     $exhibitions = isset($dynamicExhibitions) && $dynamicExhibitions->isNotEmpty()
         ? $dynamicExhibitions->map(function ($item) {
             $publishedBookings = $item->boothBookings ?? collect();
@@ -62,15 +11,25 @@
             $companyNames = $publishedBookings
                 ->map(fn ($booking) => $booking->boothProfile?->company_name ?: $booking->company?->company_name ?: $booking->company?->name)
                 ->filter()
-                ->unique(fn ($name) => strtolower(trim($name)))
+                ->unique(fn ($name) => strtolower(trim((string) $name)))
                 ->values();
             $companyCount = $companyNames->count();
             $productsCount = $publishedBookings->sum(fn ($booking) => $booking->boothProducts?->where('status', 'published')->count() ?? 0);
             $cataloguesCount = $publishedBookings->sum(fn ($booking) => $booking->boothCatalogues?->where('status', 'active')->where('visibility', 'public')->count() ?? 0);
+            $hallCount = max(
+                $publishedBookings->pluck('hall_id')->filter()->unique()->count(),
+                \App\Support\DbGuard::whenAvailable(
+                    fn () => \App\Domain\Event\Models\Hall::query()
+                        ->whereHas('pavilion', fn ($query) => $query->where('exhibition_id', $item->id))
+                        ->where('status', 'active')
+                        ->count(),
+                    0
+                )
+            );
 
             return [
                 'slug' => $item->slug,
-                'title' => $item->title,
+                'title' => $item->title ?: $item->name,
                 'date' => optional($item->start_date)->format('F j') . ' - ' . optional($item->end_date)->format('j, Y'),
                 'time' => '10:00 AM - 7:00 PM IST',
                 'location' => $item->venue ?: ($item->location ?: 'Virtual'),
@@ -78,7 +37,7 @@
                 'status' => $item->start_date && $item->start_date->isFuture() ? 'Upcoming' : 'Live registration',
                 'visitors' => (string) ($item->companies_count ?: max($companyCount, 0)),
                 'companies' => (string) $companyCount,
-                'halls' => (string) max($publishedBookings->pluck('hall_id')->filter()->unique()->count(), 1),
+                'halls' => (string) max($hallCount, 1),
                 'sessions' => (string) max(collect($publishedBookings)->sum(fn ($booking) => $booking->boothSessions?->count() ?? 0), 1),
                 'pass' => 'Free visitor pass available',
                 'image' => $image,
@@ -87,11 +46,14 @@
                 'company_names' => $companyNames->take(3)->all(),
             ];
         })->values()->all()
-        : $fallbackExhibitions;
+        : [];
 
     $featuredExhibition = isset($dynamicExhibitions) && $dynamicExhibitions->isNotEmpty()
         ? $dynamicExhibitions->first()
-        : \App\Support\LiveContent::exhibitionPageQuery()->orderBy('start_date')->first();
+        : \App\Support\DbGuard::whenAvailable(
+            fn () => \App\Support\LiveContent::exhibitionsForVisitorIndex()->first(),
+            null
+        );
     $heroExhibition = $exhibitions[0] ?? null;
 
     if ($featuredExhibition) {
@@ -130,9 +92,9 @@
         $featuredCompanyCount = (int) ($heroExhibition['companies'] ?? 0);
         $featuredHallsCount = (int) ($heroExhibition['halls'] ?? 0);
         $featuredSessionsCount = (int) ($heroExhibition['sessions'] ?? 0);
-        $featuredBoothsCount = 1;
-        $featuredPavilionsCount = 1;
-        $featuredStatus = $heroExhibition['status'] ?? 'Visitor Preview';
+        $featuredBoothsCount = 0;
+        $featuredPavilionsCount = 0;
+        $featuredStatus = 'Visitor Preview';
         $heroImage = $heroExhibition['image'] ?? 'images/exhibitions/hero-pavilion-scene.png';
         $heroImageUrl = \Illuminate\Support\Str::startsWith($heroImage, ['http://', 'https://'])
             ? $heroImage
@@ -175,17 +137,18 @@
         ['Visitor pass', 'Register once and carry a QR pass for dashboard access.', 'fa-regular fa-id-card'],
         ['Meetings', 'Book meetings, join sessions and continue live chat after entry.', 'fa-regular fa-calendar-check'],
     ];
-    $featuredSlug = $heroExhibition['slug'] ?? 'global-tech-expo-2024';
+    $featuredSlug = $heroExhibition['slug'] ?? $featuredExhibition?->slug;
+    $featuredTitle = $heroExhibition['title'] ?? ($featuredExhibition?->title ?: $featuredExhibition?->name) ?? 'Exhibition';
     $visitorAccessCards = [
-        ['Preview allowed', ($heroExhibition['title'] ?? 'Exhibition') . ' details, companies, booth previews, floor map and schedule previews.'],
+        ['Preview allowed', $featuredTitle . ' details, companies, booth previews, floor map and schedule previews.'],
         ['Pass required', 'Book meeting, live chat, brochure download, protected demo, join session and save booth.'],
     ];
-    $suggestedRouteSteps = [
+    $suggestedRouteSteps = $featuredSlug ? [
         ['01', 'Detail', route('exhibitions.show', $featuredSlug)],
         ['02', 'Companies', route('exhibitions.visitor.companies', $featuredSlug)],
         ['03', 'Map', route('exhibitions.visitor-halls.index', $featuredSlug)],
         ['04', 'QR Pass', route('exhibitions.tickets.select', $featuredSlug)],
-    ];
+    ] : [];
 @endphp
 
 <section class="bg-white">
@@ -222,13 +185,13 @@
                         </div>
                         <span class="hidden rounded-full border border-green-200 bg-[#E9FFF2] px-3 py-1 text-[10px] font-bold text-[#0A9A55] sm:inline-flex">{{ $heroPreviewStatus }}</span>
                     </div>
-                    <img src="{{ $heroImageUrl }}" alt="{{ $heroExhibition['title'] ?? 'Virtual pavilion exhibition hall' }}" class="h-[240px] w-full object-cover sm:h-[360px] lg:h-[410px]">
+                    <img src="{{ $heroImageUrl }}" alt="{{ $featuredTitle }}" class="h-[240px] w-full object-cover sm:h-[360px] lg:h-[410px]">
                 </div>
             </div>
         </div>
 
         <div class="mt-7 grid items-stretch gap-4 lg:grid-cols-[1fr_1fr]">
-            <div class="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:grid-cols-4">
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 @foreach ($heroStats as [$value, $label, $icon, $color])
                     <div class="flex items-center gap-3 rounded-xl border border-[#E7EAF3] bg-white p-3 shadow-sm">
                         <span class="grid h-11 w-11 shrink-0 place-items-center rounded-full text-white" style="background-color: {{ $color }}">
@@ -274,14 +237,16 @@
                     <p class="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[#6D28D9]">Upcoming exhibitions</p>
                     <h2 class="mt-2 text-[28px] font-black leading-tight tracking-[-0.03em] text-[#071044] sm:text-[38px]">Choose your next expo visit</h2>
                 </div>
-                <a href="{{ route('exhibitions.visitor.dashboard', $featuredSlug) }}" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#D8DCEB] bg-white px-5 py-3 text-[13px] font-extrabold text-[#071044] shadow-sm hover:bg-[#F8F7FF]">
-                    <i class="fa-solid fa-house text-[#6D28D9]"></i>
-                    Visitor Dashboard
-                </a>
+                @if ($featuredSlug)
+                    <a href="{{ route('exhibitions.visitor.dashboard', $featuredSlug) }}" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#D8DCEB] bg-white px-5 py-3 text-[13px] font-extrabold text-[#071044] shadow-sm hover:bg-[#F8F7FF]">
+                        <i class="fa-solid fa-house text-[#6D28D9]"></i>
+                        Visitor Dashboard
+                    </a>
+                @endif
             </div>
 
-            <div class="mt-5 grid gap-5 lg:grid-cols-3">
-                @foreach ($exhibitions as $exhibition)
+            <div class="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                @forelse ($exhibitions as $exhibition)
                     <article data-exhibition-card data-category="{{ $exhibition['category'] }}" data-search="{{ strtolower($exhibition['title'] . ' ' . $exhibition['category'] . ' ' . $exhibition['location'] . ' ' . implode(' ', $exhibition['company_names'] ?? [])) }}" class="flex min-h-[520px] flex-col overflow-hidden rounded-[14px] border border-[#E7EAF3] bg-white shadow-[0_10px_28px_rgba(7,16,68,0.07)] transition-transform hover:-translate-y-1">
                         <div class="relative bg-[#071044]" style="height: 210px; overflow: hidden;">
                             @php
@@ -342,48 +307,55 @@
                             </div>
                         </div>
                     </article>
-                @endforeach
+                @empty
+                    <div class="sm:col-span-2 lg:col-span-3 rounded-[14px] border border-[#E7EAF3] bg-white p-10 text-center shadow-[0_10px_28px_rgba(7,16,68,0.07)]">
+                        <p class="text-[20px] font-bold text-[#071044]">No exhibitions available yet</p>
+                        <p class="mt-3 text-[14px] font-medium leading-6 text-[#5A6480]">Published exhibitions from the database will appear here automatically.</p>
+                    </div>
+                @endforelse
             </div>
 
-            <div class="mt-6 grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-                <div class="rounded-[14px] border border-[#E7EAF3] bg-white p-5 shadow-[0_10px_28px_rgba(7,16,68,0.07)]">
-                    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                        <div>
-                            <p class="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[#6D28D9]">Visitor access</p>
-                            <h3 class="mt-2 text-[22px] font-black tracking-[-0.03em] text-[#071044]">Guest preview first, pass access after registration.</h3>
-                        </div>
-                        <p class="rounded-xl bg-[#F4F0FF] px-4 py-3 text-[13px] font-extrabold text-[#6D28D9]">Register / Get Pass to access this feature</p>
-                    </div>
-                    <div class="mt-5 grid gap-3 sm:grid-cols-2">
-                        @foreach ($visitorAccessCards as [$heading, $copy])
-                            <div class="rounded-xl border border-[#E7EAF3] bg-[#FBFAFF] p-4">
-                                <p class="text-[14px] font-extrabold text-[#071044]">{{ $heading }}</p>
-                                <p class="mt-1 text-[13px] font-medium leading-5 text-[#5A6480]">{{ $copy }}</p>
+            @if ($featuredSlug)
+                <div class="mt-6 grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
+                    <div class="rounded-[14px] border border-[#E7EAF3] bg-white p-5 shadow-[0_10px_28px_rgba(7,16,68,0.07)]">
+                        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                            <div>
+                                <p class="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[#6D28D9]">Visitor access</p>
+                                <h3 class="mt-2 text-[22px] font-black tracking-[-0.03em] text-[#071044]">Guest preview first, pass access after registration.</h3>
                             </div>
-                        @endforeach
-                    </div>
-                </div>
-
-                <div class="rounded-[14px] border border-[#E7EAF3] bg-[#071A55] p-5 text-white shadow-[0_14px_34px_rgba(7,16,68,0.18)]">
-                    <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <p class="text-[12px] font-extrabold uppercase tracking-[0.14em] text-white/65">Suggested route</p>
-                            <h3 class="mt-2 text-[22px] font-black tracking-[-0.03em]">Open, explore, register, enter.</h3>
+                            <p class="rounded-xl bg-[#F4F0FF] px-4 py-3 text-[13px] font-extrabold text-[#6D28D9]">Register / Get Pass to access this feature</p>
                         </div>
-                        <a href="{{ route('exhibitions.visit', $featuredSlug) }}" class="inline-flex min-h-11 items-center justify-center rounded-xl bg-white px-5 py-3 text-[13px] font-extrabold text-[#071044]">
-                            Preview Visitor Lobby
-                        </a>
+                        <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                            @foreach ($visitorAccessCards as [$heading, $copy])
+                                <div class="rounded-xl border border-[#E7EAF3] bg-[#FBFAFF] p-4">
+                                    <p class="text-[14px] font-extrabold text-[#071044]">{{ $heading }}</p>
+                                    <p class="mt-1 text-[13px] font-medium leading-5 text-[#5A6480]">{{ $copy }}</p>
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
-                    <div class="mt-5 grid gap-3 sm:grid-cols-4">
-                        @foreach ($suggestedRouteSteps as [$step, $label, $href])
-                            <a href="{{ $href }}" class="rounded-xl bg-white/10 p-3 transition hover:bg-white/15">
-                                <span class="grid h-8 w-8 place-items-center rounded-full bg-white text-[12px] font-extrabold text-[#6D28D9]">{{ $step }}</span>
-                                <p class="mt-2 text-[13px] font-bold text-white/90">{{ $label }}</p>
+
+                    <div class="rounded-[14px] border border-[#E7EAF3] bg-[#071A55] p-5 text-white shadow-[0_14px_34px_rgba(7,16,68,0.18)]">
+                        <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-[12px] font-extrabold uppercase tracking-[0.14em] text-white/65">Suggested route</p>
+                                <h3 class="mt-2 text-[22px] font-black tracking-[-0.03em]">Open, explore, register, enter.</h3>
+                            </div>
+                            <a href="{{ route('exhibitions.visit', $featuredSlug) }}" class="inline-flex min-h-11 items-center justify-center rounded-xl bg-white px-5 py-3 text-[13px] font-extrabold text-[#071044]">
+                                Preview Visitor Lobby
                             </a>
-                        @endforeach
+                        </div>
+                        <div class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                            @foreach ($suggestedRouteSteps as [$step, $label, $href])
+                                <a href="{{ $href }}" class="rounded-xl bg-white/10 p-3 transition hover:bg-white/15">
+                                    <span class="grid h-8 w-8 place-items-center rounded-full bg-white text-[12px] font-extrabold text-[#6D28D9]">{{ $step }}</span>
+                                    <p class="mt-2 text-[13px] font-bold text-white/90">{{ $label }}</p>
+                                </a>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
-            </div>
+            @endif
         </div>
     </div>
     </div>

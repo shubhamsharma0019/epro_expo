@@ -25,9 +25,6 @@
         <h1 class="text-[26px] font-semibold leading-[32px] tracking-[-0.4px] text-navy sm:text-[36px] sm:leading-[40px] sm:tracking-[-0.8px]">
             {{ $selectedPavilion ? $selectedPavilion->title . ' Halls' : 'Halls' }}
         </h1>
-        <p class="mt-3 max-w-[720px] text-[15px] font-medium leading-6 text-[#34405F] sm:text-[16px] sm:leading-7">
-            Select a hall to view layout and book your booth.
-        </p>
     </div>
 
     <div class="mb-6 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
@@ -39,12 +36,7 @@
                 <a href="{{ $hallFilterUrl('available') }}" class="{{ $tabClass('available') }} inline-flex items-center">
                     Available ({{ $availableCount ?? 0 }})
                 </a>
-                <a href="{{ $hallFilterUrl('high') }}" class="{{ $tabClass('high') }} inline-flex items-center">
-                    High Footfall ({{ $highFootfallCount ?? 0 }})
-                </a>
-                <a href="{{ $hallFilterUrl('medium') }}" class="{{ $tabClass('medium') }} inline-flex items-center">
-                    Medium Footfall ({{ $mediumFootfallCount ?? 0 }})
-                </a>
+
             </div>
         </div>
 
@@ -56,15 +48,22 @@
                 @if ($selectedExhibition)
                     <input type="hidden" name="exhibition" value="{{ $selectedExhibition->slug }}">
                 @endif
-                <input type="hidden" name="filter" value="{{ $filter }}">
+                @if (in_array($filter, ['all', 'available'], true))
+                    <input type="hidden" name="filter" value="{{ $filter }}">
+                @endif
                 <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-[15px] text-[#5A6480]"></i>
-                <input id="hall-search-input" type="text" name="search" value="{{ $search ?? '' }}" placeholder="Search by hall, pavilion, booth..."
-                    class="h-[52px] w-full rounded-md border border-borderColor bg-white pl-11 pr-4 text-[14px] font-medium text-navy outline-none placeholder:text-[#8A90A8] focus:border-purple">
+                <input id="hall-search-input" type="search" name="search" value="{{ $search ?? '' }}" placeholder="Search halls..."
+                    class="h-[52px] w-full rounded-md border border-borderColor bg-white pl-11 {{ ($search ?? '') !== '' ? 'pr-12' : 'pr-4' }} text-[14px] font-medium text-navy outline-none placeholder:text-[#8A90A8] focus:border-purple">
+                @if (($search ?? '') !== '')
+                    <a href="{{ url('/company/booth-booking/halls?' . http_build_query(array_filter(['pavilion' => $selectedPavilion?->id, 'filter' => $filter, 'exhibition' => $selectedExhibition?->slug]))) }}" class="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-[#5A6480] hover:bg-gray-100" aria-label="Clear hall search">
+                        <i class="fa-solid fa-xmark text-[13px]"></i>
+                    </a>
+                @endif
             </form>
 
             <button type="submit" form="hall-search-form" class="inline-flex h-[52px] w-full items-center justify-center gap-3 rounded-md border border-purple px-5 text-[15px] font-semibold text-purple sm:w-auto sm:min-w-[120px]">
-                <i class="fa-solid fa-filter text-[15px]"></i>
-                Filter
+                <i class="fa-solid fa-magnifying-glass text-[15px]"></i>
+                Search
             </button>
         </div>
     </div>
@@ -77,13 +76,12 @@
                 $isAvailable = $availableBooths > 0;
                 $imagePath = $hall->image ?: optional($hall->pavilion)->image ?: 'assets/images/pavilions/innovation-pavilion.png';
                 $imageUrl = str_starts_with($imagePath, 'http') ? $imagePath : asset($imagePath);
-                $sizeLabel = number_format(max($totalBooths * 120, 1200)) . ' sqm';
-                $footfall = $totalBooths >= 250 ? 'High Footfall' : 'Medium Footfall';
+                $bookedBooths = max($totalBooths - $availableBooths, 0);
             @endphp
             <div
                 class="rounded-xl border border-borderColor bg-white p-4 shadow-sm sm:p-5"
                 data-hall-card
-                data-search="{{ strtolower($hall->title . ' ' . $hall->slug . ' ' . ($hall->description ?? '') . ' ' . optional($hall->pavilion)->title . ' ' . optional($hall->pavilion)->slug . ' ' . $availableBooths . ' ' . $totalBooths . ' ' . $footfall) }}"
+                data-search="{{ strtolower($hall->title . ' ' . $hall->slug . ' ' . ($hall->description ?? '') . ' ' . optional($hall->pavilion)->title . ' ' . optional($hall->pavilion)->slug . ' ' . $availableBooths . ' ' . $totalBooths) }}"
             >
                 <div class="grid grid-cols-1 gap-4 sm:gap-5 xl:grid-cols-[170px_minmax(0,1fr)_330px] xl:items-center">
                     <img
@@ -115,12 +113,9 @@
                             </p>
                             <p class="flex items-center gap-3">
                                 <i class="fa-regular fa-square w-4 text-purple"></i>
-                                {{ $sizeLabel }}
+                                {{ number_format($bookedBooths) }} Booked Booths
                             </p>
-                            <p class="flex items-center gap-3">
-                                <i class="fa-solid fa-users w-4 text-purple"></i>
-                                {{ $footfall }}
-                            </p>
+
                             <p class="flex items-center gap-3">
                                 <i class="fa-regular fa-building w-4 text-purple"></i>
                                 {{ number_format($totalBooths) }} Total Booths
@@ -175,7 +170,7 @@
                 No matching halls
             </h3>
             <p class="mx-auto mt-2 max-w-[520px] text-[15px] leading-6 font-medium text-[#5A6480]">
-                Try searching by hall name, pavilion name, hall code, booth count, or footfall type.
+                Try searching by hall name, pavilion name, hall code, or booth count.
             </p>
         </div>
     </div>

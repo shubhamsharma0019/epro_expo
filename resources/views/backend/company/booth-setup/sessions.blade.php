@@ -60,8 +60,7 @@
     <div class="w-full max-w-[1400px] mx-auto border border-gray-100 rounded-2xl p-5 bg-white shadow-sm lg:p-8">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between mb-8">
             <div>
-                <h1 class="text-[28px] font-bold text-[#1E1B4B] tracking-tight mb-2">Live Demos & Sessions</h1>
-                <p class="text-[#6B7280] text-[15px]">Create and manage live demos, webinars, and product sessions.</p>
+                <h1 class="text-[28px] font-bold text-[#1E1B4B] tracking-tight">Live Demos & Sessions</h1>
             </div>
             <a href="{{ route('company.booth-setup.sessions.create', $booking) }}#sessionForm" class="inline-flex w-full items-center justify-center rounded-lg bg-[#4C1D95] px-6 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-[#3b1774] sm:w-auto">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>

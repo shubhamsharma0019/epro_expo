@@ -7,7 +7,7 @@
 <section class="mx-auto w-full max-w-[1100px] px-4 py-8 sm:px-6 lg:px-8">
     <div class="mb-6">
         <h1 class="text-[28px] font-bold leading-tight text-gray-900 sm:text-[34px]">Notifications</h1>
-        <p class="mt-2 text-[15px] font-medium leading-7 text-gray-500">Recent enquiries and meeting requests for your company.</p>
+        <p class="mt-2 text-[15px] font-medium leading-7 text-gray-500">Recent booth bookings, enquiries and meeting requests for your company.</p>
     </div>
 
     <div class="rounded-xl sm:rounded-2xl border border-gray-100 bg-white shadow-sm">
@@ -28,7 +28,7 @@
                     <i class="ph ph-bell-simple text-2xl"></i>
                 </div>
                 <h2 class="mt-4 text-[17px] font-bold text-gray-900">No notifications yet</h2>
-                <p class="mt-2 text-[14px] font-medium text-gray-500">New enquiries and meeting requests will appear here.</p>
+                <p class="mt-2 text-[14px] font-medium text-gray-500">Booth booking updates, enquiries and meeting requests will appear here.</p>
             </div>
         @endforelse
     </div>

@@ -36,11 +36,6 @@ class CompanyBoothBookingController extends Controller
             : 'grid';
         $selectedExhibition = $this->resolveBookingExhibition($request, false, false);
 
-        if (! $selectedExhibition) {
-            return redirect()->route('company.exhibitions.index')
-                ->with('status', 'Please select an exhibition to book a booth.');
-        }
-
         $pavilions = Pavilion::query()
             ->with([
                 'exhibition:id,title,slug,status',
@@ -62,9 +57,11 @@ class CompanyBoothBookingController extends Controller
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('title', 'like', "%{$search}%")
+                        ->orWhere('slug', 'like', "%{$search}%")
                         ->orWhere('description', 'like', "%{$search}%")
                         ->orWhereHas('exhibition', function ($query) use ($search) {
-                            $query->where('title', 'like', "%{$search}%");
+                            $query->where('title', 'like', "%{$search}%")
+                                ->orWhere('slug', 'like', "%{$search}%");
                         });
                 });
             })
@@ -119,7 +116,7 @@ class CompanyBoothBookingController extends Controller
             return redirect()->route('company.booth-booking.pavilions', ['exhibition' => $selectedExhibition->slug])
                 ->with('status', 'Selected pavilion does not belong to this exhibition.');
         }
-        $filter = in_array($request->query('filter'), ['all', 'available', 'high', 'medium'], true)
+        $filter = in_array($request->query('filter'), ['all', 'available'], true)
             ? $request->query('filter')
             : 'all';
 
@@ -164,28 +161,16 @@ class CompanyBoothBookingController extends Controller
             return $hall->available_booths_count ?: max($totalBooths - (int) $hall->booth_bookings_count, 0);
         };
 
-        $isHighFootfall = function ($hall) {
-            $totalBooths = (int) ($hall->total_booths ?: $hall->booths_count);
-
-            return $totalBooths >= 300;
-        };
 
         $halls = $allMatchingHalls
             ->when($filter === 'available', function ($halls) use ($availableBoothCount) {
                 return $halls->filter(fn ($hall) => $availableBoothCount($hall) > 0);
             })
-            ->when($filter === 'high', function ($halls) use ($isHighFootfall) {
-                return $halls->filter(fn ($hall) => $isHighFootfall($hall));
-            })
-            ->when($filter === 'medium', function ($halls) use ($isHighFootfall) {
-                return $halls->filter(fn ($hall) => ! $isHighFootfall($hall));
-            })
+
             ->values();
 
         $allCount = $allMatchingHalls->count();
         $availableCount = $allMatchingHalls->filter(fn ($hall) => $availableBoothCount($hall) > 0)->count();
-        $highFootfallCount = $allMatchingHalls->filter(fn ($hall) => $isHighFootfall($hall))->count();
-        $mediumFootfallCount = $allMatchingHalls->filter(fn ($hall) => ! $isHighFootfall($hall))->count();
 
         return view('backend.company.booth-booking.halls', compact(
             'halls',
@@ -195,8 +180,6 @@ class CompanyBoothBookingController extends Controller
             'filter',
             'allCount',
             'availableCount',
-            'highFootfallCount',
-            'mediumFootfallCount',
         ));
     }
 
@@ -233,8 +216,9 @@ class CompanyBoothBookingController extends Controller
         $hall->load('booths.boothSize');
         $layoutBooths = $hall->booths
             ->sortBy(function ($booth) {
-                return str_pad((string) $booth->position_y, 4, '0', STR_PAD_LEFT)
-                    . str_pad((string) $booth->position_x, 4, '0', STR_PAD_LEFT);
+                $number = (int) preg_replace('/\D+/', '', (string) $booth->booth_number);
+
+                return sprintf('%08d-%08d', $number ?: $booth->id, $booth->id);
             })
             ->values();
         $occupiedBoothIds = $this->bookedBoothGroupsForHall($hall, $layoutBooths)
@@ -258,8 +242,9 @@ class CompanyBoothBookingController extends Controller
 
         $booths = $hall->booths
             ->sortBy(function ($booth) {
-                return str_pad((string) $booth->position_y, 4, '0', STR_PAD_LEFT)
-                    . str_pad((string) $booth->position_x, 4, '0', STR_PAD_LEFT);
+                $number = (int) preg_replace('/\D+/', '', (string) $booth->booth_number);
+
+                return sprintf('%08d-%08d', $number ?: $booth->id, $booth->id);
             })
             ->values();
 
@@ -307,7 +292,9 @@ class CompanyBoothBookingController extends Controller
             : collect();
         $hasEnoughSelectedSpaces = $selectedFootprint->count() >= $requiredSpaces;
         $selectedFootprintIds = $selectedFootprint->pluck('id')->all();
-        $selectedArea = (float) ($selectedSize ? $requiredSpaces * 9 : ($selectedBooth?->boothSize?->area ?: 9));
+        $selectedArea = (float) ($selectedSize
+            ? ($selectedSize->area ?: ((float) $selectedSize->width * (float) $selectedSize->height) ?: ($requiredSpaces * 9))
+            : ($selectedBooth?->boothSize?->area ?: 9));
         $selectedVisual = \App\Support\BoothFloorMap::visualForArea($selectedArea);
         $selectedSpaceBounds = \App\Support\BoothFloorMap::boundsForFootprint($selectedFootprint);
         $selectedSpaceSegments = \App\Support\BoothFloorMap::segmentsForFootprint($selectedFootprint);
@@ -331,6 +318,13 @@ class CompanyBoothBookingController extends Controller
                 ];
             });
 
+        // Whether the selected booth size can actually fit anywhere in this hall.
+        // True when no multi-unit size is chosen, or at least one available booth
+        // can anchor a continuous group large enough for the required units.
+        $sizeAvailableInHall = ! $selectedSize || $requiredSpaces <= 1
+            ? true
+            : $availableFootprints->contains(fn ($footprint) => count($footprint['ids'] ?? []) >= $requiredSpaces);
+
         return view('backend.company.booth-booking.floor-plan', compact(
             'hall',
             'booths',
@@ -348,6 +342,7 @@ class CompanyBoothBookingController extends Controller
             'selectedFootprintIds',
             'requiredSpaces',
             'hasEnoughSelectedSpaces',
+            'sizeAvailableInHall',
             'selectedVisual',
             'selectedSpaceBounds',
             'selectedSpaceSegments',
@@ -1122,6 +1117,57 @@ class CompanyBoothBookingController extends Controller
         ));
     }
 
+    public function customize(Request $request): View|RedirectResponse
+    {
+        if (! session('company_id')) {
+            return redirect('/company/login');
+        }
+
+        $this->resolveBookingExhibition($request);
+
+        $booking = $this->currentDraftBooking();
+        if (! $booking) {
+            return redirect('/company/booth-booking/summary')
+                ->withErrors(['booking' => 'Please complete booth days before adding services.']);
+        }
+
+        $this->ensureDefaultServices();
+        $this->recalculateBookingServices($booking);
+        $booking = $booking->fresh(['pavilion', 'hall', 'booth', 'boothSize', 'days']);
+
+        $services = Service::where('status', 'active')->orderBy('id')->get();
+        $bookingServices = BookingService::with('service')
+            ->where('booth_booking_id', $booking->id)
+            ->get()
+            ->keyBy('service_id');
+
+        $brandingKeywords = ['banner', 'screen', 'video wall', 'logo', 'fascia', 'print', 'design'];
+        $brandingServices = $services->filter(function (Service $service) use ($brandingKeywords) {
+            $title = strtolower($service->title);
+
+            return collect($brandingKeywords)->contains(fn (string $keyword) => str_contains($title, $keyword));
+        })->values();
+
+        if ($brandingServices->isEmpty()) {
+            $brandingServices = $services->take(3)->values();
+        }
+
+        $furnitureServices = $services
+            ->reject(fn (Service $service) => $brandingServices->contains('id', $service->id))
+            ->take(4)
+            ->values();
+
+        $customizationTotal = (float) $bookingServices->sum('total');
+
+        return view('backend.company.booth-booking.customize', compact(
+            'booking',
+            'brandingServices',
+            'furnitureServices',
+            'bookingServices',
+            'customizationTotal',
+        ));
+    }
+
     public function services(Request $request): View|RedirectResponse
     {
         if (! session('company_id')) {
@@ -1196,9 +1242,15 @@ class CompanyBoothBookingController extends Controller
 
         $this->recalculateBookingServices($booking);
 
-        return redirect('/company/booth-booking/services?' . http_build_query(array_filter([
+        $returnTo = $request->input('return_to');
+        $query = array_filter([
             'exhibition' => $booking->exhibition?->slug ?: session('company_booth_booking.exhibition_slug'),
-        ])))
+        ]);
+        $redirectPath = $returnTo === 'customize'
+            ? '/company/booth-booking/customize'
+            : '/company/booth-booking/services';
+
+        return redirect($redirectPath . '?' . http_build_query($query))
             ->with('status', $bookingService ? 'Service removed. Total amount updated.' : 'Service added. Total amount updated.');
     }
 
@@ -1928,6 +1980,9 @@ class CompanyBoothBookingController extends Controller
 
     private function bookedBoothGroupsForHall(Hall $hall, $booths): \Illuminate\Support\Collection
     {
+        // Exhibition + pavelion details are needed for the booth click popup.
+        $hall->loadMissing('pavilion.exhibition');
+
         $orderedBooths = $booths
             ->sortBy(function ($booth) {
                 $number = (int) preg_replace('/\D+/', '', (string) $booth->booth_number);
@@ -1950,7 +2005,7 @@ class CompanyBoothBookingController extends Controller
 
         return $bookings
             ->groupBy('company_id')
-            ->map(function ($companyBookings) use ($orderedBooths, &$assignedBoothIds) {
+            ->map(function ($companyBookings) use ($hall, $orderedBooths, &$assignedBoothIds) {
                 $booking = $companyBookings->first();
                 $requiredSpaces = $companyBookings->sum(function (BoothBooking $companyBooking) {
                     $selectedIds = collect($companyBooking->selected_booth_ids ?: [$companyBooking->booth_id])
@@ -2005,6 +2060,19 @@ class CompanyBoothBookingController extends Controller
                     'booth_numbers' => $items->pluck('booth.booth_number')->values()->all(),
                     'segments' => \App\Support\BoothFloorMap::segmentsForFootprint($allocatedBooths),
                     'space_label' => trim(($items->count() > 1 ? $items->count() . ' spaces' : '1 space') . ' ' . ($booking->boothSize?->title ? '- ' . $booking->boothSize->title : '')),
+                    // Extra details surfaced in the booth-click popup (all dynamic/database driven).
+                    'exhibition_name' => $hall->pavilion?->exhibition?->title ?? $hall->pavilion?->exhibition?->name ?? 'Exhibition',
+                    'hall_name' => $hall->title,
+                    'pavilion_name' => $hall->pavilion?->title ?? 'Pavilion',
+                    'size_title' => $booking->boothSize?->title ?? 'Custom size',
+                    'booth_count' => $items->count(),
+                    'status' => ucfirst((string) ($booking->booking_status ?: 'confirmed')),
+                    'contact_person' => $booking->company?->contact_person_name ?: $booking->company?->owner_name,
+                    'email' => $booking->company?->email,
+                    'phone' => $booking->company?->phone,
+                    'website' => $booking->company?->website,
+                    'category' => $booking->company?->industry,
+                    'location' => trim(implode(', ', array_filter([$booking->company?->city, $booking->company?->country]))) ?: null,
                     'left' => max(min($items->min('left') - 4, 700), 0),
                     'top' => max(min($items->min('top') - 4, 350), 0),
                     'width' => min($items->max('right') - $items->min('left') + 8, 700),

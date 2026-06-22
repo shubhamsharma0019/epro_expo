@@ -24,7 +24,7 @@ class EventDraftController extends BaseCompanyEventController
 
     public function store(CompanyEventBasicDetailsRequest $request): RedirectResponse
     {
-        $companyEvent = $this->setupEvent();
+        $companyEvent = $this->createDraftEvent();
         $this->saveBasicDetails($request, $companyEvent);
 
         return redirect()
@@ -128,8 +128,8 @@ class EventDraftController extends BaseCompanyEventController
                     'endsAt' => '2026-05-17 18:00:00',
                     'timezone' => 'Asia/Kolkata',
                     'venueName' => 'Grand Convention Center',
-                    'venueAddress' => 'San Francisco, CA, USA',
-                    'city' => 'San Francisco',
+                    'venueAddress' => 'Bengaluru, India',
+                    'city' => 'Bengaluru',
                     'country' => 'India',
                     'website' => 'https://globalinnovate.com',
                     'summary' => 'Global Innovation Summit brings together technology leaders, innovators, and investors.',
@@ -150,10 +150,10 @@ class EventDraftController extends BaseCompanyEventController
                     'subCategory' => 'Industrial Automation',
                     'startsAt' => '2026-09-10 09:00:00',
                     'endsAt' => '2026-09-13 18:00:00',
-                    'timezone' => 'America/Chicago',
+                    'timezone' => 'Asia/Kolkata',
                     'venueName' => 'Metropolitan Exhibition Center',
-                    'venueAddress' => 'Chicago, IL, USA',
-                    'city' => 'Chicago',
+                    'venueAddress' => 'New Delhi, India',
+                    'city' => 'New Delhi',
                     'country' => 'India',
                     'website' => 'https://infomanufacturingexpo.com',
                     'summary' => 'A physical exhibition for machinery, robotics, logistics and automation.',
@@ -198,10 +198,10 @@ class EventDraftController extends BaseCompanyEventController
                     'subCategory' => 'Venture Capital',
                     'startsAt' => '2026-10-05 18:00:00',
                     'endsAt' => '2026-10-05 22:00:00',
-                    'timezone' => 'America/New_York',
+                    'timezone' => 'Asia/Kolkata',
                     'venueName' => 'Skyline Lounge & Rooftop',
-                    'venueAddress' => 'New York, NY, USA',
-                    'city' => 'New York',
+                    'venueAddress' => 'Mumbai, India',
+                    'city' => 'Mumbai',
                     'country' => 'India',
                     'website' => 'https://foundersmixer.com',
                     'summary' => 'A premium physical networking dinner and pitch mixer.',

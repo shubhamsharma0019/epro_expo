@@ -9,16 +9,12 @@
 
 <section class="max-w-[1500px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
     <div class="mb-8">
-        <h1 class="text-[32px] font-semibold leading-[40px] tracking-[-0.8px] text-navy">
+        <h1 class="text-[24px] font-semibold leading-tight tracking-[-0.8px] text-navy sm:text-[32px] sm:leading-[40px]">
             Choose Booth Size
         </h1>
-
-        <p class="mt-4 text-[16px] font-medium leading-7 text-[#34405F]">
-            Select the booth size that fit your requirements.
-            @if ($hall)
-                <span class="block text-[14px] text-[#5A6480]">{{ $hall->title }} · {{ optional($hall->pavilion)->title }}</span>
-            @endif
-        </p>
+        @if ($hall)
+            <p class="mt-3 text-[14px] font-medium text-[#5A6480]">{{ $hall->title }} · {{ optional($hall->pavilion)->title }}</p>
+        @endif
     </div>
 
     <div class="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-5">
@@ -26,13 +22,14 @@
             @php
                 $isSelected = $selectedSizeId === $size->id;
                 $boothUnits = \App\Support\BoothFloorMap::unitsForSize($size);
-                $area = $boothUnits * 9;
+                $area = (float) ($size->area ?: ((float) $size->width * (float) $size->height));
+                $previewCells = max($boothUnits, 1);
                 $boothCols = match (true) {
                     $boothUnits >= 9 => 3,
                     $boothUnits >= 4 => 2,
                     default => $boothUnits,
                 };
-                $boothRows = (int) ceil($boothUnits / $boothCols);
+                $boothRows = (int) ceil($previewCells / $boothCols);
                 $cols = $boothCols * 3;
                 $rows = $boothRows * 3;
                 $cells = $cols * $rows;
@@ -74,22 +71,6 @@
         @endforelse
     </div>
 
-    <div class="mb-4 rounded-xl border border-borderColor bg-white px-6 py-6 shadow-sm">
-        <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-            <div>
-                <h2 class="text-[20px] font-semibold text-navy">Custom Size</h2>
-                <p class="mt-2 text-[16px] font-medium text-[#34405F]">Tailored to your needs</p>
-            </div>
-
-            <form method="POST" action="{{ route('company.booth-booking.sizes.custom') }}">
-                @csrf
-                <input type="hidden" name="hall_id" value="{{ $hall?->id }}">
-            <button type="submit" class="inline-flex h-[52px] min-w-[150px] items-center justify-center rounded-md border border-[#B9A7FF] px-7 text-[16px] font-semibold text-purple">
-                Contact Us
-            </button>
-            </form>
-        </div>
-    </div>
 
     <div class="rounded-xl border border-borderColor bg-white px-6 py-7 shadow-sm">
         <h2 class="mb-8 text-[20px] font-semibold text-navy">

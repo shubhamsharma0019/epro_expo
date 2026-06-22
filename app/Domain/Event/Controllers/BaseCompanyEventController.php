@@ -59,6 +59,24 @@ abstract class BaseCompanyEventController extends Controller
         return $event;
     }
 
+    protected function createDraftEvent(): CompanyEvent
+    {
+        $event = CompanyEvent::create([
+            'company_id' => $this->companyId(),
+            'title' => 'Untitled Company Event',
+            'slug' => $this->uniqueSlug('untitled-company-event'),
+            'event_type' => 'in_person',
+            'event_mode' => 'in_person',
+            'status' => 'draft',
+            'timezone' => 'Asia/Kolkata',
+            'visibility' => 'private',
+        ]);
+
+        session(['company_event_flow_event_id' => $event->id]);
+
+        return $event;
+    }
+
     protected function uniqueSlug(string $title, ?int $ignoreId = null): string
     {
         $base = Str::slug($title) ?: 'company-event';
