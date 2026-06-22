@@ -5,6 +5,7 @@ namespace App\Domain\Event\Controllers;
 use App\Domain\Company\Models\Company;
 use App\Domain\Event\Models\CompanyEvent\CompanyEvent;
 use App\Domain\Event\Models\CompanyEvent\CompanyEventPublishRequest;
+use App\Support\CompanyEventFlowProgress;
 use App\Domain\Visitor\Models\VisitorTicket;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
@@ -14,7 +15,6 @@ class DashboardController extends BaseCompanyEventController
     public function __invoke(): View
     {
         $currentCompany = Company::query()->find($this->companyId());
-        $sessionEventId = (int) session('company_event_flow_event_id');
         $allEvents = CompanyEvent::query()
             ->with(['branding', 'latestPublishRequest', 'ticketTypes'])
             ->withCount(['ticketTypes', 'sessions', 'speakers'])
@@ -22,25 +22,9 @@ class DashboardController extends BaseCompanyEventController
             ->latest()
             ->get();
 
-        $events = $allEvents->filter(function (CompanyEvent $event) {
-            return $event->title !== 'Untitled Company Event'
-                || filled($event->starts_at)
-                || filled($event->summary)
-                || filled($event->category)
-                || $event->branding
-                || $event->ticket_types_count > 0
-                || $event->sessions_count > 0
-                || $event->speakers_count > 0
-                || in_array($event->status, ['submitted', 'pending_review', 'approved', 'published'], true);
-        })->values();
-
-        if ($events->isEmpty()) {
-            $fallbackDraft = $allEvents->firstWhere('id', $sessionEventId) ?: $allEvents->first();
-
-            if ($fallbackDraft) {
-                $events = collect([$fallbackDraft]);
-            }
-        }
+        $events = $allEvents
+            ->filter(fn (CompanyEvent $event) => CompanyEventFlowProgress::shouldShowOnDashboard($event))
+            ->values();
 
         $events = $this->addDashboardMetrics($events);
         $eventIds = $events->pluck('id');
@@ -133,7 +117,7 @@ class DashboardController extends BaseCompanyEventController
                 filled($event->category),
                 filled($event->starts_at),
                 filled($event->ends_at),
-                filled($event->venue_name) || $event->event_mode === 'online',
+                CompanyEventFlowProgress::hasLocationDetails($event),
                 filled($event->summary) || filled($event->description),
                 (bool) $event->branding,
                 $event->ticket_types_count > 0,

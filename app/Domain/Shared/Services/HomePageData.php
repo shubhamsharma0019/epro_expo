@@ -21,7 +21,6 @@ class HomePageData
             'stats' => $stats,
             'experience_tabs' => $this->resolveExperienceTabs(),
             'feature_pills' => WebsiteContent::sectionOrDefaults('home', 'feature_pill', WebsiteContent::defaultFeaturePills()),
-            'flow_cards' => $this->resolveFlowCards(),
             'features' => WebsiteContent::sectionOrDefaults('home', 'feature', WebsiteContent::defaultFeatures()),
             'steps' => WebsiteContent::sectionOrDefaults('home', 'step', WebsiteContent::defaultSteps()),
             'booth_highlight' => $boothHighlight,
@@ -29,15 +28,6 @@ class HomePageData
             'cta' => WebsiteContent::cta(),
             'cta_benefits' => WebsiteContent::sectionOrDefaults('home', 'cta_benefit', WebsiteContent::defaultCtaBenefits()),
             'footer' => WebsiteContent::footer(),
-            'testimonials' => WebsiteContent::sectionOrDefaults('home', 'testimonial', []),
-            'faqs' => WebsiteContent::sectionOrDefaults('home', 'faq', []),
-            'featured_exhibitions' => $this->featuredExhibitions(),
-            'featured_events' => $this->featuredEvents(),
-            'upcoming_events' => $this->upcomingEvents(),
-            'exhibition_categories' => $this->exhibitionCategories(),
-            'featured_companies' => $this->featuredCompanies(),
-            'booth_highlights' => $this->boothHighlights(),
-            'platform_counts' => $this->platformCounts(),
         ];
     }
 

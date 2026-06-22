@@ -4,10 +4,34 @@
 
 @section('content')
 @php
-    $attendeeFields = $companyEvent->ticket_attendee_fields ?: ['full_name', 'company', 'email', 'job_title', 'phone', 'country'];
-    $allowGroupRegistrations = $companyEvent->allow_group_registrations ?? true;
-    $showRemainingTicketCount = $companyEvent->show_remaining_ticket_count ?? true;
-    $enableWaitingList = $companyEvent->enable_waiting_list ?? false;
+    $defaultAttendeeFields = ['full_name', 'company', 'email', 'job_title', 'phone', 'country'];
+    $attendeeFieldOptions = [
+        ['key' => 'full_name', 'label' => 'Full Name'],
+        ['key' => 'company', 'label' => 'Company'],
+        ['key' => 'email', 'label' => 'Email Address'],
+        ['key' => 'job_title', 'label' => 'Job Title'],
+        ['key' => 'phone', 'label' => 'Phone Number'],
+        ['key' => 'country', 'label' => 'Country', 'muted_when_unchecked' => true],
+    ];
+    $attendeeFields = old(
+        'ticket_attendee_fields',
+        $companyEvent->ticket_attendee_fields ?? $defaultAttendeeFields
+    );
+    if (! is_array($attendeeFields)) {
+        $attendeeFields = $defaultAttendeeFields;
+    }
+    $allowGroupRegistrations = filter_var(
+        old('allow_group_registrations', $companyEvent->allow_group_registrations ?? true),
+        FILTER_VALIDATE_BOOLEAN
+    );
+    $showRemainingTicketCount = filter_var(
+        old('show_remaining_ticket_count', $companyEvent->show_remaining_ticket_count ?? true),
+        FILTER_VALIDATE_BOOLEAN
+    );
+    $enableWaitingList = filter_var(
+        old('enable_waiting_list', $companyEvent->enable_waiting_list ?? false),
+        FILTER_VALIDATE_BOOLEAN
+    );
 @endphp
 <div class="px-4 sm:px-6 md:px-10 py-8 max-w-[1250px] w-full flex flex-col">
             <!-- Add Ticket Button -->
@@ -78,50 +102,22 @@
                 <div class="border border-gray-200 rounded-[16px] p-8 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                     <h3 class="text-[15px] font-bold text-[#1C1364] mb-6">Attendee Information Fields</h3>
                     <div class="grid grid-cols-2 gap-y-5 gap-x-4">
-                        <label class="flex items-center gap-3 cursor-pointer group">
-                            <input form="ticket-settings-form" type="checkbox" name="ticket_attendee_fields[]" value="full_name" class="ticket-field-checkbox hidden" @checked(in_array('full_name', $attendeeFields, true))>
-                            <div style="background-color: {{ in_array('full_name', $attendeeFields, true) ? '#4C10D0' : '#FFFFFF' }}; color: #FFFFFF;" class="ticket-field-box w-5 h-5 rounded {{ in_array('full_name', $attendeeFields, true) ? '' : 'border border-gray-300 bg-white group-hover:border-[#4C10D0]' }} text-white flex items-center justify-center shrink-0 transition-colors">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            </div>
-                            <span class="text-[13px] font-medium text-[#1C1364]">Full Name</span>
-                        </label>
-                        <label class="flex items-center gap-3 cursor-pointer group">
-                            <input form="ticket-settings-form" type="checkbox" name="ticket_attendee_fields[]" value="company" class="ticket-field-checkbox hidden" @checked(in_array('company', $attendeeFields, true))>
-                            <div style="background-color: {{ in_array('company', $attendeeFields, true) ? '#4C10D0' : '#FFFFFF' }}; color: #FFFFFF;" class="ticket-field-box w-5 h-5 rounded {{ in_array('company', $attendeeFields, true) ? '' : 'border border-gray-300 bg-white group-hover:border-[#4C10D0]' }} text-white flex items-center justify-center shrink-0 transition-colors">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            </div>
-                            <span class="text-[13px] font-medium text-[#1C1364]">Company</span>
-                        </label>
-                        
-                        <label class="flex items-center gap-3 cursor-pointer group">
-                            <input form="ticket-settings-form" type="checkbox" name="ticket_attendee_fields[]" value="email" class="ticket-field-checkbox hidden" @checked(in_array('email', $attendeeFields, true))>
-                            <div style="background-color: {{ in_array('email', $attendeeFields, true) ? '#4C10D0' : '#FFFFFF' }}; color: #FFFFFF;" class="ticket-field-box w-5 h-5 rounded {{ in_array('email', $attendeeFields, true) ? '' : 'border border-gray-300 bg-white group-hover:border-[#4C10D0]' }} text-white flex items-center justify-center shrink-0 transition-colors">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            </div>
-                            <span class="text-[13px] font-medium text-[#1C1364]">Email Address</span>
-                        </label>
-                        <label class="flex items-center gap-3 cursor-pointer group">
-                            <input form="ticket-settings-form" type="checkbox" name="ticket_attendee_fields[]" value="job_title" class="ticket-field-checkbox hidden" @checked(in_array('job_title', $attendeeFields, true))>
-                            <div style="background-color: {{ in_array('job_title', $attendeeFields, true) ? '#4C10D0' : '#FFFFFF' }}; color: #FFFFFF;" class="ticket-field-box w-5 h-5 rounded {{ in_array('job_title', $attendeeFields, true) ? '' : 'border border-gray-300 bg-white group-hover:border-[#4C10D0]' }} text-white flex items-center justify-center shrink-0 transition-colors">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            </div>
-                            <span class="text-[13px] font-medium text-[#1C1364]">Job Title</span>
-                        </label>
-
-                        <label class="flex items-center gap-3 cursor-pointer group">
-                            <input form="ticket-settings-form" type="checkbox" name="ticket_attendee_fields[]" value="phone" class="ticket-field-checkbox hidden" @checked(in_array('phone', $attendeeFields, true))>
-                            <div style="background-color: {{ in_array('phone', $attendeeFields, true) ? '#4C10D0' : '#FFFFFF' }}; color: #FFFFFF;" class="ticket-field-box w-5 h-5 rounded {{ in_array('phone', $attendeeFields, true) ? '' : 'border border-gray-300 bg-white group-hover:border-[#4C10D0]' }} text-white flex items-center justify-center shrink-0 transition-colors">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            </div>
-                            <span class="text-[13px] font-medium text-[#1C1364]">Phone Number</span>
-                        </label>
-                        <label class="flex items-center gap-3 cursor-pointer group">
-                            <input form="ticket-settings-form" type="checkbox" name="ticket_attendee_fields[]" value="country" class="ticket-field-checkbox hidden" @checked(in_array('country', $attendeeFields, true))>
-                            <div style="background-color: {{ in_array('country', $attendeeFields, true) ? '#4C10D0' : '#FFFFFF' }}; color: #FFFFFF;" class="ticket-field-box w-5 h-5 rounded {{ in_array('country', $attendeeFields, true) ? '' : 'border border-gray-300 bg-white group-hover:border-[#4C10D0]' }} text-white flex items-center justify-center shrink-0 transition-colors">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            </div>
-                            <span class="text-[13px] font-medium {{ in_array('country', $attendeeFields, true) ? 'text-[#1C1364]' : 'text-[#5B6B8A]' }}">Country</span>
-                        </label>
+                        @foreach ($attendeeFieldOptions as $field)
+                            @php
+                                $isChecked = in_array($field['key'], $attendeeFields, true);
+                            @endphp
+                            <label class="flex items-center gap-3 cursor-pointer group">
+                                <input form="ticket-settings-form" type="checkbox" name="ticket_attendee_fields[]" value="{{ $field['key'] }}" class="ticket-field-checkbox hidden" @checked($isChecked) @if(!empty($field['muted_when_unchecked'])) data-muted-when-unchecked @endif>
+                                <div style="background-color: {{ $isChecked ? '#4C10D0' : '#FFFFFF' }}; color: #FFFFFF;" class="ticket-field-box w-5 h-5 rounded {{ $isChecked ? '' : 'border border-gray-300 bg-white group-hover:border-[#4C10D0]' }} text-white flex items-center justify-center shrink-0 transition-colors">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                </div>
+                                <span @class([
+                                    'text-[13px] font-medium',
+                                    'text-[#1C1364]' => $isChecked || empty($field['muted_when_unchecked']),
+                                    'text-[#5B6B8A]' => ! $isChecked && ! empty($field['muted_when_unchecked']),
+                                ])>{{ $field['label'] }}</span>
+                            </label>
+                        @endforeach
                     </div>
                 </div>
 
@@ -311,7 +307,7 @@
     document.querySelectorAll('.ticket-field-checkbox').forEach((checkbox) => {
         checkbox.addEventListener('change', () => {
             const box = checkbox.parentElement?.querySelector('.ticket-field-box');
-            const label = checkbox.parentElement?.querySelector('span');
+            const label = checkbox.parentElement?.querySelector('span:last-child');
 
             if (box) {
                 box.style.backgroundColor = checkbox.checked ? '#4C10D0' : '#FFFFFF';
@@ -320,7 +316,7 @@
                 box.classList.toggle('bg-white', ! checkbox.checked);
             }
 
-            if (label && checkbox.value === 'country') {
+            if (label && checkbox.hasAttribute('data-muted-when-unchecked')) {
                 label.classList.toggle('text-[#1C1364]', checkbox.checked);
                 label.classList.toggle('text-[#5B6B8A]', ! checkbox.checked);
             }

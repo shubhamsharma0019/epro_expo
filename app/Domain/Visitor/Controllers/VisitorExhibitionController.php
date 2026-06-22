@@ -368,6 +368,8 @@ class VisitorExhibitionController extends Controller
             }
         }
 
+        $isPassActive = $this->isPassActive($slug);
+
         return view('frontend.visitor-exhibition.halls.floor-plan', [
             'slug' => $slug,
             'isPassActive' => $isPassActive,

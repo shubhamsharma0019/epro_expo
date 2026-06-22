@@ -55,6 +55,19 @@ class BrandingController extends BaseCompanyEventController
             unset($data[$field]);
         }
 
+        if ($request->has('theme_sections')) {
+            $socialLinks = is_array($branding?->social_links) ? $branding->social_links : [];
+            $socialLinks['theme_sections'] = [
+                'header' => $request->boolean('theme_sections.header'),
+                'event_details' => $request->boolean('theme_sections.event_details'),
+                'sponsors' => $request->boolean('theme_sections.sponsors'),
+                'footer' => $request->boolean('theme_sections.footer'),
+            ];
+            $data['social_links'] = $socialLinks;
+        }
+
+        unset($data['theme_sections']);
+
         $data += [
             'company_id' => $this->companyId(),
             'company_event_id' => $companyEvent->id,

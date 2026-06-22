@@ -39,5 +39,5 @@
         <span class="text-[13px] font-semibold">Date</span>
         <input type="date" name="date" class="mt-2 h-12 w-full rounded-lg border border-[#E7EAF3] px-4 text-[14px] font-medium outline-none">
     </label>
-    <button class="mt-auto h-12 rounded-lg bg-gradient-to-r from-[#5b2eff] to-[#4310d8] px-8 text-[14px] font-semibold text-white shadow-[0_8px_18px_rgba(91,46,255,0.25)] sm:col-span-2 lg:col-span-1">Search Events</button>
+    <button class="mt-auto h-12 w-full rounded-lg bg-gradient-to-r from-[#5b2eff] to-[#4310d8] px-8 text-[14px] font-semibold text-white shadow-[0_8px_18px_rgba(91,46,255,0.25)] sm:col-span-2 lg:col-span-1 lg:w-auto">Search Events</button>
 </form>

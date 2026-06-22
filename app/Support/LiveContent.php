@@ -120,24 +120,50 @@ class LiveContent
 
             return max($fromBookings, $fromDb);
         }, 0);
+        $sessionsCount = (int) $publishedBookings->sum(fn ($booking) => $booking->boothSessions?->count() ?? 0);
+        $pavilionsCount = DbGuard::whenAvailable(
+            fn () => \App\Domain\Event\Models\Pavilion::query()
+                ->where('exhibition_id', $item->id)
+                ->where('status', 'active')
+                ->count(),
+            0
+        );
+        $boothsCount = DbGuard::whenAvailable(
+            fn () => \App\Domain\Booth\Models\Booth::query()
+                ->whereHas('hall.pavilion', fn ($query) => $query->where('exhibition_id', $item->id))
+                ->count(),
+            0
+        );
+        $title = $item->title ?: $item->name;
 
         return [
             'slug' => $item->slug,
-            'title' => $item->title ?: $item->name,
-            'date' => optional($item->start_date)->format('F j') . ' - ' . optional($item->end_date)->format('j, Y'),
-            'time' => '10:00 AM - 7:00 PM IST',
+            'title' => $title,
+            'date' => $item->start_date
+                ? $item->start_date->format('F j') . ($item->end_date ? ' - ' . $item->end_date->format('j, Y') : ', ' . $item->start_date->format('Y'))
+                : 'Date TBD',
+            'time' => static::resolveExhibitionTime($item),
             'location' => $item->venue ?: ($item->location ?: 'Virtual'),
-            'category' => str_contains(strtolower((string) ($item->location ?: $item->venue ?: '')), 'virtual') ? 'Virtual' : 'On-site / Hybrid',
-            'status' => $item->start_date && $item->start_date->isFuture() ? 'Upcoming' : 'Live registration',
-            'visitors' => (string) ($item->companies_count ?: max($companyCount, 0)),
+            'category' => static::resolveExhibitionCategory($item),
+            'status' => static::resolveExhibitionStatus($item),
+            'visitors' => (string) max($companyCount, (int) ($item->companies_count ?? 0)),
             'companies' => (string) $companyCount,
-            'halls' => (string) max($hallCount, 1),
-            'sessions' => (string) max($publishedBookings->sum(fn ($booking) => $booking->boothSessions?->count() ?? 0), 1),
+            'pavilions' => (string) $pavilionsCount,
+            'halls' => (string) $hallCount,
+            'booths' => (string) $boothsCount,
+            'sessions' => (string) $sessionsCount,
             'pass' => 'Free visitor pass available',
             'image' => $image,
+            'image_url' => static::resolvePublicAssetUrl($image),
             'accent' => '#5b2eff',
             'meta' => trim($productsCount . ' products / ' . $cataloguesCount . ' catalogues'),
             'company_names' => $companyNames->take(3)->all(),
+            'search_text' => strtolower(collect([
+                $title,
+                $item->venue,
+                $item->location,
+                $item->description,
+            ])->merge($companyNames)->filter()->implode(' ')),
         ];
     }
 
@@ -166,14 +192,10 @@ class LiveContent
         }
 
         $publishedBookings = $exhibition->boothBookings ?? collect();
-        $pavilionsCount = max(
-            (int) ($exhibition->active_pavilions_count ?? 0),
-            \App\Domain\Event\Models\Pavilion::query()
-                ->where('exhibition_id', $exhibition->id)
-                ->where('status', 'active')
-                ->count(),
-            1
-        );
+        $pavilionsCount = \App\Domain\Event\Models\Pavilion::query()
+            ->where('exhibition_id', $exhibition->id)
+            ->where('status', 'active')
+            ->count();
         $hallsCount = \App\Domain\Event\Models\Hall::query()
             ->whereHas('pavilion', fn ($query) => $query->where('exhibition_id', $exhibition->id))
             ->where('status', 'active')
@@ -186,17 +208,82 @@ class LiveContent
             ->filter()
             ->unique(fn ($name) => strtolower(trim((string) $name)))
             ->count();
-        $sessionsCount = max($publishedBookings->sum(fn ($booking) => $booking->boothSessions?->count() ?? 0), 1);
+        $sessionsCount = (int) $publishedBookings->sum(fn ($booking) => $booking->boothSessions?->count() ?? 0);
 
         return [
             'pavilions' => $pavilionsCount,
             'halls' => $hallsCount,
-            'booths' => max($boothsCount, 1),
+            'booths' => $boothsCount,
             'companies' => $companyCount,
             'sessions' => $sessionsCount,
-            'status' => $exhibition->start_date && $exhibition->start_date->isFuture() ? 'Upcoming' : 'Live registration',
+            'status' => static::resolveExhibitionStatus($exhibition),
             'image' => $exhibition->banner_image ?: ($exhibition->banner_url ?: 'images/exhibitions/hero-pavilion-scene.png'),
         ];
+    }
+
+    public static function resolveExhibitionTime(Exhibition $exhibition): string
+    {
+        $session = \App\Domain\Event\Models\AgendaSession::query()
+            ->where('exhibition_id', $exhibition->id)
+            ->orderBy('start_time')
+            ->first();
+
+        if ($session?->start_time) {
+            return trim($session->start_time . ($session->end_time ? ' - ' . $session->end_time : ''));
+        }
+
+        return 'Time TBD';
+    }
+
+    public static function resolveExhibitionStatus(Exhibition $exhibition): string
+    {
+        if ($exhibition->end_date && $exhibition->end_date->isPast()) {
+            return 'Completed';
+        }
+
+        if ($exhibition->start_date && $exhibition->start_date->isFuture()) {
+            return 'Upcoming';
+        }
+
+        if ($exhibition->start_date && $exhibition->start_date->isPast() && (! $exhibition->end_date || $exhibition->end_date->isFuture())) {
+            return 'Live now';
+        }
+
+        return 'Live registration';
+    }
+
+    public static function resolveExhibitionCategory(Exhibition $exhibition): string
+    {
+        $location = strtolower((string) ($exhibition->location ?: $exhibition->venue ?: ''));
+
+        if (str_contains($location, 'virtual') || str_contains($location, 'online')) {
+            return 'Virtual';
+        }
+
+        if (str_contains($location, 'hybrid')) {
+            return 'Hybrid';
+        }
+
+        return 'On-site';
+    }
+
+    public static function resolvePublicAssetUrl(?string $path): string
+    {
+        $path = trim((string) $path);
+
+        if ($path === '') {
+            return asset('images/exhibitions/hero-pavilion-scene.png');
+        }
+
+        if (\Illuminate\Support\Str::startsWith($path, ['http://', 'https://'])) {
+            return $path;
+        }
+
+        if (\Illuminate\Support\Str::startsWith($path, ['images/', 'assets/', 'storage/'])) {
+            return asset($path);
+        }
+
+        return asset('storage/' . ltrim($path, '/'));
     }
 
     public static function homeFeaturedBooths(int $limit = 6): Collection

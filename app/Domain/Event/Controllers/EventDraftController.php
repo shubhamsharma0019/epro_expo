@@ -4,6 +4,7 @@ namespace App\Domain\Event\Controllers;
 
 use App\Http\Requests\CompanyEvent\CompanyEventBasicDetailsRequest;
 use App\Domain\Event\Models\CompanyEvent\CompanyEvent;
+use App\Support\CompanyEventOptions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -11,13 +12,16 @@ class EventDraftController extends BaseCompanyEventController
 {
     public function create(): View
     {
-        $companyEvent = $this->setupEvent();
+        $existingEvent = $this->findFlowEvent();
+        $viewData = $existingEvent
+            ? $this->commonData($existingEvent)
+            : $this->placeholderCommonData();
 
         return view('backend.company.event-company-flow.create', array_merge(
-            $this->commonData($companyEvent),
+            $viewData,
             [
                 'eventTemplates' => $this->eventTemplates(),
-                'eventCategories' => $this->eventCategories(),
+                'eventCategories' => CompanyEventOptions::categories($this->companyId()),
             ]
         ));
     }
@@ -39,9 +43,9 @@ class EventDraftController extends BaseCompanyEventController
         return view('backend.company.event-company-flow.basic-details', array_merge(
             $this->commonData($companyEvent),
             [
-                'eventCategories' => $this->eventCategories(),
-                'eventSubCategories' => $this->eventSubCategories(),
-                'eventTimezones' => $this->eventTimezones(),
+                'eventCategories' => CompanyEventOptions::categories($this->companyId()),
+                'eventSubCategories' => CompanyEventOptions::subCategories(),
+                'eventTimezones' => CompanyEventOptions::timezones(),
             ]
         ));
     }
@@ -74,39 +78,6 @@ class EventDraftController extends BaseCompanyEventController
 
         $companyEvent->update($data);
         session(['company_event_flow_event_id' => $companyEvent->id]);
-    }
-
-    private function eventCategories(): array
-    {
-        return [
-            ['name' => 'Technology', 'short' => 'Tech'],
-            ['name' => 'Healthcare', 'short' => 'Health'],
-            ['name' => 'Education', 'short' => 'Edu'],
-            ['name' => 'Finance', 'short' => 'Fin'],
-            ['name' => 'Marketing', 'short' => 'Mkt'],
-            ['name' => 'Manufacturing', 'short' => 'Mfg'],
-            ['name' => 'Other', 'short' => 'Other'],
-        ];
-    }
-
-    private function eventSubCategories(): array
-    {
-        return [
-            'AI & Machine Learning',
-            'Industrial Automation',
-            'Product Design',
-            'Venture Capital',
-            'Other',
-        ];
-    }
-
-    private function eventTimezones(): array
-    {
-        return [
-            ['value' => 'Asia/Kolkata', 'label' => '(GMT +05:30) Asia/Kolkata'],
-            ['value' => 'America/Chicago', 'label' => '(GMT -05:00) America/Chicago'],
-            ['value' => 'America/New_York', 'label' => '(GMT -04:00) America/New_York'],
-        ];
     }
 
     private function eventTemplates(): array

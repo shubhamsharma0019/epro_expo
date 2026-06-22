@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomePageController::class)->name('home');
 Route::get('/home', HomePageController::class)->name('frontend.home');
+
+Route::view('/features', 'frontend.pages.features')->name('frontend.features');
+Route::view('/pricing', 'frontend.pages.pricing')->name('frontend.pricing');
+Route::view('/about-us', 'frontend.pages.about')->name('frontend.about');
 Route::get('/login', function () {
     return redirect()->route('frontend.user.login');
 })->name('login');

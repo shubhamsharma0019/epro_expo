@@ -27,7 +27,7 @@
     $eventCategories = $eventCategories ?? [];
     $eventSubCategories = $eventSubCategories ?? [];
     $eventTimezones = $eventTimezones ?? [];
-    $selectedCategory = old('category', $companyEvent->category ?: 'Technology');
+    $selectedCategory = old('category', filled($companyEvent->category) ? $companyEvent->category : ($eventCategories[0]['name'] ?? 'Technology'));
     $selectedSubCategory = old('sub_category', $companyEvent->sub_category ?: 'Other');
     $selectedTimezone = old('timezone', $companyEvent->timezone ?: 'Asia/Kolkata');
     $organizerName = $currentCompany?->contact_person_name ?? $currentCompany?->owner_name ?? $currentCompany?->company_name ?? $currentCompany?->name ?? '';

@@ -4,13 +4,20 @@
 
 @section('content')
 @php
-    $eventName = $ticket->companyEvent ? $ticket->companyEvent->title : 'Event';
-    if (!$ticket->companyEvent && $ticket->event_slug == 'global-tech-summit-2024') {
-        $eventName = 'Global Tech Summit 2024';
-    }
-    $dateInfo = $ticket->companyEvent
-        ? ($ticket->companyEvent->starts_at?->format('M d, Y') ?? 'Date TBD') . ($ticket->companyEvent->ends_at ? ' - ' . $ticket->companyEvent->ends_at->format('M d, Y') : '')
-        : 'May 15 - May 17, 2024';
+    $event = $ticket->companyEvent;
+    $eventName = $event?->title ?: 'Event';
+    $dateInfo = $event?->starts_at
+        ? $event->starts_at->format('M d, Y') . ($event->ends_at ? ' - ' . $event->ends_at->format('M d, Y') : '')
+        : 'Date TBD';
+    $venueInfo = collect([$event?->venue_name, $event?->city, $event?->country])->filter()->join(', ') ?: 'Venue TBD';
+    $currency = strtoupper($ticket->ticketType?->currency ?: 'INR');
+    $currencySymbols = ['INR' => '₹', 'USD' => '$', 'EUR' => '€', 'GBP' => '£'];
+    $currencySymbol = $currencySymbols[$currency] ?? ($currency . ' ');
+    $formattedTotal = $currencySymbol . number_format((float) $ticket->total_amount, 2);
+    $unitPrice = $ticket->ticketType?->price;
+    $formattedUnitPrice = $unitPrice !== null
+        ? $currencySymbol . number_format((float) $unitPrice, 2)
+        : null;
 @endphp
 <main class="relative flex-1 px-8 pb-14">
             <section class="relative mx-auto max-w-[900px] pt-[48px] text-center">
@@ -69,17 +76,31 @@
                             <p class="font-semibold text-[#071044]">{{ $dateInfo }}</p>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-[260px_1fr] items-start gap-2 sm:gap-4">
+                            <p class="font-medium text-[#323A68]">Venue</p>
+                            <p class="font-semibold text-[#071044]">{{ $venueInfo }}</p>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-[260px_1fr] items-start gap-2 sm:gap-4">
                             <p class="font-medium text-[#323A68]">Pass Type</p>
                             <p class="font-semibold text-[#071044]">{{ $ticket->ticket_name }}</p>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-[260px_1fr] items-start gap-2 sm:gap-4">
+                            <p class="font-medium text-[#323A68]">Attendee</p>
+                            <p class="font-semibold text-[#071044]">{{ $ticket->attendee_name ?: auth()->user()->name }}</p>
                         </div>
                     </div>
 
                     <div class="my-5 h-px w-full bg-[#DEE3F3]"></div>
 
                     <div class="space-y-5 text-[18px]">
+                        @if ($formattedUnitPrice)
+                            <div class="flex justify-between sm:grid sm:grid-cols-[260px_1fr] sm:gap-4 sm:items-center">
+                                <p class="font-medium text-[#323A68]">Price per ticket</p>
+                                <p class="sm:text-left text-right font-semibold text-[#071044]">{{ $formattedUnitPrice }}</p>
+                            </div>
+                        @endif
                         <div class="flex justify-between sm:grid sm:grid-cols-[260px_1fr] sm:gap-4 sm:items-center">
                             <p class="font-extrabold text-[#202B63]">Total Amount</p>
-                            <p class="sm:text-left text-right text-[23px] font-extrabold tracking-[-0.02em] text-[#071044]">${{ number_format($ticket->total_amount, 2) }}</p>
+                            <p class="sm:text-left text-right text-[23px] font-extrabold tracking-[-0.02em] text-[#071044]">{{ $formattedTotal }}</p>
                         </div>
                         <div class="flex justify-between sm:grid sm:grid-cols-[260px_1fr] sm:gap-4 sm:items-center">
                             <p class="font-extrabold text-[#202B63]">Total Tickets</p>

@@ -7,7 +7,8 @@
     $eventTemplates = $eventTemplates ?? [];
     $eventCategories = $eventCategories ?? [];
     $templateValues = collect($eventTemplates ?? [])->mapWithKeys(fn ($template) => [$template['key'] => $template['values']])->all();
-    $selectedCategory = old('category', $companyEvent->category ?: 'Technology');
+    $defaultCategory = $eventCategories[0]['name'] ?? 'Technology';
+    $selectedCategory = old('category', filled($companyEvent->category) ? $companyEvent->category : $defaultCategory);
     $templateUi = [
         'conference' => [
             'card' => 'relative group border border-gray-100 rounded-2xl p-4 sm:p-6 flex flex-col hover:shadow-[0_12px_30px_rgba(91,50,246,0.06)] hover:-translate-y-1 hover:border-primary/40 transition-all duration-300 bg-white',
@@ -46,7 +47,7 @@
     @csrf
     <input id="create-event-type" type="hidden" name="event_type" value="{{ old('event_type', $companyEvent->event_type ?: 'in_person') }}">
     <input id="create-event-mode" type="hidden" name="event_mode" value="{{ old('event_mode', $companyEvent->event_mode ?: 'in_person') }}">
-    <input id="create-event-category" type="hidden" name="category" value="{{ old('category', $companyEvent->category ?: 'Technology') }}">
+    <input id="create-event-category" type="hidden" name="category" value="{{ old('category', $selectedCategory) }}">
     <input id="create-sub-category" type="hidden" name="sub_category" value="{{ old('sub_category', $companyEvent->sub_category ?: 'Other') }}">
     <input id="create-title" type="hidden" name="title" value="{{ old('title', $companyEvent->title === 'Untitled Company Event' ? 'Global Innovation Summit 2026' : $companyEvent->title) }}">
     <input id="create-starts-at" type="hidden" name="starts_at" value="{{ old('starts_at', optional($companyEvent->starts_at)->format('Y-m-d H:i:s')) }}">
@@ -131,7 +132,11 @@
                     <h3 class="text-[15px] font-bold mb-4">Event Category</h3>
                     <div id="category-list" class="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
                         @foreach ($eventCategories as $category)
-                            <button type="button" onclick="selectCategory('{{ $category['name'] }}', this)" class="{{ $selectedCategory === $category['name'] ? 'min-h-11 px-3 sm:px-5 py-2.5 border-2 border-primary text-primary bg-primary-light/50 text-[13px] font-bold rounded-[12px] shadow-sm flex items-center justify-center sm:justify-start gap-2 active:scale-95 transition-all duration-200' : 'min-h-11 px-3 sm:px-5 py-2.5 border border-gray-100 text-[#1C1364] text-[13px] font-semibold rounded-[12px] hover:border-primary hover:text-primary transition-all duration-200 bg-white shadow-sm flex items-center justify-center sm:justify-start gap-2 active:scale-95' }}">
+                            <button
+                                type="button"
+                                data-category="{{ $category['name'] }}"
+                                class="category-chip min-h-11 px-3 sm:px-5 py-2.5 border text-[13px] rounded-[12px] shadow-sm flex items-center justify-center sm:justify-start gap-2 active:scale-95 transition-all duration-200 {{ $selectedCategory === $category['name'] ? 'border-2 border-primary text-primary bg-primary-light/50 font-bold' : 'border-gray-100 text-[#1C1364] font-semibold hover:border-primary hover:text-primary bg-white' }}"
+                            >
                                 <span>{{ $category['short'] }}</span> {{ $category['name'] }}
                             </button>
                         @endforeach
@@ -146,22 +151,42 @@
 @push('scripts')
 <script>
     const templateValues = @json($templateValues);
-    let activeCategory = document.getElementById('create-event-category')?.value || 'Technology';
+    const initialCategory = @json($selectedCategory);
+    const categoryChipActiveClass = 'category-chip min-h-11 px-3 sm:px-5 py-2.5 border-2 border-primary text-primary bg-primary-light/50 text-[13px] font-bold rounded-[12px] shadow-sm flex items-center justify-center sm:justify-start gap-2 active:scale-95 transition-all duration-200';
+    const categoryChipInactiveClass = 'category-chip min-h-11 px-3 sm:px-5 py-2.5 border border-gray-100 text-[#1C1364] text-[13px] font-semibold rounded-[12px] hover:border-primary hover:text-primary transition-all duration-200 bg-white shadow-sm flex items-center justify-center sm:justify-start gap-2 active:scale-95';
 
-    function selectCategory(category, element) {
-        activeCategory = category;
-        document.getElementById('create-event-category').value = category;
+    function applyCategorySelection(category) {
+        const hiddenInput = document.getElementById('create-event-category');
+        if (hiddenInput) {
+            hiddenInput.value = category;
+        }
 
-        document.querySelectorAll('#category-list button').forEach((button) => {
-            button.className = 'min-h-11 px-3 sm:px-5 py-2.5 border border-gray-100 text-[#1C1364] text-[13px] font-semibold rounded-[12px] hover:border-primary hover:text-primary transition-all duration-200 bg-white shadow-sm flex items-center justify-center sm:justify-start gap-2 active:scale-95';
+        document.querySelectorAll('#category-list .category-chip').forEach((button) => {
+            const isActive = button.dataset.category === category;
+            button.className = isActive ? categoryChipActiveClass : categoryChipInactiveClass;
         });
-        element.className = 'min-h-11 px-3 sm:px-5 py-2.5 border-2 border-primary text-primary bg-primary-light/50 text-[13px] font-bold rounded-[12px] shadow-sm flex items-center justify-center sm:justify-start gap-2 active:scale-95 transition-all duration-200';
     }
+
+    document.getElementById('category-list')?.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-category]');
+        if (!button) {
+            return;
+        }
+
+        applyCategorySelection(button.dataset.category);
+    });
+
+    applyCategorySelection(initialCategory);
 
     function useTemplate(type) {
         const values = templateValues[type] || templateValues.custom || {};
+        const category = type === 'custom'
+            ? (document.getElementById('create-event-category')?.value || initialCategory)
+            : (values.category || document.getElementById('create-event-category')?.value || initialCategory);
+
         document.getElementById('create-title').value = values.title || 'Untitled Company Event';
-        document.getElementById('create-event-category').value = type === 'custom' ? activeCategory : (values.category || activeCategory);
+        document.getElementById('create-event-category').value = category;
+        applyCategorySelection(category);
         document.getElementById('create-sub-category').value = values.subCategory || 'Other';
         document.getElementById('create-starts-at').value = values.startsAt || '';
         document.getElementById('create-ends-at').value = values.endsAt || '';

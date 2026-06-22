@@ -89,19 +89,40 @@ class CompanyEventFlowDetailTest extends TestCase
         // 1. Company Login (set session)
         $this->session(['company_id' => $this->company->id, 'company_flow_context' => 'event_company']);
 
-        // 2. Access Event Dashboard
+        // 2. Access Event Dashboard with no events yet
         $response = $this->get(route('company.event-company-flow.dashboard'));
         $response->assertStatus(200);
+        $response->assertSee('No events yet. Create your first event to see it here.');
+        $this->assertDatabaseCount('company_events', 0);
 
-        // 3. Initialize Draft Event on Create
+        // 3. Create page should not auto-create a draft event
         $response = $this->get(route('company.event-company-flow.create'));
         $response->assertStatus(200);
+        $this->assertDatabaseCount('company_events', 0);
+
+        // 4. Create the first event explicitly
+        $response = $this->post(route('company.event-company-flow.create.store'), [
+            'title' => 'Acme Global Summit 2026',
+            'category' => 'Technology',
+            'sub_category' => 'Other',
+            'event_type' => 'in_person',
+            'event_mode' => 'in_person',
+            'starts_at' => '2026-07-15 09:00:00',
+            'ends_at' => '2026-07-17 18:00:00',
+            'timezone' => 'Asia/Kolkata',
+            'venue_name' => 'Silicon Valley Center',
+            'venue_address' => '123 Tech Way',
+            'city' => 'San Jose',
+            'country' => 'USA',
+        ]);
+        $response->assertRedirect();
 
         $event = CompanyEvent::firstOrFail();
         $this->assertEquals('draft', $event->status);
         $this->assertEquals($this->company->id, $event->company_id);
+        $this->assertEquals('Acme Global Summit 2026', $event->title);
 
-        // 4. Update Basic details (Name, Dates, Location, Category)
+        // 5. Update Basic details (Name, Dates, Location, Category)
         $response = $this->post(route('company.event-company-flow.basic.update', $event->id), [
             'title' => 'Acme Global Summit 2026',
             'category' => 'Technology',

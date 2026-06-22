@@ -6,6 +6,8 @@
     $slots = $slots ?? [];
     $tickets = $tickets ?? [];
     $sampleTicket = $sampleTicket ?? null;
+    $heroSlides = $heroSlides ?? [];
+    $heroMeta = $heroMeta ?? ['event_count' => 0, 'category_count' => 0, 'country_count' => 0];
 
     $steps = [
         ['Find Your Event', 'Browse events by category, country, or search for specific topics.'],

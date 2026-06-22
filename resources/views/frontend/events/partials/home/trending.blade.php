@@ -1,16 +1,16 @@
 <section id="trending" class="mt-8 bg-white">
-    <div class="mb-5 flex items-start justify-between gap-4">
+    <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div>
-            <h2 class="text-[22px] font-extrabold leading-none text-[#071044]">Trending Events</h2>
-            <p class="mt-3 text-[14px] font-semibold text-[#4E567A]">Popular events you don't want to miss</p>
+            <h2 class="text-[20px] font-extrabold leading-none text-[#071044] sm:text-[22px]">Trending Events</h2>
+            <p class="mt-2 text-[13px] font-semibold text-[#4E567A] sm:mt-3 sm:text-[14px]">Popular events you don't want to miss</p>
         </div>
-        <a href="{{ url('/events/listings') }}" class="mt-1 inline-flex shrink-0 items-center gap-2 text-[13px] font-extrabold text-[#5b2eff]">
+        <a href="{{ url('/events/listings') }}" class="inline-flex shrink-0 items-center gap-2 self-start text-[13px] font-extrabold text-[#5b2eff]">
             View All Events
             <span aria-hidden="true">-&gt;</span>
         </a>
     </div>
     @if (count($events) > 0)
-        <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <div class="grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 2xl:grid-cols-6">
             @foreach ($events as $event)
                 @include('frontend.events.partials.home.trending-card', ['event' => $event])
             @endforeach

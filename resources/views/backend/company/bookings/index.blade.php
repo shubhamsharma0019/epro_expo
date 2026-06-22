@@ -4,10 +4,10 @@
 
 @section('content')
 
-<section class="max-w-[1500px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
+<section class="max-w-[1500px] px-4 py-6 sm:px-8 sm:py-8 lg:px-10 lg:py-10">
 
-    <div class="mb-8">
-        <h1 class="text-[36px] font-semibold leading-[44px] tracking-[-0.8px] text-navy">
+    <div class="mb-6 sm:mb-8">
+        <h1 class="text-[28px] font-semibold leading-tight tracking-[-0.8px] text-navy sm:text-[36px] sm:leading-[44px]">
             My Bookings
         </h1>
     </div>
@@ -39,24 +39,24 @@
     @endphp
 
     <div class="mb-6 flex flex-col gap-4">
-        <div class="flex items-center justify-between gap-3 rounded-lg border border-borderColor bg-white pr-3 shadow-sm">
-            <div class="min-w-0 overflow-x-auto">
+        <div class="flex flex-col gap-3 rounded-lg border border-borderColor bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:pr-3 sm:pl-0">
+            <div class="min-w-0 overflow-x-auto [-webkit-overflow-scrolling:touch]">
                 <div class="flex min-w-max items-center">
-                <a href="{{ $tabUrl('all') }}" class="inline-flex h-[56px] min-w-[110px] items-center justify-center px-6 text-center text-[15px] {{ $tabClass('all') }}">
+                <a href="{{ $tabUrl('all') }}" class="inline-flex h-[48px] min-w-[96px] items-center justify-center px-4 text-center text-[14px] sm:h-[56px] sm:min-w-[110px] sm:px-6 sm:text-[15px] {{ $tabClass('all') }}">
                     All ({{ $allCount }})
                 </a>
-                <a href="{{ $tabUrl('upcoming') }}" class="inline-flex h-[56px] min-w-[150px] items-center justify-center px-6 text-center text-[15px] {{ $tabClass('upcoming') }}">
+                <a href="{{ $tabUrl('upcoming') }}" class="inline-flex h-[48px] min-w-[120px] items-center justify-center px-4 text-center text-[14px] sm:h-[56px] sm:min-w-[150px] sm:px-6 sm:text-[15px] {{ $tabClass('upcoming') }}">
                     Upcoming ({{ $upcomingCount }})
                 </a>
-                <a href="{{ $tabUrl('completed') }}" class="inline-flex h-[56px] min-w-[150px] items-center justify-center px-6 text-center text-[15px] {{ $tabClass('completed') }}">
+                <a href="{{ $tabUrl('completed') }}" class="inline-flex h-[48px] min-w-[120px] items-center justify-center px-4 text-center text-[14px] sm:h-[56px] sm:min-w-[150px] sm:px-6 sm:text-[15px] {{ $tabClass('completed') }}">
                     Completed ({{ $completedCount }})
                 </a>
-                <a href="{{ $tabUrl('cancelled') }}" class="inline-flex h-[56px] min-w-[150px] items-center justify-center px-6 text-center text-[15px] {{ $tabClass('cancelled') }}">
+                <a href="{{ $tabUrl('cancelled') }}" class="inline-flex h-[48px] min-w-[120px] items-center justify-center px-4 text-center text-[14px] sm:h-[56px] sm:min-w-[150px] sm:px-6 sm:text-[15px] {{ $tabClass('cancelled') }}">
                     Cancelled ({{ $cancelledCount }})
                 </a>
                 </div>
             </div>
-            <button type="submit" form="booking-filter-form" class="inline-flex h-[44px] min-w-[120px] shrink-0 items-center justify-center gap-3 rounded-md border border-purple px-5 text-[15px] font-semibold text-purple">
+            <button type="submit" form="booking-filter-form" class="inline-flex h-[44px] w-full shrink-0 items-center justify-center gap-3 rounded-md border border-purple px-5 text-[15px] font-semibold text-purple sm:w-auto sm:min-w-[120px]">
                 <i class="fa-solid fa-filter text-[15px]"></i>
                 Filter
             </button>
@@ -139,23 +139,23 @@
                     ], true);
             @endphp
 
-            <div class="rounded-xl border border-borderColor bg-white p-5 shadow-sm sm:p-6">
+            <div class="rounded-xl border border-borderColor bg-white p-4 shadow-sm sm:p-6">
                 <div class="grid grid-cols-1 gap-6 xl:grid-cols-[190px_minmax(0,1fr)_380px] xl:items-center">
                     <img
                         src="{{ $imagePath }}"
                         alt="{{ $title }}"
-                        class="h-[138px] w-full rounded-md object-cover xl:w-[170px]"
+                        class="h-[160px] w-full rounded-md object-cover sm:h-[138px] xl:w-[170px]"
                     >
 
                     <div class="min-w-0">
                         <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                            <h2 class="text-[21px] font-semibold text-navy">{{ $title }}</h2>
+                            <h2 class="text-[18px] font-semibold text-navy sm:text-[21px]">{{ $title }}</h2>
                             <span class="w-fit rounded-md px-3 py-1.5 text-[13px] font-semibold {{ $statusClass }}">
                                 {{ $status }}
                             </span>
                         </div>
 
-                        <div class="space-y-3 text-[15px] font-medium text-[#34405F]">
+                        <div class="space-y-3 text-[14px] font-medium text-[#34405F] sm:text-[15px]">
                             <p class="flex items-center gap-3">
                                 <i class="fa-regular fa-building w-4 text-purple"></i>
                                 {{ $hallName }}
@@ -173,12 +173,12 @@
 
                     <div class="border-t border-borderColor pt-5 xl:border-l xl:border-t-0 xl:py-3 xl:pl-7">
                         <p class="text-[14px] font-medium text-[#5A6480]">Booking ID</p>
-                        <p class="mt-2 break-words text-[17px] font-semibold text-navy">BOOK-{{ str_pad((string) $bookingItem->id, 5, '0', STR_PAD_LEFT) }}</p>
+                        <p class="mt-2 break-all text-[16px] font-semibold text-navy sm:break-words sm:text-[17px]">BOOK-{{ str_pad((string) $bookingItem->id, 5, '0', STR_PAD_LEFT) }}</p>
 
                         <div class="my-5 border-t border-borderColor"></div>
 
                         <p class="text-[14px] font-medium text-[#5A6480]">Amount</p>
-                        <p class="mt-2 text-[26px] font-semibold leading-none text-navy">₹{{ number_format($bookingItem->total_amount, 2) }}</p>
+                        <p class="mt-2 text-[22px] font-semibold leading-none text-navy sm:text-[26px]">₹{{ number_format($bookingItem->total_amount, 2) }}</p>
 
                         <div class="mt-5 flex flex-col gap-3">
                             <a href="{{ url('/company/bookings/' . $bookingItem->id) }}"
@@ -216,9 +216,9 @@
         @endforelse
     </div>
 
-    <div class="rounded-b-xl border border-t-0 border-borderColor bg-white px-6 py-5 shadow-sm">
-        <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-            <p class="text-[14px] font-medium text-[#34405F]">
+    <div class="rounded-b-xl border border-t-0 border-borderColor bg-white px-4 py-5 shadow-sm sm:px-6">
+        <div class="flex flex-col gap-4 sm:gap-5 md:flex-row md:items-center md:justify-between">
+            <p class="text-center text-[13px] font-medium text-[#34405F] sm:text-left sm:text-[14px]">
                 Showing 1 to {{ $totalCount }} of {{ $totalCount }} bookings
             </p>
 
@@ -234,7 +234,7 @@
                 </button>
             </div>
 
-            <div class="flex items-center gap-3 text-[14px] font-medium text-[#34405F]">
+            <div class="hidden items-center justify-center gap-3 text-[14px] font-medium text-[#34405F] sm:flex">
                 <span>Rows per page:</span>
                 <button type="button" class="inline-flex h-10 items-center gap-3 rounded-md border border-borderColor px-4 text-navy">
                     10

@@ -3,6 +3,7 @@
 namespace App\Domain\Visitor\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Domain\Event\Models\CompanyEvent\CompanyEvent;
 use App\Support\LiveContent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -161,6 +162,7 @@ class PurchaseController extends Controller
     {
         $orderNumber = $request->query('order');
         $ticketQuery = \App\Domain\Visitor\Models\VisitorTicket::query()
+            ->with(['companyEvent', 'ticketType'])
             ->where('user_id', auth()->id());
 
         $ticket = $orderNumber
@@ -175,6 +177,13 @@ class PurchaseController extends Controller
         }
 
         abort_unless($ticket, 404);
+
+        if (! $ticket->companyEvent && filled($ticket->event_slug)) {
+            $ticket->setRelation(
+                'companyEvent',
+                CompanyEvent::query()->where('slug', $ticket->event_slug)->first()
+            );
+        }
 
         return view('frontend.events.tickets.confirmed', compact('ticket'));
     }

@@ -5,6 +5,7 @@ namespace App\Domain\Shared\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Domain\Shared\Models\User;
 use App\Domain\Visitor\Models\Visitor;
+use App\Domain\Event\Models\CompanyEvent\CompanyEvent;
 use App\Domain\Event\Models\Exhibition;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,21 +33,25 @@ class UserAuthController extends Controller
     {
         $request->session()->put('user_flow_context', 'event_ticket');
         $request->session()->regenerateToken();
-        $eventSlug = $request->query('event');
+        $eventSlug = $request->query('event') ?: $this->eventSlugFromSession($request);
 
         if ($eventSlug) {
             $request->session()->put('url.intended', url('/events/tickets/select?event=' . $eventSlug));
             $request->session()->put('event_booking_path', url('/events/tickets/select?event=' . $eventSlug));
         }
 
-        return view('frontend.auth.user-login', ['flowContext' => 'event_ticket', 'eventSlug' => $eventSlug]);
+        return view('frontend.auth.user-login', [
+            'flowContext' => 'event_ticket',
+            'eventSlug' => $eventSlug,
+            'contextCard' => $this->buildEventContextCard($eventSlug),
+        ]);
     }
 
     public function showExhibitionTicketLogin(Request $request): View
     {
         $request->session()->put('user_flow_context', 'exhibition_ticket');
         $request->session()->regenerateToken();
-        $exhibitionSlug = $request->query('exhibition');
+        $exhibitionSlug = $request->query('exhibition') ?: $request->session()->get('activeExhibitionSlug');
 
         if ($exhibitionSlug) {
             $request->session()->put('activeExhibitionSlug', $exhibitionSlug);
@@ -54,7 +59,11 @@ class UserAuthController extends Controller
             $request->session()->put('exhibition_booking_path', route('exhibitions.tickets.select', $exhibitionSlug));
         }
 
-        return view('frontend.auth.user-login', ['flowContext' => 'exhibition_ticket', 'exhibitionSlug' => $exhibitionSlug]);
+        return view('frontend.auth.user-login', [
+            'flowContext' => 'exhibition_ticket',
+            'exhibitionSlug' => $exhibitionSlug,
+            'contextCard' => $this->buildExhibitionContextCard($exhibitionSlug),
+        ]);
     }
 
     public function login(Request $request): RedirectResponse
@@ -225,5 +234,58 @@ class UserAuthController extends Controller
         $request->session()->forget(['url.intended', 'user_flow_context']);
 
         return redirect()->intended('/user/dashboard');
+    }
+
+    private function eventSlugFromSession(Request $request): ?string
+    {
+        $bookingPath = $request->session()->get('event_booking_path');
+
+        if (! filled($bookingPath)) {
+            return null;
+        }
+
+        parse_str(parse_url($bookingPath, PHP_URL_QUERY) ?? '', $params);
+
+        return filled($params['event'] ?? null) ? $params['event'] : null;
+    }
+
+    private function buildEventContextCard(?string $eventSlug): array
+    {
+        $event = filled($eventSlug)
+            ? CompanyEvent::query()->with('branding')->where('slug', $eventSlug)->first()
+            : null;
+
+        $dateLabel = $event?->starts_at
+            ? $event->starts_at->format('M d') . ($event->ends_at ? ' - ' . $event->ends_at->format('M d, Y') : ', ' . $event->starts_at->format('Y'))
+            : 'Date TBD';
+
+        $location = collect([$event?->city, $event?->country])->filter()->join(', ') ?: 'Location TBD';
+
+        return [
+            'label' => 'Event Ticket Booking',
+            'title' => $event?->title ?: 'Continue Your Event Booking',
+            'meta' => $dateLabel . ' · ' . $location,
+            'step' => 'Step 1 of 4',
+            'progress' => 25,
+            'icon' => 'fa-ticket',
+        ];
+    }
+
+    private function buildExhibitionContextCard(?string $exhibitionSlug): array
+    {
+        $exhibition = filled($exhibitionSlug)
+            ? Exhibition::query()->where('slug', $exhibitionSlug)->first()
+            : null;
+
+        return [
+            'label' => 'Visitor Pass Booking',
+            'title' => $exhibition?->title ?: 'Continue Your Visitor Pass',
+            'meta' => $exhibition?->start_date
+                ? $exhibition->start_date->format('M d, Y') . ($exhibition->end_date ? ' - ' . $exhibition->end_date->format('M d, Y') : '')
+                : 'Exhibition schedule TBD',
+            'step' => 'Step 1 of 4',
+            'progress' => 25,
+            'icon' => 'fa-id-card',
+        ];
     }
 }

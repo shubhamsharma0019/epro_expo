@@ -1,6 +1,6 @@
-<div id="slots" class="h-full rounded-[10px] border border-[#F0EEF8] bg-white px-7 py-7 shadow-[0_18px_42px_rgba(31,42,106,0.07)]">
-    <h2 class="text-[24px] font-extrabold leading-none tracking-[-0.01em] text-[#191D4D]">Ticket Booking &amp; Slots</h2>
-    <p class="mt-5 flex items-center gap-2 text-[13px] font-extrabold text-[#59617F]">
+<div id="slots" class="h-full rounded-[10px] border border-[#F0EEF8] bg-white px-4 py-5 shadow-[0_18px_42px_rgba(31,42,106,0.07)] sm:px-7 sm:py-7">
+    <h2 class="text-[20px] font-extrabold leading-none tracking-[-0.01em] text-[#191D4D] sm:text-[24px]">Ticket Booking &amp; Slots</h2>
+    <p class="mt-4 flex flex-wrap items-center gap-2 text-[12px] font-extrabold text-[#59617F] sm:mt-5 sm:text-[13px]">
         <svg class="h-[14px] w-[14px] shrink-0 text-[#7D829D]" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
             <path fill-rule="evenodd" d="M10 18s6-5.18 6-10A6 6 0 1 0 4 8c0 4.82 6 10 6 10Zm0-7a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" clip-rule="evenodd" />
         </svg>

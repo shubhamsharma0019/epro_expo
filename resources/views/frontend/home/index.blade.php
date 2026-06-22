@@ -4,7 +4,6 @@
     $stats = $home['stats'] ?? \App\Support\WebsiteContent::defaultStats();
     $experienceTabs = $home['experience_tabs'] ?? [];
     $featurePills = $home['feature_pills'] ?? \App\Support\WebsiteContent::defaultFeaturePills();
-    $flowCards = $home['flow_cards'] ?? \App\Support\WebsiteContent::defaultFlowCards();
     $features = $home['features'] ?? \App\Support\WebsiteContent::defaultFeatures();
     $steps = $home['steps'] ?? \App\Support\WebsiteContent::defaultSteps();
     $boothHighlight = $home['booth_highlight'] ?? [];
@@ -12,19 +11,6 @@
     $cta = $home['cta'] ?? \App\Support\WebsiteContent::defaultCta();
     $ctaBenefits = $home['cta_benefits'] ?? \App\Support\WebsiteContent::defaultCtaBenefits();
     $footer = $home['footer'] ?? \App\Support\WebsiteContent::defaultFooter();
-    $resolveFlowUrl = function (array $card) {
-        if (! empty($card['link_url'])) {
-            return $card['link_url'];
-        }
-        if (! empty($card['route'])) {
-            try {
-                return route($card['route']);
-            } catch (\Throwable) {
-                return url('/');
-            }
-        }
-        return url('/');
-    };
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -71,10 +57,10 @@
 
       <nav class="hidden items-center gap-10 text-[14px] font-semibold lg:flex">
         <a class="hover:text-violet" href="{{ route('events.home') }}">Explore Events</a>
-        <a class="hover:text-violet" href="{{ url('/exhibitions') }}">Exhibitions</a>
-        <a class="hover:text-violet" href="#features">Features</a>
-        <a class="hover:text-violet" href="#pricing">Pricing</a>
-        <a class="hover:text-violet" href="#about">About Us</a>
+        <a class="hover:text-violet" href="{{ route('exhibitions.index') }}">Exhibitions</a>
+        <a class="hover:text-violet" href="{{ route('frontend.features') }}">Features</a>
+        <a class="hover:text-violet" href="{{ route('frontend.pricing') }}">Pricing</a>
+        <a class="hover:text-violet" href="{{ route('frontend.about') }}">About Us</a>
       </nav>
 
       <div class="hidden items-center gap-4 lg:flex">
@@ -89,10 +75,10 @@
     <div id="mobileMenu" class="hidden border-t border-[#EEF0F7] bg-white px-4 py-5 sm:px-6 lg:hidden">
       <div class="flex flex-col gap-4 text-[15px] font-semibold">
         <a href="{{ route('events.home') }}">Explore Events</a>
-        <a href="{{ url('/exhibitions') }}">Exhibitions</a>
-        <a href="#features">Features</a>
-        <a href="#pricing">Pricing</a>
-        <a href="#about">About Us</a>
+        <a href="{{ route('exhibitions.index') }}">Exhibitions</a>
+        <a href="{{ route('frontend.features') }}">Features</a>
+        <a href="{{ route('frontend.pricing') }}">Pricing</a>
+        <a href="{{ route('frontend.about') }}">About Us</a>
         <div class="grid grid-cols-1 gap-3 pt-2">
           <a href="{{ route('company.home') }}" class="rounded-lg border border-[#D8DCEB] px-5 py-3 text-center font-bold text-navy">Book a Booth</a>
           <a href="{{ route('company.event-company.login') }}" class="rounded-lg border border-[#D8DCEB] px-5 py-3 text-center font-bold text-navy">Create Event</a>
@@ -122,15 +108,15 @@
             <a href="{{ $hero['button_1_url'] ?? route('events.home') }}" class="inline-flex w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-[#6D28D9] to-[#4B16D8] px-6 py-4 text-[15px] font-bold text-white shadow-[0_14px_30px_rgba(91,46,255,0.28)] sm:w-auto sm:px-7 sm:text-[16px]">
               <i class="far fa-calendar-alt text-lg"></i> {{ $hero['button_1_label'] ?? 'Explore Events' }}
             </a>
-            <a href="{{ $hero['button_2_url'] ?? url('/exhibitions') }}" class="inline-flex w-full items-center justify-center gap-3 rounded-xl border border-[#D8DCEB] bg-white px-6 py-4 text-[15px] font-bold text-navy shadow-sm hover:bg-[#F8F7FF] sm:w-auto sm:px-7 sm:text-[16px]">
-              <i class="far fa-building text-lg text-gray-500"></i> {{ $hero['button_2_label'] ?? 'Explore Exhibitions' }}
+            <a href="{{ $hero['button_2_url'] ?? url('/exhibitions') }}" class="group inline-flex w-full items-center justify-center gap-3 rounded-xl border border-[#D8DCEB] bg-white px-6 py-4 text-[15px] font-bold text-navy shadow-sm transition-all duration-200 hover:border-transparent hover:bg-gradient-to-r hover:from-[#6D28D9] hover:to-[#4B16D8] hover:text-white hover:shadow-[0_14px_30px_rgba(91,46,255,0.28)] sm:w-auto sm:px-7 sm:text-[16px]">
+              <i class="far fa-building text-lg text-gray-500 transition-colors group-hover:text-white"></i> {{ $hero['button_2_label'] ?? 'Explore Exhibitions' }}
             </a>
             <div class="grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto sm:gap-8">
-              <a href="{{ $hero['button_3_url'] ?? route('company.home') }}" class="inline-flex items-center justify-center gap-3 rounded-xl border border-[#D8DCEB] bg-white px-4 py-4 text-[14px] font-bold text-navy shadow-sm hover:bg-[#F8F7FF] sm:px-7 sm:text-[16px]">
-                <i class="fas fa-store text-lg text-[#FF9B41]"></i> {{ $hero['button_3_label'] ?? 'Book a Booth' }}
+              <a href="{{ $hero['button_3_url'] ?? route('company.home') }}" class="group inline-flex items-center justify-center gap-3 rounded-xl border border-[#D8DCEB] bg-white px-4 py-4 text-[14px] font-bold text-navy shadow-sm transition-all duration-200 hover:border-transparent hover:bg-gradient-to-r hover:from-[#6D28D9] hover:to-[#4B16D8] hover:text-white hover:shadow-[0_14px_30px_rgba(91,46,255,0.28)] sm:px-7 sm:text-[16px]">
+                <i class="fas fa-store text-lg text-[#FF9B41] transition-colors group-hover:text-white"></i> {{ $hero['button_3_label'] ?? 'Book a Booth' }}
               </a>
-              <a href="{{ $hero['button_4_url'] ?? route('company.event-company.login') }}" class="inline-flex items-center justify-center gap-3 rounded-xl border border-[#D8DCEB] bg-white px-4 py-4 text-[14px] font-bold text-navy shadow-sm hover:bg-[#F8F7FF] sm:px-7 sm:text-[16px]">
-                <i class="fas fa-calendar-plus text-lg text-[#6D28D9]"></i> {{ $hero['button_4_label'] ?? 'Create Company Event' }}
+              <a href="{{ $hero['button_4_url'] ?? route('company.event-company.login') }}" class="group inline-flex items-center justify-center gap-3 rounded-xl border border-[#D8DCEB] bg-white px-4 py-4 text-[14px] font-bold text-navy shadow-sm transition-all duration-200 hover:border-transparent hover:bg-gradient-to-r hover:from-[#6D28D9] hover:to-[#4B16D8] hover:text-white hover:shadow-[0_14px_30px_rgba(91,46,255,0.28)] sm:px-7 sm:text-[16px]">
+                <i class="fas fa-calendar-plus text-lg text-[#6D28D9] transition-colors group-hover:text-white"></i> {{ $hero['button_4_label'] ?? 'Create Company Event' }}
               </a>
             </div>
           </div>

@@ -183,16 +183,13 @@
 <body class="text-[#1E293B] font-sans flex h-screen overflow-hidden">
 
     <!-- Sidebar Overlay for mobile -->
-    <div id="exhibition-sidebar-overlay" class="fixed inset-0 z-40 hidden bg-[#071044]/40 lg:hidden"></div>
-
-    <!-- Exhibition Sidebar -->
-    @include('components.exhibition.exhibition-sidebar')
+    @include('frontend.exhibitions.tickets.partials.visitor-sidebar-shell')
 
     <!-- Main Content Area -->
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-white">
         
         <!-- Header Container -->
-        <div id="header-container" class="flex-shrink-0 z-40 w-full relative">@include('frontend.exhibitions.tickets.header')</div>
+        <div id="header-container" class="flex-shrink-0 z-40 w-full relative">@include('frontend.exhibitions.tickets.header', ['hideMobileMenu' => !($showVisitorSidebar ?? false)])</div>
 
         <!-- Scrollable Content -->
         <div class="ticket-flow-main flex-1 overflow-y-auto px-4 py-6 sm:px-8 lg:px-12 lg:py-8 relative bg-gradient-to-br from-[#FAFAFA] to-[#EDE9FE]">

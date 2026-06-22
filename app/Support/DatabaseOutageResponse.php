@@ -57,6 +57,8 @@ class DatabaseOutageResponse
                 'events' => [],
                 'categories' => [],
                 'countries' => [],
+                'heroSlides' => [],
+                'heroMeta' => ['event_count' => 0, 'category_count' => 0, 'country_count' => 0],
                 'tickets' => [],
                 'slots' => [],
                 'sampleTicket' => null,

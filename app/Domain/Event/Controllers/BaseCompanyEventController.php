@@ -3,7 +3,9 @@
 namespace App\Domain\Event\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Domain\Company\Models\Company;
 use App\Domain\Event\Models\CompanyEvent\CompanyEvent;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Str;
 
 abstract class BaseCompanyEventController extends Controller
@@ -13,7 +15,7 @@ abstract class BaseCompanyEventController extends Controller
         return (int) session('company_id');
     }
 
-    protected function setupEvent(?CompanyEvent $companyEvent = null): CompanyEvent
+    protected function findFlowEvent(?CompanyEvent $companyEvent = null): ?CompanyEvent
     {
         if ($companyEvent) {
             abort_unless($companyEvent->company_id === $this->companyId(), 403);
@@ -25,38 +27,52 @@ abstract class BaseCompanyEventController extends Controller
 
         $sessionEventId = (int) session('company_event_flow_event_id');
 
-        if ($sessionEventId) {
-            $event = CompanyEvent::query()
-                ->where('company_id', $this->companyId())
-                ->find($sessionEventId);
-
-            if ($event) {
-                return $event;
-            }
+        if (! $sessionEventId) {
+            return null;
         }
 
-        $event = CompanyEvent::query()
+        return CompanyEvent::query()
             ->where('company_id', $this->companyId())
-            ->where('status', 'draft')
-            ->latest()
-            ->first();
+            ->find($sessionEventId);
+    }
+
+    protected function setupEvent(?CompanyEvent $companyEvent = null): CompanyEvent
+    {
+        $event = $this->findFlowEvent($companyEvent);
 
         if (! $event) {
-            $event = CompanyEvent::create([
-                'company_id' => $this->companyId(),
-                'title' => 'Untitled Company Event',
-                'slug' => $this->uniqueSlug('untitled-company-event'),
-                'event_type' => 'in_person',
-                'event_mode' => 'in_person',
-                'status' => 'draft',
-                'timezone' => 'Asia/Kolkata',
-                'visibility' => 'private',
-            ]);
+            throw new HttpResponseException(
+                redirect()
+                    ->route('company.event-company-flow.create')
+                    ->with('status', 'Create an event to continue setup.')
+            );
         }
 
-        session(['company_event_flow_event_id' => $event->id]);
-
         return $event;
+    }
+
+    protected function newDraftPlaceholder(): CompanyEvent
+    {
+        return new CompanyEvent([
+            'event_type' => 'in_person',
+            'event_mode' => 'in_person',
+            'status' => 'draft',
+            'timezone' => 'Asia/Kolkata',
+            'visibility' => 'private',
+        ]);
+    }
+
+    protected function placeholderCommonData(): array
+    {
+        return [
+            'companyEvent' => $this->newDraftPlaceholder(),
+            'eventBranding' => null,
+            'ticketTypes' => collect(),
+            'eventSessions' => collect(),
+            'eventSpeakers' => collect(),
+            'publishRequest' => null,
+            'currentCompany' => Company::query()->find($this->companyId()),
+        ];
     }
 
     protected function createDraftEvent(): CompanyEvent

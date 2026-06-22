@@ -50,6 +50,67 @@
                             <textarea name="hero_subtitle" rows="3" class="w-full rounded-xl border border-gray-200 px-4 py-3 text-[14px]">{{ old('hero_subtitle', $hero['subtitle']) }}</textarea>
                         </div>
                     </div>
+
+                    <div class="mt-6 border-t border-gray-100 pt-6">
+                        <h4 class="text-[15px] font-bold text-[#0B132C]">Hero Buttons</h4>
+                        <div class="mt-4 grid gap-4 md:grid-cols-2">
+                            @foreach ([1, 2, 3, 4] as $buttonNumber)
+                                <div class="rounded-xl border border-gray-100 p-4">
+                                    <p class="mb-3 text-[13px] font-semibold text-gray-600">Button {{ $buttonNumber }}</p>
+                                    <label class="mb-2 block text-[12px] font-semibold">Label</label>
+                                    <input type="text" name="hero_button_{{ $buttonNumber }}_label" value="{{ old('hero_button_' . $buttonNumber . '_label', $hero['button_' . $buttonNumber . '_label'] ?? '') }}" class="mb-3 h-10 w-full rounded-xl border border-gray-200 px-4 text-[14px]">
+                                    <label class="mb-2 block text-[12px] font-semibold">URL (optional)</label>
+                                    <input type="text" name="hero_button_{{ $buttonNumber }}_url" value="{{ old('hero_button_' . $buttonNumber . '_url', $hero['button_' . $buttonNumber . '_url'] ?? '') }}" class="h-10 w-full rounded-xl border border-gray-200 px-4 text-[14px]" placeholder="Leave blank for default route">
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                    <h3 class="text-[18px] font-bold text-[#0B132C]">Section Headings</h3>
+                    <div class="mt-5 grid gap-4 md:grid-cols-2">
+                        <div>
+                            <label class="mb-2 block text-[13px] font-semibold">Features section title</label>
+                            <input type="text" name="features_title" value="{{ old('features_title', $sectionHeadings['features_title']) }}" class="h-11 w-full rounded-xl border border-gray-200 px-4 text-[14px]">
+                        </div>
+                        <div>
+                            <label class="mb-2 block text-[13px] font-semibold">How it works title</label>
+                            <input type="text" name="how_it_works_title" value="{{ old('how_it_works_title', $sectionHeadings['how_it_works_title']) }}" class="h-11 w-full rounded-xl border border-gray-200 px-4 text-[14px]">
+                        </div>
+                        <div>
+                            <label class="mb-2 block text-[13px] font-semibold">Experience section title</label>
+                            <input type="text" name="experience_title" value="{{ old('experience_title', $sectionHeadings['experience_title']) }}" class="h-11 w-full rounded-xl border border-gray-200 px-4 text-[14px]">
+                        </div>
+                        <div>
+                            <label class="mb-2 block text-[13px] font-semibold">Partners section title</label>
+                            <input type="text" name="partners_title" value="{{ old('partners_title', $sectionHeadings['partners_title']) }}" class="h-11 w-full rounded-xl border border-gray-200 px-4 text-[14px]">
+                        </div>
+                        <div>
+                            <label class="mb-2 block text-[13px] font-semibold">Featured events title</label>
+                            <input type="text" name="featured_events_title" value="{{ old('featured_events_title', $sectionHeadings['featured_events_title']) }}" class="h-11 w-full rounded-xl border border-gray-200 px-4 text-[14px]">
+                        </div>
+                        <div>
+                            <label class="mb-2 block text-[13px] font-semibold">Featured exhibitions title</label>
+                            <input type="text" name="featured_exhibitions_title" value="{{ old('featured_exhibitions_title', $sectionHeadings['featured_exhibitions_title']) }}" class="h-11 w-full rounded-xl border border-gray-200 px-4 text-[14px]">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="mb-2 block text-[13px] font-semibold">Featured events subtitle</label>
+                            <input type="text" name="featured_events_subtitle" value="{{ old('featured_events_subtitle', $sectionHeadings['featured_events_subtitle']) }}" class="h-11 w-full rounded-xl border border-gray-200 px-4 text-[14px]">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="mb-2 block text-[13px] font-semibold">Featured exhibitions subtitle</label>
+                            <input type="text" name="featured_exhibitions_subtitle" value="{{ old('featured_exhibitions_subtitle', $sectionHeadings['featured_exhibitions_subtitle']) }}" class="h-11 w-full rounded-xl border border-gray-200 px-4 text-[14px]">
+                        </div>
+                        <div>
+                            <label class="mb-2 block text-[13px] font-semibold">Header Get Started label</label>
+                            <input type="text" name="get_started_label" value="{{ old('get_started_label', $sectionHeadings['get_started_label']) }}" class="h-11 w-full rounded-xl border border-gray-200 px-4 text-[14px]">
+                        </div>
+                        <div>
+                            <label class="mb-2 block text-[13px] font-semibold">Header Get Started URL</label>
+                            <input type="text" name="get_started_url" value="{{ old('get_started_url', $sectionHeadings['get_started_url']) }}" class="h-11 w-full rounded-xl border border-gray-200 px-4 text-[14px]" placeholder="Leave blank for /events">
+                        </div>
+                    </div>
                 </div>
 
                 <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">

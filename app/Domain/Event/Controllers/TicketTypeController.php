@@ -11,6 +11,15 @@ use Illuminate\View\View;
 
 class TicketTypeController extends BaseCompanyEventController
 {
+    private const ATTENDEE_FIELD_KEYS = [
+        'full_name',
+        'email',
+        'phone',
+        'company',
+        'job_title',
+        'country',
+    ];
+
     public function index(?CompanyEvent $companyEvent = null): View
     {
         $companyEvent = $this->setupEvent($companyEvent);
@@ -62,17 +71,22 @@ class TicketTypeController extends BaseCompanyEventController
 
         $data = $request->validate([
             'ticket_attendee_fields' => ['nullable', 'array'],
-            'ticket_attendee_fields.*' => ['string', 'max:80'],
+            'ticket_attendee_fields.*' => ['string', 'in:' . implode(',', self::ATTENDEE_FIELD_KEYS)],
             'allow_group_registrations' => ['nullable', 'boolean'],
             'show_remaining_ticket_count' => ['nullable', 'boolean'],
             'enable_waiting_list' => ['nullable', 'boolean'],
         ]);
 
+        $selectedFields = collect($data['ticket_attendee_fields'] ?? [])
+            ->filter(fn ($field) => in_array($field, self::ATTENDEE_FIELD_KEYS, true))
+            ->values()
+            ->all();
+
         $companyEvent->update([
-            'ticket_attendee_fields' => $data['ticket_attendee_fields'] ?? [],
-            'allow_group_registrations' => (bool) ($data['allow_group_registrations'] ?? false),
-            'show_remaining_ticket_count' => (bool) ($data['show_remaining_ticket_count'] ?? false),
-            'enable_waiting_list' => (bool) ($data['enable_waiting_list'] ?? false),
+            'ticket_attendee_fields' => $selectedFields,
+            'allow_group_registrations' => $request->boolean('allow_group_registrations'),
+            'show_remaining_ticket_count' => $request->boolean('show_remaining_ticket_count'),
+            'enable_waiting_list' => $request->boolean('enable_waiting_list'),
         ]);
 
         return redirect()

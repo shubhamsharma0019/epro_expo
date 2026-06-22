@@ -185,7 +185,7 @@ class CompanyAuthController extends Controller
             Session::put('company_flow_context', 'event_company');
             $request->session()->save();
 
-            return redirect('/company/event-company-flow/create');
+            return redirect()->route('company.event-company-flow.dashboard');
         }
 
         Session::forget('company_flow_context');

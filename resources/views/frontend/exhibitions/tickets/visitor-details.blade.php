@@ -1,94 +1,24 @@
 @php
-    $exhibition = \App\Domain\Event\Models\Exhibition::query()
-        ->with([
-            'boothBookings' => fn ($query) => $query
-                ->with(['boothProfile', 'boothBranding', 'company'])
-                ->where('payment_status', 'paid')
-                ->whereIn('booking_status', ['confirmed', 'active'])
-                ->where('admin_status', 'approved')
-                ->whereIn('booth_setup_status', ['draft', 'setup_in_progress', 'ready_to_publish', 'pending_review', 'published', 'in_progress', 'submitted_for_review', 'approved', 'live']),
-        ])
-        ->where('slug', $slug)
-        ->first();
-    if (!$exhibition) {
-        $exhibition = \App\Domain\Event\Models\Exhibition::query()
-            ->with([
-                'boothBookings' => fn ($query) => $query
-                    ->with(['boothProfile', 'boothBranding', 'company'])
-                    ->where('payment_status', 'paid')
-                    ->whereIn('booking_status', ['confirmed', 'active'])
-                    ->where('admin_status', 'approved')
-                    ->whereIn('booth_setup_status', ['draft', 'setup_in_progress', 'ready_to_publish', 'pending_review', 'published', 'in_progress', 'submitted_for_review', 'approved', 'live']),
-            ])
-            ->find($slug);
-    }
-    if (!$exhibition) {
-        abort(404);
-    }
-
-    $title = $exhibition->title ?: $exhibition->name;
-    
-    // Resolve banner image (prioritize booth setup banner or logo)
-    $publishedBookings = ($exhibition->boothBookings ?? collect())->filter(fn ($booking) => 
-        in_array($booking->booth_setup_status, ['published', 'approved', 'live'])
-    );
-    $firstBooking = $publishedBookings->first(fn ($booking) => $booking->boothBranding?->booth_banner)
-        ?: $publishedBookings->first(fn ($booking) => $booking->boothProfile?->company_logo || $booking->company?->logo);
-        
-    $bannerImage = $exhibition->banner_url ?: ($exhibition->banner_image ?: 'images/exhibitions/hero-pavilion-scene.png');
-    if ($firstBooking) {
-        if ($firstBooking->boothBranding?->booth_banner) {
-            $bannerPath = $firstBooking->boothBranding->booth_banner;
-            $bannerImage = str_starts_with($bannerPath, 'storage/') ? $bannerPath : 'storage/' . $bannerPath;
-        } elseif ($firstBooking->boothProfile?->company_logo) {
-            $logoPath = $firstBooking->boothProfile->company_logo;
-            $bannerImage = str_starts_with($logoPath, 'storage/') ? $logoPath : 'storage/' . $logoPath;
-        } elseif ($firstBooking->company?->logo) {
-            $logoPath = $firstBooking->company->logo;
-            $bannerImage = str_starts_with($logoPath, 'storage/') ? $logoPath : 'storage/' . $logoPath;
-        }
-    }
-
-    if (str_starts_with($bannerImage, 'http://') || str_starts_with($bannerImage, 'https://')) {
-        // Keep absolute URLs as is
-    } elseif (str_starts_with($bannerImage, 'images/') || str_starts_with($bannerImage, 'assets/') || str_starts_with($bannerImage, 'storage/')) {
-        $bannerImage = asset($bannerImage);
-    } else {
-        $bannerImage = asset('storage/' . $bannerImage);
-    }
-    
-    // Resolve date string
-    if ($exhibition->start_date && $exhibition->end_date) {
-        $dateStr = $exhibition->start_date->format('M d') . ' – ' . $exhibition->end_date->format('d, Y');
-    } else {
-        $dateStr = 'Date TBD';
-    }
-    
-    // Resolve location
-    $location = $exhibition->venue ?: ($exhibition->location ?: 'Virtual');
-    $firstAgendaSession = \App\Domain\Event\Models\AgendaSession::query()
-        ->where('exhibition_id', $exhibition->id)
-        ->orderBy('start_time')
-        ->first();
-    $timeStr = $firstAgendaSession?->start_time
-        ? trim($firstAgendaSession->start_time . ($firstAgendaSession->end_time ? ' - ' . $firstAgendaSession->end_time : ''))
-        : 'Time TBD';
-
-    // Get Pavilions dynamically
-    $pavilions = \App\Domain\Event\Models\Pavilion::where('exhibition_id', $exhibition->id)->get();
-
-    // Get logged in user details if authenticated (Do not auto-prefill fields as per user request)
-    $firstName = '';
-    $lastName = '';
-    $email = '';
-    $phone = '';
+    $title = $title ?? 'Exhibition';
+    $bannerImage = $bannerImage ?? asset('images/exhibitions/hero-pavilion-scene.png');
+    $dateStr = $dateStr ?? 'Date TBD';
+    $location = $location ?? 'Virtual';
+    $timeStr = $timeStr ?? 'Time TBD';
+    $pavilions = $pavilions ?? collect();
+    $countries = $countries ?? collect(['India']);
+    $states = $states ?? collect();
+    $cities = $cities ?? collect();
+    $industries = $industries ?? collect();
+    $companySizes = $companySizes ?? collect();
+    $defaultCountry = $defaultCountry ?? $countries->first();
+    $showVisitorSidebar = $showVisitorSidebar ?? false;
 @endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EproExpo - Visitor Details</title>
+    <title>{{ $title }} - Visitor Details - EproExpo</title>
     <script>
         // Check if pass selection is filled before showing page content
         (function() {
@@ -148,19 +78,16 @@
     </style>
     @include('frontend.exhibitions.visitor.partials.ticket-responsive')
 </head>
-<body class="text-[#1E293B] font-sans flex h-screen overflow-hidden">
+<body class="text-[#1E293B] font-sans flex min-h-screen flex-col lg:h-screen lg:overflow-hidden">
 
     <!-- Sidebar Overlay for mobile -->
-    <div id="exhibition-sidebar-overlay" class="fixed inset-0 z-40 hidden bg-[#071044]/40 lg:hidden"></div>
-
-    <!-- Exhibition Sidebar -->
-    @include('components.exhibition.exhibition-sidebar')
+    @include('frontend.exhibitions.tickets.partials.visitor-sidebar-shell')
 
     <!-- Main Content Area -->
-    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-white">
+    <main class="flex min-h-0 flex-1 flex-col bg-white lg:h-screen lg:overflow-hidden">
         
         <!-- Header Container -->
-        <div id="header-container" class="flex-shrink-0 z-40 w-full relative">@include('frontend.exhibitions.tickets.header')</div>
+        <div id="header-container" class="flex-shrink-0 z-40 w-full relative">@include('frontend.exhibitions.tickets.header', ['hideMobileMenu' => !($showVisitorSidebar ?? false)])</div>
 
         <!-- Scrollable Content -->
         <div class="ticket-flow-main flex-1 overflow-y-auto px-4 py-6 sm:px-8 lg:px-12 lg:py-8 relative bg-gradient-to-br from-[#FAFAFA] to-[#EDE9FE]">
@@ -171,36 +98,37 @@
             </a>
 
             <!-- Header Section with Stepper -->
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between mb-8 pb-8 gap-6 border-b border-gray-100">
+            <div class="mb-8 flex flex-col gap-6 border-b border-gray-100 pb-6 sm:pb-8 lg:flex-row lg:items-center lg:justify-between">
                 <!-- Left: Event Info -->
-                <div class="flex gap-5">
-                    <div class="w-[100px] h-[100px] rounded-2xl bg-cover bg-center border border-gray-100 shadow-sm" style="background-image: url('{{ $bannerImage }}');"></div>
-                    <div class="flex flex-col justify-center">
-                        <h1 class="text-[22px] font-bold text-[#1E1B4B] tracking-tight mb-2">{{ $title }}</h1>
+                <div class="flex min-w-0 gap-4 sm:gap-5">
+                    <div class="ticket-flow-hero-img h-[72px] w-[72px] shrink-0 rounded-2xl border border-gray-100 bg-cover bg-center shadow-sm sm:h-[100px] sm:w-[100px]" style="background-image: url('{{ $bannerImage }}');"></div>
+                    <div class="flex min-w-0 flex-col justify-center">
+                        <h1 class="mb-2 text-lg font-bold tracking-tight text-[#1E1B4B] sm:text-[22px]">{{ $title }}</h1>
                         
-                        <div class="flex items-center gap-4 text-[#475569] text-[13px] font-medium mb-2">
+                        <div class="mb-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px] font-medium text-[#475569] sm:text-[13px]">
                             <div class="flex items-center gap-1.5">
                                 <i class="ph ph-calendar-blank text-[16px]"></i>
                                 <span>{{ $dateStr }}</span>
                             </div>
-                            <span class="w-1 h-1 rounded-full bg-gray-300"></span>
+                            <span class="hidden h-1 w-1 rounded-full bg-gray-300 sm:inline"></span>
                             <div class="flex items-center gap-1.5">
                                 <i class="ph ph-clock text-[16px]"></i>
                                 <span>{{ $timeStr }}</span>
                             </div>
                         </div>
                         
-                        <div class="flex items-center gap-1.5 text-[#475569] text-[13px] font-medium">
-                            <i class="ph ph-map-pin text-[16px]"></i>
-                            <span>{{ $location }}</span>
+                        <div class="flex items-center gap-1.5 text-[12px] font-medium text-[#475569] sm:text-[13px]">
+                            <i class="ph ph-map-pin shrink-0 text-[16px]"></i>
+                            <span class="break-words">{{ $location }}</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Right: Stepper -->
-                <div class="flex flex-col lg:pl-8 w-full lg:w-auto overflow-hidden">
-                    <h2 class="text-[16px] font-bold text-[#1E1B4B] mb-5">Visitor Pass Selection</h2>
-                    <div class="flex items-center ticket-flow-stepper no-scrollbar">
+                <div class="flex w-full min-w-0 flex-col overflow-hidden lg:w-auto lg:pl-8">
+                    <p class="mb-3 text-[13px] font-bold text-primary-600 sm:hidden">Step 2 of 4 · Visitor Details</p>
+                    <h2 class="mb-4 hidden text-[16px] font-bold text-[#1E1B4B] sm:mb-5 sm:block">Visitor Pass Selection</h2>
+                    <div class="ticket-flow-stepper no-scrollbar flex w-full min-w-0 items-center overflow-x-auto">
                         <!-- Step 1 -->
                         <div class="flex flex-col items-center relative z-10 w-24">
                             <div class="w-7 h-7 rounded-full bg-primary-500 text-white flex items-center justify-center text-[16px] mb-2 shadow-sm">
@@ -234,24 +162,24 @@
             </div>
 
             <!-- Content Area (Form + Summary) -->
-            <div class="ticket-flow-two-col flex flex-col lg:flex-row gap-8">
+            <div class="ticket-flow-two-col flex flex-col gap-6 lg:flex-row lg:gap-8">
                 
                 <!-- Left: Main Form Area -->
-                <div class="flex-1">
-                    <div class="flex items-end justify-between mb-6">
+                <div class="min-w-0 flex-1">
+                    <div class="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                         <div>
                             <h2 class="text-[20px] font-bold text-[#1E1B4B] mb-1">Visitor Details</h2>
                             <p class="text-[14px] text-gray-500 font-medium">Please enter your details to continue.</p>
                         </div>
-                        <div class="text-[13px] text-gray-500 font-medium">
+                        <div class="text-[12px] text-gray-500 font-medium sm:text-[13px]">
                             All fields marked with <span class="required">*</span> are required
                         </div>
                     </div>
 
                     <!-- Form Grid -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-6">
+                    <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 md:grid-cols-3">
                         <!-- Row 0: Exhibition & Pavilion Selection -->
-                        <div class="col-span-2">
+                        <div class="md:col-span-2">
                             <label class="form-label">Selected Exhibition</label>
                             <input type="text" id="selected_exhibition_display" class="form-input bg-gray-50 text-gray-500 font-medium" disabled value="{{ $title }}">
                         </div>
@@ -260,9 +188,11 @@
                             <div class="relative">
                                 <select id="pavilion_id" class="form-input appearance-none bg-white font-medium">
                                     <option value="">-- Select Pavilion --</option>
-                                    @foreach ($pavilions as $p)
-                                        <option value="{{ $p->id }}">{{ $p->title }}</option>
-                                    @endforeach
+                                    @forelse ($pavilions as $pavilion)
+                                        <option value="{{ $pavilion->id }}">{{ $pavilion->title }}</option>
+                                    @empty
+                                        <option value="" disabled>No pavilions available for this exhibition</option>
+                                    @endforelse
                                 </select>
                                 <i class="ph ph-caret-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                             </div>
@@ -271,27 +201,27 @@
                         <!-- Row 1 -->
                         <div>
                             <label class="form-label">First Name <span class="required">*</span></label>
-                            <input type="text" id="first_name" class="form-input" value="{{ old('first_name', $firstName) }}">
+                            <input type="text" id="first_name" class="form-input" value="{{ old('first_name') }}">
                         </div>
                         <div>
                             <label class="form-label">Last Name <span class="required">*</span></label>
-                            <input type="text" id="last_name" class="form-input" value="{{ old('last_name', $lastName) }}">
+                            <input type="text" id="last_name" class="form-input" value="{{ old('last_name') }}">
                         </div>
                         <div>
                             <label class="form-label">Email Address <span class="required">*</span></label>
-                            <input type="email" id="email" class="form-input" value="{{ old('email', $email) }}">
+                            <input type="email" id="email" class="form-input" value="{{ old('email') }}">
                         </div>
 
                         <!-- Row 2 -->
                         <div>
                             <label class="form-label">Mobile Number <span class="required">*</span></label>
-                            <div class="flex border border-[#E2E8F0] rounded-lg overflow-hidden focus-within:border-primary-500 transition-colors">
-                                <button class="flex items-center gap-1.5 px-3 bg-gray-50 border-r border-[#E2E8F0] text-[14px] font-medium">
+                            <div class="flex w-full min-w-0 overflow-hidden rounded-lg border border-[#E2E8F0] transition-colors focus-within:border-primary-500">
+                                <button type="button" class="flex shrink-0 items-center gap-1.5 border-r border-[#E2E8F0] bg-gray-50 px-2.5 text-[13px] font-medium sm:px-3 sm:text-[14px]">
                                     <span>🇮🇳</span>
                                     <span>+91</span>
-                                    <i class="ph ph-caret-down text-gray-400 text-xs ml-1"></i>
+                                    <i class="ph ph-caret-down ml-1 text-xs text-gray-400"></i>
                                 </button>
-                                <input type="text" id="mobile" class="flex-1 px-3 py-2 text-[14px] outline-none" value="{{ old('mobile', $phone) }}">
+                                <input type="text" id="mobile" class="min-w-0 flex-1 px-3 py-2 text-[14px] outline-none" value="{{ old('mobile') }}">
                             </div>
                         </div>
                         <div>
@@ -308,8 +238,10 @@
                             <label class="form-label">Country <span class="required">*</span></label>
                             <div class="relative">
                                 <select id="country" class="form-input appearance-none bg-white">
-                                    <option value="" disabled selected>-- Select Country --</option>
-                                    <option value="India">India</option>
+                                    <option value="" disabled {{ old('country') ? '' : 'selected' }}>-- Select Country --</option>
+                                    @foreach ($countries as $country)
+                                        <option value="{{ $country }}" @selected(old('country', $defaultCountry) === $country)>{{ $country }}</option>
+                                    @endforeach
                                 </select>
                                 <i class="ph ph-caret-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                             </div>
@@ -318,14 +250,12 @@
                             <label class="form-label">State <span class="required">*</span></label>
                             <div class="relative">
                                 <select id="state" class="form-input appearance-none bg-white">
-                                    <option value="" disabled selected>-- Select State --</option>
-                                    <option value="Maharashtra">Maharashtra</option>
-                                    <option value="Karnataka">Karnataka</option>
-                                    <option value="Delhi">Delhi</option>
-                                    <option value="Gujarat">Gujarat</option>
-                                    <option value="Tamil Nadu">Tamil Nadu</option>
-                                    <option value="Telangana">Telangana</option>
-                                    <option value="Uttar Pradesh">Uttar Pradesh</option>
+                                    <option value="" disabled {{ old('state') ? '' : 'selected' }}>-- Select State --</option>
+                                    @forelse ($states as $state)
+                                        <option value="{{ $state }}" @selected(old('state') === $state)>{{ $state }}</option>
+                                    @empty
+                                        <option value="Not Applicable">Not Applicable</option>
+                                    @endforelse
                                 </select>
                                 <i class="ph ph-caret-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                             </div>
@@ -334,14 +264,12 @@
                             <label class="form-label">City <span class="required">*</span></label>
                             <div class="relative">
                                 <select id="city" class="form-input appearance-none bg-white">
-                                    <option value="" disabled selected>-- Select City --</option>
-                                    <option value="Mumbai">Mumbai</option>
-                                    <option value="Bengaluru">Bengaluru</option>
-                                    <option value="New Delhi">New Delhi</option>
-                                    <option value="Ahmedabad">Ahmedabad</option>
-                                    <option value="Chennai">Chennai</option>
-                                    <option value="Hyderabad">Hyderabad</option>
-                                    <option value="Noida">Noida</option>
+                                    <option value="" disabled {{ old('city') ? '' : 'selected' }}>-- Select City --</option>
+                                    @forelse ($cities as $city)
+                                        <option value="{{ $city }}" @selected(old('city') === $city)>{{ $city }}</option>
+                                    @empty
+                                        <option value="Other">Other</option>
+                                    @endforelse
                                 </select>
                                 <i class="ph ph-caret-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                             </div>
@@ -349,18 +277,15 @@
                     </div>
 
                     <!-- Row 4 (2 columns) -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
                         <div>
                             <label class="form-label">Industry <span class="required">*</span></label>
                             <div class="relative">
                                 <select id="industry" class="form-input appearance-none bg-white">
-                                    <option value="" disabled selected>-- Select Industry --</option>
-                                    <option value="Technology">Technology</option>
-                                    <option value="Healthcare">Healthcare</option>
-                                    <option value="Finance">Finance</option>
-                                    <option value="Education">Education</option>
-                                    <option value="Manufacturing">Manufacturing</option>
-                                    <option value="Automotive">Automotive</option>
+                                    <option value="" disabled {{ old('industry') ? '' : 'selected' }}>-- Select Industry --</option>
+                                    @foreach ($industries as $industry)
+                                        <option value="{{ $industry }}" @selected(old('industry') === $industry)>{{ $industry }}</option>
+                                    @endforeach
                                 </select>
                                 <i class="ph ph-caret-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                             </div>
@@ -369,12 +294,10 @@
                             <label class="form-label">Company Size <span class="required">*</span></label>
                             <div class="relative">
                                 <select id="company_size" class="form-input appearance-none bg-white">
-                                    <option value="" disabled selected>-- Select Company Size --</option>
-                                    <option value="51 - 200 Employees">51 - 200 Employees</option>
-                                    <option value="1 - 10 Employees">1 - 10 Employees</option>
-                                    <option value="11 - 50 Employees">11 - 50 Employees</option>
-                                    <option value="201 - 500 Employees">201 - 500 Employees</option>
-                                    <option value="501+ Employees">501+ Employees</option>
+                                    <option value="" disabled {{ old('company_size') ? '' : 'selected' }}>-- Select Company Size --</option>
+                                    @foreach ($companySizes as $size)
+                                        <option value="{{ $size }}" @selected(old('company_size') === $size)>{{ $size }}</option>
+                                    @endforeach
                                 </select>
                                 <i class="ph ph-caret-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                             </div>
@@ -388,19 +311,19 @@
                     </div>
 
                     <!-- Checkbox -->
-                    <div class="flex items-center gap-3 mb-10 mt-2 cursor-pointer select-none" id="checkbox-updates-wrapper">
-                        <div id="checkbox-updates" class="w-5 h-5 rounded border border-primary-500 bg-primary-500 flex items-center justify-center text-white shrink-0 shadow-sm transition-colors">
+                    <div class="mb-10 mt-2 flex cursor-pointer select-none items-start gap-3" id="checkbox-updates-wrapper">
+                        <div id="checkbox-updates" class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border border-primary-500 bg-primary-500 text-white shadow-sm transition-colors">
                             <i id="checkbox-check-icon" class="ph-bold ph-check text-[14px]"></i>
                         </div>
-                        <span class="text-[14px] text-[#1E293B] font-medium">Receive updates about this event and future events from eproexpo and partners.</span>
+                        <span class="text-[13px] font-medium leading-relaxed text-[#1E293B] sm:text-[14px]">Receive updates about this event and future events from eproexpo and partners.</span>
                     </div>
 
                     <!-- Bottom Buttons -->
-                    <div class="flex items-center justify-between pb-10">
-                        <a href="{{ route('exhibitions.tickets.select', $slug) }}" class="flex items-center gap-2 px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-600 hover:bg-gray-50 transition-colors shadow-sm text-[15px]">
+                    <div class="flex flex-col-reverse gap-3 pb-10 sm:flex-row sm:items-center sm:justify-between">
+                        <a href="{{ route('exhibitions.tickets.select', $slug) }}" class="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 px-6 py-3 text-[15px] font-bold text-gray-600 shadow-sm transition-colors hover:bg-gray-50 sm:w-auto">
                             <i class="ph ph-arrow-left text-lg"></i> Back
                         </a>
-                        <a id="continue-to-review-btn" href="{{ route('exhibitions.tickets.summary', $slug) }}" class="flex items-center gap-2 px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-bold transition-all shadow-[0_4px_14px_rgba(90,50,250,0.25)] text-[15px]">
+                        <a id="continue-to-review-btn" href="{{ route('exhibitions.tickets.summary', $slug) }}" class="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-8 py-3 text-[15px] font-bold text-white shadow-[0_4px_14px_rgba(90,50,250,0.25)] transition-all hover:bg-primary-700 sm:w-auto">
                             Continue to Review <i class="ph ph-arrow-right text-lg"></i>
                         </a>
                     </div>
@@ -408,8 +331,8 @@
                 </div>
 
                 <!-- Right: Summary Sidebar -->
-                <div class="ticket-flow-sidebar w-full lg:w-[340px] shrink-0">
-                    <div class="border border-gray-100 rounded-2xl bg-[#FAFAFA] p-6 shadow-[0_2px_15px_rgba(0,0,0,0.02)] sticky top-0">
+                <div class="ticket-flow-sidebar w-full shrink-0 lg:w-[340px]">
+                    <div class="rounded-2xl border border-gray-100 bg-[#FAFAFA] p-5 shadow-[0_2px_15px_rgba(0,0,0,0.02)] sm:p-6 lg:sticky lg:top-0">
                         
                         <!-- Your Selection -->
                         <div class="mb-6">
@@ -494,12 +417,13 @@
     <script src="/script.js"></script>
     <script>
         async function initializeDetailsPage() {
-            const urlParams = new URLSearchParams(window.location.search);
-            let exhId = '{{ $exhibition->id }}';
+            const exhId = '{{ $exhibition->id }}';
             localStorage.setItem('activeExhibitionId', exhId);
-            localStorage.setItem('activeExhibitionName', '{{ addslashes($title) }}');
+            localStorage.setItem('activeExhibitionSlug', '{{ $slug }}');
+            localStorage.setItem('activeExhibitionName', @json($title));
 
             // Preselect active pavilion if user came from a pavilion page
+            const urlParams = new URLSearchParams(window.location.search);
             const activePav = urlParams.get('pavilion_id') || localStorage.getItem('activePavilionId');
             const pavSelect = document.getElementById('pavilion_id');
             if (activePav && pavSelect) {

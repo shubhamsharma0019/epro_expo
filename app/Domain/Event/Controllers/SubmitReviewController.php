@@ -3,6 +3,7 @@
 namespace App\Domain\Event\Controllers;
 
 use App\Http\Requests\CompanyEvent\CompanyEventSubmitReviewRequest;
+use App\Support\CompanyEventFlowProgress;
 use App\Domain\Event\Models\CompanyEvent\CompanyEvent;
 use App\Domain\Event\Models\CompanyEvent\CompanyEventPublishRequest;
 use Illuminate\Http\RedirectResponse;
@@ -20,6 +21,12 @@ class SubmitReviewController extends BaseCompanyEventController
     public function submit(CompanyEventSubmitReviewRequest $request, ?CompanyEvent $companyEvent = null): RedirectResponse
     {
         $companyEvent = $this->setupEvent($companyEvent);
+
+        abort_unless(
+            CompanyEventFlowProgress::requiredSectionsComplete($companyEvent),
+            422,
+            'Complete Basic Details, Branding, and Tickets / Passes before submitting for review.'
+        );
 
         CompanyEventPublishRequest::create([
             'company_event_id' => $companyEvent->id,

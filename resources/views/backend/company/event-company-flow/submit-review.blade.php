@@ -4,6 +4,8 @@
 
 @section('content')
 @php
+    use App\Support\CompanyEventFlowProgress;
+
     $ticketTypes = collect($ticketTypes ?? []);
     $eventBranding = $eventBranding ?? $companyEvent->branding;
 
@@ -17,23 +19,12 @@
     $eventCapacityValue = (int) ($companyEvent->capacity ?: $ticketCapacity);
     $eventCapacity = $eventCapacityValue > 0 ? number_format($eventCapacityValue) : '0';
     $eventCapacitySource = $companyEvent->capacity ? 'Based on event capacity' : ($ticketCapacity > 0 ? 'Based on ticket sales configuration' : 'No attendee capacity configured yet');
-    $hasMeaningfulTitle = filled($companyEvent->title) && $companyEvent->title !== 'Untitled Company Event';
-    $hasLocation = filled($companyEvent->venue_name) || filled($companyEvent->city) || filled($companyEvent->country) || $companyEvent->event_mode === 'virtual';
-    $basicComplete = $hasMeaningfulTitle && filled($companyEvent->starts_at) && $hasLocation;
-    $brandingComplete = (bool) $eventBranding;
-    $ticketsComplete = $ticketTypes->isNotEmpty();
-    $resourcesComplete = filled($companyEvent->website) || filled($eventBranding?->brochure_path);
 
-    $checklistItems = collect([
-        ['label' => 'Basic Details', 'complete' => $basicComplete, 'required' => true],
-        ['label' => 'Branding', 'complete' => $brandingComplete, 'required' => true],
-        ['label' => 'Tickets / Passes', 'complete' => $ticketsComplete, 'required' => true],
-        ['label' => 'Resources', 'complete' => $resourcesComplete, 'required' => false],
-    ])->filter(fn ($item) => $item['required'] || $item['complete'])->values();
-    $completedSections = $checklistItems->where('complete', true)->count();
-    $totalSections = $checklistItems->count();
-    $requiredComplete = $checklistItems->where('required', true)->every(fn ($item) => $item['complete']);
-    $progressPercent = $totalSections > 0 ? (int) round(($completedSections / $totalSections) * 100) : 0;
+    $checklistItems = CompanyEventFlowProgress::checklist($companyEvent);
+    $completedSections = CompanyEventFlowProgress::completedSectionsCount($companyEvent);
+    $totalSections = CompanyEventFlowProgress::totalSectionsCount($companyEvent);
+    $requiredComplete = CompanyEventFlowProgress::requiredSectionsComplete($companyEvent);
+    $progressPercent = CompanyEventFlowProgress::progressPercent($companyEvent);
     $reviewNotes = old('company_notes', $publishRequest->company_notes ?? 'Our event is ready for review. Please let us know if any additional information is required.');
     $reviewNotesLength = \Illuminate\Support\Str::length($reviewNotes);
 @endphp
@@ -190,7 +181,7 @@
                                 </div>
                             @endif
 
-                            @unless ($resourcesComplete)
+                            @unless (CompanyEventFlowProgress::resourcesComplete($companyEvent))
                                 <div class="grid min-h-[92px] place-items-center rounded-[8px] border border-dashed border-gray-200 bg-white p-4 text-center text-[13px] font-medium text-[#5B6B8A]">
                                     No documents or links added yet.
                                 </div>
@@ -204,7 +195,7 @@
                     <a href="{{ route('company.event-company-flow.preview', $companyEvent) }}" class="inline-flex h-12 items-center justify-center rounded-lg border border-gray-200 bg-white px-8 text-[14px] font-bold text-[#1C1364] shadow-sm hover:bg-gray-50">
                         Back
                     </a>
-                    <button id="submit-review-btn" type="submit" style="background-color: #4C10D0; color: #FFFFFF;" class="inline-flex h-12 w-full items-center justify-center rounded-lg px-8 text-[14px] font-bold shadow-[0_4px_14px_rgba(76,16,208,0.3)] transition-colors hover:bg-[#3d0ba8] focus:outline-none sm:w-auto sm:min-w-[260px]">
+                    <button id="submit-review-btn" type="submit" @disabled(! $requiredComplete) style="background-color: #4C10D0; color: #FFFFFF;" class="inline-flex h-12 w-full items-center justify-center rounded-lg px-8 text-[14px] font-bold shadow-[0_4px_14px_rgba(76,16,208,0.3)] transition-colors hover:bg-[#3d0ba8] focus:outline-none sm:w-auto sm:min-w-[260px] disabled:cursor-not-allowed disabled:opacity-50">
                         Submit for Review
                     </button>
                 </div>

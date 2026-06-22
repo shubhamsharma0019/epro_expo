@@ -1,124 +1,26 @@
 @php
-    $title = $exhibition->title ?: $exhibition->name;
-    $ticketUrl = auth()->check()
-        ? route('exhibitions.visitor.dashboard', $slug)
-        : route('exhibitions.visitor.login', ['exhibition' => $slug]);
-    
-    $publishedBookings = ($exhibition->boothBookings ?? collect())->values();
-
-    // Resolve banner image directly from database
-    $bannerImage = $exhibition->banner_image ?: ($exhibition->banner_url ?: 'images/exhibitions/hero-pavilion-scene.png');
-
-    if (str_starts_with($bannerImage, 'http://') || str_starts_with($bannerImage, 'https://')) {
-        // Keep absolute URLs as is
-    } elseif (str_starts_with($bannerImage, 'images/') || str_starts_with($bannerImage, 'assets/') || str_starts_with($bannerImage, 'storage/')) {
-        $bannerImage = asset($bannerImage);
-    } else {
-        $bannerImage = asset('storage/' . $bannerImage);
-    }
-    
-    // Resolve date string
-    if ($exhibition->start_date && $exhibition->end_date) {
-        $dateStr = $exhibition->start_date->format('M d') . ' – ' . $exhibition->end_date->format('d, Y');
-    } else {
-        $dateStr = 'Date TBD';
-    }
-    
-    // Resolve location
-    $location = $exhibition->venue ?: ($exhibition->location ?: 'Virtual');
-    $firstAgendaSession = $agenda->first();
-    $timeStr = $firstAgendaSession?->start_time
-        ? trim($firstAgendaSession->start_time . ($firstAgendaSession->end_time ? ' - ' . $firstAgendaSession->end_time : ''))
-        : 'Time TBD';
-    
-    // Resolve dynamic stats from the live exhibition flow.
-    $participatingCompanies = $publishedBookings
-        ->map(function ($booking) {
-            $companyName = $booking->boothProfile?->company_name ?: ($booking->company?->company_name ?: ($booking->company?->name ?: null));
-
-            if (! filled($companyName)) {
-                return null;
-            }
-
-            $logo = $booking->boothProfile?->company_logo ?: ($booking->company?->logo ?: '');
-            $logoUrl = $logo ? (str_starts_with($logo, 'http') ? $logo : (str_starts_with($logo, 'storage/') ? asset($logo) : asset('storage/' . $logo))) : null;
-            $companySlug = \Illuminate\Support\Str::slug($companyName);
-
-            return [
-                'key' => 'name-' . (string) \Illuminate\Support\Str::of($companyName)->lower()->squish(),
-                'name' => $companyName,
-                'logo_url' => $logoUrl,
-                'slug' => $companySlug,
-            ];
-        })
-        ->filter()
-        ->unique('key')
-        ->values();
-    $companiesCount = $participatingCompanies->count();
-    $countriesCount = $publishedBookings
-        ->map(fn($booking) => $booking->company?->country)
-        ->filter()
-        ->unique()
-        ->count();
-    $eventSpeakerCards = $speakers->map(fn ($speaker) => (object) [
-        'name' => $speaker->name,
-        'title' => $speaker->title,
-        'company' => $speaker->company,
-        'bio' => $speaker->bio,
-        'avatar_url' => $speaker->avatar_url,
-    ]);
-    $boothSpeakerCards = $publishedBookings->flatMap(function ($booking) {
-        $companyName = $booking->boothProfile?->company_name ?: ($booking->company?->company_name ?: ($booking->company?->name ?: null));
-
-        return ($booking->boothTeamMembers ?? collect())
-            ->where('status', 'active')
-            ->map(function ($member) use ($companyName) {
-                $photo = $member->photo ? ltrim($member->photo, '/') : null;
-
-                return (object) [
-                    'name' => $member->name,
-                    'title' => $member->designation,
-                    'company' => $companyName,
-                    'bio' => collect($member->expertise_tags ?? [])->filter()->implode(', '),
-                    'avatar_url' => $photo ? (str_starts_with($photo, 'http') ? $photo : (str_starts_with($photo, 'storage/') ? asset($photo) : asset('storage/' . $photo))) : null,
-                ];
-            });
-    });
-    $speakerCards = $eventSpeakerCards
-        ->concat($boothSpeakerCards)
-        ->filter(fn ($speaker) => filled($speaker->name))
-        ->unique(fn ($speaker) => strtolower(trim($speaker->name)))
-        ->values();
-    $boothSessionsCount = $publishedBookings
-        ->flatMap(fn ($booking) => $booking->boothSessions ?? collect())
-        ->whereIn('status', ['live', 'upcoming', 'completed'])
-        ->count();
-    
-    $displayCompanies = $companiesCount;
-    $displayCountries = $countriesCount > 0 ? $countriesCount : ($companiesCount > 0 ? 1 : 0);
-    $displaySpeakers = $speakerCards->count();
-    $displaySessions = $agenda->count() + $boothSessionsCount;
-
-    // Determine tags dynamically based on title
-    $tags = ['Expo', 'Interactive'];
-    $lowerTitle = strtolower($title);
-    if (str_contains($lowerTitle, 'tech') || str_contains($lowerTitle, 'digital')) {
-        $tags = ['Technology', 'Innovation', 'AI & ML', 'Cloud'];
-    } elseif (str_contains($lowerTitle, 'ai') || str_contains($lowerTitle, 'artificial')) {
-        $tags = ['AI & ML', 'Neural Networks', 'Future Tech', 'Robotics'];
-    } elseif (str_contains($lowerTitle, 'sustain') || str_contains($lowerTitle, 'green') || str_contains($lowerTitle, 'eco')) {
-        $tags = ['Sustainability', 'Green Energy', 'Eco Friendly', 'Climate'];
-    } elseif (str_contains($lowerTitle, 'health') || str_contains($lowerTitle, 'medical')) {
-        $tags = ['Healthcare', 'Medicine', 'Wellness', 'Biotech'];
-    }
-
-    $expectations = [
-        ['ph-star', 'Explore ' . $title],
-        ['ph-users', $displayCompanies . ' participating ' . \Illuminate\Support\Str::plural('company', $displayCompanies)],
-        ['ph-user-circle', $displaySpeakers . ' keynote ' . \Illuminate\Support\Str::plural('speaker', $displaySpeakers)],
-        ['ph-presentation-chart', $displaySessions . ' agenda ' . \Illuminate\Support\Str::plural('session', $displaySessions)],
-        ['ph-certificate', 'One-to-one meetings and visitor pass access'],
-    ];
+    $title = $title ?? ($exhibition->title ?? $exhibition->name ?? 'Exhibition');
+    $ticketUrl = $ticketUrl ?? route('exhibitions.visitor.login', ['exhibition' => $slug]);
+    $bannerImage = $bannerImage ?? asset('images/exhibitions/hero-pavilion-scene.png');
+    $dateStr = $dateStr ?? 'Date TBD';
+    $location = $location ?? 'Virtual';
+    $timeStr = $timeStr ?? 'Time TBD';
+    $eventType = $eventType ?? 'On-site';
+    $statusLabel = $statusLabel ?? 'Live registration';
+    $tags = $tags ?? ['Expo', 'Interactive'];
+    $participatingCompanies = $participatingCompanies ?? collect();
+    $speakerCards = $speakerCards ?? collect();
+    $displayCompanies = $displayCompanies ?? 0;
+    $displayCountries = $displayCountries ?? 0;
+    $displaySpeakers = $displaySpeakers ?? 0;
+    $displaySessions = $displaySessions ?? 0;
+    $expectations = $expectations ?? [];
+    $visibleTabs = $visibleTabs ?? [['id' => 'overview', 'label' => 'Overview', 'icon' => 'ph-layout', 'show' => true]];
+    $firstTabId = $visibleTabs[0]['id'] ?? 'overview';
+    $agenda = $agenda ?? collect();
+    $sponsors = $sponsors ?? collect();
+    $faqs = $faqs ?? collect();
+    $halls = $halls ?? collect();
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -151,18 +53,19 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="text-[#1E293B] font-sans flex h-screen overflow-hidden">
+<body class="min-h-screen bg-white text-[#1E293B] font-sans">
 
 
 
     <!-- Main Content Area -->
-    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-white">
+    <main class="flex min-h-screen w-full flex-col bg-white">
         
         <!-- Header Container -->
-        <div id="header-container" class="flex-shrink-0 z-40 w-full relative">
-            @include('frontend.exhibitions.tickets.header')
-        </div>        <!-- Scrollable Content -->
-        <div class="flex-1 overflow-y-auto px-4 sm:px-8 md:px-12 py-8 relative bg-[#F8FAFC]">
+        <div id="header-container" class="relative z-40 w-full shrink-0">
+            @include('frontend.exhibitions.tickets.header', ['hideMobileMenu' => true])
+        </div>
+        <!-- Scrollable Content -->
+        <div class="relative flex-1 overflow-y-auto bg-[#F8FAFC] px-4 py-6 sm:px-8 sm:py-8 md:px-12">
             
             <!-- Back button -->
             <a href="{{ url('/exhibitions') }}" class="inline-flex items-center gap-1.5 text-indigo-600 font-semibold hover:text-indigo-700 transition-colors mb-6 text-sm">
@@ -170,7 +73,7 @@
             </a>
 
             <!-- Header Section (Hero Card Banner) -->
-            <div class="relative bg-gradient-to-r from-[#EEF2FF] via-[#F4F2FF] to-[#FAF5FF] rounded-3xl p-6 md:p-8 lg:p-10 shadow-sm border border-indigo-100/40 mb-8 overflow-hidden">
+            <div class="relative mb-8 overflow-hidden rounded-3xl border border-indigo-100/40 bg-gradient-to-r from-[#EEF2FF] via-[#F4F2FF] to-[#FAF5FF] p-5 shadow-sm sm:p-6 md:p-8 lg:p-10">
                 <!-- Dotted pattern decorations -->
                 <div class="absolute top-6 left-6 text-indigo-300/30 opacity-60">
                     <svg width="40" height="60" fill="currentColor">
@@ -225,19 +128,19 @@
                         </p>
 
                         <!-- CTA Buttons -->
-                        <div class="flex flex-wrap gap-4">
-                            <a id="get-pass-btn-hero" href="{{ $ticketUrl }}" class="bg-[#4A22E0] hover:bg-[#3D1CBA] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-[0_4px_14px_rgba(74,34,224,0.25)] transition-all text-sm">
+                        <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                            <a id="get-pass-btn-hero" href="{{ $ticketUrl }}" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#4A22E0] px-6 py-3 text-sm font-bold text-white shadow-[0_4px_14px_rgba(74,34,224,0.25)] transition-all hover:bg-[#3D1CBA] sm:w-auto">
                                 <i class="ph ph-ticket text-[18px]"></i> Get Visitor Pass
                             </a>
-                            <a href="{{ route('exhibitions.visitor.floor-map', $slug) }}" class="bg-white border-2 border-[#E0D7FF] text-[#4A22E0] px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-[#F5F3FF] transition-colors text-sm shadow-sm">
+                            <a href="{{ route('exhibitions.visitor.floor-map', $slug) }}" class="inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[#E0D7FF] bg-white px-6 py-3 text-sm font-bold text-[#4A22E0] shadow-sm transition-colors hover:bg-[#F5F3FF] sm:w-auto">
                                 <i class="ph ph-map-trifold text-[18px]"></i> View Floor Plan
                             </a>
                         </div>
                     </div>
 
                     <!-- Right Column (Large Banner Image) -->
-                    <div class="lg:w-[460px] xl:w-[520px] shrink-0">
-                        <img src="{{ $bannerImage }}" alt="{{ $title }}" class="w-full h-[220px] md:h-[280px] rounded-3xl object-cover shadow-[0_15px_30px_rgba(74,34,224,0.1)] border-4 border-white">
+                    <div class="w-full shrink-0 lg:w-[460px] xl:w-[520px]">
+                        <img src="{{ $bannerImage }}" alt="{{ $title }}" class="h-[200px] w-full rounded-3xl border-4 border-white object-cover shadow-[0_15px_30px_rgba(74,34,224,0.1)] sm:h-[240px] md:h-[280px]">
                     </div>
                 </div>
             </div>
@@ -252,7 +155,6 @@
                     <div>
                         <div class="text-3xl font-extrabold text-[#1E1B4B] flex items-center leading-none">
                             <span id="exh-companies-count">{{ $displayCompanies }}</span>
-                            <span class="w-1.5 h-1.5 bg-orange-400 rounded-full ml-1 self-start"></span>
                         </div>
                         <div class="text-[13px] text-gray-400 font-bold tracking-wide mt-1.5">Companies</div>
                     </div>
@@ -266,9 +168,8 @@
                         <i class="ph ph-globe text-[24px]"></i>
                     </div>
                     <div>
-                        <div class="text-3xl font-extrabold text-[#1E1B4B] flex items-center leading-none">
-                            <span>{{ $displayCountries }}+</span>
-                            <span class="w-1.5 h-1.5 bg-orange-400 rounded-full ml-1 self-start"></span>
+                        <div class="text-3xl font-extrabold text-[#1E1B4B] leading-none">
+                            <span>{{ $displayCountries }}</span>
                         </div>
                         <div class="text-[13px] text-gray-400 font-bold tracking-wide mt-1.5">Countries</div>
                     </div>
@@ -282,9 +183,8 @@
                         <i class="ph ph-users text-[24px]"></i>
                     </div>
                     <div>
-                        <div class="text-3xl font-extrabold text-[#1E1B4B] flex items-center leading-none">
+                        <div class="text-3xl font-extrabold text-[#1E1B4B] leading-none">
                             <span>{{ $displaySpeakers }}</span>
-                            <span class="w-1.5 h-1.5 bg-orange-400 rounded-full ml-1 self-start"></span>
                         </div>
                         <div class="text-[13px] text-gray-400 font-bold tracking-wide mt-1.5">Speakers</div>
                     </div>
@@ -298,9 +198,8 @@
                         <i class="ph ph-calendar text-[24px]"></i>
                     </div>
                     <div>
-                        <div class="text-3xl font-extrabold text-[#1E1B4B] flex items-center leading-none">
-                            <span>{{ $displaySessions }}+</span>
-                            <span class="w-1.5 h-1.5 bg-orange-400 rounded-full ml-1 self-start"></span>
+                        <div class="text-3xl font-extrabold text-[#1E1B4B] leading-none">
+                            <span>{{ $displaySessions }}</span>
                         </div>
                         <div class="text-[13px] text-gray-400 font-bold tracking-wide mt-1.5">Sessions</div>
                     </div>
@@ -310,34 +209,21 @@
             </div>
 
             <!-- Tabs (Horizontal scrollable strip with prefix icons) -->
-            <div class="bg-white border border-gray-150 rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.01)] p-1.5 mb-8 flex items-center gap-2 overflow-x-auto no-scrollbar select-none">
-                <button id="tab-overview" data-tab="overview" onclick="switchTab('overview', this)" class="tab-btn shrink-0 flex items-center gap-2 px-5 py-3 rounded-xl text-[14px] font-bold transition-all focus:outline-none bg-[#F5F3FF] text-[#4A22E0]">
-                    <i class="ph ph-layout text-lg"></i> Overview
-                </button>
-                <button id="tab-agenda" data-tab="agenda" onclick="switchTab('agenda', this)" class="tab-btn shrink-0 flex items-center gap-2 px-5 py-3 rounded-xl text-[14px] font-bold transition-all focus:outline-none text-gray-500 hover:text-gray-950 hover:bg-gray-50">
-                    <i class="ph ph-calendar-blank text-lg"></i> Agenda
-                </button>
-                <button id="tab-speakers" data-tab="speakers" onclick="switchTab('speakers', this)" class="tab-btn shrink-0 flex items-center gap-2 px-5 py-3 rounded-xl text-[14px] font-bold transition-all focus:outline-none text-gray-500 hover:text-gray-950 hover:bg-gray-50">
-                    <i class="ph ph-users text-lg"></i> Speakers
-                </button>
-                <button id="tab-sponsors" data-tab="sponsors" onclick="switchTab('sponsors', this)" class="tab-btn shrink-0 flex items-center gap-2 px-5 py-3 rounded-xl text-[14px] font-bold transition-all focus:outline-none text-gray-500 hover:text-gray-950 hover:bg-gray-50">
-                    <i class="ph ph-shield-star text-lg"></i> Sponsors
-                </button>
-                <button id="tab-floorplan" data-tab="floorplan" onclick="switchTab('floorplan', this)" class="tab-btn shrink-0 flex items-center gap-2 px-5 py-3 rounded-xl text-[14px] font-bold transition-all focus:outline-none text-gray-500 hover:text-gray-950 hover:bg-gray-50">
-                    <i class="ph ph-map-trifold text-lg"></i> Floor Plan
-                </button>
-                <button id="tab-faqs" data-tab="faqs" onclick="switchTab('faqs', this)" class="tab-btn shrink-0 flex items-center gap-2 px-5 py-3 rounded-xl text-[14px] font-bold transition-all focus:outline-none text-gray-500 hover:text-gray-950 hover:bg-gray-50">
-                    <i class="ph ph-question text-lg"></i> FAQs
-                </button>
+            <div class="mb-8 flex items-center gap-2 overflow-x-auto rounded-2xl border border-gray-150 bg-white p-1.5 shadow-[0_4px_15px_rgba(0,0,0,0.01)] no-scrollbar select-none">
+                @foreach ($visibleTabs as $tab)
+                    <button id="tab-{{ $tab['id'] }}" data-tab="{{ $tab['id'] }}" onclick="switchTab('{{ $tab['id'] }}', this)" class="tab-btn shrink-0 flex items-center gap-2 px-4 py-3 rounded-xl text-[13px] sm:px-5 sm:text-[14px] font-bold transition-all focus:outline-none {{ $loop->first ? 'bg-[#F5F3FF] text-[#4A22E0]' : 'text-gray-500 hover:text-gray-950 hover:bg-gray-50' }}">
+                        <i class="ph {{ $tab['icon'] }} text-lg"></i> {{ $tab['label'] }}
+                    </button>
+                @endforeach
             </div>
 
             <!-- Tab Panels -->
             <div id="tab-panels-container">
                 
                 <!-- Overview Panel -->
-                <div id="panel-overview" class="tab-panel grid grid-cols-1 lg:grid-cols-[1.1fr_1.1fr_0.8fr] gap-6 pb-10">
+                <div id="panel-overview" class="tab-panel {{ $firstTabId === 'overview' ? '' : 'hidden' }} grid grid-cols-1 gap-6 pb-10 lg:grid-cols-[1.1fr_1.1fr_0.8fr]">
                     <!-- Left: What to Expect -->
-                    <div class="border border-gray-100 rounded-3xl p-8 shadow-[0_4px_25px_rgba(0,0,0,0.02)] bg-white flex flex-col relative overflow-hidden">
+                    <div class="border border-gray-100 rounded-3xl p-5 sm:p-8 shadow-[0_4px_25px_rgba(0,0,0,0.02)] bg-white flex flex-col relative overflow-hidden">
                         <!-- Decorative dome outline sketch watermark -->
                         <div class="absolute bottom-12 right-0 w-48 h-32 pointer-events-none select-none">
                             <svg class="w-full h-full" viewBox="0 0 100 60" fill="none" stroke="#4A22E0" stroke-opacity="0.04" stroke-width="0.75">
@@ -368,7 +254,7 @@
                     </div>
 
                     <!-- Middle: Participating Companies -->
-                    <div class="border border-gray-100 rounded-3xl p-8 shadow-[0_4px_25px_rgba(0,0,0,0.02)] bg-white flex flex-col">
+                    <div class="border border-gray-100 rounded-3xl p-5 sm:p-8 shadow-[0_4px_25px_rgba(0,0,0,0.02)] bg-white flex flex-col">
                         <div class="flex items-center gap-2 mb-8 text-[#1E1B4B]">
                             <i class="ph ph-buildings text-[22px] text-indigo-600"></i>
                             <h2 class="text-[20px] font-bold">Participating Companies</h2>
@@ -376,7 +262,7 @@
                         
                         <div class="space-y-4">
                             @forelse ($participatingCompanies->take(6) as $company)
-                                <div class="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.01)] hover:border-indigo-100 hover:shadow-md transition-all duration-300">
+                                <div class="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_2px_8px_rgba(0,0,0,0.01)] transition-all duration-300 hover:border-indigo-100 hover:shadow-md sm:flex-row sm:items-center sm:justify-between">
                                     <div class="flex items-center gap-4">
                                         <!-- Logo container -->
                                         <div class="w-14 h-14 bg-gray-50 border border-gray-100 rounded-xl overflow-hidden flex items-center justify-center p-2 flex-shrink-0">
@@ -391,11 +277,11 @@
                                         <!-- Details -->
                                         <div>
                                             <h4 class="font-bold text-[#1E1B4B] text-[15px]">{{ $company['name'] }}</h4>
-                                            <p class="text-xs text-gray-400 mt-0.5 font-medium">Exhibition • {{ $exhibition->venue ?: ($exhibition->location ?: 'India') }}</p>
+                                            <p class="mt-0.5 text-xs font-medium text-gray-400">{{ $company['location'] }}</p>
                                         </div>
                                     </div>
                                     <!-- Action -->
-                                    <a href="{{ route('exhibitions.visitor.companies.show', ['slug' => $slug, 'companySlug' => $company['slug']]) }}" class="text-xs font-bold text-[#4A22E0] bg-white border border-[#E0D7FF] px-4 py-2.5 rounded-lg hover:bg-[#F5F3FF] transition-colors whitespace-nowrap">
+                                    <a href="{{ route('exhibitions.visitor.companies.show', ['slug' => $slug, 'companySlug' => $company['slug']]) }}" class="w-full rounded-lg border border-[#E0D7FF] bg-white px-4 py-2.5 text-center text-xs font-bold text-[#4A22E0] transition-colors hover:bg-[#F5F3FF] sm:w-auto sm:whitespace-nowrap">
                                         View Company
                                     </a>
                                 </div>
@@ -428,7 +314,7 @@
                                 </div>
                                 <div class="flex justify-between items-center text-xs font-semibold">
                                     <span class="text-gray-400">Event Type</span>
-                                    <span class="bg-indigo-50 border border-indigo-150 text-indigo-700 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">Interactive Expo</span>
+                                    <span class="rounded-full border border-indigo-150 bg-indigo-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-indigo-700">{{ $eventType }}</span>
                                 </div>
                             </div>
                         </div>
@@ -477,8 +363,8 @@
                     <h2 class="text-[18px] font-bold text-[#1E1B4B] mb-6">Conference Agenda / Schedule</h2>
                     <div class="space-y-6">
                         @forelse ($agenda as $session)
-                            <div class="flex gap-6 items-start pb-6 border-b border-gray-100 last:border-0 last:pb-0">
-                                <div class="w-[120px] shrink-0">
+                            <div class="flex flex-col gap-4 border-b border-gray-100 pb-6 last:border-0 last:pb-0 sm:flex-row sm:items-start sm:gap-6">
+                                <div class="w-full shrink-0 sm:w-[120px]">
                                     <div class="text-indigo-600 font-bold text-[14px] mb-0.5">{{ $session->start_time }}</div>
                                     <div class="text-gray-400 font-semibold text-[11px] uppercase">{{ $session->end_time ?: 'Session' }}</div>
                                     @if($session->date)
@@ -602,9 +488,9 @@
 
                 <!-- Floor Plan Panel -->
                 <div id="panel-floorplan" class="tab-panel hidden border border-gray-100 rounded-[20px] p-8 shadow-[0_2px_15px_rgba(0,0,0,0.02)] bg-white mb-10">
-                    <div class="flex justify-between items-center mb-6">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
                         <h2 class="text-[18px] font-bold text-[#1E1B4B]">Exhibition Halls Floor Plan</h2>
-                        <a href="{{ route('exhibitions.visitor.floor-map', $slug) }}" class="bg-[#4A22E0] hover:bg-[#3D1CBA] text-white px-5 py-2.5 rounded-lg font-bold text-[13px] transition-colors flex items-center gap-2 shadow-sm">
+                        <a href="{{ route('exhibitions.visitor.floor-map', $slug) }}" class="inline-flex w-full sm:w-auto items-center justify-center gap-2 bg-[#4A22E0] hover:bg-[#3D1CBA] text-white px-5 py-2.5 rounded-lg font-bold text-[13px] transition-colors shadow-sm">
                             <i class="ph ph-map-trifold text-[18px]"></i> Full Floor Map
                         </a>
                     </div>
@@ -676,11 +562,13 @@
 
             // Reset active tab button styles
             document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.className = 'tab-btn shrink-0 flex items-center gap-2 px-5 py-3 rounded-xl text-[14px] font-bold transition-all focus:outline-none text-gray-500 hover:text-gray-950 hover:bg-gray-50';
+                btn.classList.remove('bg-[#F5F3FF]', 'text-[#4A22E0]');
+                btn.classList.add('text-gray-500', 'hover:text-gray-950', 'hover:bg-gray-50');
             });
 
             // Set current tab button active styles
-            el.className = 'tab-btn shrink-0 flex items-center gap-2 px-5 py-3 rounded-xl text-[14px] font-bold transition-all focus:outline-none bg-[#F5F3FF] text-[#4A22E0]';
+            el.classList.remove('text-gray-500', 'hover:text-gray-950', 'hover:bg-gray-50');
+            el.classList.add('bg-[#F5F3FF]', 'text-[#4A22E0]');
 
             if (updateHash) {
                 window.location.hash = `tab-${tabId}`;

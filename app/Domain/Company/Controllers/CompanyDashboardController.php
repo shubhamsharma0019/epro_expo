@@ -52,7 +52,7 @@ class CompanyDashboardController extends Controller
         }
 
         if (session('company_flow_context') === 'event_company') {
-            return redirect()->route('company.event-company-flow.create');
+            return redirect()->route('company.event-company-flow.dashboard');
         }
 
         $latestBooking = $currentCompany->boothBookings()

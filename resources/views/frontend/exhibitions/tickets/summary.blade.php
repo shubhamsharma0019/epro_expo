@@ -1,88 +1,20 @@
 @php
-    $exhibition = \App\Domain\Event\Models\Exhibition::query()
-        ->with([
-            'boothBookings' => fn ($query) => $query
-                ->with(['boothProfile', 'boothBranding', 'company'])
-                ->where('payment_status', 'paid')
-                ->whereIn('booking_status', ['confirmed', 'active'])
-                ->where('admin_status', 'approved')
-                ->whereIn('booth_setup_status', ['draft', 'setup_in_progress', 'ready_to_publish', 'pending_review', 'published', 'in_progress', 'submitted_for_review', 'approved', 'live']),
-        ])
-        ->where('slug', $slug)
-        ->first();
-    if (!$exhibition) {
-        $exhibition = \App\Domain\Event\Models\Exhibition::query()
-            ->with([
-                'boothBookings' => fn ($query) => $query
-                    ->with(['boothProfile', 'boothBranding', 'company'])
-                    ->where('payment_status', 'paid')
-                    ->whereIn('booking_status', ['confirmed', 'active'])
-                    ->where('admin_status', 'approved')
-                    ->whereIn('booth_setup_status', ['draft', 'setup_in_progress', 'ready_to_publish', 'pending_review', 'published', 'in_progress', 'submitted_for_review', 'approved', 'live']),
-            ])
-            ->find($slug);
-    }
-    if (!$exhibition) {
-        abort(404);
-    }
-
-    $title = $exhibition->title ?: $exhibition->name;
-    
-    // Resolve banner image (prioritize booth setup banner or logo)
-    $publishedBookings = ($exhibition->boothBookings ?? collect())->filter(fn ($booking) => 
-        in_array($booking->booth_setup_status, ['published', 'approved', 'live'])
-    );
-    $firstBooking = $publishedBookings->first(fn ($booking) => $booking->boothBranding?->booth_banner)
-        ?: $publishedBookings->first(fn ($booking) => $booking->boothProfile?->company_logo || $booking->company?->logo);
-        
-    $bannerImage = $exhibition->banner_url ?: ($exhibition->banner_image ?: 'images/exhibitions/hero-pavilion-scene.png');
-    if ($firstBooking) {
-        if ($firstBooking->boothBranding?->booth_banner) {
-            $bannerPath = $firstBooking->boothBranding->booth_banner;
-            $bannerImage = str_starts_with($bannerPath, 'storage/') ? $bannerPath : 'storage/' . $bannerPath;
-        } elseif ($firstBooking->boothProfile?->company_logo) {
-            $logoPath = $firstBooking->boothProfile->company_logo;
-            $bannerImage = str_starts_with($logoPath, 'storage/') ? $logoPath : 'storage/' . $logoPath;
-        } elseif ($firstBooking->company?->logo) {
-            $logoPath = $firstBooking->company->logo;
-            $bannerImage = str_starts_with($logoPath, 'storage/') ? $logoPath : 'storage/' . $logoPath;
-        }
-    }
-
-    if (str_starts_with($bannerImage, 'http://') || str_starts_with($bannerImage, 'https://')) {
-        // Keep absolute URLs as is
-    } elseif (str_starts_with($bannerImage, 'images/') || str_starts_with($bannerImage, 'assets/') || str_starts_with($bannerImage, 'storage/')) {
-        $bannerImage = asset($bannerImage);
-    } else {
-        $bannerImage = asset('storage/' . $bannerImage);
-    }
-    
-    // Resolve date string
-    if ($exhibition->start_date && $exhibition->end_date) {
-        $dateStr = $exhibition->start_date->format('M d') . ' – ' . $exhibition->end_date->format('d, Y');
-    } else {
-        $dateStr = 'Date TBD';
-    }
-    
-    // Resolve location
-    $location = $exhibition->venue ?: ($exhibition->location ?: 'Virtual');
-    $firstAgendaSession = \App\Domain\Event\Models\AgendaSession::query()
-        ->where('exhibition_id', $exhibition->id)
-        ->orderBy('start_time')
-        ->first();
-    $timeStr = $firstAgendaSession?->start_time
-        ? trim($firstAgendaSession->start_time . ($firstAgendaSession->end_time ? ' - ' . $firstAgendaSession->end_time : ''))
-        : 'Time TBD';
-
-    // Get Pavilions dynamically
-    $pavilions = \App\Domain\Event\Models\Pavilion::where('exhibition_id', $exhibition->id)->get();
+    $title = $title ?? 'Exhibition';
+    $bannerImage = $bannerImage ?? asset('images/exhibitions/hero-pavilion-scene.png');
+    $dateStr = $dateStr ?? 'Date TBD';
+    $location = $location ?? 'Virtual';
+    $timeStr = $timeStr ?? 'Time TBD';
+    $pavilions = $pavilions ?? collect();
+    $pavilionMap = $pavilionMap ?? collect();
+    $ticketTiers = $ticketTiers ?? collect();
+    $showVisitorSidebar = $showVisitorSidebar ?? false;
 @endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EproExpo - Review & Confirm</title>
+    <title>{{ $title }} - Review & Confirm - EproExpo</title>
     <script>
         // Check if all visitor details and pass selection are filled before showing page content
         (function() {
@@ -134,19 +66,16 @@
     </style>
     @include('frontend.exhibitions.visitor.partials.ticket-responsive')
 </head>
-<body class="text-[#1E293B] font-sans flex h-screen overflow-hidden">
+<body class="text-[#1E293B] font-sans flex min-h-screen flex-col lg:h-screen lg:overflow-hidden">
 
     <!-- Sidebar Overlay for mobile -->
-    <div id="exhibition-sidebar-overlay" class="fixed inset-0 z-40 hidden bg-[#071044]/40 lg:hidden"></div>
-
-    <!-- Exhibition Sidebar -->
-    @include('components.exhibition.exhibition-sidebar')
+    @include('frontend.exhibitions.tickets.partials.visitor-sidebar-shell')
 
     <!-- Main Content Area -->
-    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-white">
+    <main class="flex min-h-0 flex-1 flex-col bg-white lg:h-screen lg:overflow-hidden">
         
         <!-- Header Container -->
-        <div id="header-container" class="flex-shrink-0 z-40 w-full relative">@include('frontend.exhibitions.tickets.header')</div>
+        <div id="header-container" class="flex-shrink-0 z-40 w-full relative">@include('frontend.exhibitions.tickets.header', ['hideMobileMenu' => !($showVisitorSidebar ?? false)])</div>
 
         <!-- Scrollable Content -->
         <div class="ticket-flow-main flex-1 overflow-y-auto px-4 py-6 sm:px-8 lg:px-12 lg:py-8 relative bg-gradient-to-br from-[#FAFAFA] to-[#EDE9FE]">
@@ -157,36 +86,37 @@
             </a>
 
             <!-- Header Section with Stepper -->
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between mb-8 pb-8 gap-6 border-b border-gray-100">
+            <div class="mb-8 flex flex-col gap-6 border-b border-gray-100 pb-6 sm:pb-8 lg:flex-row lg:items-center lg:justify-between">
                 <!-- Left: Event Info -->
-                <div class="flex gap-5">
-                    <div class="w-[100px] h-[100px] rounded-2xl bg-cover bg-center border border-gray-100 shadow-sm" style="background-image: url('{{ $bannerImage }}');"></div>
-                    <div class="flex flex-col justify-center">
-                        <h1 class="text-[22px] font-bold text-[#1E1B4B] tracking-tight mb-2">{{ $title }}</h1>
+                <div class="flex min-w-0 gap-4 sm:gap-5">
+                    <div class="ticket-flow-hero-img h-[72px] w-[72px] shrink-0 rounded-2xl border border-gray-100 bg-cover bg-center shadow-sm sm:h-[100px] sm:w-[100px]" style="background-image: url('{{ $bannerImage }}');"></div>
+                    <div class="flex min-w-0 flex-col justify-center">
+                        <h1 class="mb-2 text-lg font-bold tracking-tight text-[#1E1B4B] sm:text-[22px]">{{ $title }}</h1>
                         
-                        <div class="flex items-center gap-4 text-[#475569] text-[13px] font-medium mb-2">
+                        <div class="mb-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px] font-medium text-[#475569] sm:text-[13px]">
                             <div class="flex items-center gap-1.5">
                                 <i class="ph ph-calendar-blank text-[16px]"></i>
                                 <span>{{ $dateStr }}</span>
                             </div>
-                            <span class="w-1 h-1 rounded-full bg-gray-300"></span>
+                            <span class="hidden h-1 w-1 rounded-full bg-gray-300 sm:inline"></span>
                             <div class="flex items-center gap-1.5">
                                 <i class="ph ph-clock text-[16px]"></i>
                                 <span>{{ $timeStr }}</span>
                             </div>
                         </div>
                         
-                        <div class="flex items-center gap-1.5 text-[#475569] text-[13px] font-medium">
-                            <i class="ph ph-map-pin text-[16px]"></i>
-                            <span>{{ $location }}</span>
+                        <div class="flex items-center gap-1.5 text-[12px] font-medium text-[#475569] sm:text-[13px]">
+                            <i class="ph ph-map-pin shrink-0 text-[16px]"></i>
+                            <span class="break-words">{{ $location }}</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Right: Stepper -->
-                <div class="flex flex-col lg:pl-8 w-full lg:w-auto overflow-hidden">
-                    <h2 class="text-[16px] font-bold text-[#1E1B4B] mb-5">Visitor Pass Selection</h2>
-                    <div class="flex items-center ticket-flow-stepper no-scrollbar">
+                <div class="flex w-full min-w-0 flex-col overflow-hidden lg:w-auto lg:pl-8">
+                    <p class="mb-3 text-[13px] font-bold text-primary-600 sm:hidden">Step 3 of 4 · Review & Confirm</p>
+                    <h2 class="mb-4 hidden text-[16px] font-bold text-[#1E1B4B] sm:mb-5 sm:block">Visitor Pass Selection</h2>
+                    <div class="ticket-flow-stepper no-scrollbar flex w-full min-w-0 items-center overflow-x-auto">
                         <!-- Step 1 -->
                         <div class="flex flex-col items-center relative z-10 w-24">
                             <div class="w-7 h-7 rounded-full bg-primary-500 text-white flex items-center justify-center text-[16px] mb-2 shadow-sm">
@@ -222,50 +152,50 @@
             </div>
 
             <!-- Content Area -->
-            <div class="ticket-flow-two-col flex flex-col lg:flex-row gap-8">
+            <div class="ticket-flow-two-col flex flex-col gap-6 lg:flex-row lg:gap-8">
                 
                 <!-- Left: Review Info -->
-                <div class="flex-1">
+                <div class="min-w-0 flex-1">
                     <div class="mb-6">
                         <h2 class="text-[20px] font-bold text-[#1E1B4B] mb-1">Review & Confirm</h2>
                         <p class="text-[14px] text-gray-500 font-medium">Please review your details and confirm your order.</p>
                     </div>
 
                     <!-- 1. Selected Pass -->
-                    <div class="border border-gray-100 rounded-2xl p-6 shadow-sm bg-white mb-6">
-                        <div class="flex items-center justify-between mb-4 border-b border-gray-50 pb-4">
-                            <h3 class="font-bold text-[#1E1B4B] text-[15px]">1. Selected Pass</h3>
-                            <a href="{{ route('exhibitions.tickets.select', $slug) }}" class="flex items-center gap-1.5 text-primary-600 font-bold text-[13px] hover:underline">
+                    <div class="mb-6 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
+                        <div class="mb-4 flex items-center justify-between border-b border-gray-50 pb-4">
+                            <h3 class="text-[15px] font-bold text-[#1E1B4B]">1. Selected Pass</h3>
+                            <a href="{{ route('exhibitions.tickets.select', $slug) }}" class="flex items-center gap-1.5 text-[13px] font-bold text-primary-600 hover:underline">
                                 <i class="ph ph-pencil-simple text-[15px]"></i> Edit
                             </a>
                         </div>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-full bg-primary-50 text-primary-600 flex items-center justify-center">
+                        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div class="flex min-w-0 items-center gap-4">
+                                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-600">
                                     <i class="ph ph-identification-badge text-[24px]"></i>
                                 </div>
-                                <div>
-                                    <div class="font-bold text-[#1E293B] text-[15px] mb-1" id="visitor-pass-name">Free Visitor Pass</div>
-                                    <div class="text-[13px] text-[#475569]">Access to exhibition & booths</div>
+                                <div class="min-w-0">
+                                    <div class="mb-1 text-[15px] font-bold text-[#1E293B]" id="visitor-pass-name">Free Visitor Pass</div>
+                                    <div class="text-[13px] text-[#475569]" id="visitor-pass-description">Access to exhibition & booths</div>
                                 </div>
                             </div>
-                            <div class="text-right">
-                                <div class="font-bold text-[#1E1B4B] text-[20px] mb-1" id="visitor-pass-price">₹0</div>
-                                <div class="text-primary-600 font-medium text-[12px] bg-primary-50 px-3 py-1 rounded-full inline-block" id="visitor-pass-qty-pill">Quantity: 1</div>
+                            <div class="flex items-center justify-between gap-4 sm:block sm:text-right">
+                                <div class="text-[20px] font-bold text-[#1E1B4B]" id="visitor-pass-price">₹0</div>
+                                <div class="inline-block rounded-full bg-primary-50 px-3 py-1 text-[12px] font-medium text-primary-600" id="visitor-pass-qty-pill">Quantity: 1</div>
                             </div>
                         </div>
                     </div>
 
                     <!-- 2. Visitor Details -->
-                    <div class="border border-gray-100 rounded-2xl p-6 shadow-sm bg-white mb-6">
-                        <div class="flex items-center justify-between mb-5 border-b border-gray-50 pb-4">
-                            <h3 class="font-bold text-[#1E1B4B] text-[15px]">2. Visitor Details</h3>
-                            <a href="{{ route('exhibitions.tickets.visitor-details', $slug) }}?edit=true" class="flex items-center gap-1.5 text-primary-600 font-bold text-[13px] hover:underline">
+                    <div class="mb-6 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
+                        <div class="mb-5 flex items-center justify-between border-b border-gray-50 pb-4">
+                            <h3 class="text-[15px] font-bold text-[#1E1B4B]">2. Visitor Details</h3>
+                            <a href="{{ route('exhibitions.tickets.visitor-details', $slug) }}?edit=true" class="flex items-center gap-1.5 text-[13px] font-bold text-primary-600 hover:underline">
                                 <i class="ph ph-pencil-simple text-[15px]"></i> Edit
                             </a>
                         </div>
                         
-                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-4">
+                        <div class="grid grid-cols-1 gap-y-5 gap-x-4 sm:grid-cols-2 md:grid-cols-3">
                             <!-- Col 1 -->
                             <div>
                                 <div class="text-[12px] text-gray-500 font-medium mb-1">Name</div>
@@ -280,8 +210,8 @@
                                 <div id="display-email" class="text-[14px] text-[#1E293B] font-medium">-</div>
                             </div>
                             <div>
-                                <div class="text-[12px] text-gray-500 font-medium mb-1">Business Address</div>
-                                <div id="display-address" class="text-[14px] text-[#1E293B] font-medium leading-relaxed max-w-[200px]">-</div>
+                                <div class="mb-1 text-[12px] font-medium text-gray-500">Business Address</div>
+                                <div id="display-address" class="max-w-none text-[14px] font-medium leading-relaxed text-[#1E293B] sm:max-w-[240px]">-</div>
                             </div>
 
                             <div>
@@ -289,11 +219,8 @@
                                 <div id="display-mobile" class="text-[14px] text-[#1E293B] font-medium">-</div>
                             </div>
                             <div>
-                                <div class="text-[12px] text-gray-500 font-medium mb-1">Company / Organization</div>
-                                <div id="display-company" class="text-[14px] text-[#1E293B] font-medium">-</div>
-                            </div>
-                            <div class="row-span-2 col-start-3 self-end -mt-6">
-                                <!-- Empty to align with business address if needed -->
+                                <div class="mb-1 text-[12px] font-medium text-gray-500">Company / Organization</div>
+                                <div id="display-company" class="text-[14px] font-medium text-[#1E293B]">-</div>
                             </div>
 
                             <div>
@@ -304,9 +231,9 @@
                                 <div class="text-[12px] text-gray-500 font-medium mb-1">Company Size</div>
                                 <div id="display-company-size" class="text-[14px] text-[#1E293B] font-medium">-</div>
                             </div>
-                            <div class="col-start-3">
-                                <div class="text-[12px] text-gray-500 font-medium mb-1">City, State, Country</div>
-                                <div id="display-csc" class="text-[14px] text-[#1E293B] font-medium">-</div>
+                            <div>
+                                <div class="mb-1 text-[12px] font-medium text-gray-500">City, State, Country</div>
+                                <div id="display-csc" class="text-[14px] font-medium text-[#1E293B]">-</div>
                             </div>
 
                             <div>
@@ -317,21 +244,21 @@
                     </div>
 
                     <!-- 3. Additional Information -->
-                    <div class="border border-gray-100 rounded-2xl p-6 shadow-sm bg-white mb-10">
+                    <div class="mb-10 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
                         <div class="mb-4 pb-2">
-                            <h3 class="font-bold text-[#1E1B4B] text-[15px]">3. Additional Information</h3>
+                            <h3 class="text-[15px] font-bold text-[#1E1B4B]">3. Additional Information</h3>
                         </div>
-                        <div class="flex items-center justify-between">
-                            <div class="flex gap-4 items-center">
-                                <div class="w-10 h-10 rounded-full bg-primary-50 text-primary-600 flex items-center justify-center flex-shrink-0">
+                        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div class="flex min-w-0 items-center gap-4">
+                                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-600">
                                     <i class="ph ph-envelope-simple text-[20px]"></i>
                                 </div>
-                                <div>
-                                    <div class="font-bold text-[#1E293B] text-[13px] mb-0.5" id="subscription-title">Updates & Notifications</div>
-                                    <div class="text-[13px] text-[#64748B] max-w-[400px] leading-relaxed" id="subscription-description">Checking your notification preference...</div>
+                                <div class="min-w-0">
+                                    <div class="mb-0.5 text-[13px] font-bold text-[#1E293B]" id="subscription-title">Updates & Notifications</div>
+                                    <div class="max-w-none text-[13px] leading-relaxed text-[#64748B] sm:max-w-[400px]" id="subscription-description">Checking your notification preference...</div>
                                 </div>
                             </div>
-                            <div id="subscription-status-badge" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-[12px] border">
+                            <div id="subscription-status-badge" class="flex w-fit items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-bold">
                                 <i id="subscription-status-icon" class="ph-bold"></i> <span id="subscription-status-text"></span>
                             </div>
                         </div>
@@ -339,7 +266,7 @@
 
                     <!-- Bottom Buttons -->
                     <div class="pb-10">
-                        <a href="{{ route('exhibitions.tickets.visitor-details', $slug) }}?edit=true" class="inline-flex items-center gap-2 px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-600 hover:bg-gray-50 transition-colors shadow-sm text-[14px]">
+                        <a href="{{ route('exhibitions.tickets.visitor-details', $slug) }}?edit=true" class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 px-6 py-3 text-[14px] font-bold text-gray-600 shadow-sm transition-colors hover:bg-gray-50 sm:w-auto">
                             <i class="ph ph-arrow-left text-lg"></i> Back
                         </a>
                     </div>
@@ -347,10 +274,10 @@
                 </div>
 
                 <!-- Right: Summary Sidebar -->
-                <div class="ticket-flow-sidebar w-full lg:w-[340px] shrink-0 flex flex-col gap-5">
+                <div class="ticket-flow-sidebar flex w-full shrink-0 flex-col gap-5 lg:w-[340px]">
                     
                     <!-- Order Summary Box -->
-                    <div class="border border-gray-100 rounded-2xl bg-[#FAFAFA] p-6 shadow-sm">
+                    <div class="rounded-2xl border border-gray-100 bg-[#FAFAFA] p-5 shadow-sm sm:p-6 lg:sticky lg:top-0">
                         <h3 class="font-bold text-[#1E1B4B] text-[15px] mb-5">Order Summary</h3>
                         <div class="space-y-4 mb-6">
                             <div class="flex items-center justify-between text-[14px]">
@@ -423,13 +350,16 @@
     <script src="/script.js"></script>
     <script>
         async function initializeReviewPage() {
-            const urlParams = new URLSearchParams(window.location.search);
-            let exhId = '{{ $exhibition->id }}';
-            localStorage.setItem('activeExhibitionId', exhId);
-            localStorage.setItem('activeExhibitionName', '{{ addslashes($title) }}');
+            const ticketTiers = @json($ticketTiers);
+            const pavilionMap = @json($pavilionMap);
+
+            localStorage.setItem('activeExhibitionId', '{{ $exhibition->id }}');
+            localStorage.setItem('activeExhibitionSlug', '{{ $slug }}');
+            localStorage.setItem('activeExhibitionName', @json($title));
 
             // Populate Selection Summary
             const passName = localStorage.getItem('selectedPassName') || 'Free Visitor Pass';
+            const matchedTier = ticketTiers.find((tier) => tier.name === passName);
             
             const rawPrice = parseFloat(localStorage.getItem('selectedPassPrice'));
             const passPriceNum = isNaN(rawPrice) ? 0 : rawPrice;
@@ -456,9 +386,14 @@
             
             const nameElem = document.getElementById('visitor-pass-name');
             if (nameElem) nameElem.innerText = passName;
+
+            const descElem = document.getElementById('visitor-pass-description');
+            if (descElem) {
+                descElem.innerText = matchedTier?.summary || (passPriceNum === 0 ? 'Access to exhibition & booths' : 'Enhanced access & features');
+            }
             
             const priceElem = document.getElementById('visitor-pass-price');
-            if (priceElem) priceElem.innerText = '₹' + passPriceNum.toLocaleString('en-IN');
+            if (priceElem) priceElem.innerText = '₹' + passPriceNum.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             
             const subtotalElem = document.getElementById('visitor-subtotal');
             if (subtotalElem) subtotalElem.innerText = formatINR(passSubtotal);
@@ -502,8 +437,7 @@
                 },
                 'display-pavilion': () => {
                     const id = localStorage.getItem('visitor_reg_pavilion_id');
-                    const pavilions = @json($pavilions->pluck('title', 'id'));
-                    return pavilions[id] || id || '-';
+                    return pavilionMap[id] || id || '-';
                 },
                 'display-email': () => localStorage.getItem('visitor_reg_email') || '',
                 'display-mobile': () => {

@@ -33,6 +33,7 @@ class AdminWebsiteController extends Controller
 
         return view('backend.admin.website.home', [
             'hero' => WebsiteContent::hero(),
+            'sectionHeadings' => WebsiteContent::sectionHeadings(),
             'cta' => WebsiteContent::cta(),
             'footer' => WebsiteContent::footer(),
             'stats' => WebsiteContent::publishedItems('home', 'stat')->isNotEmpty()
@@ -58,6 +59,24 @@ class AdminWebsiteController extends Controller
             'hero_title_highlight' => ['required', 'string', 'max:255'],
             'hero_subtitle' => ['nullable', 'string'],
             'hero_image_url' => ['nullable', 'string', 'max:500'],
+            'hero_button_1_label' => ['nullable', 'string', 'max:255'],
+            'hero_button_1_url' => ['nullable', 'string', 'max:500'],
+            'hero_button_2_label' => ['nullable', 'string', 'max:255'],
+            'hero_button_2_url' => ['nullable', 'string', 'max:500'],
+            'hero_button_3_label' => ['nullable', 'string', 'max:255'],
+            'hero_button_3_url' => ['nullable', 'string', 'max:500'],
+            'hero_button_4_label' => ['nullable', 'string', 'max:255'],
+            'hero_button_4_url' => ['nullable', 'string', 'max:500'],
+            'features_title' => ['nullable', 'string', 'max:255'],
+            'how_it_works_title' => ['nullable', 'string', 'max:255'],
+            'experience_title' => ['nullable', 'string', 'max:255'],
+            'partners_title' => ['nullable', 'string', 'max:255'],
+            'featured_events_title' => ['nullable', 'string', 'max:255'],
+            'featured_events_subtitle' => ['nullable', 'string', 'max:500'],
+            'featured_exhibitions_title' => ['nullable', 'string', 'max:255'],
+            'featured_exhibitions_subtitle' => ['nullable', 'string', 'max:500'],
+            'get_started_label' => ['nullable', 'string', 'max:255'],
+            'get_started_url' => ['nullable', 'string', 'max:500'],
             'cta_title' => ['required', 'string', 'max:255'],
             'cta_subtitle' => ['nullable', 'string'],
             'footer_copyright' => ['nullable', 'string', 'max:500'],
@@ -78,7 +97,32 @@ class AdminWebsiteController extends Controller
                 'subtitle' => $data['hero_title_line_2'],
                 'body' => $data['hero_subtitle'] ?? null,
                 'image_url' => $data['hero_image_url'] ?? null,
-                'meta' => json_encode(['title_highlight' => $data['hero_title_highlight']]),
+                'meta' => json_encode([
+                    'title_highlight' => $data['hero_title_highlight'],
+                    'button_1_label' => $data['hero_button_1_label'] ?? null,
+                    'button_1_url' => $data['hero_button_1_url'] ?? null,
+                    'button_2_label' => $data['hero_button_2_label'] ?? null,
+                    'button_2_url' => $data['hero_button_2_url'] ?? null,
+                    'button_3_label' => $data['hero_button_3_label'] ?? null,
+                    'button_3_url' => $data['hero_button_3_url'] ?? null,
+                    'button_4_label' => $data['hero_button_4_label'] ?? null,
+                    'button_4_url' => $data['hero_button_4_url'] ?? null,
+                ]),
+            ]);
+
+            $this->upsertSingleton('section_headings', [
+                'meta' => json_encode([
+                    'features_title' => $data['features_title'] ?? null,
+                    'how_it_works_title' => $data['how_it_works_title'] ?? null,
+                    'experience_title' => $data['experience_title'] ?? null,
+                    'partners_title' => $data['partners_title'] ?? null,
+                    'featured_events_title' => $data['featured_events_title'] ?? null,
+                    'featured_events_subtitle' => $data['featured_events_subtitle'] ?? null,
+                    'featured_exhibitions_title' => $data['featured_exhibitions_title'] ?? null,
+                    'featured_exhibitions_subtitle' => $data['featured_exhibitions_subtitle'] ?? null,
+                    'get_started_label' => $data['get_started_label'] ?? null,
+                    'get_started_url' => $data['get_started_url'] ?? null,
+                ]),
             ]);
 
             $this->upsertSingleton('cta', [

@@ -1,9 +1,11 @@
 <header class="border-b border-gray-100 px-4 py-4 md:px-10 md:py-5 flex items-center justify-between bg-white w-full h-full">
     <div class="flex items-center gap-3">
+        @unless($hideMobileMenu ?? false)
         <!-- Hamburger Menu for Mobile -->
         <button id="mobile-menu-toggle" data-sidebar-open class="lg:hidden text-gray-500 hover:text-primary-600 focus:outline-none transition p-1.5 rounded-lg hover:bg-gray-100 cursor-pointer">
             <i class="ph ph-list text-[26px]"></i>
         </button>
+        @endunless
     </div>
     <div class="flex items-center gap-6 ml-auto">
 @php

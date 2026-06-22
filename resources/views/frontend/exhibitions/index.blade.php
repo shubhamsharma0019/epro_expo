@@ -4,151 +4,20 @@
 
 @section('content')
 @php
-    $exhibitions = isset($dynamicExhibitions) && $dynamicExhibitions->isNotEmpty()
-        ? $dynamicExhibitions->map(function ($item) {
-            $publishedBookings = $item->boothBookings ?? collect();
-            $image = $item->banner_image ?: ($item->banner_url ?: 'images/exhibitions/hero-pavilion-scene.png');
-            $companyNames = $publishedBookings
-                ->map(fn ($booking) => $booking->boothProfile?->company_name ?: $booking->company?->company_name ?: $booking->company?->name)
-                ->filter()
-                ->unique(fn ($name) => strtolower(trim((string) $name)))
-                ->values();
-            $companyCount = $companyNames->count();
-            $productsCount = $publishedBookings->sum(fn ($booking) => $booking->boothProducts?->where('status', 'published')->count() ?? 0);
-            $cataloguesCount = $publishedBookings->sum(fn ($booking) => $booking->boothCatalogues?->where('status', 'active')->where('visibility', 'public')->count() ?? 0);
-            $hallCount = max(
-                $publishedBookings->pluck('hall_id')->filter()->unique()->count(),
-                \App\Support\DbGuard::whenAvailable(
-                    fn () => \App\Domain\Event\Models\Hall::query()
-                        ->whereHas('pavilion', fn ($query) => $query->where('exhibition_id', $item->id))
-                        ->where('status', 'active')
-                        ->count(),
-                    0
-                )
-            );
-
-            return [
-                'slug' => $item->slug,
-                'title' => $item->title ?: $item->name,
-                'date' => optional($item->start_date)->format('F j') . ' - ' . optional($item->end_date)->format('j, Y'),
-                'time' => '10:00 AM - 7:00 PM IST',
-                'location' => $item->venue ?: ($item->location ?: 'Virtual'),
-                'category' => str_contains(strtolower((string) ($item->location ?: $item->venue ?: '')), 'virtual') ? 'Virtual' : 'On-site / Hybrid',
-                'status' => $item->start_date && $item->start_date->isFuture() ? 'Upcoming' : 'Live registration',
-                'visitors' => (string) ($item->companies_count ?: max($companyCount, 0)),
-                'companies' => (string) $companyCount,
-                'halls' => (string) max($hallCount, 1),
-                'sessions' => (string) max(collect($publishedBookings)->sum(fn ($booking) => $booking->boothSessions?->count() ?? 0), 1),
-                'pass' => 'Free visitor pass available',
-                'image' => $image,
-                'accent' => '#5b2eff',
-                'meta' => trim($productsCount . ' products / ' . $cataloguesCount . ' catalogues'),
-                'company_names' => $companyNames->take(3)->all(),
-            ];
-        })->values()->all()
-        : [];
-
-    $featuredExhibition = isset($dynamicExhibitions) && $dynamicExhibitions->isNotEmpty()
-        ? $dynamicExhibitions->first()
-        : \App\Support\DbGuard::whenAvailable(
-            fn () => \App\Support\LiveContent::exhibitionsForVisitorIndex()->first(),
-            null
-        );
-    $heroExhibition = $exhibitions[0] ?? null;
-
-    if ($featuredExhibition) {
-        $featuredPublishedBookings = $featuredExhibition->boothBookings ?? collect();
-        $featuredPavilionsCount = \App\Domain\Event\Models\Pavilion::query()
-            ->where('exhibition_id', $featuredExhibition->id)
-            ->where('status', 'active')
-            ->count();
-        $featuredHallsCount = \App\Domain\Event\Models\Hall::query()
-            ->whereHas('pavilion', fn ($query) => $query->where('exhibition_id', $featuredExhibition->id))
-            ->where('status', 'active')
-            ->count();
-        $featuredBoothsCount = \App\Domain\Booth\Models\Booth::query()
-            ->whereHas('hall.pavilion', fn ($query) => $query->where('exhibition_id', $featuredExhibition->id))
-            ->count();
-        $featuredCompanyCount = $featuredPublishedBookings
-            ->map(fn ($booking) => $booking->boothProfile?->company_name ?: $booking->company?->company_name ?: $booking->company?->name)
-            ->filter()
-            ->unique(fn ($name) => strtolower(trim((string) $name)))
-            ->count();
-        $featuredSessionsCount = max($featuredPublishedBookings->sum(fn ($booking) => $booking->boothSessions?->count() ?? 0), 1);
-        $featuredPavilionsCount = max($featuredPavilionsCount, 1);
-        $featuredHallsCount = max($featuredHallsCount, 1);
-        $featuredBoothsCount = max($featuredBoothsCount, 1);
-        $featuredStatus = $featuredExhibition->start_date && $featuredExhibition->start_date->isFuture() ? 'Upcoming' : 'Live registration';
-
-        $heroImage = $featuredExhibition->banner_image ?: ($featuredExhibition->banner_url ?: ($heroExhibition['image'] ?? 'images/exhibitions/hero-pavilion-scene.png'));
-        if (\Illuminate\Support\Str::startsWith($heroImage, ['http://', 'https://'])) {
-            $heroImageUrl = $heroImage;
-        } elseif (\Illuminate\Support\Str::startsWith($heroImage, ['images/', 'assets/', 'storage/'])) {
-            $heroImageUrl = asset($heroImage);
-        } else {
-            $heroImageUrl = asset('storage/' . ltrim($heroImage, '/'));
-        }
-    } else {
-        $featuredCompanyCount = (int) ($heroExhibition['companies'] ?? 0);
-        $featuredHallsCount = (int) ($heroExhibition['halls'] ?? 0);
-        $featuredSessionsCount = (int) ($heroExhibition['sessions'] ?? 0);
-        $featuredBoothsCount = 0;
-        $featuredPavilionsCount = 0;
-        $featuredStatus = 'Visitor Preview';
-        $heroImage = $heroExhibition['image'] ?? 'images/exhibitions/hero-pavilion-scene.png';
-        $heroImageUrl = \Illuminate\Support\Str::startsWith($heroImage, ['http://', 'https://'])
-            ? $heroImage
-            : asset($heroImage);
-    }
-
-    if (isset($dynamicExhibitions) && $dynamicExhibitions->isNotEmpty()) {
-        $aggregatePublishedBookings = $dynamicExhibitions
-            ->flatMap(fn ($item) => $item->boothBookings ?? collect())
-            ->values();
-
-        $aggregateCompanyCount = $aggregatePublishedBookings
-            ->map(fn ($booking) => $booking->company_id ?: strtolower(trim((string) ($booking->boothProfile?->company_name ?: $booking->company?->company_name ?: $booking->company?->name))))
-            ->filter()
-            ->unique()
-            ->count();
-        $aggregateHallCount = $aggregatePublishedBookings->pluck('hall_id')->filter()->unique()->count();
-        $aggregateSessionCount = $aggregatePublishedBookings->sum(fn ($booking) => $booking->boothSessions?->count() ?? 0);
-    } else {
-        $aggregateCompanyCount = $featuredCompanyCount;
-        $aggregateHallCount = $featuredHallsCount;
-        $aggregateSessionCount = $featuredSessionsCount;
-    }
-
-    $heroStats = [
-        [number_format($aggregateCompanyCount), 'Companies', 'fa-solid fa-store', '#6325E6'],
-        [number_format($aggregateHallCount), 'Halls', 'fa-regular fa-map', '#FF9B41'],
-        [number_format($aggregateSessionCount), 'Sessions', 'fa-regular fa-circle-play', '#3478E5'],
-        ['QR', 'Visitor Pass', 'fa-solid fa-qrcode', '#48C4AE'],
-    ];
-    $exhibitionFilters = ['All', 'Technology', 'Healthcare'];
-    $heroPavilionsCount = $featuredPavilionsCount;
-    $heroHallsCount = $featuredHallsCount;
-    $heroBoothsCount = $featuredBoothsCount;
-    $heroPreviewStatus = strtoupper($featuredStatus);
-
-    $visitorTools = [
-        ['Companies', 'Search exhibitors, products, brochures and booth locations.', 'fa-solid fa-building'],
-        ['Floor map', 'Preview halls and jump directly to company booth pages.', 'fa-regular fa-map'],
-        ['Visitor pass', 'Register once and carry a QR pass for dashboard access.', 'fa-regular fa-id-card'],
-        ['Meetings', 'Book meetings, join sessions and continue live chat after entry.', 'fa-regular fa-calendar-check'],
-    ];
-    $featuredSlug = $heroExhibition['slug'] ?? $featuredExhibition?->slug;
-    $featuredTitle = $heroExhibition['title'] ?? ($featuredExhibition?->title ?: $featuredExhibition?->name) ?? 'Exhibition';
-    $visitorAccessCards = [
-        ['Preview allowed', $featuredTitle . ' details, companies, booth previews, floor map and schedule previews.'],
-        ['Pass required', 'Book meeting, live chat, brochure download, protected demo, join session and save booth.'],
-    ];
-    $suggestedRouteSteps = $featuredSlug ? [
-        ['01', 'Detail', route('exhibitions.show', $featuredSlug)],
-        ['02', 'Companies', route('exhibitions.visitor.companies', $featuredSlug)],
-        ['03', 'Map', route('exhibitions.visitor-halls.index', $featuredSlug)],
-        ['04', 'QR Pass', route('exhibitions.tickets.select', $featuredSlug)],
-    ] : [];
+    $exhibitions = $exhibitions ?? [];
+    $featuredExhibition = $featuredExhibition ?? null;
+    $featuredSlug = $featuredSlug ?? null;
+    $featuredTitle = $featuredTitle ?? 'Exhibition';
+    $heroPavilionsCount = $heroPavilionsCount ?? 0;
+    $heroHallsCount = $heroHallsCount ?? 0;
+    $heroBoothsCount = $heroBoothsCount ?? 0;
+    $heroPreviewStatus = $heroPreviewStatus ?? 'VISITOR PREVIEW';
+    $heroImageUrl = $heroImageUrl ?? asset('images/exhibitions/hero-pavilion-scene.png');
+    $heroStats = $heroStats ?? [];
+    $exhibitionFilters = $exhibitionFilters ?? ['All'];
+    $visitorTools = $visitorTools ?? [];
+    $visitorAccessCards = $visitorAccessCards ?? [];
+    $suggestedRouteSteps = $suggestedRouteSteps ?? [];
 @endphp
 
 <section class="bg-white">
@@ -170,7 +39,7 @@
                         <i class="far fa-building text-lg"></i> Browse Exhibitions
                     </a>
                     <a href="{{ $featuredExhibition ? route('exhibitions.show', $featuredExhibition->slug) : '#exhibition-list' }}" class="inline-flex w-full items-center justify-center gap-3 rounded-xl border border-[#D8DCEB] bg-white px-6 py-4 text-[15px] font-bold text-[#071044] shadow-sm hover:bg-[#F8F7FF] sm:w-auto sm:px-7">
-                        <i class="far fa-id-card text-lg text-gray-500"></i> Featured Expo
+                        <i class="far fa-id-card text-lg text-gray-500"></i> {{ \Illuminate\Support\Str::limit($featuredTitle, 28) }}
                     </a>
                 </div>
             </div>
@@ -247,19 +116,9 @@
 
             <div class="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 @forelse ($exhibitions as $exhibition)
-                    <article data-exhibition-card data-category="{{ $exhibition['category'] }}" data-search="{{ strtolower($exhibition['title'] . ' ' . $exhibition['category'] . ' ' . $exhibition['location'] . ' ' . implode(' ', $exhibition['company_names'] ?? [])) }}" class="flex min-h-[520px] flex-col overflow-hidden rounded-[14px] border border-[#E7EAF3] bg-white shadow-[0_10px_28px_rgba(7,16,68,0.07)] transition-transform hover:-translate-y-1">
+                    <article data-exhibition-card data-category="{{ $exhibition['category'] }}" data-search="{{ $exhibition['search_text'] ?? strtolower($exhibition['title'] . ' ' . $exhibition['category'] . ' ' . $exhibition['location'] . ' ' . implode(' ', $exhibition['company_names'] ?? [])) }}" class="flex min-h-[520px] flex-col overflow-hidden rounded-[14px] border border-[#E7EAF3] bg-white shadow-[0_10px_28px_rgba(7,16,68,0.07)] transition-transform hover:-translate-y-1">
                         <div class="relative bg-[#071044]" style="height: 210px; overflow: hidden;">
-                            @php
-                                $imageUrl = $exhibition['image'];
-                                if (!str_starts_with($imageUrl, 'http://') && !str_starts_with($imageUrl, 'https://')) {
-                                    if (str_starts_with($imageUrl, 'images/') || str_starts_with($imageUrl, 'assets/')) {
-                                        $imageUrl = asset($imageUrl);
-                                    } else {
-                                        $imageUrl = asset(str_starts_with($imageUrl, 'storage/') ? $imageUrl : 'storage/' . $imageUrl);
-                                    }
-                                }
-                            @endphp
-                            <img src="{{ $imageUrl }}" alt="{{ $exhibition['title'] }}" class="h-full w-full object-cover" style="height: 100%; width: 100%; object-fit: cover;">
+                            <img src="{{ $exhibition['image_url'] ?? asset($exhibition['image']) }}" alt="{{ $exhibition['title'] }}" class="h-full w-full object-cover" style="height: 100%; width: 100%; object-fit: cover;">
                             <div class="absolute left-4 top-4 rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-[#6D28D9] shadow-sm">{{ $exhibition['category'] }}</div>
                             <div class="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#071044]/70 to-transparent"></div>
                         </div>
@@ -278,7 +137,7 @@
                             </div>
 
                             <div class="mt-5 grid grid-cols-4 gap-1.5">
-                                @foreach ([[$exhibition['visitors'], 'Visitors'], [$exhibition['companies'], 'Companies'], [$exhibition['halls'], 'Halls'], [$exhibition['sessions'], 'Sessions']] as [$value, $label])
+                                @foreach ([[$exhibition['pavilions'] ?? '0', 'Pavilions'], [$exhibition['companies'], 'Companies'], [$exhibition['halls'], 'Halls'], [$exhibition['sessions'], 'Sessions']] as [$value, $label])
                                     <div class="rounded-lg bg-[#F8F8FC] p-2 text-center flex flex-col justify-center" style="min-height: 54px;">
                                         <p class="text-[13px] font-black text-[#071044] truncate" title="{{ $value }}">{{ $value }}</p>
                                         <p class="mt-0.5 text-[10px] font-bold text-[#6B7280] truncate">{{ $label }}</p>

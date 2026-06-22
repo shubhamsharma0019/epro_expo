@@ -1,7 +1,7 @@
 <style>
     html, body { overflow-x: hidden; max-width: 100%; }
     .ticket-flow-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .ticket-flow-stepper { overflow-x: auto; padding-bottom: 0.25rem; }
+    .ticket-flow-stepper { overflow-x: auto; padding-bottom: 0.25rem; -webkit-overflow-scrolling: touch; }
     @media (max-width: 1023px) {
         .ticket-flow-main { padding-left: 1rem !important; padding-right: 1rem !important; }
         .ticket-flow-two-col { flex-direction: column !important; }
@@ -10,6 +10,7 @@
     @media (max-width: 639px) {
         .ticket-flow-main { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
         .ticket-flow-hero-img { width: 72px !important; height: 72px !important; }
-        .ticket-flow-stepper .w-24 { width: 4.5rem !important; }
+        .ticket-flow-stepper .w-24 { width: 4.25rem !important; min-width: 4.25rem !important; }
+        .ticket-flow-stepper .min-w-\[60px\] { min-width: 2rem !important; }
     }
 </style>

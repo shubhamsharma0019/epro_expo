@@ -15,10 +15,8 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
         Route::post('/register', [\App\Domain\Shared\Controllers\Auth\UserAuthController::class, 'register'])->name('register.store');
     });
 
-    Route::get('/', function () {
-        $dynamicExhibitions = \App\Support\LiveContent::exhibitionsForVisitorIndex();
-
-        return view('frontend.exhibitions.index', compact('dynamicExhibitions'));
+    Route::get('/', function (\App\Domain\Shared\Services\ExhibitionsVisitorIndexPageData $pageData) {
+        return view('frontend.exhibitions.index', $pageData->build());
     })->name('index');
 
     Route::get('/home', function () {
@@ -48,10 +46,8 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
         return redirect()->route('exhibitions.home');
     })->name('booking-dashboard');
 
-    Route::get('/browse', function () {
-        $dynamicExhibitions = \App\Support\LiveContent::exhibitionsForVisitorIndex();
-
-        return view('frontend.exhibitions.index', compact('dynamicExhibitions'));
+    Route::get('/browse', function (\App\Domain\Shared\Services\ExhibitionsVisitorIndexPageData $pageData) {
+        return view('frontend.exhibitions.index', $pageData->build());
     })->name('browse');
 
     Route::get('/pavilions', function () {
@@ -248,6 +244,10 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
                 'user_flow_context' => 'exhibition_ticket',
             ]);
 
+            if (! \App\Support\ExhibitionTicketFlow::shouldShowVisitorSidebar($slug)) {
+                session()->forget('visitor_pass_active');
+            }
+
             if (! auth()->check()) {
                 session()->put('url.intended', route('exhibitions.tickets.select', $slug));
                 session()->put('exhibition_booking_path', route('exhibitions.tickets.select', $slug));
@@ -259,14 +259,22 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
             return view('frontend.exhibitions.tickets.select', compact('slug'));
         })->name('select');
 
-        Route::get('/visitor-details', function ($slug) {
-            return view('frontend.exhibitions.tickets.visitor-details', compact('slug'));
+        Route::get('/visitor-details', function (string $slug, \App\Domain\Shared\Services\ExhibitionTicketVisitorDetailsPageData $pageData) {
+            $data = $pageData->build($slug);
+
+            abort_unless($data, 404);
+
+            return view('frontend.exhibitions.tickets.visitor-details', $data);
         })->name('visitor-details');
 
         Route::post('/register', [VisitorTicketController::class, 'register'])->name('register');
 
-        Route::get('/summary', function ($slug) {
-            return view('frontend.exhibitions.tickets.summary', compact('slug'));
+        Route::get('/summary', function (string $slug, \App\Domain\Shared\Services\ExhibitionTicketSummaryPageData $pageData) {
+            $data = $pageData->build($slug);
+
+            abort_unless($data, 404);
+
+            return view('frontend.exhibitions.tickets.summary', $data);
         })->name('summary');
 
         Route::get('/payment', function ($slug) {
@@ -275,9 +283,16 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
 
         Route::post('/payment/{bookingId}/confirm', [VisitorTicketController::class, 'confirmPayment'])->name('payment.confirm');
 
-        Route::get('/confirmed', function ($slug) {
-            session(['visitor_pass_active' => true]);
-            return view('frontend.exhibitions.tickets.confirmed', compact('slug'));
+        Route::get('/confirmed', function (string $slug, \App\Domain\Shared\Services\ExhibitionTicketConfirmedPageData $pageData) {
+            $data = $pageData->build($slug);
+
+            abort_unless($data, 404);
+
+            if ($data['visitor'] && $data['visitor']->payment_status === 'completed') {
+                session(['visitor_pass_active' => true]);
+            }
+
+            return view('frontend.exhibitions.tickets.confirmed', $data);
         })->name('confirmed');
 
         Route::get('/e-ticket', function ($slug) {
@@ -334,12 +349,12 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
 
     Route::get('/{slug}/booths/{companySlug}', [ExhibitionBoothController::class, 'show'])->name('booths.show');
 
-    Route::get('/{slug}', function ($slug) {
+    Route::get('/{slug}', function (string $slug, \App\Domain\Shared\Services\ExhibitionShowPageData $pageData) {
         $context = \App\Support\LiveContent::exhibitionShowContext($slug);
 
         abort_unless($context, 404);
 
-        return view('frontend.exhibitions.show', ['slug' => $slug] + $context);
+        return view('frontend.exhibitions.show', $pageData->build($slug, $context));
     })->name('show');
 
 });

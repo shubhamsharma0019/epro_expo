@@ -1,13 +1,17 @@
+@php
+    $activeNav = $activeNav ?? null;
+    $navLinkClass = fn (string $key) => ($activeNav === $key ? 'text-[#5726E8]' : 'text-[#071044]') . ' hover:text-[#5726E8]';
+@endphp
 <header class="sticky top-0 z-50 border-b border-[#EEF0F7] bg-white/90 backdrop-blur-xl">
     <div class="mx-auto flex max-w-[1440px] items-center justify-between px-4 py-4 sm:px-6 lg:px-8 lg:py-5">
         <x-shared.brand-logo href="{{ route('home') }}" mark-class="h-11 w-11 rounded-[16px] text-[20px] sm:h-[54px] sm:w-[54px] sm:rounded-[18px] sm:text-[24px]" title-class="text-[24px] text-[#071044] sm:text-[30px]" subtitle-class="text-[10px] text-[#8A94AD] sm:text-[12px]" />
 
         <nav class="hidden items-center gap-10 text-[14px] font-semibold lg:flex">
-            <a class="hover:text-[#5726E8]" href="{{ route('events.home') }}">Explore Events</a>
-            <a class="hover:text-[#5726E8]" href="{{ route('exhibitions.index') }}">Exhibitions</a>
-            <a class="hover:text-[#5726E8]" href="#features">Features</a>
-            <a class="hover:text-[#5726E8]" href="#pricing">Pricing</a>
-            <a class="hover:text-[#5726E8]" href="#about">About Us</a>
+            <a class="{{ $navLinkClass('events') }}" href="{{ route('events.home') }}">Explore Events</a>
+            <a class="{{ $navLinkClass('exhibitions') }}" href="{{ route('exhibitions.index') }}">Exhibitions</a>
+            <a class="{{ $navLinkClass('features') }}" href="{{ route('frontend.features') }}">Features</a>
+            <a class="{{ $navLinkClass('pricing') }}" href="{{ route('frontend.pricing') }}">Pricing</a>
+            <a class="{{ $navLinkClass('about') }}" href="{{ route('frontend.about') }}">About Us</a>
         </nav>
 
         <div class="hidden items-center gap-4 lg:flex">
@@ -21,11 +25,11 @@
 
     <div id="eventHomeMobileMenu" class="hidden border-t border-[#EEF0F7] bg-white px-4 py-5 sm:px-6 lg:hidden">
         <div class="flex flex-col gap-4 text-[15px] font-semibold">
-            <a href="{{ route('events.home') }}">Explore Events</a>
-            <a href="{{ route('exhibitions.index') }}">Exhibitions</a>
-            <a href="#features">Features</a>
-            <a href="#pricing">Pricing</a>
-            <a href="#about">About Us</a>
+            <a class="{{ $navLinkClass('events') }}" href="{{ route('events.home') }}">Explore Events</a>
+            <a class="{{ $navLinkClass('exhibitions') }}" href="{{ route('exhibitions.index') }}">Exhibitions</a>
+            <a class="{{ $navLinkClass('features') }}" href="{{ route('frontend.features') }}">Features</a>
+            <a class="{{ $navLinkClass('pricing') }}" href="{{ route('frontend.pricing') }}">Pricing</a>
+            <a class="{{ $navLinkClass('about') }}" href="{{ route('frontend.about') }}">About Us</a>
             <div class="grid grid-cols-1 gap-3 pt-2">
                 <a href="{{ route('events.home') }}" class="rounded-lg bg-[#5726E8] px-5 py-3 text-center font-bold text-white">Get Started</a>
             </div>
@@ -40,6 +44,10 @@
 
         menuButton?.addEventListener('click', () => {
             mobileMenu?.classList.toggle('hidden');
+        });
+
+        mobileMenu?.querySelectorAll('a').forEach((link) => {
+            link.addEventListener('click', () => mobileMenu.classList.add('hidden'));
         });
     })();
 </script>

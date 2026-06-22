@@ -27,6 +27,11 @@ class CompanyEventBrandingRequest extends FormRequest
             'cta_url' => ['nullable', 'url', 'max:255'],
             'social_links' => ['nullable', 'array'],
             'social_links.*' => ['nullable', 'url', 'max:255'],
+            'theme_sections' => ['nullable', 'array'],
+            'theme_sections.header' => ['nullable', 'boolean'],
+            'theme_sections.event_details' => ['nullable', 'boolean'],
+            'theme_sections.sponsors' => ['nullable', 'boolean'],
+            'theme_sections.footer' => ['nullable', 'boolean'],
             'action' => ['nullable', 'in:save,continue,reset'],
         ];
     }

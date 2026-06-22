@@ -9,16 +9,24 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen bg-white font-sans text-[#020617] antialiased">
+<body class="min-h-screen font-sans text-[#020617] antialiased" style="background: linear-gradient(135deg, #EEF3FF 0%, #FFF5EE 100%);">
 @php
     $flowContext = $flowContext ?? request('flow');
     $isEventTicketFlow = $flowContext === 'event_ticket';
     $isExhibitionTicketFlow = $flowContext === 'exhibition_ticket';
     $eventSlug = $eventSlug ?? request('event');
     $exhibitionSlug = $exhibitionSlug ?? request('exhibition');
+    $contextCard = $contextCard ?? [
+        'label' => 'Visitor Login',
+        'title' => 'Your Expo Dashboard',
+        'meta' => 'Tickets, passes, visits and enquiries in one place.',
+        'step' => 'Secure sign in',
+        'progress' => 100,
+        'icon' => 'fa-compass',
+    ];
 @endphp
-<main class="grid min-h-screen w-full overflow-hidden bg-white lg:grid-cols-[0.92fr_1.08fr]">
-    <section class="relative hidden overflow-hidden bg-[#EFF6FF] p-8 lg:flex lg:flex-col lg:justify-between">
+<main class="grid min-h-screen w-full overflow-hidden lg:grid-cols-[0.92fr_1.08fr]">
+    <section class="relative hidden overflow-hidden bg-[#EFF6FF]/80 p-8 backdrop-blur-[1px] lg:flex lg:flex-col lg:justify-between">
         <a href="{{ route('home') }}" class="flex items-center gap-2">
             <span class="grid grid-cols-2 gap-[3px]">
                 <i class="h-[10px] w-[10px] rounded-[2px] bg-[#2563EB]"></i>
@@ -26,7 +34,10 @@
                 <i class="h-[10px] w-[10px] rounded-[2px] bg-sky-400"></i>
                 <i class="h-[10px] w-[10px] rounded-[2px] bg-[#2563EB]"></i>
             </span>
-            <span class="text-[22px] font-bold text-[#020617]">EproExpo</span>
+            <span>
+                <span class="block text-[22px] font-bold leading-none text-[#020617]">EproExpo</span>
+                <span class="mt-1 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#64748B]">Event Visitor</span>
+            </span>
         </a>
 
         <div>
@@ -36,20 +47,29 @@
         </div>
 
         <div class="rounded-[14px] bg-white p-5 shadow-[0_12px_32px_rgba(15,23,42,0.05)]">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-[11px] font-semibold text-[#64748B]">Active Visitor Pass</p>
-                    <h2 class="mt-2 text-[22px] font-bold text-[#020617]">Global Tech Expo</h2>
+            <div class="flex items-center justify-between gap-4">
+                <div class="min-w-0">
+                    <p class="text-[11px] font-semibold text-[#64748B]">{{ $contextCard['label'] }}</p>
+                    <h2 class="mt-2 break-words text-[22px] font-bold text-[#020617]">{{ $contextCard['title'] }}</h2>
+                    @if (filled($contextCard['meta'] ?? null))
+                        <p class="mt-1 break-words text-[12px] font-medium leading-5 text-[#64748B]">{{ $contextCard['meta'] }}</p>
+                    @endif
                 </div>
-                <span class="grid h-12 w-12 place-items-center rounded-[10px] bg-[#2563EB] text-white"><i class="fa-regular fa-id-card"></i></span>
+                <span class="grid h-12 w-12 shrink-0 place-items-center rounded-[10px] bg-[#2563EB] text-white"><i class="fa-solid {{ $contextCard['icon'] }}"></i></span>
             </div>
-            <div class="mt-5 h-[7px] overflow-hidden rounded-full bg-blue-100">
-                <div class="h-full w-[85%] rounded-full bg-[#2563EB]"></div>
-            </div>
+            @if (($contextCard['progress'] ?? 100) < 100)
+                <div class="mt-4 flex items-center justify-between text-[11px] font-semibold text-[#64748B]">
+                    <span>{{ $contextCard['step'] }}</span>
+                    <span class="text-[#2563EB]">{{ $contextCard['progress'] }}%</span>
+                </div>
+                <div class="mt-2 h-[7px] overflow-hidden rounded-full bg-blue-100">
+                    <div class="h-full rounded-full bg-[#2563EB]" style="width: {{ min(100, max(8, (int) ($contextCard['progress'] ?? 100))) }}%"></div>
+                </div>
+            @endif
         </div>
     </section>
 
-    <section class="flex items-center justify-center px-5 py-10 sm:px-10">
+    <section class="flex items-center justify-center bg-white/90 px-5 py-10 backdrop-blur-sm sm:px-10">
         <div class="w-full max-w-[430px]">
             <div class="mb-9 lg:hidden">
                 <a href="{{ route('home') }}" class="flex items-center gap-2">
@@ -59,9 +79,22 @@
                         <i class="h-[10px] w-[10px] rounded-[2px] bg-sky-400"></i>
                         <i class="h-[10px] w-[10px] rounded-[2px] bg-[#2563EB]"></i>
                     </span>
-                    <span class="text-[22px] font-bold text-[#020617]">EproExpo</span>
+                    <span>
+                        <span class="block text-[22px] font-bold text-[#020617]">EproExpo</span>
+                        <span class="mt-1 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#64748B]">Event Visitor</span>
+                    </span>
                 </a>
             </div>
+
+            @if ($isEventTicketFlow || $isExhibitionTicketFlow)
+                <div class="mb-6 rounded-[14px] border border-[#E2E8F0] bg-[#EFF6FF] p-4 lg:hidden">
+                    <p class="text-[11px] font-semibold text-[#64748B]">{{ $contextCard['label'] }}</p>
+                    <h2 class="mt-2 break-words text-[18px] font-bold text-[#020617]">{{ $contextCard['title'] }}</h2>
+                    @if (filled($contextCard['meta'] ?? null))
+                        <p class="mt-1 break-words text-[12px] font-medium text-[#64748B]">{{ $contextCard['meta'] }}</p>
+                    @endif
+                </div>
+            @endif
 
             <p class="text-[12px] font-bold uppercase tracking-[0.18em] text-[#2563EB]">Welcome Back</p>
             <h2 class="mt-3 text-[34px] font-extrabold tracking-[-0.03em] text-[#020617]">User Login</h2>
@@ -80,7 +113,7 @@
                     <input name="password" type="password" required class="mt-2 h-[52px] w-full rounded-[8px] border border-[#E2E8F0] bg-[#F8FAFC] px-4 text-[14px] font-semibold outline-none transition focus:border-[#2563EB] focus:bg-white">
                 </label>
 
-                <div class="flex items-center justify-between gap-4 text-[13px] font-semibold text-[#64748B]">
+                <div class="flex flex-col gap-3 text-[13px] font-semibold text-[#64748B] sm:flex-row sm:items-center sm:justify-between">
                     <label class="flex items-center gap-2"><input type="checkbox" name="remember" class="rounded border-[#CBD5E1] text-[#2563EB]"> Remember me</label>
                     <a href="#" class="text-[#2563EB]">Forgot password?</a>
                 </div>

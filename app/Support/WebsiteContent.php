@@ -234,6 +234,35 @@ class WebsiteContent
         ];
     }
 
+    public static function sectionHeadings(string $page = 'home'): array
+    {
+        $row = self::publishedItems($page, 'section_headings')->first();
+
+        if (! $row) {
+            return self::defaultSectionHeadings();
+        }
+
+        $meta = json_decode((string) ($row->meta ?? '{}'), true) ?: [];
+
+        return array_merge(self::defaultSectionHeadings(), array_filter($meta, fn ($value) => $value !== null && $value !== ''));
+    }
+
+    public static function defaultSectionHeadings(): array
+    {
+        return [
+            'features_title' => 'Everything You Need, In One Platform',
+            'how_it_works_title' => 'How It Works',
+            'experience_title' => 'Virtual Exhibition Experience',
+            'partners_title' => 'Trusted by Organizations Worldwide',
+            'featured_events_title' => 'Featured Events',
+            'featured_events_subtitle' => 'Discover upcoming events curated for you.',
+            'featured_exhibitions_title' => 'Featured Exhibitions',
+            'featured_exhibitions_subtitle' => 'Explore live virtual expos and meet top companies.',
+            'get_started_label' => 'Get Started',
+            'get_started_url' => null,
+        ];
+    }
+
     public static function defaultCtaBenefits(): array
     {
         return [
