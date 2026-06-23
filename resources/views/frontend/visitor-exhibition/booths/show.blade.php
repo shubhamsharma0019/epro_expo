@@ -75,7 +75,7 @@
         <div class="grid gap-6 overflow-hidden rounded-[22px] border border-[#E7EAF3] bg-white p-6 shadow-[0_18px_44px_rgba(7,16,68,0.08)] lg:grid-cols-[1fr_420px] lg:p-8">
             <div class="min-w-0">
                 <p class="text-[13px] font-bold uppercase tracking-[0.12em] text-[#5b2eff]">Company booth</p>
-                <h1 class="mt-3 text-[38px] font-bold tracking-[-0.03em] text-[#071044] sm:text-[52px]">{{ $company }}</h1>
+                <h1 class="mt-3 text-[28px] font-bold tracking-[-0.03em] text-[#071044] sm:text-[38px] lg:text-[52px]">{{ $company }}</h1>
                 <p class="mt-4 max-w-[760px] text-[16px] font-medium leading-7 text-[#5A6480]">
                     {{ $profile?->tagline ?: $profile?->about_company ?: 'Visit this company booth to explore products, documents, media, demos, meeting slots and live interactions with the exhibitor team.' }}
                 </p>

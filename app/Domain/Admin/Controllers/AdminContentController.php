@@ -194,7 +194,7 @@ class AdminContentController extends Controller
                 ['name' => 'industry', 'label' => 'Industry', 'type' => 'text'],
                 ['name' => 'city', 'label' => 'City', 'type' => 'text'],
                 ['name' => 'country', 'label' => 'Country', 'type' => 'text'],
-                ['name' => 'password', 'label' => 'Password', 'type' => 'password', 'required' => true, 'value' => 'password'],
+                ['name' => 'password', 'label' => 'Password', 'type' => 'password', 'required' => true, 'placeholder' => 'Set company login password'],
                 [
                     'name' => 'status',
                     'label' => 'Status',

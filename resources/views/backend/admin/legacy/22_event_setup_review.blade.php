@@ -124,7 +124,7 @@
 
         <!-- Page Content (Scrollable) -->
         <div class="flex-1 overflow-y-auto overflow-x-hidden p-6 lg:p-8 main-scrollbar">
-<div class="mx-6 lg:mx-8 mt-6 bg-[#F4F2FF] border border-[#E6E1FF] rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"><div><h3 class="text-[#0B132C] font-bold">Event Logistics Review added</h3><p class="text-[13px] text-gray-600 mt-1">Speaker list, agenda, equipment, catering, security, insurance aur emergency contact review ke liye logistics module.</p></div><a href="{{ url('/admin/23_event_logistics_review') }}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-[#3723db] text-white text-[13px] font-semibold hover:bg-[#2b1bb7] transition-colors">Open Module <i class="ph ph-arrow-right ml-2"></i></a></div>
+<div class="mx-6 lg:mx-8 mt-6 bg-[#F4F2FF] border border-[#E6E1FF] rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"><div><h3 class="text-[#0B132C] font-bold">Event Logistics Review added</h3><p class="text-[13px] text-gray-600 mt-1">Logistics module for speaker list, agenda, equipment, catering, security, insurance, and emergency contact review.</p></div><a href="{{ url('/admin/23_event_logistics_review') }}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-[#3723db] text-white text-[13px] font-semibold hover:bg-[#2b1bb7] transition-colors">Open Module <i class="ph ph-arrow-right ml-2"></i></a></div>
 
             <div class="max-w-[1600px] mx-auto">
                 

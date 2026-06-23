@@ -52,6 +52,7 @@
                                     type="{{ $field['type'] ?? 'text' }}"
                                     name="{{ $field['name'] }}"
                                     value="{{ old($field['name'], $field['value'] ?? '') }}"
+                                    @if (! empty($field['placeholder'])) placeholder="{{ $field['placeholder'] }}" @endif
                                     @if (! empty($field['step'])) step="{{ $field['step'] }}" @endif
                                     class="h-11 w-full rounded-xl border border-gray-200 px-4 text-[14px] text-[#0B132C] outline-none transition focus:border-[#3723db] focus:ring-1 focus:ring-[#3723db]"
                                 >
@@ -60,7 +61,7 @@
                     @endforeach
                 </div>
 
-                <div class="flex justify-end gap-3 pt-2">
+                <div class="admin-form-actions flex justify-end gap-3 pt-2">
                     <a href="{{ url()->previous() }}" class="inline-flex h-11 items-center justify-center rounded-xl border border-gray-200 px-5 text-[14px] font-semibold text-[#0B132C] transition hover:bg-gray-50">
                         Cancel
                     </a>

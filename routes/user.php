@@ -1,6 +1,8 @@
 <?php
 
 use App\Domain\Shared\Controllers\Auth\UserAuthController;
+use App\Domain\Visitor\Controllers\UserPortalController;
+use App\Domain\Visitor\Controllers\UserTicketController;
 use App\Domain\Visitor\Controllers\VisitorDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -15,56 +17,32 @@ Route::prefix('user')->name('frontend.user.')->group(function () {
     Route::post('/register', [UserAuthController::class, 'register'])->name('register.store');
     Route::post('/logout', [UserAuthController::class, 'logout'])->name('logout');
 
-    Route::get('/dashboard', [VisitorDashboardController::class, 'index'])->name('dashboard');
+    Route::middleware('auth')->group(function () {
+        Route::get('/dashboard', [VisitorDashboardController::class, 'index'])->name('dashboard');
 
-    Route::prefix('tickets')->name('tickets.')->group(function () {
-        Route::get('/', [\App\Domain\Visitor\Controllers\UserTicketController::class, 'index'])->name('index');
+        Route::prefix('tickets')->name('tickets.')->group(function () {
+            Route::get('/', [UserTicketController::class, 'index'])->name('index');
+            Route::get('/exhibition/{id}', [UserTicketController::class, 'showExhibitionPass'])->name('exhibition.show');
+            Route::get('/exhibition/{id}/pass', [UserTicketController::class, 'downloadExhibitionPass'])->name('exhibition.pass');
+            Route::get('/{id}/e-ticket', [UserTicketController::class, 'download'])->name('e-ticket');
+            Route::get('/{id}', [UserTicketController::class, 'show'])->name('show');
+        });
 
-        Route::get('/{id}/e-ticket', [\App\Domain\Visitor\Controllers\UserTicketController::class, 'download'])->name('e-ticket');
+        Route::prefix('exhibition-tickets')->name('exhibition-tickets.')->group(function () {
+            Route::get('/', fn () => redirect()->route('frontend.user.tickets.index'))->name('index');
+            Route::get('/{id}/e-ticket', fn ($id) => redirect()->route('frontend.user.tickets.exhibition.pass', $id))->name('e-ticket');
+            Route::get('/{id}', fn ($id) => redirect()->route('frontend.user.tickets.exhibition.show', $id))->name('show');
+        });
 
-        Route::get('/{id}', [\App\Domain\Visitor\Controllers\UserTicketController::class, 'show'])->name('show');
+        Route::prefix('visits')->name('visits.')->group(function () {
+            Route::get('/', [UserPortalController::class, 'visits'])->name('index');
+            Route::get('/{id}', [UserPortalController::class, 'visitShow'])->name('show');
+        });
+
+        Route::get('/saved/exhibitions', [UserPortalController::class, 'savedExhibitions'])->name('saved.exhibitions');
+        Route::get('/booths/visited', [UserPortalController::class, 'visitedBooths'])->name('booths.visited');
+
+        Route::get('/profile', [UserPortalController::class, 'profile'])->name('profile');
+        Route::post('/profile', [UserPortalController::class, 'updateProfile'])->name('profile.update');
     });
-
-    Route::prefix('exhibition-tickets')->name('exhibition-tickets.')->group(function () {
-        Route::get('/', function () {
-            $tickets = auth()->check()
-                ? \App\Domain\Visitor\Models\VisitorTicket::where('user_id', auth()->id())
-                    ->with(['companyEvent', 'ticketType'])
-                    ->orderBy('created_at', 'desc')
-                    ->get()
-                : collect();
-
-            return view('frontend.user.tickets.index', compact('tickets'));
-        })->name('index');
-
-        Route::get('/{id}/e-ticket', function ($id) {
-            return redirect()->route('frontend.user.tickets.e-ticket', $id);
-        })->name('e-ticket');
-
-        Route::get('/{id}', function ($id) {
-            return redirect()->route('frontend.user.tickets.show', $id);
-        })->name('show');
-    });
-
-    Route::prefix('visits')->name('visits.')->group(function () {
-        Route::get('/', function () {
-            return view('frontend.user.visits.index');
-        })->name('index');
-
-        Route::get('/{id}', function ($id) {
-            return view('frontend.user.visits.show', compact('id'));
-        })->name('show');
-    });
-
-    Route::get('/saved/exhibitions', function () {
-        return view('frontend.user.saved.exhibitions');
-    })->name('saved.exhibitions');
-
-    Route::get('/booths/visited', function () {
-        return view('frontend.user.booths.visited');
-    })->name('booths.visited');
-
-    Route::get('/profile', function () {
-        return view('frontend.user.profile');
-    })->name('profile');
 });

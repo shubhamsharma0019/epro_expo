@@ -28,12 +28,12 @@ class VisitorDashboardController extends Controller
             $pendingSlug = $request->query('slug') ?? session('activeExhibitionSlug');
             $pendingExhibition = $pendingSlug ? Exhibition::where('slug', $pendingSlug)->first() : null;
             $hasCompletedPass = Visitor::query()
-                ->where('email', $userEmail)
+                ->whereRaw('LOWER(email) = ?', [strtolower($userEmail)])
                 ->when($pendingExhibition, fn ($query) => $query->where('exhibition_id', $pendingExhibition->id))
                 ->where('payment_status', 'completed')
                 ->exists();
 
-            if (! $hasCompletedPass) {
+            if (! $hasCompletedPass && $request->boolean('resume_exhibition_booking')) {
                 return redirect(session('exhibition_booking_path'));
             }
         }
@@ -44,7 +44,7 @@ class VisitorDashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $exhibitionPasses = Visitor::where('email', $userEmail)
+        $exhibitionPasses = Visitor::whereRaw('LOWER(email) = ?', [strtolower($userEmail)])
             ->with('exhibition')
             ->orderBy('created_at', 'desc')
             ->get();
@@ -174,10 +174,82 @@ class VisitorDashboardController extends Controller
 
         $recentActivities = $activities->sortByDesc('time')->take(8)->values();
 
+        $passes = collect();
+
+        foreach ($eventTickets as $ticket) {
+            $passes->push([
+                'type' => 'event',
+                'id' => $ticket->id,
+                'pass_type' => 'Event Ticket',
+                'name' => $ticket->companyEvent->title ?? $ticket->ticket_name ?? 'Event',
+                'date' => $ticket->companyEvent?->starts_at,
+                'ends_at' => $ticket->companyEvent?->ends_at,
+                'status' => $ticket->status,
+                'number' => $ticket->order_number,
+                'quantity' => $ticket->quantity,
+                'ticket_name' => $ticket->ticket_name,
+                'email' => $userEmail,
+            ]);
+        }
+
+        foreach ($exhibitionPasses as $pass) {
+            $passes->push([
+                'type' => 'exhibition',
+                'id' => $pass->id,
+                'pass_type' => 'Exhibition Pass',
+                'name' => $pass->exhibition->title ?? $pass->exhibition->name ?? 'Exhibition',
+                'date' => $pass->exhibition?->start_date,
+                'ends_at' => $pass->exhibition?->end_date,
+                'status' => $pass->payment_status === 'completed' ? 'confirmed' : $pass->payment_status,
+                'number' => $pass->booking_id,
+                'quantity' => 1,
+                'ticket_name' => 'Visitor Pass',
+                'email' => $pass->email,
+                'slug' => $pass->exhibition->slug ?? '',
+            ]);
+        }
+
+        $passes = $passes->map(function ($pass) use ($now) {
+            $date = $pass['date'];
+            $endsAt = $pass['ends_at'];
+
+            if ($endsAt && $endsAt->lt($now)) {
+                $category = 'completed';
+            } elseif ($date && $date->gt($now)) {
+                $category = 'upcoming';
+            } else {
+                $category = 'live';
+            }
+
+            $pass['category'] = $category;
+
+            return $pass;
+        })->sortBy(function ($pass) {
+            return match ($pass['category']) {
+                'upcoming' => 1,
+                'live' => 2,
+                default => 3,
+            };
+        })->values();
+
+        $statCards = [
+            ['label' => 'Event Tickets', 'value' => $eventTickets->count()],
+            ['label' => 'Exhibition Passes', 'value' => $exhibitionPasses->count()],
+            ['label' => 'Total Passes', 'value' => $totalTicketsCount],
+            ['label' => 'Pending Meetings', 'value' => $pendingMeetingsCount],
+        ];
+
+        $quickActions = [
+            ['label' => 'Browse Events', 'href' => url('/events/listings'), 'icon' => 'ph ph-calendar-blank'],
+            ['label' => 'Browse Exhibitions', 'href' => route('exhibitions.index'), 'icon' => 'ph ph-buildings'],
+            ['label' => 'My Passes', 'href' => route('frontend.user.tickets.index'), 'icon' => 'ph ph-ticket'],
+        ];
+
         return view('frontend.user.dashboard', [
             'user' => $user,
             'eventTickets' => $eventTickets,
             'exhibitionPasses' => $exhibitionPasses,
+            'passes' => $passes,
             'activeSlug' => $activeSlug,
             'totalTicketsCount' => $totalTicketsCount,
             'upcomingExhibitions' => $upcomingExhibitions,
@@ -188,6 +260,8 @@ class VisitorDashboardController extends Controller
             'completedEvents' => $completedEvents,
             'pendingMeetingsCount' => $pendingMeetingsCount,
             'recentActivities' => $recentActivities,
+            'statCards' => $statCards,
+            'quickActions' => $quickActions,
         ]);
     }
 }

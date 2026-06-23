@@ -25,7 +25,7 @@
     });
 @endphp
 
-<section class="visitor-flow-page max-w-[1500px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
+<section class="visitor-flow-page mx-auto w-full max-w-[1500px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
     <div class="visitor-flow-hero mb-7">
         <p class="text-[13px] font-semibold uppercase tracking-[0.12em] text-purple">Visitor workspace</p>
         <h1>Saved Booths</h1>

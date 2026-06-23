@@ -18,6 +18,15 @@ Route::get('/login', function () {
     return redirect()->route('frontend.user.login');
 })->name('login');
 
+if (app()->environment('local')) {
+    Route::prefix('setup/google-meet')->name('setup.google-meet.')->group(function () {
+        Route::get('/', [\App\Domain\Shared\Controllers\GoogleMeetSetupController::class, 'index'])->name('index');
+        Route::post('/credentials', [\App\Domain\Shared\Controllers\GoogleMeetSetupController::class, 'saveCredentials'])->name('credentials');
+        Route::get('/connect', [\App\Domain\Shared\Controllers\GoogleMeetSetupController::class, 'connect'])->name('connect');
+        Route::get('/callback', [\App\Domain\Shared\Controllers\GoogleMeetSetupController::class, 'callback'])->name('callback');
+    });
+}
+
 require __DIR__.'/user.php';
 require __DIR__.'/visitor.php';
 require __DIR__.'/admin.php';

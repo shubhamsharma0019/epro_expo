@@ -48,8 +48,9 @@
     body { font-family: Inter, sans-serif; }
   </style>
   @include('frontend.shared.partials.responsive-fixes')
+  @include('frontend.home.partials.mobile-styles')
 </head>
-<body class="bg-white text-navy antialiased">
+<body id="home-page" class="bg-white text-navy antialiased">
   <!-- Header -->
   <header class="sticky top-0 z-50 border-b border-[#EEF0F7] bg-white/90 backdrop-blur-xl">
     <div class="mx-auto flex max-w-[1440px] items-center justify-between px-4 py-4 sm:px-6 lg:px-8 lg:py-5">
@@ -90,21 +91,22 @@
 
   <!-- Hero -->
   <main>
-    <section class="relative overflow-hidden bg-white pb-4 lg:min-h-[620px] lg:pb-0">
+    <section class="home-hero relative overflow-hidden bg-white pb-4 lg:min-h-[620px] lg:pb-0">
       <img src="{{ $hero['image_url'] }}" alt="eproexpo virtual event building" class="absolute inset-y-0 right-0 hidden h-full w-[72%] object-cover object-right-top lg:block" />
-      <img src="{{ $hero['image_url'] }}" alt="eproexpo virtual event building" class="absolute inset-x-0 top-0 h-[260px] w-full object-cover object-center opacity-20 sm:h-[340px] lg:hidden" />
-      <div class="absolute inset-0" style="background: linear-gradient(90deg, #fff 0%, #fff 27%, rgba(255,255,255,0.98) 34%, rgba(255,255,255,0.82) 39%, rgba(255,255,255,0.46) 44%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0) 58%);"></div>
-      <div class="absolute inset-0 bg-gradient-to-b from-white/0 via-white/0 via-[76%] to-white/78"></div>
+      <img src="{{ $hero['image_url'] }}" alt="eproexpo virtual event building" class="home-hero-image-mobile absolute inset-x-0 top-0 h-[260px] w-full object-cover object-center opacity-20 sm:h-[340px] lg:hidden" />
+      <div class="home-hero-overlay-desktop absolute inset-0 hidden lg:block" style="background: linear-gradient(90deg, #fff 0%, #fff 27%, rgba(255,255,255,0.98) 34%, rgba(255,255,255,0.82) 39%, rgba(255,255,255,0.46) 44%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0) 58%);"></div>
+      <div class="home-hero-overlay-mobile absolute inset-0 lg:hidden"></div>
+      <div class="absolute inset-0 bg-gradient-to-b from-white/0 via-white/0 via-[76%] to-white/78 lg:block"></div>
       <div class="relative z-10 mx-auto grid max-w-[1440px] items-start gap-10 px-4 pb-12 pt-7 sm:px-6 sm:pb-20 lg:min-h-[384px] lg:grid-cols-[0.76fr_1.24fr] lg:px-8 lg:pb-0 lg:pt-7">
-        <div class="relative z-10">
-          <h1 class="max-w-[555px] text-[38px] font-black leading-[1.02] tracking-[-0.045em] text-navy min-[420px]:text-[44px] sm:text-[62px] sm:leading-[0.97] lg:text-[68px]">
+        <div class="relative z-10 min-w-0">
+          <h1 class="home-hero-title max-w-[555px] text-[38px] font-black leading-[1.02] tracking-[-0.045em] text-navy min-[420px]:text-[44px] sm:text-[62px] sm:leading-[0.97] lg:text-[68px]">
             {{ $hero['title_line_1'] }}<br />{{ $hero['title_line_2'] }}<br />
             <span class="bg-gradient-to-r from-[#6D28D9] to-[#B735D7] bg-clip-text text-transparent">{{ $hero['title_highlight'] }}</span>
           </h1>
-          <p class="mt-5 max-w-[520px] text-[15px] font-medium leading-[1.65] text-[#1F2B55] sm:text-[17px] sm:leading-[1.55]">
+          <p class="home-hero-copy mt-5 max-w-[520px] text-[15px] font-medium leading-[1.65] text-[#1F2B55] sm:text-[17px] sm:leading-[1.55]">
             {{ $hero['subtitle'] }}
           </p>
-          <div class="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-5">
+          <div class="home-hero-actions mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-5">
             <a href="{{ $hero['button_1_url'] ?? route('events.home') }}" class="inline-flex w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-[#6D28D9] to-[#4B16D8] px-6 py-4 text-[15px] font-bold text-white shadow-[0_14px_30px_rgba(91,46,255,0.28)] sm:w-auto sm:px-7 sm:text-[16px]">
               <i class="far fa-calendar-alt text-lg"></i> {{ $hero['button_1_label'] ?? 'Explore Events' }}
             </a>
@@ -137,12 +139,14 @@
               </div>
             @endforeach
           </div>
-          <div class="grid grid-cols-2 gap-2 rounded-2xl bg-white p-3 shadow-soft min-[480px]:grid-cols-3 sm:grid-cols-6 sm:p-4">
+          <div class="home-pills-wrap">
+            <div class="home-pills-grid grid grid-cols-2 gap-2 rounded-2xl bg-white p-3 shadow-soft min-[480px]:grid-cols-3 sm:grid-cols-6 sm:p-4">
             @foreach ($featurePills as $pill)
               <div class="text-center text-[12px] font-semibold text-gray-700 hover:text-[#6D28D9] cursor-pointer transition-colors">
                 <div class="text-[20px] mb-1.5"><i class="{{ $pill['icon'] ?? 'far fa-circle' }}"></i></div>{{ $pill['title'] ?? '' }}
               </div>
             @endforeach
+            </div>
           </div>
         </div>
       </div>
@@ -156,9 +160,9 @@
           <div class="mx-auto mt-3 h-[2px] w-[58px] rounded-full bg-gradient-to-r from-[#6D28D9] via-[#C640CF] to-[#FF9B41]"></div>
         </div>
 
-        <div class="mt-6 grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+        <div class="home-features-grid mt-6 grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
           @foreach ($features as $feature)
-            <article class="min-h-[248px] rounded-[10px] border border-[#E7EAF3] bg-white px-4 py-6 text-center shadow-[0_8px_22px_rgba(7,16,68,0.06)] transition-transform hover:-translate-y-1">
+            <article class="home-feature-card min-h-[248px] rounded-[10px] border border-[#E7EAF3] bg-white px-4 py-6 text-center shadow-[0_8px_22px_rgba(7,16,68,0.06)] transition-transform hover:-translate-y-1">
               <span class="mx-auto grid h-[52px] w-[52px] place-items-center rounded-full text-[24px] text-white" style="background-color: {{ $feature['color'] ?? '#8B2DE8' }}"><i class="{{ $feature['icon'] ?? 'far fa-circle' }}"></i></span>
               <h3 class="mt-5 text-[15px] font-extrabold leading-snug text-[#071044]">{!! nl2br(e($feature['title'] ?? '')) !!}</h3>
               <p class="mt-4 text-[11px] font-semibold leading-[1.75] text-[#25305B]">{{ $feature['body'] ?? '' }}</p>
@@ -171,13 +175,13 @@
     <!-- Experience -->
     <section id="exhibitions" class="bg-white px-4 py-8 sm:px-6 lg:px-8">
       <div class="mx-auto grid max-w-[1440px] gap-6 lg:grid-cols-[300px_1fr]">
-        <aside class="relative z-10 overflow-hidden rounded-[14px] bg-[#071A55] px-5 py-7 text-white shadow-[0_14px_34px_rgba(7,16,68,0.18)]">
+        <aside class="home-steps-panel relative z-10 overflow-hidden rounded-[14px] bg-[#071A55] px-5 py-7 text-white shadow-[0_14px_34px_rgba(7,16,68,0.18)]">
           <h2 class="text-center text-[21px] font-extrabold leading-none">How It Works</h2>
           <div class="relative mt-8 space-y-7">
             <div class="absolute bottom-10 left-[31px] top-9 border-l-2 border-dashed border-white/22"></div>
             @foreach ($steps as $index => $step)
-              <div class="relative grid grid-cols-[64px_1fr] gap-5">
-                <span class="relative z-10 grid h-[62px] w-[62px] place-items-center rounded-full text-[26px] text-white shadow-[0_8px_20px_rgba(0,0,0,0.15)]" style="background-color: {{ $step['color'] ?? '#8B2DE8' }}"><i class="{{ $step['icon'] ?? 'fas fa-circle' }}"></i></span>
+              <div class="home-step-item relative grid grid-cols-[64px_1fr] gap-5">
+                <span class="home-step-icon relative z-10 grid h-[62px] w-[62px] place-items-center rounded-full text-[26px] text-white shadow-[0_8px_20px_rgba(0,0,0,0.15)]" style="background-color: {{ $step['color'] ?? '#8B2DE8' }}"><i class="{{ $step['icon'] ?? 'fas fa-circle' }}"></i></span>
                 <div class="pt-1">
                   <div class="flex items-center gap-3"><span class="grid h-7 w-7 place-items-center rounded-full bg-white text-[14px] font-extrabold text-[#6D28D9]">{{ $step['step'] ?? ($index + 1) }}</span><h3 class="text-[15px] font-extrabold">{{ $step['title'] ?? '' }}</h3></div>
                   <p class="mt-2 text-[12px] font-medium leading-[1.55] text-white/88">{{ $step['body'] ?? '' }}</p>
@@ -192,7 +196,7 @@
           
           <div class="flex flex-col gap-6 xl:flex-row xl:items-start">
             <div class="flex-1 overflow-hidden rounded-2xl border border-[#DCE1EE] bg-[#F8F9FD] shadow-card" id="experience-preview-container">
-              <div class="flex gap-2 overflow-x-auto border-b border-[#DCE1EE] px-4 py-3 text-[13px] font-bold sm:px-8 sm:py-4">
+              <div class="home-tab-row flex gap-2 overflow-x-auto border-b border-[#DCE1EE] px-4 py-3 text-[13px] font-bold sm:px-8 sm:py-4">
                 @foreach ($experienceTabs as $index => $tab)
                   <button class="rounded-lg {{ $index === 0 ? 'bg-[#6D28D9] text-white shadow active' : 'transition-colors hover:bg-white' }} px-5 py-2.5 sm:px-6 sm:py-3 tab-btn" data-img="{{ $tab['image_url'] ?? '' }}">{{ $tab['title'] ?? '' }}</button>
                 @endforeach
@@ -211,7 +215,7 @@
               <img src="{{ $boothHighlight['image_url'] ?? asset('images/home/booth-preview-new.png') }}" alt="{{ $boothHighlight['company_name'] ?? 'Exhibitor' }} booth" class="h-[120px] w-full rounded-lg object-cover" />
               <h3 class="mt-5 text-[15px] font-extrabold">{{ $boothHighlight['tagline'] ?? '' }}</h3>
               <p class="mt-3 text-[13px] font-medium leading-6 text-[#1F2B55]">{{ $boothHighlight['description'] ?? '' }}</p>
-              <div class="mt-5 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2">
+              <div class="home-booth-actions mt-5 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2">
                 <a href="{{ $boothHighlight['link_url'] ?? '#' }}" class="rounded-lg bg-[#6D28D9] hover:bg-[#5726E8] px-3 py-3 text-[12px] font-bold text-white transition-colors text-center block"><i class="far fa-comment-dots mr-1"></i> Chat Now</a>
                 <a href="{{ $boothHighlight['link_url'] ?? '#' }}" class="rounded-lg border border-[#DCE1EE] hover:bg-[#F8F7FF] px-3 py-3 text-[12px] font-bold transition-colors text-center block"><i class="far fa-file-alt mr-1"></i> View Brochure</a>
               </div>
@@ -226,7 +230,7 @@
     <section class="bg-white px-4 pb-4 pt-7 sm:px-6 lg:px-8">
       <div class="mx-auto max-w-[1440px] text-center">
         <p class="text-[15px] font-extrabold text-[#071044]">Trusted by Organizations Worldwide</p>
-        <div class="mt-5 flex flex-wrap items-center justify-center gap-x-7 gap-y-4 text-[17px] font-bold text-[#8C91A0] sm:gap-x-12 sm:gap-y-5 sm:text-[23px]">
+        <div class="home-partners-row mt-5 flex flex-wrap items-center justify-center gap-x-7 gap-y-4 text-[17px] font-bold text-[#8C91A0] sm:gap-x-12 sm:gap-y-5 sm:text-[23px]">
           @foreach ($partners as $partner)
             @php($style = $partner['meta']['style'] ?? null)
             @if ($style === 'unilever')
@@ -260,7 +264,7 @@
             <a class="w-full rounded-xl border border-white/55 px-7 py-4 text-center text-[15px] font-extrabold transition-colors hover:bg-white/10 sm:w-auto sm:px-12" href="{{ $cta['button_2_url'] ?? route('company.home') }}">{{ $cta['button_2_label'] ?? 'Exhibit Your Company' }}</a>
           </div>
         </div>
-        <div class="grid gap-5 px-5 pb-8 pt-2 text-[14px] font-semibold sm:grid-cols-2 sm:px-8 lg:grid-cols-4 lg:gap-7 lg:px-[180px]">
+        <div class="home-cta-benefits grid gap-5 px-5 pb-8 pt-2 text-[14px] font-semibold sm:grid-cols-2 sm:px-8 lg:grid-cols-4 lg:gap-7 lg:px-[180px]">
           @foreach ($ctaBenefits as $benefit)
             <div class="flex items-center gap-4">
               <span class="flex h-10 w-10 items-center justify-center text-[27px] text-white/85"><i class="{{ $benefit['icon'] ?? 'far fa-check-square' }}"></i></span>
@@ -273,7 +277,7 @@
         </div>
       </div>
 
-      <footer class="mx-auto max-w-[1440px] bg-[#071044] px-5 py-6 text-white sm:px-8 lg:px-10">
+      <footer class="home-footer-wrap mx-auto max-w-[1440px] bg-[#071044] px-5 py-6 text-white sm:px-8 lg:px-10">
         <div class="flex flex-col items-center justify-between gap-6 text-center lg:flex-row lg:text-left">
           <div class="rounded-2xl bg-white px-3 py-2">
             <x-shared.brand-logo href="{{ route('home') }}" mark-class="h-10 w-10 rounded-[14px] text-[19px]" title-class="text-[23px] text-[#071044]" subtitle-class="text-[10px] text-[#8A94AD]" />

@@ -450,7 +450,7 @@
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h2 class="text-xl font-bold text-[#0B132C]">Enterprise Admin Control Modules</h2>
-                            <p class="text-[13px] text-gray-500 mt-1">Flow diagrams ke according missing 10 admin modules yahan add kiye gaye hain.</p>
+                            <p class="text-[13px] text-gray-500 mt-1">10 missing admin modules from the flow diagrams have been added here.</p>
                         </div>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">

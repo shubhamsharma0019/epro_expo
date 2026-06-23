@@ -489,22 +489,27 @@ class VisitorExhibitionController extends Controller
 
     public function savedBooths(string $slug): View
     {
+        $isPassActive = $this->isPassActive($slug);
         $exhibition = $this->resolveExhibition($slug);
         $visitor = $this->resolveVisitor($exhibition);
         $savedBoothIds = $this->resolveBookmarkedBoothIds($visitor);
 
-        $savedBooths = BoothBooking::query()
-            ->with(['company', 'boothProfile', 'hall', 'booth'])
-            ->when($exhibition, fn (Builder $query) => $query->where('exhibition_id', $exhibition->id))
-            ->when($savedBoothIds->isNotEmpty(), fn (Builder $query) => $query->whereIn('id', $savedBoothIds))
-            ->where('payment_status', 'paid')
-            ->whereIn('booking_status', ['confirmed', 'active'])
-            ->where('admin_status', 'approved')
-            ->whereIn('booth_setup_status', ['published', 'approved', 'live'])
-            ->latest()
-            ->get()
-            ->filter(fn (BoothBooking $booking) => filled($booking->boothProfile?->company_name ?: $booking->company?->company_name ?: $booking->company?->name))
-            ->values();
+        if ($savedBoothIds->isEmpty()) {
+            $savedBooths = collect();
+        } else {
+            $savedBooths = BoothBooking::query()
+                ->with(['company', 'boothProfile', 'hall', 'booth'])
+                ->when($exhibition, fn (Builder $query) => $query->where('exhibition_id', $exhibition->id))
+                ->whereIn('id', $savedBoothIds)
+                ->where('payment_status', 'paid')
+                ->whereIn('booking_status', ['confirmed', 'active'])
+                ->where('admin_status', 'approved')
+                ->whereIn('booth_setup_status', ['published', 'approved', 'live'])
+                ->latest()
+                ->get()
+                ->filter(fn (BoothBooking $booking) => filled($booking->boothProfile?->company_name ?: $booking->company?->company_name ?: $booking->company?->name))
+                ->values();
+        }
 
         return view('frontend.visitor-exhibition.booths.saved', [
             'slug' => $slug,
@@ -515,6 +520,7 @@ class VisitorExhibitionController extends Controller
 
     public function meetings(string $slug): View
     {
+        $isPassActive = $this->isPassActive($slug);
         $exhibition = LiveContent::exhibitionQuery()->where('slug', $slug)->first()
             ?: Exhibition::where('slug', $slug)->first();
         $bookingId = request()->query('booking_id') ?: session('selected_visitor_booking_id');
@@ -617,6 +623,7 @@ class VisitorExhibitionController extends Controller
 
     public function sessions(string $slug): View
     {
+        $isPassActive = $this->isPassActive($slug);
         $exhibition = LiveContent::exhibitionQuery()->where('slug', $slug)->first();
         $visitor = $this->resolveVisitor($exhibition);
 
@@ -686,6 +693,7 @@ class VisitorExhibitionController extends Controller
 
     public function notifications(string $slug): View
     {
+        $isPassActive = $this->isPassActive($slug);
         $exhibition = $this->resolveExhibition($slug);
         $visitor = $this->resolveVisitor($exhibition);
 
@@ -698,6 +706,7 @@ class VisitorExhibitionController extends Controller
 
     public function chat(string $slug, string $companySlug = null): View
     {
+        $isPassActive = $this->isPassActive($slug);
         $exhibition = $this->resolveExhibition($slug);
         $visitor = $this->resolveVisitor($exhibition);
 
@@ -783,6 +792,7 @@ class VisitorExhibitionController extends Controller
 
     public function hallsIndex(string $slug): View
     {
+        $isPassActive = $this->isPassActive($slug);
         $exhibition = $this->resolveExhibition($slug);
 
         $halls = collect();
@@ -810,6 +820,7 @@ class VisitorExhibitionController extends Controller
 
     public function hallsShow(string $slug, string $hallSlug): View
     {
+        $isPassActive = $this->isPassActive($slug);
         $exhibition = $this->resolveExhibition($slug);
 
         $hall = null;

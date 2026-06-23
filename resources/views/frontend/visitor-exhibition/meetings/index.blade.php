@@ -5,7 +5,7 @@
 @section('content')
 @include('frontend.visitor-exhibition.shared.flow-styles')
 
-<section class="visitor-flow-page max-w-[1500px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
+<section class="visitor-flow-page mx-auto w-full max-w-[1500px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
     <div class="visitor-flow-hero mb-7">
         <p class="text-[13px] font-semibold uppercase tracking-[0.12em] text-purple">Visitor schedule</p>
         <h1 class="mt-3 text-[32px] font-semibold tracking-[-0.8px] text-navy sm:text-[40px]">My Meetings</h1>

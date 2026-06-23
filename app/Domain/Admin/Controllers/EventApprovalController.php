@@ -69,8 +69,8 @@ class EventApprovalController extends Controller
             'pageDescription' => 'Review company event publish requests before they go live.',
             'search' => '',
             'status' => $status,
-            'createUrl' => route('admin.event-approvals.preview'),
-            'createLabel' => 'Preview Layout',
+            'createUrl' => null,
+            'createLabel' => null,
             'stats' => [
                 ['label' => 'Total Requests', 'value' => CompanyEventPublishRequest::count(), 'tone' => 'indigo'],
                 ['label' => 'Pending', 'value' => CompanyEventPublishRequest::where('status', 'pending')->count(), 'tone' => 'amber'],
@@ -113,6 +113,23 @@ class EventApprovalController extends Controller
         return view('backend.admin.event-approvals.show', [
             'publishRequest' => $publishRequest->load(['company', 'companyEvent.branding', 'companyEvent.ticketTypes']),
         ]);
+    }
+
+    public function preview(): RedirectResponse
+    {
+        $publishRequest = CompanyEventPublishRequest::query()
+            ->where('status', 'pending')
+            ->latest()
+            ->first()
+            ?? CompanyEventPublishRequest::query()->latest()->first();
+
+        if ($publishRequest) {
+            return redirect()->route('admin.event-approvals.show', $publishRequest);
+        }
+
+        return redirect()
+            ->route('admin.event-approvals.index')
+            ->with('status', 'No event approval requests available to review yet.');
     }
 
     public function approve(CompanyEventPublishRequest $publishRequest): RedirectResponse

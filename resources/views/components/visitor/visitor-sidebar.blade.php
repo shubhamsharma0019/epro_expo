@@ -1,146 +1,128 @@
 @php
-    $activeSlug = request()->route('slug') 
-        ?? session('activeExhibitionSlug') 
-        ?? \App\Domain\Event\Models\Exhibition::orderBy('start_date')->first()?->slug 
-        ?? 'global-tech-expo-2024';
+    $completedPass = auth()->check()
+        ? \App\Domain\Visitor\Models\Visitor::query()
+            ->whereRaw('LOWER(email) = ?', [strtolower(auth()->user()->email)])
+            ->where('payment_status', 'completed')
+            ->with('exhibition')
+            ->latest()
+            ->first()
+        : null;
 
-    $exhibition = \App\Domain\Event\Models\Exhibition::where('slug', $activeSlug)->first();
-    $visitor = null;
-    if (auth()->check() && $exhibition) {
-        $visitor = \App\Domain\Visitor\Models\Visitor::where('exhibition_id', $exhibition->id)
-            ->where('email', auth()->user()->email)
-            ->orderBy('created_at', 'desc')
-            ->first();
-    }
-    
-    $hasExhibitionPass = $visitor ? $visitor->payment_status === 'completed' : false;
-    $passFlowHref = $exhibition ? route('exhibitions.tickets.select', $activeSlug) : route('frontend.user.dashboard');
-    $passFlowLocked = $exhibition && auth()->check() && ! $hasExhibitionPass && session('exhibition_booking_path');
+    $routeSlug = request()->route('slug');
+    $hubSlug = $routeSlug ?? $completedPass?->exhibition?->slug ?? session('activeExhibitionSlug');
+    $hasExhibitionPass = $completedPass !== null;
+    $showExhibitionLinks = filled($hubSlug) && ($hasExhibitionPass || filled($routeSlug));
 
-    // Define menu items
-    $dashboardLink = ['Dashboard', $passFlowLocked ? $passFlowHref : route('frontend.user.dashboard'), request()->routeIs('frontend.user.dashboard'), 'fa-solid fa-chart-pie'];
-
-    $exhibitionLinks = [];
-    if ($exhibition) {
-        $exhibitionLinks = [
-            ['Exhibition Lobby', route('exhibitions.visit', $activeSlug), request()->routeIs('exhibitions.visit'), 'fa-solid fa-door-open'],
-            ['Companies', route('exhibitions.visitor.companies', $activeSlug), request()->routeIs('exhibitions.visitor.companies*'), 'fa-solid fa-store'],
-            ['Halls & Map', route('exhibitions.visitor.floor-map', $activeSlug), request()->routeIs('exhibitions.visitor.floor-map') || request()->routeIs('exhibitions.halls.*') || request()->routeIs('exhibitions.visitor-halls.*'), 'fa-regular fa-map'],
-            ['Sessions', route('exhibitions.visitor.sessions', $activeSlug), request()->routeIs('exhibitions.visitor.sessions'), 'fa-regular fa-circle-play'],
-            ['My Meetings', route('exhibitions.visitor.meetings', $activeSlug), request()->routeIs('exhibitions.visitor.meetings'), 'fa-regular fa-calendar-check'],
-            ['Notifications', route('exhibitions.visitor.notifications', $activeSlug), request()->routeIs('exhibitions.visitor.notifications'), 'fa-regular fa-bell'],
-            ['QR Pass', $passFlowLocked ? $passFlowHref : route('exhibitions.visitor.qr-pass', $activeSlug), request()->routeIs('exhibitions.visitor.qr-pass'), 'fa-solid fa-qrcode'],
-        ];
-    }
-
-    $lowerPriorityLinks = [
-        ['My Passes', $passFlowLocked ? $passFlowHref : route('frontend.user.tickets.index'), request()->routeIs('frontend.user.tickets.*') || request()->routeIs('frontend.user.exhibition-tickets.*'), 'fa-solid fa-ticket'],
-        ['Upcoming Events', url('/events/listings'), request()->is('events/listings*'), 'fa-regular fa-calendar-days'],
-        ['My Bookings', url('/exhibitions/booking/my-bookings'), request()->is('exhibitions/booking/my-bookings*'), 'fa-solid fa-calendar-check'],
-        ['Profile', route('frontend.user.profile'), request()->routeIs('frontend.user.profile'), 'fa-regular fa-user'],
+    $mainLinks = [
+        ['Dashboard', route('frontend.user.dashboard'), 'ph-chart-pie-slice'],
+        ['My Passes', route('frontend.user.tickets.index'), 'ph-ticket'],
     ];
+
+    $exhibitionLinks = $showExhibitionLinks ? [
+        ['Exhibition Lobby', route('exhibitions.visit', $hubSlug), 'ph-door-open'],
+        ['Companies', route('exhibitions.visitor.companies', $hubSlug), 'ph-storefront'],
+        ['Sessions', route('exhibitions.visitor.sessions', $hubSlug), 'ph-play-circle'],
+        ['My Meetings', route('exhibitions.visitor.meetings', $hubSlug), 'ph-calendar-check'],
+    ] : [];
+
+    $accountLinks = [
+        ['Profile', route('frontend.user.profile'), 'ph-user'],
+    ];
+
+    $isActive = function (string $href): bool {
+        $path = parse_url($href, PHP_URL_PATH) ?? $href;
+        $current = request()->path();
+
+        if ($path === '/user/dashboard' || str_ends_with($path, '/user/dashboard')) {
+            return request()->routeIs('frontend.user.dashboard');
+        }
+
+        return $current === ltrim($path, '/') || str_starts_with($current, ltrim($path, '/').'/');
+    };
 @endphp
 
-<div class="flex h-full min-h-0 w-full flex-col overflow-hidden bg-white font-sans text-[#34405F] border-r border-[#E7EAF3]">
-    <!-- Logo Section -->
-    <div class="py-4 px-5 flex items-center justify-between shrink-0">
-        <x-shared.brand-logo 
-            href="{{ $passFlowLocked ? $passFlowHref : route('frontend.user.dashboard') }}" 
-            subtitle="VISITOR PANEL" 
-            mark-class="h-9 w-9 rounded-xl text-[16px]" 
-            title-class="text-[20px] text-[#071044]" 
-            subtitle-class="text-[9px] text-[#8A94AD]" 
+<aside id="user-sidebar-aside" class="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#0b1739] font-sans text-[#a0aabf]">
+    <div class="flex shrink-0 items-center justify-between border-b border-white/10 px-5 py-5">
+        <x-shared.brand-logo
+            href="{{ route('frontend.user.dashboard') }}"
+            subtitle="VISITOR PORTAL"
+            mark-class="h-10 w-10 rounded-[14px] text-[18px]"
+            title-class="text-[20px] text-white"
+            subtitle-class="text-[10px] text-[#a0aabf]"
         />
-        <button type="button" data-user-sidebar-close data-sidebar-close data-visitor-sidebar-close class="flex h-8 w-8 items-center justify-center rounded-xl border border-[#E7EAF3] text-[#071044] lg:hidden hover:bg-[#F8FAFF]">
-            <i class="fa-solid fa-xmark text-md"></i>
+        <button type="button" data-user-sidebar-close data-sidebar-close class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-white lg:hidden">
+            <i class="ph ph-x text-lg"></i>
         </button>
     </div>
 
-    <!-- Navigation Menu -->
-    <nav class="flex-1 overflow-y-auto px-3 pb-4 custom-scrollbar">
+    <nav class="flex-1 overflow-y-auto px-3 py-4">
         <ul class="space-y-1">
-            <!-- Dashboard (Priority 1) -->
-            <li>
-                <a href="{{ $dashboardLink[1] }}" class="flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors group {{ $dashboardLink[2] ? 'bg-[#F4F0FF] text-[#5b2eff] font-semibold' : 'text-[#475569] hover:bg-[#F8FAFF] hover:text-[#5b2eff]' }}">
-                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md {{ $dashboardLink[2] ? 'bg-[#5b2eff] text-white' : 'bg-[#F8FAFF] text-[#8A94AD] group-hover:bg-[#5b2eff]/10 group-hover:text-[#5b2eff]' }}">
-                        <i class="{{ $dashboardLink[3] }} text-[12px]"></i>
-                    </span>
-                    <span class="font-medium text-[13px]">{{ $dashboardLink[0] }}</span>
-                    @if ($dashboardLink[2])
-                        <span class="ml-auto h-1.5 w-1.5 rounded-full bg-[#5b2eff]"></span>
-                    @endif
-                </a>
-            </li>
+            @foreach ($mainLinks as [$label, $href, $icon])
+                <li>
+                    <a href="{{ $href }}" @class([
+                        'flex items-center gap-3 rounded-[10px] px-3 py-2.5 transition-colors',
+                        'bg-[#3723db] text-white' => $isActive($href),
+                        'hover:bg-white/5 hover:text-white' => ! $isActive($href),
+                    ])>
+                        <i class="{{ $icon }} text-[20px]"></i>
+                        <span class="text-[14px] font-medium">{{ $label }}</span>
+                    </a>
+                </li>
+            @endforeach
 
-            <!-- Active Exhibition Section (Priority 2) -->
-            @if ($exhibition)
-                @foreach ($exhibitionLinks as [$label, $href, $active, $icon])
+            @if ($showExhibitionLinks)
+                <li class="pt-3">
+                    <p class="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">Exhibition</p>
+                </li>
+                @foreach ($exhibitionLinks as [$label, $href, $icon])
                     <li>
-                        <a href="{{ $href }}" class="flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors group {{ $active ? 'bg-[#F4F0FF] text-[#5b2eff] font-semibold' : 'text-[#475569] hover:bg-[#F8FAFF] hover:text-[#5b2eff]' }}">
-                            <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md {{ $active ? 'bg-[#5b2eff] text-white' : 'bg-[#F8FAFF] text-[#8A94AD] group-hover:bg-[#5b2eff]/10 group-hover:text-[#5b2eff]' }}">
-                                <i class="{{ $icon }} text-[12px]"></i>
-                            </span>
-                            <span class="font-medium text-[13px]">{{ $label }}</span>
-                            @if ($active)
-                                <span class="ml-auto h-1.5 w-1.5 rounded-full bg-[#5b2eff]"></span>
-                            @endif
+                        <a href="{{ $href }}" @class([
+                            'flex items-center gap-3 rounded-[10px] px-3 py-2.5 transition-colors',
+                            'bg-[#3723db] text-white' => $isActive($href),
+                            'hover:bg-white/5 hover:text-white' => ! $isActive($href),
+                        ])>
+                            <i class="{{ $icon }} text-[20px]"></i>
+                            <span class="text-[14px] font-medium">{{ $label }}</span>
                         </a>
                     </li>
                 @endforeach
             @endif
 
-            <!-- Lower Priority Section (Priority 3) -->
-            @foreach ($lowerPriorityLinks as [$label, $href, $active, $icon])
+            <li class="pt-3">
+                <p class="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">Account</p>
+            </li>
+            @foreach ($accountLinks as [$label, $href, $icon])
                 <li>
-                    <a href="{{ $href }}" class="flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors group {{ $active ? 'bg-[#F4F0FF] text-[#5b2eff] font-semibold' : 'text-[#475569] hover:bg-[#F8FAFF] hover:text-[#5b2eff]' }}">
-                        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md {{ $active ? 'bg-[#5b2eff] text-white' : 'bg-[#F8FAFF] text-[#8A94AD] group-hover:bg-[#5b2eff]/10 group-hover:text-[#5b2eff]' }}">
-                            <i class="{{ $icon }} text-[12px]"></i>
-                        </span>
-                        <span class="font-medium text-[13px]">{{ $label }}</span>
-                        @if ($active)
-                            <span class="ml-auto h-1.5 w-1.5 rounded-full bg-[#5b2eff]"></span>
-                        @endif
+                    <a href="{{ $href }}" @class([
+                        'flex items-center gap-3 rounded-[10px] px-3 py-2.5 transition-colors',
+                        'bg-[#3723db] text-white' => $isActive($href),
+                        'hover:bg-white/5 hover:text-white' => ! $isActive($href),
+                    ])>
+                        <i class="{{ $icon }} text-[20px]"></i>
+                        <span class="text-[14px] font-medium">{{ $label }}</span>
                     </a>
                 </li>
             @endforeach
+        </ul>
+    </nav>
 
-            <!-- Account / Preferences -->
-            <li class="border-t border-[#E7EAF3]/80 pt-2.5 mt-2.5">
-                <a href="{{ url('/') }}" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[#475569] hover:bg-[#F8FAFF] hover:text-[#5b2eff] transition-colors group">
-                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#F8FAFF] text-[#8A94AD] group-hover:bg-[#5b2eff]/10 group-hover:text-[#5b2eff]">
-                        <i class="fa-solid fa-globe text-[12px]"></i>
-                    </span>
-                    <span class="font-medium text-[13px]">Back to Website</span>
+    <div class="border-t border-white/10 px-3 py-4">
+        <ul class="space-y-1">
+            <li>
+                <a href="{{ url('/') }}" class="flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[14px] font-medium transition-colors hover:bg-white/5 hover:text-white">
+                    <i class="ph ph-globe text-[20px]"></i>
+                    Back to Website
                 </a>
             </li>
             <li>
                 <form method="POST" action="{{ route('frontend.user.logout') }}">
                     @csrf
-                    <button type="submit" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition-colors group text-left bg-transparent border-0 cursor-pointer">
-                        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-rose-50 text-rose-500 group-hover:bg-rose-100 group-hover:text-rose-600">
-                            <i class="fa-solid fa-power-off text-[12px]"></i>
-                        </span>
-                        <span class="font-medium text-[13px]">Logout</span>
+                    <button type="submit" class="flex w-full items-center gap-3 rounded-[10px] border-0 bg-transparent px-3 py-2.5 text-left text-[14px] font-medium text-rose-300 transition-colors hover:bg-rose-500/10 hover:text-rose-200">
+                        <i class="ph ph-sign-out text-[20px]"></i>
+                        Logout
                     </button>
                 </form>
             </li>
         </ul>
-    </nav>
-
-    <!-- Hide scrollbar from sidebar completely -->
-    <style>
-        #user-sidebar::-webkit-scrollbar,
-        #exhibition-sidebar::-webkit-scrollbar,
-        .custom-scrollbar::-webkit-scrollbar {
-            display: none !important;
-            width: 0 !important;
-            height: 0 !important;
-        }
-        #user-sidebar,
-        #exhibition-sidebar,
-        .custom-scrollbar {
-            -ms-overflow-style: none !important;
-            scrollbar-width: none !important;
-        }
-    </style>
-</div>
+    </div>
+</aside>

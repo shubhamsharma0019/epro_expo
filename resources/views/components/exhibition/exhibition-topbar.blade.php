@@ -1,85 +1,87 @@
 @php
-    $activeSlug = request()->route('slug') ?? session('activeExhibitionSlug') ?? 'global-tech-expo-2024';
-    $exhibition = \App\Domain\Event\Models\Exhibition::where('slug', $activeSlug)->first();
-    $visitor = null;
-
-    if (auth()->check() && $exhibition) {
-        $visitor = \App\Domain\Visitor\Models\Visitor::where('exhibition_id', $exhibition->id)
-            ->where('email', auth()->user()->email)
+    $activeSlug = request()->route('slug')
+        ?? session('activeExhibitionSlug')
+        ?? \App\Domain\Visitor\Models\Visitor::where('email', auth()->user()?->email)
+            ->where('payment_status', 'completed')
+            ->with('exhibition')
             ->latest()
-            ->first();
-    }
+            ->first()?->exhibition?->slug;
 
-    $passFlowHref = route('exhibitions.tickets.select', $activeSlug);
-    $passFlowLocked = $exhibition && auth()->check() && (! $visitor || $visitor->payment_status !== 'completed') && session('exhibition_booking_path');
+    $exhibition = $activeSlug
+        ? \App\Domain\Event\Models\Exhibition::where('slug', $activeSlug)->first()
+        : null;
+
+    $pageTitle = trim($__env->yieldContent('page-title'));
+    if ($pageTitle === '') {
+        $pageTitle = $exhibition->title ?? $exhibition->name ?? 'Exhibition';
+    }
 @endphp
 
-<header class="sticky top-0 z-30 border-b border-borderColor bg-white/95 px-5 py-3 shadow-sm backdrop-blur sm:px-8 lg:px-8">
-    <div class="flex min-h-[60px] items-center justify-between gap-4">
-        <div class="flex min-w-0 items-center gap-3">
-            <button type="button" data-sidebar-open class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-borderColor text-navy lg:hidden">
-                <i class="fa-solid fa-bars text-[16px]"></i>
-            </button>
-
-            <div class="min-w-0 lg:hidden">
-                <p class="truncate text-[15px] font-semibold text-navy">Visitor Exhibition</p>
-                <p class="truncate text-[12px] font-medium text-[#5A6480]">Companies, halls, pass and sessions</p>
-            </div>
-        </div>
-
-        <div class="flex shrink-0 items-center gap-2 sm:gap-3">
-            @auth
-            <div class="relative inline-block text-left" id="exhTopbarDropdownContainer">
-                <button type="button" id="exhTopbarDropdownBtn" class="flex items-center gap-3 cursor-pointer pl-4 border-l border-borderColor hover:opacity-85 transition-opacity focus:outline-none bg-transparent border-0 p-0">
-                        <div class="text-right hidden sm:block">
-                            <div class="text-[13px] font-bold text-[#1E293B]">{{ auth()->user()->name }}</div>
-                            <div class="text-[11px] text-gray-500 font-medium">{{ ucfirst(auth()->user()->role ?? 'Visitor') }}</div>
-                        </div>
-                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#5A32FA] to-[#246BFF] text-[14px] font-medium text-white shadow-sm">
-                            {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
-                        </span>
-                    <i class="fa-solid fa-caret-down text-[14px] text-gray-400"></i>
-                </button>
-
-                <!-- Dropdown Menu -->
-                <div id="exhTopbarDropdownMenu" class="hidden absolute right-0 z-50 mt-2.5 w-48 origin-top-right rounded-xl bg-white py-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.08)] ring-1 ring-black/5 focus:outline-none transition-all duration-200 border border-borderColor">
-                        <a href="{{ $passFlowLocked ? $passFlowHref : route('exhibitions.visitor.dashboard', $activeSlug) }}" class="flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
-                            <i class="fa-solid fa-gauge text-[14px] text-gray-500 w-4 text-center"></i>
-                            Visitor Dashboard
-                        </a>
-                        <a href="{{ $passFlowLocked ? $passFlowHref : url('/user/dashboard') }}" class="flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
-                            <i class="fa-solid fa-ticket text-[14px] text-gray-500 w-4 text-center"></i>
-                            My Passes
-                        </a>
-                        <hr class="border-borderColor my-1">
-                        <form method="POST" action="{{ url('/user/logout') }}" class="w-full">
-                            @csrf
-                            <button type="submit" class="flex w-full items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-red-600 hover:bg-red-50/50 transition-colors text-left bg-transparent border-0 cursor-pointer">
-                                <i class="fa-solid fa-right-from-bracket text-[14px] text-red-500 w-4 text-center"></i>
-                                Logout
-                            </button>
-                        </form>
-                </div>
-            </div>
-            @endauth
-
-            <script>
-                document.addEventListener('DOMContentLoaded', () => {
-                    const btn = document.getElementById('exhTopbarDropdownBtn');
-                    const menu = document.getElementById('exhTopbarDropdownMenu');
-                    if (btn && menu) {
-                        btn.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            menu.classList.toggle('hidden');
-                        });
-                        document.addEventListener('click', (e) => {
-                            if (!btn.contains(e.target) && !menu.contains(e.target)) {
-                                menu.classList.add('hidden');
-                            }
-                        });
-                    }
-                });
-            </script>
+<header class="sticky top-0 z-30 flex min-h-[72px] items-center justify-between border-b border-gray-100 bg-white px-4 sm:px-8">
+    <div class="flex min-w-0 flex-1 items-center gap-3">
+        <button
+            type="button"
+            class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-[#0B132C] lg:hidden"
+            data-sidebar-open
+            data-user-sidebar-open
+            aria-label="Open sidebar"
+        >
+            <i class="ph ph-list text-xl"></i>
+        </button>
+        <div class="visitor-topbar-title min-w-0">
+            <h1 class="truncate text-[17px] font-bold text-[#0B132C] sm:text-[18px]">{{ $pageTitle }}</h1>
         </div>
     </div>
+
+    @auth
+        <div class="relative shrink-0" id="exhTopbarDropdownContainer">
+            <button type="button" id="exhTopbarDropdownBtn" class="inline-flex cursor-pointer items-center gap-2 rounded-full border border-gray-200 px-2 py-1.5 transition hover:bg-gray-50 focus:outline-none sm:gap-3 sm:px-2.5">
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#3723db] text-[14px] font-semibold text-white">
+                    {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+                </span>
+                <span class="hidden text-left sm:block">
+                    <span class="block max-w-[120px] truncate text-[13px] font-bold leading-none text-[#0B132C]">{{ auth()->user()->name }}</span>
+                    <span class="block pt-1 text-[11px] font-medium leading-none text-gray-500">Visitor</span>
+                </span>
+                <i class="ph ph-caret-down hidden text-gray-400 sm:block"></i>
+            </button>
+
+            <div id="exhTopbarDropdownMenu" class="absolute right-0 z-50 mt-2.5 hidden w-48 origin-top-right rounded-xl border border-gray-100 bg-white py-1.5 shadow-lg">
+                <a href="{{ route('frontend.user.dashboard') }}" class="flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50">
+                    <i class="ph ph-chart-pie-slice text-[16px] text-gray-500"></i>
+                    Dashboard
+                </a>
+                <a href="{{ route('frontend.user.tickets.index') }}" class="flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50">
+                    <i class="ph ph-ticket text-[16px] text-gray-500"></i>
+                    My Passes
+                </a>
+                <hr class="my-1 border-gray-100">
+                <form method="POST" action="{{ route('frontend.user.logout') }}">
+                    @csrf
+                    <button type="submit" class="flex w-full items-center gap-2 border-0 bg-transparent px-4 py-2.5 text-left text-[13px] font-semibold text-red-600 hover:bg-red-50">
+                        <i class="ph ph-sign-out text-[16px] text-red-500"></i>
+                        Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const btn = document.getElementById('exhTopbarDropdownBtn');
+                const menu = document.getElementById('exhTopbarDropdownMenu');
+                if (btn && menu) {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        menu.classList.toggle('hidden');
+                    });
+                    document.addEventListener('click', (e) => {
+                        if (!btn.contains(e.target) && !menu.contains(e.target)) {
+                            menu.classList.add('hidden');
+                        }
+                    });
+                }
+            });
+        </script>
+    @endauth
 </header>

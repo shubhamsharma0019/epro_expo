@@ -8,8 +8,9 @@
     table { width: 100%; }
     .overflow-x-auto { -webkit-overflow-scrolling: touch; }
     @media (max-width: 1024px) {
-        #admin-sidebar, #company-sidebar { max-width: 85vw; }
+        #admin-sidebar, #company-sidebar, #user-sidebar, #exhibition-sidebar { max-width: 85vw; }
         .grid { min-width: 0; }
+        .user-app main, .exhibition-app main { min-width: 0; width: 100%; }
         
         /* Table scroll responsive enhancements */
         .overflow-x-auto, .overflow-x-visible {

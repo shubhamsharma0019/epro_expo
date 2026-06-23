@@ -3,10 +3,13 @@
         --vf-navy: #071044;
         --vf-muted: #5A6480;
         --vf-border: #E7EAF3;
-        --vf-purple: #5b2eff;
+        --vf-purple: #3723db;
         width: 100%;
         max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
         overflow-x: hidden;
+        box-sizing: border-box;
     }
     .visitor-flow-hero {
         border-radius: 1rem;
@@ -76,5 +79,97 @@
     .visitor-flow-grid-safe {
         min-width: 0;
         width: 100%;
+        max-width: 100%;
+    }
+
+    .visitor-flow-page .grid,
+    .visitor-flow-page .flex {
+        min-width: 0;
+    }
+
+    .visitor-flow-page table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    @media (max-width: 1023px) {
+        .visitor-flow-page table {
+            min-width: 0 !important;
+            display: table !important;
+            table-layout: auto !important;
+        }
+    }
+
+    @media (max-width: 767px) {
+        .visitor-flow-page .xl\:grid-cols-\[minmax\(0\,1fr\)_310px\],
+        .visitor-flow-page .xl\:grid-cols-\[minmax\(0\,1fr\)_380px\],
+        .visitor-flow-page .xl\:grid-cols-\[minmax\(0\,1fr\)_360px\],
+        .visitor-flow-page .lg\:grid-cols-\[minmax\(0\,1fr\)_420px\],
+        .visitor-flow-page .lg\:grid-cols-\[1fr_420px\],
+        .visitor-flow-page .lg\:grid-cols-\[1fr_390px\],
+        .visitor-flow-page .lg\:grid-cols-\[330px_minmax\(0\,1fr\)] {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .visitor-flow-page .xl\:grid-cols-5,
+        .visitor-flow-page .xl\:grid-cols-4,
+        .visitor-flow-page .xl\:grid-cols-3,
+        .visitor-flow-page .lg\:grid-cols-3 {
+            grid-template-columns: repeat(1, minmax(0, 1fr));
+        }
+
+        .visitor-flow-page .lg\:grid-cols-\[1fr_420px\].p-6,
+        .visitor-flow-page .lg\:grid-cols-\[1fr_420px\].lg\:p-8 {
+            padding: 1.25rem;
+        }
+
+        .visitor-flow-page h1.text-\[38px\],
+        .visitor-flow-page h1.text-\[52px\] {
+            font-size: clamp(1.75rem, 7vw, 2.375rem) !important;
+            line-height: 1.15 !important;
+        }
+
+        .visitor-flow-page .chat-compose-form {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .visitor-flow-page .chat-compose-form button {
+            width: 100%;
+        }
+
+        .visitor-flow-page .meeting-card-actions {
+            width: 100%;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .visitor-flow-page .meeting-card-actions > * {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .visitor-flow-page .company-card-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .visitor-flow-page .company-card-actions > a,
+        .visitor-flow-page .company-card-actions > button {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .visitor-flow-page .company-card-actions > button {
+            width: 100%;
+        }
+
+        .visitor-flow-page .floor-map-scroll {
+            margin-left: -0.25rem;
+            margin-right: -0.25rem;
+        }
     }
 </style>

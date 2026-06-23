@@ -80,7 +80,7 @@
                                 @endforeach
                                 @if ($hasActions)
                                     <td class="w-[210px] px-3 py-3 whitespace-nowrap">
-                                        <div class="flex flex-nowrap items-center justify-end gap-2">
+                                        <div class="admin-table-actions flex flex-wrap items-center justify-end gap-2">
                                             @foreach (($row['actions'] ?? []) as $action)
                                                 @if (($action['method'] ?? 'GET') === 'POST')
                                                     <form method="POST" action="{{ $action['href'] }}" class="shrink-0">

@@ -49,4 +49,17 @@ return [
         'default_duration' => (int) env('ZOOM_DEFAULT_DURATION', 30),
     ],
 
+    'meeting' => [
+        'jitsi_base_url' => env('JITSI_BASE_URL', 'https://meet.jit.si'),
+    ],
+
+    'google_meet' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'refresh_token' => env('GOOGLE_REFRESH_TOKEN'),
+        'calendar_id' => env('GOOGLE_CALENDAR_ID', 'primary'),
+        'timezone' => env('GOOGLE_CALENDAR_TIMEZONE', env('APP_TIMEZONE', 'Asia/Kolkata')),
+        'default_duration' => (int) env('GOOGLE_MEET_DEFAULT_DURATION', 30),
+    ],
+
 ];

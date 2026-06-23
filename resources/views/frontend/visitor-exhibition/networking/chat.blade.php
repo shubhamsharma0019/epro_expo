@@ -5,7 +5,7 @@
 @section('content')
 @include('frontend.visitor-exhibition.shared.flow-styles')
 
-<section class="visitor-flow-page max-w-[1200px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
+<section class="visitor-flow-page mx-auto w-full max-w-[1200px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
     <div class="grid overflow-hidden rounded-xl border border-borderColor bg-white shadow-sm lg:grid-cols-[330px_minmax(0,1fr)]">
         <aside class="border-b border-borderColor bg-[#FBFAFF] p-6 lg:border-b-0 lg:border-r">
             <p class="text-[13px] font-semibold uppercase tracking-[0.12em] text-purple">Live chat</p>
@@ -40,10 +40,10 @@
             </div>
 
             @if (!empty($companySlug))
-                <form method="POST" action="{{ route('exhibitions.visitor.chat.send', [$slug, $companySlug]) }}" class="mt-6 flex gap-3">
+                <form method="POST" action="{{ route('exhibitions.visitor.chat.send', [$slug, $companySlug]) }}" class="chat-compose-form mt-6 flex flex-col gap-3 sm:flex-row">
                     @csrf
                     <input type="text" name="message" required placeholder="Type your message..." class="h-12 min-w-0 flex-1 rounded-md border border-borderColor px-4 text-[14px] font-medium outline-none focus:border-purple">
-                    <button type="submit" class="h-12 rounded-md bg-[#5b2eff] px-6 text-[14px] font-semibold text-white">Send</button>
+                    <button type="submit" class="h-12 shrink-0 rounded-md bg-[#5b2eff] px-6 text-[14px] font-semibold text-white sm:w-auto">Send</button>
                 </form>
             @endif
         </div>

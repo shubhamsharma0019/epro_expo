@@ -36,14 +36,14 @@
             @endif
         </div>
     </div>
-    <div class="flex flex-wrap items-center gap-3">
+    <div class="flex flex-wrap items-center gap-3 meeting-card-actions">
         <span class="inline-flex h-10 items-center rounded-md px-4 text-[13px] font-semibold {{ $statusClass }}">
             {{ $statusLabel }}
         </span>
 
         @if (in_array($meeting->status, ['confirmed', 'accepted', 'completed'], true) && $zoomJoinUrl)
-            <a href="{{ $zoomJoinUrl }}" target="_blank" rel="noopener" class="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#2D8CFF] px-4 text-[13px] font-semibold text-white hover:bg-[#1A73E8]">
-                <i class="fa-solid fa-video"></i> Join Zoom
+            <a href="{{ $zoomJoinUrl }}" target="_blank" rel="noopener" class="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#0F9D58] px-4 text-[13px] font-semibold text-white hover:bg-[#0B8043]">
+                <i class="fa-solid fa-video"></i> Join Google Meet
             </a>
         @endif
 

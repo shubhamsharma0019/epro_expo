@@ -1,6 +1,7 @@
 @extends('layouts.exhibition')
 
 @section('title', 'Visitor Dashboard - EproExpo')
+@section('page-title', 'Exhibition Dashboard')
 
 @section('content')
 @include('frontend.visitor-exhibition.shared.flow-styles')

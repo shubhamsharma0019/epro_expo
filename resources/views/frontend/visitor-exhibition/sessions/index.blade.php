@@ -38,7 +38,7 @@
     ];
 @endphp
 
-<section class="visitor-flow-page max-w-[1500px] px-5 py-6 sm:px-8 lg:px-10 lg:py-8">
+<section class="visitor-flow-page mx-auto w-full max-w-[1500px] px-5 py-6 sm:px-8 lg:px-10 lg:py-8">
     <div class="mb-6 overflow-hidden rounded-[14px] border border-[#E7EAF3] bg-white shadow-[0_10px_28px_rgba(7,16,68,0.07)]">
         <div class="grid gap-0 xl:grid-cols-[minmax(0,1fr)_320px]">
             <div class="p-5 lg:p-7">

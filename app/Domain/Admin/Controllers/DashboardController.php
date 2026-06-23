@@ -10,6 +10,6 @@ class DashboardController extends Controller
 {
     public function index(DashboardMetrics $dashboardMetrics): View
     {
-        return view('backend.admin.dashboard.index', $dashboardMetrics->data());
+        return view('backend.admin.dashboard.index', $dashboardMetrics->forDashboard());
     }
 }

@@ -4,6 +4,7 @@ namespace App\Domain\Company\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Domain\Visitor\Models\VisitorMeetingBooking;
+use App\Domain\Shared\Services\GoogleMeetService;
 use App\Domain\Shared\Services\ZoomMeetingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,7 +33,7 @@ class CompanyMeetingController extends Controller
         return view('backend.company.meetings.index', compact('meetings', 'upcoming', 'completed', 'cancelled', 'rescheduled'));
     }
 
-    public function show($id): View|RedirectResponse
+    public function show($id, GoogleMeetService $googleMeetService): View|RedirectResponse
     {
         $companyId = session('company_id');
         if (! $companyId) {
@@ -43,7 +44,39 @@ class CompanyMeetingController extends Controller
             ->where('company_id', $companyId)
             ->findOrFail($id);
 
-        return view('backend.company.meetings.show', compact('meeting'));
+        $googleMeetConfigured = $googleMeetService->isConfigured();
+
+        return view('backend.company.meetings.show', compact('meeting', 'googleMeetConfigured'));
+    }
+
+    public function createZoom($id, GoogleMeetService $googleMeetService): RedirectResponse
+    {
+        $companyId = session('company_id');
+        if (! $companyId) {
+            return redirect('/company/login');
+        }
+
+        $meeting = VisitorMeetingBooking::with('companyMeeting')
+            ->where('company_id', $companyId)
+            ->findOrFail($id);
+
+        if (! $meeting->companyMeeting) {
+            return back()->with('error', 'Meeting details not found.');
+        }
+
+        try {
+            $linkPayload = $googleMeetService->createForCompanyMeeting($meeting->companyMeeting);
+            $meeting->companyMeeting->update($linkPayload);
+        } catch (\Throwable $exception) {
+            Log::warning('Google Meet provision failed', [
+                'visitor_meeting_booking_id' => $meeting->id,
+                'message' => $exception->getMessage(),
+            ]);
+
+            return back()->with('error', $exception->getMessage());
+        }
+
+        return back()->with('status', 'Google Meet link is ready. Share it with the visitor.');
     }
 
     public function updateZoom(Request $request, $id): RedirectResponse
@@ -74,10 +107,10 @@ class CompanyMeetingController extends Controller
             $meeting->companyMeeting->update($payload);
         }
 
-        return back()->with('status', 'Zoom meeting details saved.');
+        return back()->with('status', 'Google Meet details saved.');
     }
 
-    public function updateStatus(Request $request, $id, ZoomMeetingService $zoomMeetingService): RedirectResponse
+    public function updateStatus(Request $request, $id, GoogleMeetService $googleMeetService, ZoomMeetingService $zoomMeetingService): RedirectResponse
     {
         $companyId = session('company_id');
         if (! $companyId) {
@@ -100,7 +133,6 @@ class CompanyMeetingController extends Controller
         $oldDate = $meeting->companyMeeting?->meeting_date?->format('Y-m-d');
         $oldTime = $meeting->companyMeeting?->meeting_time;
 
-        // Rescheduling Validation Check
         if ($status === 'rescheduled' && $request->filled('meeting_date') && $request->filled('meeting_time')) {
             $engine = new \App\Domain\Shared\Services\SmartSchedulingEngine();
             $exhibitionId = \App\Domain\Booth\Models\BoothBooking::where('company_id', $companyId)->first()?->exhibition_id ?? 1;
@@ -123,11 +155,57 @@ class CompanyMeetingController extends Controller
                     $sTime = \Carbon\Carbon::parse($suggested->start_time)->format('h:i A');
                     $errorMsg .= " Suggested next available slot: {$sDate} at {$sTime}.";
                 }
+
                 return back()->with('error', $errorMsg)->withInput();
             }
         }
 
-        // Release old slot if status is rejected, cancelled, or rescheduled
+        $manualPayload = array_filter([
+            'meeting_link' => $request->input('meeting_link'),
+            'zoom_meeting_id' => $request->input('zoom_meeting_id'),
+            'zoom_passcode' => $request->input('zoom_passcode'),
+            'meeting_date' => $request->input('meeting_date'),
+            'meeting_time' => $request->input('meeting_time'),
+            'meeting_agenda' => $request->input('meeting_agenda'),
+        ], fn ($value) => $value !== null && $value !== '');
+
+        if ($status === 'rescheduled' && $request->filled('meeting_date') && $request->filled('meeting_time')) {
+            $newStart = $request->input('meeting_date') . ' ' . $request->input('meeting_time');
+            $newEnd = \Carbon\Carbon::parse($newStart)->addMinutes(30)->format('Y-m-d H:i:s');
+            $manualPayload['start_time'] = $newStart;
+            $manualPayload['end_time'] = $newEnd;
+        }
+
+        $meetPayload = [];
+
+        if (in_array($status, ['confirmed', 'rescheduled'], true) && $meeting->companyMeeting) {
+            if ($request->filled('meeting_link')) {
+                $manualPayload['zoom_join_url'] = $request->input('meeting_link');
+            } elseif (! filled($meeting->companyMeeting->zoom_join_url) && ! filled($meeting->companyMeeting->meeting_link)) {
+                try {
+                    $meetPayload = $googleMeetService->createForCompanyMeeting($meeting->companyMeeting);
+                } catch (\Throwable $exception) {
+                    Log::warning('Google Meet auto-provision failed', [
+                        'visitor_meeting_booking_id' => $meeting->id,
+                        'message' => $exception->getMessage(),
+                    ]);
+
+                    return back()->with('error', $exception->getMessage() . ' You can paste a Google Meet link manually below.')->withInput();
+                }
+            }
+        }
+
+        if (in_array($status, ['rejected', 'cancelled'], true) && $meeting->companyMeeting) {
+            try {
+                $zoomMeetingService->deleteForCompanyMeeting($meeting->companyMeeting);
+            } catch (\Throwable $exception) {
+                Log::warning('Zoom meeting delete skipped', [
+                    'visitor_meeting_booking_id' => $meeting->id,
+                    'message' => $exception->getMessage(),
+                ]);
+            }
+        }
+
         if (in_array($status, ['rejected', 'cancelled', 'rescheduled'], true) && $oldDate && $oldTime) {
             $oldSlot = \App\Domain\Booth\Models\BoothMeetingSlot::where('company_id', $companyId)
                 ->where('date', $oldDate)
@@ -138,7 +216,6 @@ class CompanyMeetingController extends Controller
             }
         }
 
-        // Lock new slot if rescheduled or confirmed
         if (in_array($status, ['confirmed', 'rescheduled'], true) && $request->filled('meeting_date') && $request->filled('meeting_time')) {
             $newSlot = \App\Domain\Booth\Models\BoothMeetingSlot::where('company_id', $companyId)
                 ->where('date', $request->input('meeting_date'))
@@ -156,50 +233,9 @@ class CompanyMeetingController extends Controller
         ]);
 
         if (in_array($status, ['confirmed', 'completed', 'rescheduled'], true) && $meeting->companyMeeting) {
-            $zoomPayload = [];
-
-            if ($status === 'confirmed' && ! $request->filled('meeting_link')) {
-                try {
-                    $zoomPayload = $zoomMeetingService->createForCompanyMeeting($meeting->companyMeeting);
-                } catch (\Throwable $exception) {
-                    Log::warning('Zoom auto-provision skipped', [
-                        'visitor_meeting_booking_id' => $meeting->id,
-                        'message' => $exception->getMessage(),
-                    ]);
-                }
-
-                // If zoom meeting was not created dynamically, generate mock online links
-                if (empty($zoomPayload) || empty($zoomPayload['meeting_link'])) {
-                    $mockLink = 'https://meet.google.com/abc-' . strtolower(\Illuminate\Support\Str::random(4)) . '-' . strtolower(\Illuminate\Support\Str::random(3));
-                    $zoomPayload = [
-                        'meeting_link' => $mockLink,
-                        'zoom_join_url' => $mockLink,
-                        'zoom_meeting_status' => 'scheduled',
-                    ];
-                }
-            }
-
-            $manualPayload = array_filter([
-                'meeting_link' => $request->input('meeting_link'),
-                'zoom_meeting_id' => $request->input('zoom_meeting_id'),
-                'zoom_passcode' => $request->input('zoom_passcode'),
-                'meeting_date' => $request->input('meeting_date'),
-                'meeting_time' => $request->input('meeting_time'),
-                'meeting_agenda' => $request->input('meeting_agenda'),
-            ], fn ($value) => $value !== null && $value !== '');
-
-            if ($status === 'rescheduled' && $request->filled('meeting_date') && $request->filled('meeting_time')) {
-                $newStart = $request->input('meeting_date') . ' ' . $request->input('meeting_time');
-                $newEnd = \Carbon\Carbon::parse($newStart)->addMinutes(30)->format('Y-m-d H:i:s');
-                $manualPayload['start_time'] = $newStart;
-                $manualPayload['end_time'] = $newEnd;
-            }
-
-            unset($zoomPayload['configured']);
-            $meeting->companyMeeting->update(array_merge($manualPayload, array_filter($zoomPayload)));
+            $meeting->companyMeeting->update(array_merge($manualPayload, array_filter($meetPayload)));
         }
 
-        // Add Notification Log
         \Illuminate\Support\Facades\DB::table('meeting_notifications')->insert([
             'visitor_id' => $meeting->visitor_id,
             'company_id' => $companyId,
@@ -213,10 +249,10 @@ class CompanyMeetingController extends Controller
         ]);
 
         $message = match ($status) {
-            'confirmed' => 'Meeting accepted. Zoom details are ready for the visitor.',
+            'confirmed' => 'Meeting accepted. Google Meet link is ready for the visitor.',
             'completed' => 'Meeting marked as completed.',
             'rejected' => 'Meeting invitation declined.',
-            'rescheduled' => 'Meeting successfully rescheduled.',
+            'rescheduled' => 'Meeting successfully rescheduled.' . (filled($meetPayload) ? ' Google Meet link updated.' : ''),
             default => 'Meeting status updated.',
         };
 

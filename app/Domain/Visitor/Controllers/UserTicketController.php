@@ -22,7 +22,7 @@ class UserTicketController extends Controller
             ->get();
 
         // 2. Fetch Exhibition Passes
-        $exhibitionPasses = Visitor::where('email', $userEmail)
+        $exhibitionPasses = Visitor::whereRaw('LOWER(email) = ?', [strtolower($userEmail)])
             ->with('exhibition')
             ->orderBy('created_at', 'desc')
             ->get();
@@ -109,10 +109,30 @@ class UserTicketController extends Controller
 
     public function download($id)
     {
-        $ticket = \App\Domain\Visitor\Models\VisitorTicket::where('user_id', auth()->id())
+        $ticket = VisitorTicket::where('user_id', auth()->id())
             ->with(['companyEvent', 'ticketType'])
             ->findOrFail($id);
             
         return view('frontend.user.tickets.e-ticket', compact('ticket'));
+    }
+
+    public function showExhibitionPass(int $id)
+    {
+        $pass = Visitor::query()
+            ->whereRaw('LOWER(email) = ?', [strtolower(auth()->user()->email)])
+            ->with('exhibition')
+            ->findOrFail($id);
+
+        return view('frontend.user.tickets.exhibition-pass', compact('pass'));
+    }
+
+    public function downloadExhibitionPass(int $id)
+    {
+        $pass = Visitor::query()
+            ->whereRaw('LOWER(email) = ?', [strtolower(auth()->user()->email)])
+            ->with('exhibition')
+            ->findOrFail($id);
+
+        return view('frontend.user.tickets.exhibition-pass', compact('pass'));
     }
 }

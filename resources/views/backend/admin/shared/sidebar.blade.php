@@ -1,13 +1,16 @@
 <aside id="admin-sidebar-aside" class="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#0b1739] font-sans text-[#a0aabf]">
   <!-- Logo Section -->
-  <div class="p-6 flex items-center gap-3 shrink-0">
-    <x-shared.brand-logo 
-        href="{{ route('admin.dashboard') }}" 
-        subtitle="ADMIN PANEL" 
-        mark-class="h-10 w-10 rounded-[14px] text-[18px] sm:h-11 sm:w-11 sm:rounded-[16px] sm:text-[20px]" 
-        title-class="text-[22px] text-white" 
-        subtitle-class="text-[10px] text-[#a0aabf]" 
+  <div class="flex shrink-0 items-center justify-between border-b border-white/10 px-5 py-5">
+    <x-shared.brand-logo
+        href="{{ route('admin.dashboard') }}"
+        subtitle="ADMIN PANEL"
+        mark-class="h-10 w-10 rounded-[14px] text-[18px]"
+        title-class="text-[20px] text-white"
+        subtitle-class="text-[10px] text-[#a0aabf]"
     />
+    <button type="button" data-admin-sidebar-close class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-white lg:hidden">
+      <i class="ph ph-x text-lg"></i>
+    </button>
   </div>
 
   <!-- Navigation Menu -->
@@ -261,11 +264,11 @@
         </a>
       </li>
 
-      <!-- Enquiries / Leads -->
+      <!-- Enquiries -->
       <li>
         <a href="{{ route('admin.enquiries.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-[10px] hover:bg-white/5 hover:text-white transition-colors group" data-path="33_enquiries.html">
           <i class="ph ph-envelope text-xl group-hover:text-white transition-colors"></i>
-          <span class="font-medium text-[15px]">Enquiries / Leads</span>
+          <span class="font-medium text-[15px]">Enquiries</span>
         </a>
       </li>
 
@@ -296,7 +299,6 @@
             <li><a href="{{ route('admin.kyc.index') }}" class="relative flex items-center pl-[44px] pr-4 py-2 text-[14px] text-[#a0aabf] hover:text-white hover:bg-white/5 rounded-lg transition-colors group" data-path="05_kyc_verification.html"><div class="absolute left-[24.5px] w-[4px] h-[4px] rounded-full bg-white/30 group-hover:bg-white/50 indicator-dot"></div>KYC Verification</a></li>
             <li><a href="{{ route('admin.refunds.index') }}" class="relative flex items-center pl-[44px] pr-4 py-2 text-[14px] text-[#a0aabf] hover:text-white hover:bg-white/5 rounded-lg transition-colors group" data-path="29_refund_management.html"><div class="absolute left-[24.5px] w-[4px] h-[4px] rounded-full bg-white/30 group-hover:bg-white/50 indicator-dot"></div>Refund Management</a></li>
             <li><a href="{{ route('admin.booth-engineering.index') }}" class="relative flex items-center pl-[44px] pr-4 py-2 text-[14px] text-[#a0aabf] hover:text-white hover:bg-white/5 rounded-lg transition-colors group" data-path="19_booth_engineering_review.html"><div class="absolute left-[24.5px] w-[4px] h-[4px] rounded-full bg-white/30 group-hover:bg-white/50 indicator-dot"></div>Booth Engineering</a></li>
-            <li><a href="{{ route('admin.event-logistics.index') }}" class="relative flex items-center pl-[44px] pr-4 py-2 text-[14px] text-[#a0aabf] hover:text-white hover:bg-white/5 rounded-lg transition-colors group" data-path="23_event_logistics_review.html"><div class="absolute left-[24.5px] w-[4px] h-[4px] rounded-full bg-white/30 group-hover:bg-white/50 indicator-dot"></div>Event Logistics</a></li>
             <li><a href="{{ route('admin.exhibition-lifecycle.index') }}" class="relative flex items-center pl-[44px] pr-4 py-2 text-[14px] text-[#a0aabf] hover:text-white hover:bg-white/5 rounded-lg transition-colors group" data-path="09_exhibition_lifecycle.html"><div class="absolute left-[24.5px] w-[4px] h-[4px] rounded-full bg-white/30 group-hover:bg-white/50 indicator-dot"></div>Exhibition Lifecycle</a></li>
             <li><a href="{{ route('admin.occupancy-analytics.index') }}" class="relative flex items-center pl-[44px] pr-4 py-2 text-[14px] text-[#a0aabf] hover:text-white hover:bg-white/5 rounded-lg transition-colors group" data-path="32_occupancy_analytics.html"><div class="absolute left-[24.5px] w-[4px] h-[4px] rounded-full bg-white/30 group-hover:bg-white/50 indicator-dot"></div>Occupancy Analytics</a></li>
             <li><a href="{{ route('admin.revenue-breakdown.index') }}" class="relative flex items-center pl-[44px] pr-4 py-2 text-[14px] text-[#a0aabf] hover:text-white hover:bg-white/5 rounded-lg transition-colors group" data-path="31_revenue_breakdown_reports.html"><div class="absolute left-[24.5px] w-[4px] h-[4px] rounded-full bg-white/30 group-hover:bg-white/50 indicator-dot"></div>Revenue Breakdown</a></li>
@@ -358,12 +360,6 @@
                 <a href="{{ route('admin.system-settings.index') }}" class="relative flex items-center pl-[44px] pr-4 py-2 text-[14px] text-[#a0aabf] hover:text-white hover:bg-white/5 rounded-lg transition-colors group">
                     <div class="absolute left-[24.5px] w-[4px] h-[4px] rounded-full bg-white/30 group-hover:bg-white/50 indicator-dot"></div>
                     System Settings
-                </a>
-            </li>
-            <li>
-                <a href="{{ route('admin.settings.index') }}" class="relative flex items-center pl-[44px] pr-4 py-2 text-[14px] text-[#a0aabf] hover:text-white hover:bg-white/5 rounded-lg transition-colors group">
-                    <div class="absolute left-[24.5px] w-[4px] h-[4px] rounded-full bg-white/30 group-hover:bg-white/50 indicator-dot"></div>
-                    Backup & Restore
                 </a>
             </li>
           </ul>

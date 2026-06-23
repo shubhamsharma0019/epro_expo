@@ -12,7 +12,7 @@
         ?: 'Preview booth locations and details. Active pass holders can save booths, book meetings, chat, download brochures and join sessions.';
 @endphp
 
-<section class="visitor-flow-page max-w-[1500px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
+<section class="visitor-flow-page mx-auto w-full max-w-[1500px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
     <div class="mb-7 rounded-xl border border-borderColor bg-white p-6 shadow-sm lg:p-8">
         <div class="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
             <div>
@@ -42,7 +42,7 @@
     @endunless
 
     <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div class="overflow-hidden rounded-xl border border-borderColor bg-white p-5 shadow-sm">
+        <div class="floor-map-scroll overflow-hidden rounded-xl border border-borderColor bg-white p-4 shadow-sm sm:p-5">
             @include('frontend.exhibitions.booths.partials.floor-diagram', ['hideDetailsPanel' => true])
         </div>
 

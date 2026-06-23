@@ -8,7 +8,7 @@
     $slug = $slug ?? '';
 @endphp
 
-<section class="visitor-flow-page max-w-[1500px] px-4 py-6 sm:px-8 sm:py-10 lg:px-10">
+<section class="visitor-flow-page mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-8 sm:py-10 lg:px-10">
     <div class="mb-7 rounded-xl border border-borderColor bg-white p-6 shadow-sm lg:p-8">
         <p class="text-[13px] font-semibold uppercase tracking-[0.12em] text-purple">Visitor access</p>
         <h1 class="mt-3 text-[32px] font-semibold tracking-[-0.8px] text-navy sm:text-[40px]">My Passes / Registered Exhibitions</h1>

@@ -56,8 +56,8 @@ class BoothApprovalController extends Controller
             'pageDescription' => 'Review exhibitor booth setup submissions before publishing.',
             'search' => '',
             'status' => 'all',
-            'createUrl' => route('admin.booth-approvals.preview'),
-            'createLabel' => 'Preview Layout',
+            'createUrl' => null,
+            'createLabel' => null,
             'stats' => [
                 ['label' => 'Total Requests', 'value' => BoothPublishRequest::count(), 'tone' => 'indigo'],
                 ['label' => 'Pending', 'value' => BoothPublishRequest::where('status', 'pending')->count(), 'tone' => 'amber'],
@@ -95,6 +95,23 @@ class BoothApprovalController extends Controller
         return view('backend.admin.booth-approvals.show', [
             'publishRequest' => $publishRequest->load(['boothBooking.company', 'boothBooking.booth']),
         ]);
+    }
+
+    public function preview(): RedirectResponse
+    {
+        $publishRequest = BoothPublishRequest::query()
+            ->where('status', 'pending')
+            ->latest()
+            ->first()
+            ?? BoothPublishRequest::query()->latest()->first();
+
+        if ($publishRequest) {
+            return redirect()->route('admin.booth-approvals.show', $publishRequest);
+        }
+
+        return redirect()
+            ->route('admin.booth-approvals.index')
+            ->with('status', 'No booth setup requests available to review yet.');
     }
 
     public function approve(BoothPublishRequest $publishRequest): RedirectResponse

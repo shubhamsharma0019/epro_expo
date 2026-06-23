@@ -27,10 +27,7 @@ class ZoomMeetingService
         }
 
         $token = $this->accessToken();
-        $start = $meeting->start_time instanceof Carbon
-            ? $meeting->start_time
-            : Carbon::parse($meeting->start_time ?? now()->addDay());
-
+        $start = $this->resolveStartTime($meeting);
         $duration = (int) ($meeting->zoom_duration ?: config('services.zoom.default_duration', 30));
         $userId = config('services.zoom.user_id', 'me');
 
@@ -60,6 +57,89 @@ class ZoomMeetingService
 
         $payload = $response->json();
 
+        return $this->mapMeetingResponse($payload, $duration);
+    }
+
+    /**
+     * @return array{configured: bool, meeting_link?: string, zoom_meeting_id?: string, zoom_passcode?: string, zoom_join_url?: string, zoom_start_url?: string, zoom_duration?: int, zoom_meeting_status?: string}
+     */
+    public function updateForCompanyMeeting(CompanyMeeting $meeting): array
+    {
+        if (! $this->isConfigured()) {
+            return ['configured' => false];
+        }
+
+        if (! filled($meeting->zoom_meeting_id)) {
+            return $this->createForCompanyMeeting($meeting);
+        }
+
+        $token = $this->accessToken();
+        $start = $this->resolveStartTime($meeting);
+        $duration = (int) ($meeting->zoom_duration ?: config('services.zoom.default_duration', 30));
+
+        $response = Http::withToken($token)
+            ->patch("https://api.zoom.us/v2/meetings/{$meeting->zoom_meeting_id}", [
+                'topic' => $meeting->title ?: 'Exhibition Meeting',
+                'start_time' => $start->utc()->format('Y-m-d\TH:i:s\Z'),
+                'duration' => $duration,
+                'timezone' => config('app.timezone', 'UTC'),
+                'agenda' => $meeting->meeting_agenda ?: $meeting->description,
+            ]);
+
+        if (! $response->successful()) {
+            Log::warning('Zoom meeting update failed', [
+                'meeting_id' => $meeting->id,
+                'zoom_meeting_id' => $meeting->zoom_meeting_id,
+                'status' => $response->status(),
+                'body' => $response->json(),
+            ]);
+
+            throw new RuntimeException('Unable to update Zoom meeting. Check Zoom API credentials.');
+        }
+
+        return $this->mapMeetingResponse($response->json(), $duration);
+    }
+
+    public function deleteForCompanyMeeting(CompanyMeeting $meeting): void
+    {
+        if (! $this->isConfigured() || ! filled($meeting->zoom_meeting_id)) {
+            return;
+        }
+
+        $token = $this->accessToken();
+
+        $response = Http::withToken($token)
+            ->delete("https://api.zoom.us/v2/meetings/{$meeting->zoom_meeting_id}");
+
+        if (! $response->successful() && $response->status() !== 404) {
+            Log::warning('Zoom meeting delete failed', [
+                'meeting_id' => $meeting->id,
+                'zoom_meeting_id' => $meeting->zoom_meeting_id,
+                'status' => $response->status(),
+                'body' => $response->json(),
+            ]);
+        }
+    }
+
+    protected function resolveStartTime(CompanyMeeting $meeting): Carbon
+    {
+        if ($meeting->start_time instanceof Carbon) {
+            return $meeting->start_time;
+        }
+
+        if ($meeting->meeting_date && $meeting->meeting_time) {
+            return Carbon::parse($meeting->meeting_date->format('Y-m-d') . ' ' . $meeting->meeting_time);
+        }
+
+        return Carbon::parse($meeting->start_time ?? now()->addDay());
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array{configured: bool, meeting_link?: string, zoom_meeting_id?: string, zoom_passcode?: string, zoom_join_url?: string, zoom_start_url?: string, zoom_duration?: int, zoom_meeting_status?: string}
+     */
+    protected function mapMeetingResponse(array $payload, int $duration): array
+    {
         return [
             'configured' => true,
             'meeting_link' => $payload['join_url'] ?? null,

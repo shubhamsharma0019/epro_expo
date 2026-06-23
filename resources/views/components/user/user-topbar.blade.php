@@ -1,93 +1,79 @@
 @php
-    $quickLinks = [
-        ['Home', '/', 'fa-solid fa-house'],
-        ['Events', '/events', 'fa-regular fa-calendar'],
-        ['Exhibitions', '/exhibitions', 'fa-solid fa-building-columns'],
-        ['My Passes', '/user/exhibition-tickets', 'fa-regular fa-id-card'],
-    ];
+    $activeExhibitionSlug = request()->route('slug')
+        ?? session('activeExhibitionSlug')
+        ?? \App\Domain\Visitor\Models\Visitor::where('email', auth()->user()?->email)
+            ->where('payment_status', 'completed')
+            ->with('exhibition')
+            ->latest()
+            ->first()?->exhibition?->slug;
 @endphp
 
-<header class="sticky top-0 z-30 border-b border-[#E7EAF3] bg-white/96 backdrop-blur-xl">
-    <div class="flex h-[76px] items-center gap-4 px-5 sm:px-8 lg:px-8">
-        <button type="button" data-user-sidebar-open class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#E7EAF3] bg-white text-[#071044] shadow-sm lg:hidden">
-            <i class="fa-solid fa-bars"></i>
+<header class="sticky top-0 z-30 flex min-h-[72px] items-center justify-between border-b border-gray-100 bg-white px-4 sm:px-8">
+    <div class="flex min-w-0 flex-1 items-center gap-3">
+        <button
+            type="button"
+            class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-[#0B132C] lg:hidden"
+            data-user-sidebar-open
+            aria-label="Open sidebar"
+        >
+            <i class="ph ph-list text-xl"></i>
+        </button>
+        <div class="visitor-topbar-title min-w-0">
+            <h1 class="truncate text-[17px] font-bold text-[#0B132C] sm:text-[18px]">@yield('page-title', 'Dashboard')</h1>
+        </div>
+    </div>
+
+    <div class="relative shrink-0" id="userTopbarDropdownContainer">
+        <button type="button" id="userTopbarDropdownBtn" class="inline-flex cursor-pointer items-center gap-2 rounded-full border border-gray-200 px-2 py-1.5 transition hover:bg-gray-50 focus:outline-none sm:gap-3 sm:px-2.5">
+            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#3723db] text-[14px] font-semibold text-white">
+                {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+            </span>
+            <span class="hidden text-left sm:block">
+                <span class="block max-w-[120px] truncate text-[13px] font-bold leading-none text-[#0B132C]">{{ auth()->user()->name ?? 'Visitor' }}</span>
+                <span class="block pt-1 text-[11px] font-medium leading-none text-gray-500">Visitor</span>
+            </span>
+            <i class="ph ph-caret-down hidden text-gray-400 sm:block"></i>
         </button>
 
-        <div class="hidden shrink-0 items-center gap-2 rounded-full border border-[#E7EAF3] bg-[#F8FAFF] p-1 lg:flex">
-            @foreach ($quickLinks as [$label, $href, $icon])
-                <a href="{{ url($href) }}" class="inline-flex h-9 items-center gap-2 rounded-full px-4 text-[13px] font-medium text-[#34405F] transition hover:bg-white hover:text-[#5b2eff] hover:shadow-sm">
-                    <i class="{{ $icon }} text-[12px]"></i>
-                    {{ $label }}
-                </a>
-            @endforeach
-        </div>
-
-        <div class="min-w-0 flex-1"></div>
-
-        <div class="flex shrink-0 items-center gap-2 sm:gap-3">
-            <div class="relative inline-block text-left" id="userTopbarDropdownContainer">
-                <button type="button" id="userTopbarDropdownBtn" class="flex items-center gap-3 cursor-pointer hover:opacity-85 transition-opacity focus:outline-none bg-transparent border-0 p-0">
-                    <div class="text-right hidden sm:block">
-                        <div class="text-[13px] font-bold text-[#1E293B]">{{ auth()->user()->name ?? 'Unknown User' }}</div>
-                        <div class="text-[11px] text-gray-500 font-medium">Visitor</div>
-                    </div>
-                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#5b2eff] to-[#246BFF] text-[14px] font-medium text-white shadow-sm">
-                        {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
-                    </span>
-                    <i class="fa-solid fa-caret-down text-[14px] text-gray-400"></i>
-                </button>
-
-                <!-- Dropdown Menu -->
-                <div id="userTopbarDropdownMenu" class="hidden absolute right-0 z-50 mt-2.5 w-48 origin-top-right rounded-xl bg-white py-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.08)] ring-1 ring-black/5 focus:outline-none transition-all duration-200 border border-[#E7EAF3]">
-                    <a href="{{ route('exhibitions.visitor.dashboard', 'global-tech-expo-2024') }}" class="flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
-                        <i class="fa-solid fa-gauge text-[14px] text-gray-500 w-4 text-center"></i>
-                        Visitor Dashboard
-                    </a>
-                    <a href="{{ url('/user/dashboard') }}" class="flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
-                        <i class="fa-solid fa-ticket text-[14px] text-gray-500 w-4 text-center"></i>
-                        My Passes
-                    </a>
-                    <a href="{{ url('/user/profile') }}" class="flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
-                        <i class="fa-solid fa-user text-[14px] text-gray-500 w-4 text-center"></i>
-                        My Profile
-                    </a>
-                    <hr class="border-[#E7EAF3] my-1">
-                    <form method="POST" action="{{ url('/user/logout') }}" class="w-full">
-                        @csrf
-                        <button type="submit" class="flex w-full items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-red-600 hover:bg-red-50/50 transition-colors text-left bg-transparent border-0 cursor-pointer">
-                            <i class="fa-solid fa-right-from-bracket text-[14px] text-red-500 w-4 text-center"></i>
-                            Logout
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-            <script>
-                document.addEventListener('DOMContentLoaded', () => {
-                    const btn = document.getElementById('userTopbarDropdownBtn');
-                    const menu = document.getElementById('userTopbarDropdownMenu');
-                    if (btn && menu) {
-                        btn.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            menu.classList.toggle('hidden');
-                        });
-                        document.addEventListener('click', (e) => {
-                            if (!btn.contains(e.target) && !menu.contains(e.target)) {
-                                menu.classList.add('hidden');
-                            }
-                        });
-                    }
-                });
-            </script>
-        </div>
-    </div>
-
-    <div class="flex gap-2 overflow-x-auto border-t border-[#F0F2F8] px-5 py-2 sm:px-8 lg:hidden">
-        @foreach ($quickLinks as [$label, $href, $icon])
-            <a href="{{ url($href) }}" class="inline-flex h-9 shrink-0 items-center gap-2 rounded-full bg-[#F8FAFF] px-4 text-[13px] font-medium text-[#34405F]">
-                <i class="{{ $icon }} text-[12px]"></i>
-                {{ $label }}
+        <div id="userTopbarDropdownMenu" class="absolute right-0 z-50 mt-2.5 hidden w-48 origin-top-right rounded-xl border border-gray-100 bg-white py-1.5 shadow-lg">
+            <a href="{{ route('frontend.user.profile') }}" class="flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50">
+                <i class="ph ph-user text-[16px] text-gray-500"></i>
+                Profile
             </a>
-        @endforeach
+            <a href="{{ url('/events/listings') }}" class="flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50">
+                <i class="ph ph-calendar-blank text-[16px] text-gray-500"></i>
+                Browse Events
+            </a>
+            <a href="{{ route('exhibitions.index') }}" class="flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50">
+                <i class="ph ph-buildings text-[16px] text-gray-500"></i>
+                Browse Exhibitions
+            </a>
+            <hr class="my-1 border-gray-100">
+            <form method="POST" action="{{ route('frontend.user.logout') }}">
+                @csrf
+                <button type="submit" class="flex w-full items-center gap-2 border-0 bg-transparent px-4 py-2.5 text-left text-[13px] font-semibold text-red-600 hover:bg-red-50">
+                    <i class="ph ph-sign-out text-[16px] text-red-500"></i>
+                    Logout
+                </button>
+            </form>
+        </div>
     </div>
 </header>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('userTopbarDropdownBtn');
+        const menu = document.getElementById('userTopbarDropdownMenu');
+        if (btn && menu) {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                menu.classList.toggle('hidden');
+            });
+            document.addEventListener('click', (e) => {
+                if (!btn.contains(e.target) && !menu.contains(e.target)) {
+                    menu.classList.add('hidden');
+                }
+            });
+        }
+    });
+</script>

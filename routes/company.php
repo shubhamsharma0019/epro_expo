@@ -364,6 +364,7 @@ Route::prefix('company')->name('company.')->group(function () {
         Route::get('/', [CompanyMeetingController::class, 'index'])->name('index');
         Route::get('/{id}', [CompanyMeetingController::class, 'show'])->name('show');
         Route::post('/{id}/zoom', [CompanyMeetingController::class, 'updateZoom'])->name('zoom.update');
+        Route::post('/{id}/zoom/create', [CompanyMeetingController::class, 'createZoom'])->name('zoom.create');
         Route::post('/{id}/status', [CompanyMeetingController::class, 'updateStatus'])->name('status.update');
     });
 

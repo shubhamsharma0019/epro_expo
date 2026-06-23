@@ -8,9 +8,9 @@
         >
             <i class="ph ph-list text-xl"></i>
         </button>
-        <div class="hidden sm:block">
-            <p class="text-[12px] font-medium uppercase tracking-[0.18em] text-gray-400">Admin Workspace</p>
-            <h1 class="text-[18px] font-bold text-[#0B132C]">@yield('page-title', 'Dashboard')</h1>
+        <div class="admin-topbar-title min-w-0 sm:block">
+            <p class="hidden text-[12px] font-medium uppercase tracking-[0.18em] text-gray-400 sm:block">Admin Workspace</p>
+            <h1 class="truncate text-[16px] font-bold text-[#0B132C] sm:text-[18px]">@yield('page-title', 'Dashboard')</h1>
         </div>
     </div>
 

@@ -14,7 +14,7 @@
     $qrData = urlencode($ticket->order_number . '|' . $eventName . '|' . $ticket->attendee_name);
     $initials = collect(explode(' ', $ticket->attendee_name))->map(fn($w) => substr($w, 0, 1))->take(2)->implode('');
 @endphp
-<section class="min-w-0 px-5 py-6 sm:px-8 lg:px-10 lg:py-8">
+<section class="space-y-6 px-4 py-6 sm:px-8">
     <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <article class="overflow-hidden rounded-[30px] border border-[#E7EAF3] bg-white shadow-[0_22px_60px_rgba(7,16,68,0.08)]">
             <div class="grid lg:grid-cols-[1fr_260px]">
@@ -64,9 +64,9 @@
                     </div>
                 </div>
                 <div class="mt-6 space-y-3 text-[14px] text-[#34405F]">
-                    <p class="flex justify-between gap-4"><span>Entry gate</span><strong class="font-medium text-[#071044]">Main Gate</strong></p>
-                    <p class="flex justify-between gap-4"><span>Ticket type</span><strong class="font-medium text-[#071044]">{{ $ticket->ticket_name }} x {{ $ticket->quantity }}</strong></p>
-                    <p class="flex justify-between gap-4"><span>Status</span><strong class="font-medium text-emerald-700">Paid</strong></p>
+                    <p class="ticket-detail-row flex justify-between gap-4"><span>Entry gate</span><strong class="font-medium text-[#071044]">Main Gate</strong></p>
+                    <p class="ticket-detail-row flex justify-between gap-4"><span>Ticket type</span><strong class="font-medium text-[#071044]">{{ $ticket->ticket_name }} x {{ $ticket->quantity }}</strong></p>
+                    <p class="ticket-detail-row flex justify-between gap-4"><span>Status</span><strong class="font-medium text-emerald-700">Paid</strong></p>
                 </div>
             </div>
 

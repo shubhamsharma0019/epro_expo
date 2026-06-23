@@ -169,7 +169,7 @@
 
         <!-- Scrollable Dashboard Content -->
         <div class="flex-1 overflow-y-auto overflow-x-hidden p-6 lg:p-8 main-scrollbar bg-white">
-<div class="mx-6 lg:mx-8 mt-6 bg-[#F4F2FF] border border-[#E6E1FF] rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"><div><h3 class="text-[#0B132C] font-bold">Advanced Reports added</h3><p class="text-[13px] text-gray-600 mt-1">Revenue breakdown aur occupancy analytics ke detailed reports add kiye gaye hain.</p></div><a href="{{ url('/admin/31_revenue_breakdown_reports') }}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-[#3723db] text-white text-[13px] font-semibold hover:bg-[#2b1bb7] transition-colors">Open Module <i class="ph ph-arrow-right ml-2"></i></a></div>
+<div class="mx-6 lg:mx-8 mt-6 bg-[#F4F2FF] border border-[#E6E1FF] rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"><div><h3 class="text-[#0B132C] font-bold">Advanced Reports added</h3><p class="text-[13px] text-gray-600 mt-1">Detailed revenue breakdown and occupancy analytics reports have been added.</p></div><a href="{{ url('/admin/31_revenue_breakdown_reports') }}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-[#3723db] text-white text-[13px] font-semibold hover:bg-[#2b1bb7] transition-colors">Open Module <i class="ph ph-arrow-right ml-2"></i></a></div>
 
             <div class="max-w-[1600px] mx-auto">
                 

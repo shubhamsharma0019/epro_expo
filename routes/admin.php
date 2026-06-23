@@ -201,9 +201,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
     Route::prefix('booth-approvals')->name('booth-approvals.')->group(function () {
         Route::get('/', [BoothApprovalController::class, 'index'])->name('index');
-        Route::get('/preview', function () {
-            return view('backend.admin.booth-approvals.preview');
-        })->name('preview');
+        Route::get('/preview', [BoothApprovalController::class, 'preview'])->name('preview');
         Route::get('/{publishRequest}', [BoothApprovalController::class, 'show'])->name('show');
         Route::post('/{publishRequest}/approve', [BoothApprovalController::class, 'approve'])->name('approve');
         Route::post('/{publishRequest}/reject', [BoothApprovalController::class, 'reject'])->name('reject');
@@ -211,9 +209,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
     Route::prefix('event-approvals')->name('event-approvals.')->group(function () {
         Route::get('/', [EventApprovalController::class, 'index'])->name('index');
-        Route::get('/preview', function () {
-            return view('backend.admin.event-approvals.preview');
-        })->name('preview');
+        Route::get('/preview', [EventApprovalController::class, 'preview'])->name('preview');
         Route::get('/{publishRequest}', [EventApprovalController::class, 'show'])->name('show');
         Route::post('/{publishRequest}/approve', [EventApprovalController::class, 'approve'])->name('approve');
         Route::post('/{publishRequest}/reject', [EventApprovalController::class, 'reject'])->name('reject');

@@ -11,6 +11,7 @@
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @include('frontend.shared.partials.responsive-fixes')
+    @include('components.admin.admin-layout-styles')
     <style>
         /* Sidebar Fix: Ensure the sidebar is fixed and has a constant width on desktop viewports */
         @media (min-width: 1024px) {
@@ -42,7 +43,9 @@
     <main class="min-h-screen min-w-0 bg-[#F5F7FC] lg:ml-[260px]">
         @include('components.admin.admin-topbar')
 
-        @yield('content')
+        <div class="admin-main-content">
+            @yield('content')
+        </div>
 
         @include('components.admin.admin-footer')
     </main>

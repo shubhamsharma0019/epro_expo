@@ -75,7 +75,7 @@
     }
 @endphp
 
-<section class="visitor-flow-page max-w-[1500px] px-4 py-6 sm:px-8 lg:px-10 lg:py-8">
+<section class="visitor-flow-page mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-8 lg:px-10 lg:py-8">
     <div class="mb-6 overflow-hidden rounded-[14px] border border-[#E7EAF3] bg-white shadow-[0_10px_28px_rgba(7,16,68,0.07)]">
         <div class="grid gap-0 xl:grid-cols-[minmax(0,1fr)_310px]">
             <div class="p-5 lg:p-6">
@@ -180,14 +180,14 @@
                         <span class="rounded-lg border border-[#DCE1EE] px-3 py-2">{{ $brochures }}</span>
                     </div>
 
-                    <div class="mt-auto grid grid-cols-1 gap-2 pt-4 sm:grid-cols-[1fr_1fr_auto]">
+                    <div class="company-card-actions mt-auto pt-4">
                         <a href="{{ route('exhibitions.visitor.companies.show', [$companyExhibitionSlug, $companySlug]) }}" class="inline-flex h-10 items-center justify-center rounded-lg bg-[#6D28D9] px-3 text-[12px] font-bold text-white hover:bg-[#5726E8]">
                             Open Booth
                         </a>
                         <a href="{{ route('exhibitions.visitor.floor-map', $slug) }}" class="inline-flex h-10 items-center justify-center rounded-lg border border-[#DCE1EE] px-3 text-[12px] font-bold text-navy hover:bg-[#F8F7FF]">
                             Map
                         </a>
-                        <button class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[#DCE1EE] text-[#6D28D9] hover:bg-[#F8F7FF]" title="{{ $isPassActive ? 'Save booth' : 'Register / Get Pass to access this feature' }}">
+                        <button class="inline-flex h-10 w-full items-center justify-center rounded-lg border border-[#DCE1EE] text-[#6D28D9] hover:bg-[#F8F7FF] sm:w-10" title="{{ $isPassActive ? 'Save booth' : 'Register / Get Pass to access this feature' }}">
                             <i class="fa-regular fa-bookmark"></i>
                         </button>
                     </div>

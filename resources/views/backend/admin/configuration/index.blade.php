@@ -64,7 +64,7 @@
                 </div>
             @endforeach
 
-            <div class="flex justify-end">
+            <div class="admin-form-actions flex justify-end">
                 <button type="submit" class="inline-flex h-11 items-center justify-center rounded-xl bg-[#3723db] px-5 text-[14px] font-semibold text-white transition hover:bg-[#2515a6]">
                     {{ $submitLabel }}
                 </button>
