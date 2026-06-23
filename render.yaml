@@ -1,0 +1,54 @@
+services:
+  - type: web
+    name: erpoexpo
+    runtime: docker
+    dockerfilePath: ./Dockerfile.production
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: SESSION_DRIVER
+        value: database
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: APP_SEED_BASE
+        value: false
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_URL
+        sync: false
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DB_HOST
+        fromDatabase:
+          name: erpoexpo-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: erpoexpo-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: erpoexpo-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: erpoexpo-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: erpoexpo-db
+          property: password
+
+databases:
+  - name: erpoexpo-db
+    plan: free
+    ipAllowList: []
