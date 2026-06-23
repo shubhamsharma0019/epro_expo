@@ -20,13 +20,13 @@ services:
       - key: QUEUE_CONNECTION
         value: database
       - key: APP_SEED_BASE
-        value: false
+        value: "true"
       - key: APP_KEY
         generateValue: true
       - key: APP_URL
         sync: false
       - key: DB_CONNECTION
-        value: mysql
+        value: pgsql
       - key: DB_HOST
         fromDatabase:
           name: erpoexpo-db
@@ -51,4 +51,5 @@ services:
 databases:
   - name: erpoexpo-db
     plan: free
-    ipAllowList: []
+    databaseName: erpoexpo
+    user: erpoexpo
