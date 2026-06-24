@@ -17,7 +17,7 @@ class EventDraftController extends BaseCompanyEventController
             ? $this->commonData($existingEvent)
             : $this->placeholderCommonData();
 
-        return view('backend.company.event-company-flow.create', array_merge(
+        return view('backend.company.event-company-flow.create-event', array_merge(
             $viewData,
             [
                 'eventTemplates' => $this->eventTemplates(),

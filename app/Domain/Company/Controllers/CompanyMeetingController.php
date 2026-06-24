@@ -30,7 +30,7 @@ class CompanyMeetingController extends Controller
         $cancelled = $meetings->filter(fn ($m) => in_array($m->status, ['cancelled', 'rejected'], true));
         $rescheduled = $meetings->filter(fn ($m) => $m->status === 'rescheduled');
 
-        return view('backend.company.meetings.index', compact('meetings', 'upcoming', 'completed', 'cancelled', 'rescheduled'));
+        return view('backend.company.meetings.meeting-requests', compact('meetings', 'upcoming', 'completed', 'cancelled', 'rescheduled'));
     }
 
     public function show($id, GoogleMeetService $googleMeetService): View|RedirectResponse
@@ -46,7 +46,7 @@ class CompanyMeetingController extends Controller
 
         $googleMeetConfigured = $googleMeetService->isConfigured();
 
-        return view('backend.company.meetings.show', compact('meeting', 'googleMeetConfigured'));
+        return view('backend.company.meetings.meeting-details', compact('meeting', 'googleMeetConfigured'));
     }
 
     public function createZoom($id, GoogleMeetService $googleMeetService): RedirectResponse

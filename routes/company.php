@@ -189,14 +189,14 @@ Route::prefix('company')->name('company.')->group(function () {
         // Mark notifications as seen so the topbar bell badge clears.
         session(['company_notifications_seen_at' => now()]);
 
-        return view('backend.company.notifications.index', compact('company', 'notifications'));
+        return view('backend.company.notifications.notification-list', compact('company', 'notifications'));
     })->middleware('company')->name('notifications');
 
     Route::get('/profile', [CompanyProfileController::class, 'edit'])->middleware('company')->name('profile');
     Route::post('/profile', [CompanyProfileController::class, 'update'])->middleware('company')->name('profile.update');
 
     Route::get('/settings', function () {
-        return view('backend.company.settings');
+        return view('backend.company.settings.company-settings');
     })->middleware('company')->name('settings');
 
     Route::prefix('exhibitions')->name('exhibitions.')->middleware('company')->group(function () {
@@ -286,7 +286,7 @@ Route::prefix('company')->name('company.')->group(function () {
                 })
                 ->values();
 
-            return view('backend.company.bookings.index', compact('bookings', 'allBookings', 'activeStatus', 'search'));
+            return view('backend.company.bookings.my-bookings', compact('bookings', 'allBookings', 'activeStatus', 'search'));
         })->name('index');
 
         Route::get('/{booking}', [BookingDetailsController::class, 'show'])->name('show');

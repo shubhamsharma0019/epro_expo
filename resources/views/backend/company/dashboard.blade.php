@@ -1,1 +1,1 @@
-@include('backend.company.dashboard.index')
+@include('backend.company.dashboard.company-dashboard')

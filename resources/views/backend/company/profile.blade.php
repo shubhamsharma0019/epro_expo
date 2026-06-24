@@ -1,1 +1,1 @@
-@include('backend.company.profile.index')
+@include('backend.company.profile.company-profile')

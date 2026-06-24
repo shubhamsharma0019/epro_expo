@@ -100,7 +100,7 @@ class DashboardController extends BaseCompanyEventController
                 ?? config('services.razorpay.currency', 'INR'),
         ];
 
-        return view('backend.company.event-company-flow.dashboard', compact(
+        return view('backend.company.event-company-flow.event-dashboard', compact(
             'events',
             'upcomingEvents',
             'recentActivities',

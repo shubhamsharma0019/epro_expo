@@ -11,7 +11,7 @@ class BookingDetailsController extends BaseBoothSetupController
     {
         $booking = $this->ownedBooking($booking);
 
-        return view('backend.company.bookings.show', [
+        return view('backend.company.bookings.booking-details', [
             'booking' => $booking,
             'bookingServices' => $booking->services()->get(),
             'bookingDays' => $booking->days()->orderBy('booking_date')->get(),

@@ -16,6 +16,6 @@ class BoothSetupController extends BaseBoothSetupController
             return $booking;
         }
 
-        return view('backend.company.booth-setup.index', $this->commonData($booking, $steps));
+        return view('backend.company.booth-setup.setup-overview', $this->commonData($booking, $steps));
     }
 }

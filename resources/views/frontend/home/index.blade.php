@@ -1,7 +1,7 @@
 @php
     $home = $home ?? [];
     $hero = $home['hero'] ?? \App\Support\WebsiteContent::defaultHero();
-    $stats = $home['stats'] ?? \App\Support\WebsiteContent::defaultStats();
+    $stats = $home['stats'] ?? [];
     $experienceTabs = $home['experience_tabs'] ?? [];
     $featurePills = $home['feature_pills'] ?? \App\Support\WebsiteContent::defaultFeaturePills();
     $features = $home['features'] ?? \App\Support\WebsiteContent::defaultFeatures();
@@ -131,20 +131,29 @@
         <div class="grid items-center gap-5 lg:grid-cols-[1.02fr_1fr]">
           <div class="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:grid-cols-4">
             @foreach ($stats as $stat)
-              <div class="flex items-center gap-3 rounded-xl border border-[#E7EAF3] bg-white p-3 shadow-sm">
+              @php($statUrl = $stat['link_url'] ?? null)
+              @if ($statUrl)
+                <a href="{{ $statUrl }}" class="flex items-center gap-3 rounded-xl border border-[#E7EAF3] bg-white p-3 shadow-sm transition-colors hover:border-[#6D28D9]">
+              @else
+                <div class="flex items-center gap-3 rounded-xl border border-[#E7EAF3] bg-white p-3 shadow-sm">
+              @endif
                 <span class="grid h-11 w-11 shrink-0 place-items-center rounded-full text-white" style="background-color: {{ $stat['color'] ?? '#6325E6' }}">
                   <i class="{{ $stat['icon'] ?? 'fa-solid fa-store' }} text-lg"></i>
                 </span>
                 <p class="text-[13px] font-bold leading-tight">{{ $stat['title'] ?? '' }}<br><span class="font-medium">{{ $stat['subtitle'] ?? '' }}</span></p>
-              </div>
+              @if ($statUrl)
+                </a>
+              @else
+                </div>
+              @endif
             @endforeach
           </div>
           <div class="home-pills-wrap">
             <div class="home-pills-grid grid grid-cols-2 gap-2 rounded-2xl bg-white p-3 shadow-soft min-[480px]:grid-cols-3 sm:grid-cols-6 sm:p-4">
             @foreach ($featurePills as $pill)
-              <div class="text-center text-[12px] font-semibold text-gray-700 hover:text-[#6D28D9] cursor-pointer transition-colors">
+              <a href="{{ $pill['link_url'] ?? route('exhibitions.index') }}" class="text-center text-[12px] font-semibold text-gray-700 hover:text-[#6D28D9] transition-colors">
                 <div class="text-[20px] mb-1.5"><i class="{{ $pill['icon'] ?? 'far fa-circle' }}"></i></div>{{ $pill['title'] ?? '' }}
-              </div>
+              </a>
             @endforeach
             </div>
           </div>

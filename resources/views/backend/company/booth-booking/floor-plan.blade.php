@@ -1,4 +1,4 @@
-@extends('layouts.company-flow')
+@extends('layouts.company')
 
 @section('title', 'EproExpo Hall Layout')
 

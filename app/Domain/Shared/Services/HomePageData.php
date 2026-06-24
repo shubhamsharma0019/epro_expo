@@ -7,6 +7,7 @@ use App\Domain\Company\Models\Company;
 use App\Domain\Event\Models\Exhibition;
 use App\Support\DbGuard;
 use App\Support\LiveContent;
+use App\Domain\Visitor\Models\Visitor;
 use App\Support\WebsiteContent;
 
 class HomePageData
@@ -20,7 +21,7 @@ class HomePageData
             'hero' => WebsiteContent::hero(),
             'stats' => $stats,
             'experience_tabs' => $this->resolveExperienceTabs(),
-            'feature_pills' => WebsiteContent::sectionOrDefaults('home', 'feature_pill', WebsiteContent::defaultFeaturePills()),
+            'feature_pills' => $this->resolveFeaturePills(),
             'features' => WebsiteContent::sectionOrDefaults('home', 'feature', WebsiteContent::defaultFeatures()),
             'steps' => WebsiteContent::sectionOrDefaults('home', 'step', WebsiteContent::defaultSteps()),
             'booth_highlight' => $boothHighlight,
@@ -33,19 +34,55 @@ class HomePageData
 
     private function resolveStats(): array
     {
-        $cmsStats = WebsiteContent::sectionOrDefaults('home', 'stat', []);
         $counts = $this->platformCounts();
 
+        $defaults = [
+            ['icon' => 'fa-solid fa-store', 'color' => '#6325E6', 'title' => $this->formatCount($counts['companies']), 'subtitle' => 'Companies'],
+            ['icon' => 'fa-regular fa-map', 'color' => '#FF9B41', 'title' => $this->formatCount($counts['halls']), 'subtitle' => 'Halls'],
+            ['icon' => 'fa-regular fa-circle-play', 'color' => '#3478E5', 'title' => $this->formatCount($counts['sessions']), 'subtitle' => 'Sessions'],
+            [
+                'icon' => 'fa-solid fa-qrcode',
+                'color' => '#48C4AE',
+                'title' => ($counts['visitor_passes'] ?? 0) > 0 ? $this->formatCount($counts['visitor_passes']) : 'QR',
+                'subtitle' => 'Visitor Pass',
+                'link_url' => $this->visitorPassUrl(),
+            ],
+        ];
+
+        $cmsStats = WebsiteContent::sectionOrDefaults('home', 'stat', []);
         if (empty($cmsStats)) {
-            return $this->applyLiveStatValues([
-                ['icon' => 'fa-solid fa-store', 'color' => '#6325E6', 'title' => number_format($counts['companies'] ?? 0) . '+', 'subtitle' => 'Companies'],
-                ['icon' => 'fa-regular fa-map', 'color' => '#FF9B41', 'title' => number_format($counts['halls'] ?? 0) . '+', 'subtitle' => 'Halls'],
-                ['icon' => 'fa-regular fa-circle-play', 'color' => '#3478E5', 'title' => number_format($counts['sessions'] ?? 0) . '+', 'subtitle' => 'Sessions'],
-                ['icon' => 'fa-solid fa-qrcode', 'color' => '#48C4AE', 'title' => 'QR', 'subtitle' => 'Visitor Pass'],
-            ], $counts);
+            return $defaults;
         }
 
-        return $this->applyLiveStatValues($cmsStats, $counts);
+        return $this->mergeStatsWithLiveCounts($cmsStats, $counts, $defaults);
+    }
+
+    private function resolveFeaturePills(): array
+    {
+        $pills = WebsiteContent::sectionOrDefaults('home', 'feature_pill', WebsiteContent::defaultFeaturePills());
+        $slug = $this->primaryExhibitionSlug();
+
+        $routes = [
+            'live chat' => $slug ? route('exhibitions.visitor.chat', ['slug' => $slug]) : route('exhibitions.index'),
+            'video call' => $slug ? route('exhibitions.visitor.meetings', ['slug' => $slug]) : route('exhibitions.index'),
+            'brochures' => $slug ? route('exhibitions.visitor.companies', ['slug' => $slug]) : route('exhibitions.index'),
+            'enquiries' => $slug ? route('exhibitions.visitor.companies', ['slug' => $slug]) : route('exhibitions.index'),
+            'appointments' => $slug ? route('exhibitions.visitor.meetings', ['slug' => $slug]) : route('exhibitions.index'),
+            'leaderboard' => $slug ? route('exhibitions.visitor.dashboard', ['slug' => $slug]) : route('exhibitions.index'),
+        ];
+
+        return array_map(function (array $pill) use ($routes) {
+            if (! empty($pill['link_url'])) {
+                return $pill;
+            }
+
+            $key = strtolower(trim((string) ($pill['title'] ?? '')));
+            if (isset($routes[$key])) {
+                $pill['link_url'] = $routes[$key];
+            }
+
+            return $pill;
+        }, $pills);
     }
 
     private function resolveFlowCards(): array
@@ -248,6 +285,9 @@ class HomePageData
                 ? \App\Domain\Event\Models\Hall::where('status', 'active')->count()
                 : 0,
             'sessions' => $this->sessionCount(),
+            'visitor_passes' => DbGuard::hasTable('visitors')
+                ? Visitor::query()->where('payment_status', 'completed')->count()
+                : 0,
         ], [
             'events' => 0,
             'exhibitions' => 0,
@@ -255,21 +295,54 @@ class HomePageData
             'booths' => 0,
             'halls' => 0,
             'sessions' => 0,
+            'visitor_passes' => 0,
         ]);
     }
 
-    private function applyLiveStatValues(array $stats, array $counts): array
+    private function mergeStatsWithLiveCounts(array $cmsStats, array $counts, array $defaults): array
     {
-        return array_map(function (array $stat) use ($counts) {
-            $subtitle = strtolower(trim((string) ($stat['subtitle'] ?? '')));
+        return array_map(function (array $stat, int $index) use ($counts, $defaults) {
+            $fallback = $defaults[$index] ?? [];
+            $subtitle = strtolower(trim((string) ($stat['subtitle'] ?? $fallback['subtitle'] ?? '')));
 
-            return match ($subtitle) {
-                'companies' => array_merge($stat, ['title' => $this->formatCount($counts['companies'] ?? 0)]),
-                'halls' => array_merge($stat, ['title' => $this->formatCount($counts['halls'] ?? 0)]),
-                'sessions' => array_merge($stat, ['title' => $this->formatCount($counts['sessions'] ?? 0)]),
-                default => $stat,
+            $liveTitle = match ($subtitle) {
+                'companies' => $this->formatCount($counts['companies'] ?? 0),
+                'halls' => $this->formatCount($counts['halls'] ?? 0),
+                'sessions' => $this->formatCount($counts['sessions'] ?? 0),
+                'visitor pass' => ($counts['visitor_passes'] ?? 0) > 0
+                    ? $this->formatCount($counts['visitor_passes'])
+                    : 'QR',
+                default => $stat['title'] ?? $fallback['title'] ?? '',
             };
-        }, $stats);
+
+            return array_merge($fallback, $stat, [
+                'title' => $liveTitle,
+                'link_url' => $stat['link_url'] ?? $fallback['link_url'] ?? null,
+            ]);
+        }, $cmsStats, array_keys($cmsStats));
+    }
+
+    private function primaryExhibitionSlug(): ?string
+    {
+        return DbGuard::whenAvailable(
+            fn () => LiveContent::exhibitionQuery()->value('slug'),
+            null
+        );
+    }
+
+    private function visitorPassUrl(): string
+    {
+        $slug = $this->primaryExhibitionSlug();
+
+        if ($slug) {
+            try {
+                return route('exhibitions.tickets.select', ['slug' => $slug]);
+            } catch (\Throwable) {
+                return route('exhibitions.index');
+            }
+        }
+
+        return route('exhibitions.index');
     }
 
     private function formatCount(int $count): string

@@ -26,7 +26,7 @@ class CompanyEnquiryController extends Controller
 
         $enquiries = $this->companyRepository->getEnquiries($companyId);
 
-        return view('backend.company.enquiries.index', compact('enquiries'));
+        return view('backend.company.enquiries.enquiry-list', compact('enquiries'));
     }
 
     public function show($id): View|RedirectResponse
@@ -42,7 +42,7 @@ class CompanyEnquiryController extends Controller
             $enquiry->update(['status' => 'open']);
         }
 
-        return view('backend.company.enquiries.show', compact('enquiry'));
+        return view('backend.company.enquiries.enquiry-details', compact('enquiry'));
     }
 
     public function reply(ReplyEnquiryRequest $request, $id): RedirectResponse

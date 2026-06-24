@@ -1,1 +1,1 @@
-@include('backend.company.analytics.index')
+@include('backend.company.analytics.company-analytics')

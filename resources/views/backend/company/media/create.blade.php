@@ -1,8 +1,1 @@
-@extends('layouts.company')
-
-@section('title', 'Add Media')
-@section('page-title', 'Media Gallery')
-
-@section('content')
-@include('backend.company.media.form', ['mode' => 'Create'])
-@endsection
+@include('backend.company.media.add-media')

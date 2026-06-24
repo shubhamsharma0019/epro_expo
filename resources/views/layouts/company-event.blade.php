@@ -56,7 +56,7 @@
 <body class="company-event-flow overflow-x-hidden bg-white font-sans text-[#1C1364] antialiased">
     <div id="company-event-sidebar-overlay" class="fixed inset-0 z-40 hidden bg-[#1C1364]/35 lg:hidden"></div>
 
-    @include('backend.company.event-company-flow.partials.sidebar')
+    @include('backend.company.event-company-flow.layout.sidebar')
 
     @php
         $hideCompanyEventTopbar = trim($__env->yieldContent('hideTopbar')) === 'true';
@@ -64,7 +64,7 @@
 
     <main class="company-event-flow-main {{ $hideCompanyEventTopbar ? 'company-event-flow-main-no-topbar' : '' }} min-h-screen min-w-0 overflow-x-hidden bg-gradient-to-br from-[#E7DAFF] via-[#C8AEFF] to-[#9D7BFF] transition-all duration-300">
         @unless ($hideCompanyEventTopbar)
-            @include('backend.company.event-company-flow.partials.topbar')
+            @include('backend.company.event-company-flow.layout.topbar')
         @endunless
 
         @if (session('status'))
