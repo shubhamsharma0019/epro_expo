@@ -75,7 +75,7 @@ class CompanyBoothBookingController extends Controller
             return $pavilion->halls->sum('booths_count');
         });
 
-        return view('backend.company.booth-booking.pavilions', compact(
+        return view('company.booth-booking.pavilions', compact(
             'pavilions',
             'search',
             'viewMode',
@@ -172,7 +172,7 @@ class CompanyBoothBookingController extends Controller
         $allCount = $allMatchingHalls->count();
         $availableCount = $allMatchingHalls->filter(fn ($hall) => $availableBoothCount($hall) > 0)->count();
 
-        return view('backend.company.booth-booking.halls', compact(
+        return view('company.booth-booking.halls', compact(
             'halls',
             'selectedPavilion',
             'selectedExhibition',
@@ -325,7 +325,7 @@ class CompanyBoothBookingController extends Controller
             ? true
             : $availableFootprints->contains(fn ($footprint) => count($footprint['ids'] ?? []) >= $requiredSpaces);
 
-        return view('backend.company.booth-booking.floor-plan', compact(
+        return view('company.booth-booking.floor-plan', compact(
             'hall',
             'booths',
             'selectedBooth',
@@ -481,7 +481,7 @@ class CompanyBoothBookingController extends Controller
             ]);
         }
 
-        return view('backend.company.booth-booking.sizes', compact(
+        return view('company.booth-booking.sizes', compact(
             'hall',
             'boothSizes',
             'selectedSize',
@@ -744,7 +744,7 @@ class CompanyBoothBookingController extends Controller
             ])),
         ]);
 
-        return view('backend.company.booth-booking.slots', compact(
+        return view('company.booth-booking.slots', compact(
             'hall',
             'booth',
             'selectedSize',
@@ -1106,7 +1106,7 @@ class CompanyBoothBookingController extends Controller
             ->join(', ');
         $summary = $this->syncBookingSummary($booking, $selectedDays, $boothPrice, $daysAmount, $amountToPay);
 
-        return view('backend.company.booth-booking.summary', compact(
+        return view('company.booth-booking.summary', compact(
             'booking',
             'summary',
             'selectedDays',
@@ -1159,7 +1159,7 @@ class CompanyBoothBookingController extends Controller
 
         $customizationTotal = (float) $bookingServices->sum('total');
 
-        return view('backend.company.booth-booking.customize', compact(
+        return view('company.booth-booking.customize', compact(
             'booking',
             'brandingServices',
             'furnitureServices',
@@ -1195,7 +1195,7 @@ class CompanyBoothBookingController extends Controller
         $servicesAmount = (float) $bookingServices->sum('total');
         $amountToPay = (float) $booking->total_amount;
 
-        return view('backend.company.booth-booking.services', compact(
+        return view('company.booth-booking.services', compact(
             'booking',
             'services',
             'bookingServices',
@@ -1346,7 +1346,7 @@ class CompanyBoothBookingController extends Controller
             ? $bookingServices->map(fn ($bookingService) => $bookingService->service?->title . ((int) $bookingService->quantity > 1 ? ' x' . $bookingService->quantity : ''))->filter()->join(', ')
             : 'No extra services selected';
 
-        return view('backend.company.booth-booking.review', compact(
+        return view('company.booth-booking.review', compact(
             'booking',
             'summary',
             'selectedDays',
@@ -1390,7 +1390,7 @@ class CompanyBoothBookingController extends Controller
         $razorpayCurrency = config('services.razorpay.currency', 'INR');
         $razorpayEnabled = filled($razorpayKey) && filled(config('services.razorpay.secret'));
 
-        return view('backend.company.booth-booking.payment', compact(
+        return view('company.booth-booking.payment', compact(
             'booking',
             'selectedDays',
             'daysAmount',
@@ -1710,7 +1710,7 @@ class CompanyBoothBookingController extends Controller
         ]);
         session()->forget('company_booth_booking');
 
-        return view('backend.company.booth-booking.confirmed', compact('booking'));
+        return view('company.booth-booking.confirmed', compact('booking'));
     }
 
     private function syncDraftBooking(Hall $hall, \App\Domain\Booth\Models\Booth $booth, ?BoothSize $selectedSize, $selectedSlots, array $bookingDraft): array
@@ -1980,19 +1980,15 @@ class CompanyBoothBookingController extends Controller
 
     private function bookedBoothGroupsForHall(Hall $hall, $booths): \Illuminate\Support\Collection
     {
-        // Exhibition + pavelion details are needed for the booth click popup.
         $hall->loadMissing('pavilion.exhibition');
 
-        $orderedBooths = $booths
-            ->sortBy(function ($booth) {
-                $number = (int) preg_replace('/\D+/', '', (string) $booth->booth_number);
+        $boothsById = $booths->keyBy('id');
 
-                return sprintf('%08d-%08d', $number ?: $booth->id, $booth->id);
-            })
-            ->values();
-        $assignedBoothIds = collect();
+        if ($boothsById->isEmpty()) {
+            return collect();
+        }
 
-        $bookings = BoothBooking::query()
+        return BoothBooking::query()
             ->with(['company', 'boothProfile', 'boothSize'])
             ->where('hall_id', $hall->id)
             ->where('payment_status', 'paid')
@@ -2001,35 +1997,25 @@ class CompanyBoothBookingController extends Controller
             ->orderBy('created_at')
             ->orderBy('id')
             ->get()
-            ->filter(fn (BoothBooking $booking) => $booking->company_id && $booking->booth_id);
+            ->filter(fn (BoothBooking $booking) => $booking->company_id && $booking->booth_id)
+            ->map(function (BoothBooking $booking) use ($hall, $boothsById) {
+                $allocatedBooths = collect($booking->selected_booth_ids ?: [$booking->booth_id])
+                    ->push($booking->booth_id)
+                    ->filter()
+                    ->map(fn ($id) => (int) $id)
+                    ->unique()
+                    ->filter(fn (int $id) => $boothsById->has($id))
+                    ->map(fn (int $id) => $boothsById->get($id))
+                    ->sortBy(function ($booth) {
+                        $number = (int) preg_replace('/\D+/', '', (string) $booth->booth_number);
 
-        return $bookings
-            ->groupBy('company_id')
-            ->map(function ($companyBookings) use ($hall, $orderedBooths, &$assignedBoothIds) {
-                $booking = $companyBookings->first();
-                $requiredSpaces = $companyBookings->sum(function (BoothBooking $companyBooking) {
-                    $selectedIds = collect($companyBooking->selected_booth_ids ?: [$companyBooking->booth_id])
-                        ->push($companyBooking->booth_id)
-                        ->filter()
-                        ->map(fn ($id) => (int) $id)
-                        ->unique();
-
-                    return max($selectedIds->count(), \App\Support\BoothFloorMap::unitsForSize($companyBooking->boothSize));
-                });
-
-                $allocatedBooths = $orderedBooths
-                    ->reject(fn ($booth) => $assignedBoothIds->contains((int) $booth->id))
-                    ->take($requiredSpaces)
+                        return sprintf('%08d-%08d', $number ?: $booth->id, $booth->id);
+                    })
                     ->values();
 
                 if ($allocatedBooths->isEmpty()) {
                     return null;
                 }
-
-                $assignedBoothIds = $assignedBoothIds
-                    ->merge($allocatedBooths->pluck('id')->map(fn ($id) => (int) $id))
-                    ->unique()
-                    ->values();
 
                 $items = $allocatedBooths
                     ->map(function ($booth) use ($booking) {
@@ -2060,7 +2046,6 @@ class CompanyBoothBookingController extends Controller
                     'booth_numbers' => $items->pluck('booth.booth_number')->values()->all(),
                     'segments' => \App\Support\BoothFloorMap::segmentsForFootprint($allocatedBooths),
                     'space_label' => trim(($items->count() > 1 ? $items->count() . ' spaces' : '1 space') . ' ' . ($booking->boothSize?->title ? '- ' . $booking->boothSize->title : '')),
-                    // Extra details surfaced in the booth-click popup (all dynamic/database driven).
                     'exhibition_name' => $hall->pavilion?->exhibition?->title ?? $hall->pavilion?->exhibition?->name ?? 'Exhibition',
                     'hall_name' => $hall->title,
                     'pavilion_name' => $hall->pavilion?->title ?? 'Pavilion',
@@ -2073,10 +2058,10 @@ class CompanyBoothBookingController extends Controller
                     'website' => $booking->company?->website,
                     'category' => $booking->company?->industry,
                     'location' => trim(implode(', ', array_filter([$booking->company?->city, $booking->company?->country]))) ?: null,
-                    'left' => max(min($items->min('left') - 4, 700), 0),
-                    'top' => max(min($items->min('top') - 4, 350), 0),
-                    'width' => min($items->max('right') - $items->min('left') + 8, 700),
-                    'height' => min($items->max('bottom') - $items->min('top') + 8, 350),
+                    'left' => max(min($items->min('left'), 700), 0),
+                    'top' => max(min($items->min('top'), 350), 0),
+                    'width' => min($items->max('right') - $items->min('left'), 700),
+                    'height' => min($items->max('bottom') - $items->min('top'), 350),
                 ];
             })
             ->filter()

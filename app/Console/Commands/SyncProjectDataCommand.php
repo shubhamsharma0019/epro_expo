@@ -12,9 +12,9 @@ class SyncProjectDataCommand extends Command
 {
     protected $signature = 'db:sync-project-data
                             {--migrate : Run pending migrations before syncing}
-                            {--seed-base : Seed base admin/company accounts (APP_SEED_BASE)}';
+                            {--seed-base : Seed base admin/company accounts only (optional)}';
 
-    protected $description = 'Connect MySQL, normalize publish fields, sync service catalog, and report all database row counts.';
+    protected $description = 'Sync all application data from MySQL: normalize publish fields, booth counts, booking statuses, and report row counts. No demo seeders.';
 
     public function handle(): int
     {
@@ -39,13 +39,22 @@ class SyncProjectDataCommand extends Command
             $this->line(Artisan::output());
         }
 
+        $this->info('Syncing data from MySQL...');
+
         $this->normalizeExhibitionPublishFields();
         $this->normalizeCompanyEventPublishFields();
 
         Service::syncDefaultCatalog();
 
-        if ($this->option('seed-base') || filter_var(env('APP_SEED_BASE', false), FILTER_VALIDATE_BOOLEAN)) {
-            $this->info('Seeding base accounts...');
+        $syncSummary = \App\Support\DatabaseProjectSync::run();
+        foreach ($syncSummary as $task => $count) {
+            $this->line(sprintf('  • %s: %d updated', str_replace('_', ' ', $task), $count));
+        }
+
+        if ($this->option('seed-base')) {
+            $this->info('Seeding base accounts only (--seed-base)...');
+            putenv('APP_SEED_DEMO=false');
+            putenv('APP_SEED_BASE=true');
             Artisan::call('db:seed', ['--force' => true]);
             $this->line(Artisan::output());
         }
@@ -53,11 +62,12 @@ class SyncProjectDataCommand extends Command
         Artisan::call('storage:link');
         Artisan::call('config:clear');
         Artisan::call('cache:clear');
+        Artisan::call('view:clear');
 
         \App\Support\DbGuard::reset();
 
         $this->newLine();
-        $this->info('Database sync complete. Row counts:');
+        $this->info('MySQL sync complete. Row counts:');
         $this->table(['Table', 'Rows'], $this->rowCounts());
 
         return self::SUCCESS;

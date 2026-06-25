@@ -28,7 +28,15 @@
         'reserved' => 'bg-[#D5D6D8] text-navy',
         'warning' => 'bg-[#FF7B33] text-white',
     ];
+    $stateColors = [
+        'available' => ['bg' => '#21B86E', 'text' => '#ffffff'],
+        'selected' => ['bg' => '#4B18D9', 'text' => '#ffffff'],
+        'booked' => ['bg' => '#7B7B7B', 'text' => '#ffffff'],
+        'reserved' => ['bg' => '#D5D6D8', 'text' => '#071044'],
+        'warning' => ['bg' => '#FF7B33', 'text' => '#ffffff'],
+    ];
     $showDetailsPanel = !isset($hideDetailsPanel) || !$hideDetailsPanel;
+    $isVisitorMap = ($visitorFloorMap ?? null) || (isset($hall) && ! $showDetailsPanel);
     $normalizeBoothNumber = function ($number) {
         $value = strtoupper(preg_replace('/[^A-Z0-9]/', '', (string) $number));
         $value = str_starts_with($value, 'B') ? substr($value, 1) : $value;
@@ -48,201 +56,74 @@
 
         return $value;
     };
-    $fallbackBoothLayout = collect([
-        ['B01', 18, 28, 'reserved'], ['B02', 78, 30, 'reserved'], ['B03', 138, 30, 'reserved'],
-        ['B04', 198, 30, 'reserved'], ['B05', 258, 30, 'reserved'], ['B06', 318, 30, 'reserved'],
-        ['B07', 386, 30, 'available'], ['B08', 446, 30, 'available'], ['B09', 506, 30, 'available'],
-        ['B10', 640, 28, 'reserved'], ['B11', 18, 82, 'available'], ['B12', 640, 82, 'available'],
-        ['B13', 18, 136, 'available'], ['B14', 640, 136, 'available'], ['B15', 18, 190, 'available'],
-        ['B16', 640, 190, 'available'], ['B19', 18, 244, 'available'], ['B18', 640, 244, 'available'],
-        ['B21', 18, 304, 'reserved'], ['B32', 640, 304, 'reserved'], ['B22', 120, 122, 'available'],
-        ['B17', 250, 122, 'available'], ['B16A', 380, 122, 'available'], ['B18A', 510, 122, 'available'],
-        ['B24', 78, 248, 'available'], ['B25', 138, 248, 'available'], ['B26', 198, 248, 'reserved'],
-        ['B27', 258, 248, 'reserved'], ['B28', 318, 248, 'reserved'], ['B29', 386, 248, 'reserved'],
-        ['B30', 446, 248, 'available'], ['B44', 78, 306, 'available'], ['B45', 138, 306, 'available'],
-        ['B46', 198, 306, 'reserved'], ['B47', 258, 306, 'reserved'], ['B48', 318, 306, 'available'],
-        ['B49', 386, 306, 'available'], ['B50', 446, 306, 'available'], ['B51', 506, 306, 'available'],
-    ])->mapWithKeys(function ($booth) use ($normalizeBoothNumber, $formatBoothLabel) {
+
+    $mapFromVisitorFloorMap = function (array $mapData) {
         return [
-            $normalizeBoothNumber($booth[0]) => [
-                'number' => $booth[0],
-                'label' => $formatBoothLabel($booth[0]),
-                'x' => $booth[1],
-                'y' => $booth[2],
-                'status' => $booth[3],
-            ],
+            'booths' => collect($mapData['booths'])->map(function (array $booth) {
+                return [
+                    $booth['label'],
+                    $booth['shape'],
+                    $booth['left'],
+                    $booth['top'],
+                    $booth['state'],
+                    $booth['company'] ?? null,
+                    $booth['width'] ?? null,
+                    $booth['height'] ?? null,
+                    'is_hidden' => $booth['is_hidden'] ?? false,
+                    'category_color' => filled($booth['category'] ?? null)
+                        ? \App\Support\VisitorFloorMap::colorForCategory($booth['category'])['color']
+                        : null,
+                ];
+            })->all(),
+            'overlayBookedBoothGroups' => collect($mapData['overlayBookedBoothGroups'] ?? []),
+            'totalBoothsCount' => $mapData['totalBoothsCount'],
+            'availableBoothsCount' => $mapData['availableBoothsCount'],
+            'selectedBoothsCount' => $mapData['selectedBoothsCount'],
+            'bookedBoothsCount' => $mapData['bookedBoothsCount'],
+            'reservedBoothsCount' => $mapData['reservedBoothsCount'],
         ];
-    });
+    };
 
-    if (isset($hall)) {
-        // Fetch booths for the hall sorted by coordinate alignment
-        $dbBooths = $hall->booths()
-            ->with('boothSize')
-            ->get()
-            ->sortBy(function ($booth) {
-                return str_pad((string) $booth->position_y, 4, '0', STR_PAD_LEFT)
-                    . str_pad((string) $booth->position_x, 4, '0', STR_PAD_LEFT);
-            })
-            ->values();
+    if (($visitorFloorMap ?? null) || isset($hall)) {
+        $resolvedMap = $visitorFloorMap ?? \App\Support\VisitorFloorMap::prepare($hall);
+        $mapped = $mapFromVisitorFloorMap($resolvedMap);
+        $booths = $mapped['booths'];
+        $overlayBookedBoothGroups = $mapped['overlayBookedBoothGroups'];
+        $totalBoothsCount = $mapped['totalBoothsCount'];
+        $availableBoothsCount = $mapped['availableBoothsCount'];
+        $selectedBoothsCount = $mapped['selectedBoothsCount'];
+        $bookedBoothsCount = $mapped['bookedBoothsCount'];
+        $reservedBoothsCount = $mapped['reservedBoothsCount'];
+    } elseif (filled($slug ?? null)) {
+        $exhibition = \App\Domain\Event\Models\Exhibition::where('slug', $slug)->first();
+        $dbHall = $exhibition
+            ? \App\Domain\Event\Models\Hall::query()
+                ->whereHas('pavilion', fn ($query) => $query->where('exhibition_id', $exhibition->id))
+                ->where('status', 'active')
+                ->with('booths.boothSize')
+                ->orderBy('id')
+                ->first()
+            : null;
 
-        $dbBooths = $dbBooths->map(function ($booth) use ($fallbackBoothLayout, $normalizeBoothNumber) {
-            $layout = $fallbackBoothLayout->get($normalizeBoothNumber($booth->booth_number));
-            if ($layout && ((int) ($booth->position_x ?? 0) <= 0 && (int) ($booth->position_y ?? 0) <= 0)) {
-                $booth->position_x = $layout['x'];
-                $booth->position_y = $layout['y'];
-            } elseif ((int) ($booth->position_x ?? 0) <= 0 && (int) ($booth->position_y ?? 0) <= 0) {
-                $booth->position_x = 336;
-                $booth->position_y = 150;
-            }
-
-            if ($layout && blank($booth->status)) {
-                $booth->status = $layout['status'];
-            }
-
-            return $booth;
-        });
-
-        $dbBooths = $dbBooths
-            ->sortBy(function ($booth) {
-                return str_pad((string) $booth->position_y, 4, '0', STR_PAD_LEFT)
-                    . str_pad((string) $booth->position_x, 4, '0', STR_PAD_LEFT);
-            })
-            ->values();
-
-        // Calculate booked groups
-        $bookedBoothsById = $dbBooths->keyBy('id');
-        $bookedBoothGroups = collect();
-        if ($bookedBoothsById->isNotEmpty()) {
-            $bookings = \App\Domain\Booth\Models\BoothBooking::query()
-                ->with(['company', 'boothProfile'])
-                ->where('hall_id', $hall->id)
-                ->whereIn('booking_status', ['confirmed', 'active'])
-                ->where(function ($query) use ($bookedBoothsById) {
-                    $query->whereIn('booth_id', $bookedBoothsById->keys())
-                        ->orWhereNotNull('selected_booth_ids');
-                })
-                ->orderByRaw("CASE WHEN payment_status = 'paid' THEN 0 ELSE 1 END")
-                ->orderByRaw("CASE WHEN admin_status = 'approved' THEN 0 ELSE 1 END")
-                ->get()
-                ->filter(fn ($booking) => $booking->company_id && $booking->booth_id);
-
-            $bookedBoothGroups = $bookings
-                ->map(function ($booking) use ($bookedBoothsById) {
-                    $selectedIds = collect($booking->selected_booth_ids ?: [$booking->booth_id])
-                        ->push($booking->booth_id)
-                        ->filter()
-                        ->map(fn ($id) => (int) $id)
-                        ->unique();
-
-                    $items = $selectedIds
-                        ->map(function (int $boothId) use ($booking, $bookedBoothsById) {
-                            $booth = $bookedBoothsById->get($boothId);
-                            if (! $booth) {
-                                return null;
-                            }
-
-                            $height = (int) ($booth->position_y ?? 0) === 122 ? 70 : 44;
-                            $width = (int) ($booth->position_y ?? 0) === 122 ? 86 : 48;
-                            $left = min((int) ($booth->position_x ?? 0), 700 - $width);
-                            $top = min((int) ($booth->position_y ?? 0), 350 - $height);
-
-                            return [
-                                'booking' => $booking,
-                                'booth' => $booth,
-                                'left' => $left,
-                                'top' => $top,
-                                'right' => $left + $width,
-                                'bottom' => $top + $height,
-                            ];
-                        })
-                        ->filter()
-                        ->values();
-
-                    if ($items->isEmpty()) {
-                        return null;
-                    }
-
-                    $logo = $booking->boothProfile?->company_logo
-                        ? asset('storage/' . $booking->boothProfile->company_logo)
-                        : ($booking->company?->logo ? asset($booking->company->logo) : null);
-
-                    return [
-                        'company_id' => $booking->company_id,
-                        'company_name' => $booking->boothProfile?->company_name ?: $booking->company?->company_name ?: $booking->company?->name ?? 'Booked Company',
-                        'logo_url' => $logo,
-                        'booth_ids' => $items->pluck('booth.id')->values()->all(),
-                        'booth_numbers' => $items->pluck('booth.booth_number')->values()->all(),
-                        'left' => max(min($items->min('left') - 4, 700), 0),
-                        'top' => max(min($items->min('top') - 4, 350), 0),
-                        'width' => min($items->max('right') - $items->min('left') + 8, 700),
-                        'height' => min($items->max('bottom') - $items->min('top') + 8, 350),
-                    ];
-                })
-                ->filter()
-                ->values();
+        if ($dbHall && $dbHall->booths->isNotEmpty()) {
+            $resolvedMap = \App\Support\VisitorFloorMap::prepare($dbHall);
+            $mapped = $mapFromVisitorFloorMap($resolvedMap);
+            $booths = $mapped['booths'];
+            $overlayBookedBoothGroups = $mapped['overlayBookedBoothGroups'];
+            $totalBoothsCount = $mapped['totalBoothsCount'];
+            $availableBoothsCount = $mapped['availableBoothsCount'];
+            $selectedBoothsCount = $mapped['selectedBoothsCount'];
+            $bookedBoothsCount = $mapped['bookedBoothsCount'];
+            $reservedBoothsCount = $mapped['reservedBoothsCount'];
+        } else {
+            $booths = [];
+            $overlayBookedBoothGroups = collect();
+            $totalBoothsCount = 0;
+            $availableBoothsCount = 0;
+            $selectedBoothsCount = 0;
+            $bookedBoothsCount = 0;
+            $reservedBoothsCount = 0;
         }
-
-        $groupedBookedBoothIds = $bookedBoothGroups
-            ->flatMap(fn ($group) => $group['booth_ids'])
-            ->unique()
-            ->values()
-            ->all();
-        $overlayBookedBoothGroups = $bookedBoothGroups
-            ->filter(fn ($group) => count($group['booth_ids']) > 1)
-            ->values();
-        $overlayBookedBoothIds = $overlayBookedBoothGroups
-            ->flatMap(fn ($group) => $group['booth_ids'])
-            ->unique()
-            ->values()
-            ->all();
-        $companyNamesByBoothId = $bookedBoothGroups
-            ->flatMap(fn ($group) => collect($group['booth_ids'])->mapWithKeys(fn ($boothId) => [$boothId => $group['company_name']]));
-
-        $booths = [];
-        foreach ($dbBooths as $booth) {
-            $label = $formatBoothLabel($booth->booth_number);
-            $booth->loadMissing('boothSize');
-            if ($booth->boothSize) {
-                $width = (int) (floatval($booth->boothSize->width) * 16);
-                $height = (int) (floatval($booth->boothSize->height) * 15);
-                $shape = 'custom';
-            } else {
-                $isCenterFeatureBooth = in_array((int) ($booth->position_y ?? 0), [122], true);
-                $shape = $isCenterFeatureBooth ? 'large' : 'square';
-                $width = $isCenterFeatureBooth ? 86 : 48;
-                $height = $isCenterFeatureBooth ? 70 : 44;
-            }
-            $left = (int) ($booth->position_x ?? 0);
-            $top = (int) ($booth->position_y ?? 0);
-            $left = min($left, 700 - $width);
-            $top = min($top, 350 - $height);
-            $state = in_array($booth->id, $groupedBookedBoothIds, true) ? 'booked' : $booth->status;
-
-            $companyName = $companyNamesByBoothId->get($booth->id);
-
-            $booths[] = [
-                $label,
-                $shape,
-                $left,
-                $top,
-                $state,
-                $companyName,
-                $width,
-                $height,
-                'is_hidden' => false
-            ];
-        }
-
-        $totalBoothsCount = $dbBooths->count();
-        $availableBoothsCount = $dbBooths
-            ->filter(fn ($booth) => $booth->status === 'available' && ! in_array($booth->id, $groupedBookedBoothIds, true))
-            ->count();
-        $selectedBoothsCount = 0;
-        $bookedBoothsCount = $dbBooths
-            ->filter(fn ($booth) => $booth->status === 'booked' || in_array($booth->id, $groupedBookedBoothIds, true))
-            ->count();
-        $reservedBoothsCount = $dbBooths->where('status', 'reserved')->count();
-
     } else {
         // Fetch dynamic bookings for the current exhibition
         $exhibition = \App\Domain\Event\Models\Exhibition::where('slug', $slug)->first();
@@ -366,16 +247,58 @@
 
     <div class="grid grid-cols-1 gap-6 {{ $showDetailsPanel ? 'xl:grid-cols-[minmax(0,1fr)_300px]' : '' }}">
         <div class="min-w-0">
-            <div class="w-full overflow-x-auto rounded-xl border border-borderColor bg-white p-4 shadow-sm sm:p-5">
-                <div class="w-[720px] max-w-none">
+            <div class="w-full overflow-x-auto">
+                <div class="mx-auto w-[720px] max-w-none">
                     <div class="mb-4 flex items-center gap-8 px-8 text-center text-[16px] font-semibold text-navy">
                         <div class="h-px flex-1 bg-[#9AA3B8]"></div>
                         <div>Main Aisle</div>
                         <div class="h-px flex-1 bg-[#9AA3B8]"></div>
                     </div>
 
-                    <div class="relative w-full min-h-[400px] bg-white rounded-md border border-[#BFC8DE]">
-                        
+                    <div class="floor-map-canvas relative w-[720px] max-w-none rounded-md border border-[#BFC8DE] bg-[#F8FAFF]" style="height: 380px; min-height: 380px;">
+
+                        @if (isset($overlayBookedBoothGroups) && $showDetailsPanel && ! $isVisitorMap)
+                            @foreach ($overlayBookedBoothGroups as $group)
+                                @php
+                                    $groupCompany = $group['company_name'] ?? 'Booked Company';
+                                    $groupNumbers = $group['booth_numbers'] ?? [];
+                                    $groupLabel = count($groupNumbers) > 1
+                                        ? count($groupNumbers) . ' booths'
+                                        : 'Booth ' . $formatBoothLabel($groupNumbers[0] ?? '');
+                                    $groupCompanySlug = \Illuminate\Support\Str::slug($groupCompany);
+                                    $groupCompanyUrl = route('exhibitions.visitor.companies.show', [$slug, $groupCompanySlug]);
+                                    $groupSegments = $group['segments'] ?? [[
+                                        'left' => (int) ($group['left'] ?? 0),
+                                        'top' => (int) ($group['top'] ?? 0),
+                                        'width' => max((int) ($group['width'] ?? 48), 48),
+                                        'height' => max((int) ($group['height'] ?? 44), 44),
+                                    ]];
+                                @endphp
+                                @foreach ($groupSegments as $segmentIndex => $segment)
+                                    @php
+                                        $groupLeft = (int) ($segment['left'] ?? 0);
+                                        $groupTop = (int) ($segment['top'] ?? 0);
+                                        $groupWidth = max((int) ($segment['width'] ?? 48), 48);
+                                        $groupHeight = max((int) ($segment['height'] ?? 44), 44);
+                                    @endphp
+                                    <button
+                                        type="button"
+                                        style="position: absolute; left: {{ $groupLeft }}px; top: {{ $groupTop }}px; width: {{ $groupWidth }}px; height: {{ $groupHeight }}px; z-index: 20;"
+                                        class="absolute flex cursor-pointer flex-col items-center justify-center rounded-md bg-[#7B7B7B] px-2 text-center text-[12px] font-bold text-white shadow-sm transition hover:scale-[1.02]"
+                                        title="{{ $groupCompany }} - {{ implode(', ', $groupNumbers) }}"
+                                        onclick="window.location.href='{{ $groupCompanyUrl }}'">
+                                        @if ($segmentIndex === 0)
+                                            @if (! empty($group['logo_url']))
+                                                <img src="{{ $group['logo_url'] }}" alt="{{ $groupCompany }}" class="mb-1 h-6 w-6 rounded-full object-cover" onerror="this.remove();">
+                                            @endif
+                                            <span class="w-full truncate px-1 text-[9px] leading-tight">{{ $groupLabel }}</span>
+                                            <span class="mt-0.5 w-full truncate px-1 text-[8px] font-semibold leading-tight opacity-90">{{ \Illuminate\Support\Str::limit($groupCompany, 10) }}</span>
+                                        @endif
+                                    </button>
+                                @endforeach
+                            @endforeach
+                        @endif
+
                         @foreach ($booths as $booth)
                             @php
                                 $label = $booth[0];
@@ -387,25 +310,39 @@
                                 $width = $booth[6] ?? null;
                                 $height = $booth[7] ?? null;
                                 $isHidden = $booth['is_hidden'] ?? false;
+                                $categoryColor = $booth['category_color'] ?? null;
 
                                 if ($isHidden) continue;
-                                
-                                $style = "position: absolute; left: {$left}px; top: {$top}px;";
-                                if ($width) $style .= " width: {$width}px;";
-                                if ($height) $style .= " height: {$height}px;";
+
+                                $boothWidth = (int) ($width ?: ($shape === 'large' ? 86 : 48));
+                                $boothHeight = (int) ($height ?: ($shape === 'large' ? 70 : 44));
+                                $palette = $stateColors[$state] ?? $stateColors['available'];
+                                $style = "position: absolute; left: {$left}px; top: {$top}px; z-index: 10; width: {$boothWidth}px; height: {$boothHeight}px; display: flex; align-items: center; justify-content: center; flex-direction: column; font-size: " . ($shape === 'large' ? '18px' : '14px') . "; font-weight: 600; border-radius: " . ($shape === 'circle' ? '9999px' : '6px') . "; box-shadow: 0 1px 2px rgba(7,16,68,0.12);";
+
+                                if ($shape === 'circle' && in_array($state, ['available', 'reserved'], true)) {
+                                    if ($state === 'reserved') {
+                                        $style .= " background: {$palette['bg']}; color: {$palette['text']}; border: none;";
+                                    } else {
+                                        $style .= " background: #ffffff; color: #071044; border: 1px solid #26335E;";
+                                    }
+                                } else {
+                                    $style .= " background: {$palette['bg']}; color: {$palette['text']}; border: none;";
+                                }
+
                                 if ($company && $state === 'booked') {
                                     $style .= " cursor: pointer;";
                                 }
-                                
-                                $class = "absolute flex shrink-0 flex-col items-center justify-center font-semibold shadow-sm transition hover:scale-105 ";
-                                if ($shape === 'large') {
-                                    $class .= "h-[70px] w-[86px] text-[18px] rounded " . $stateClasses[$state];
-                                } elseif ($shape === 'circle') {
-                                    $class .= "h-[44px] w-[48px] text-[14px] rounded-full border border-[#26335E] bg-white text-navy shadow-none";
-                                } elseif ($shape === 'custom') {
-                                    $class .= "text-[14px] rounded " . $stateClasses[$state];
-                                } else {
-                                    $class .= "h-[44px] w-[48px] text-[14px] rounded " . $stateClasses[$state];
+
+                                $class = $isVisitorMap ? 'transition' : 'transition hover:scale-105';
+                                if (! $isVisitorMap) {
+                                    $class .= " font-semibold shadow-sm ";
+                                    if ($shape === 'large') {
+                                        $class .= "flex-col text-[18px] " . ($stateClasses[$state] ?? $stateClasses['available']);
+                                    } elseif ($shape === 'circle') {
+                                        $class .= "text-[14px] rounded-full border border-[#26335E] bg-white text-navy shadow-none";
+                                    } else {
+                                        $class .= "flex-col text-[14px] " . ($stateClasses[$state] ?? $stateClasses['available']);
+                                    }
                                 }
 
                                 $onClickAttr = '';
@@ -428,13 +365,21 @@
                                     <span class="w-full truncate px-1 text-[9px] leading-tight">{{ $company }}</span>
                                 @elseif($company && $state === 'booked')
                                     <span class="text-[12px] font-bold leading-none">{{ $label }}</span>
-                                    <span class="mt-0.5 w-full truncate px-1 text-[8px] font-semibold leading-tight opacity-90">{{ \Illuminate\Support\Str::limit($company, 8) }}</span>
+                                    @unless ($isVisitorMap)
+                                        <span class="mt-0.5 w-full truncate px-1 text-[8px] font-semibold leading-tight opacity-90">{{ \Illuminate\Support\Str::limit($company, 8) }}</span>
+                                    @endunless
                                 @else
                                     {{ $label }}
                                 @endif
                                 
                             </button>
                         @endforeach
+
+                        @if (empty($booths))
+                            <div class="absolute inset-0 flex items-center justify-center px-6 text-center text-[15px] font-semibold text-[#5A6480]">
+                                Booth layout is loading. Please refresh or select another hall.
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

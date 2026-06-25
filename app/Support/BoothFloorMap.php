@@ -8,6 +8,10 @@ use Illuminate\Support\Collection;
 
 class BoothFloorMap
 {
+    public const CELL_WIDTH = 48;
+
+    public const CELL_HEIGHT = 44;
+
     public static function unitsForSize(?BoothSize $selectedSize): int
     {
         if (! $selectedSize) {
@@ -41,6 +45,25 @@ class BoothFloorMap
     {
         $booth->loadMissing('boothSize');
 
+        $left = (int) ($booth->position_x ?? 0);
+        $top = (int) ($booth->position_y ?? 0);
+
+        if ($left > 0 || $top > 0) {
+            $visual = self::hallCoordinateVisual($left, $top);
+
+            $left = min($left, 720 - $visual['width'] - 16);
+            $top = min($top, 400 - $visual['height'] - 16);
+
+            return [
+                'left' => $left,
+                'top' => $top,
+                'right' => $left + $visual['width'],
+                'bottom' => $top + $visual['height'],
+                'width' => $visual['width'],
+                'height' => $visual['height'],
+            ];
+        }
+
         [$left, $top] = self::fallbackPositionForBooth($booth);
 
         $width = 60;
@@ -59,6 +82,26 @@ class BoothFloorMap
         ];
     }
 
+    /** @return array{width:int,height:int} */
+    private static function hallCoordinateVisual(int $left, int $top): array
+    {
+        $cornerPositions = [
+            '18-28' => true,
+            '18-304' => true,
+            '640-304' => true,
+        ];
+
+        if (isset($cornerPositions["{$left}-{$top}"])) {
+            return ['width' => 48, 'height' => 44];
+        }
+
+        if ($top === 122) {
+            return ['width' => 86, 'height' => 70];
+        }
+
+        return ['width' => 48, 'height' => 44];
+    }
+
     private static function fallbackPositionForBooth(Booth $booth): array
     {
         $number = (int) preg_replace('/\D+/', '', (string) $booth->booth_number);
@@ -73,7 +116,7 @@ class BoothFloorMap
     public static function boundsForFootprint(Collection $footprint): array
     {
         if ($footprint->isEmpty()) {
-            return ['left' => 0, 'top' => 0, 'width' => 60, 'height' => 68];
+            return ['left' => 0, 'top' => 0, 'width' => self::CELL_WIDTH, 'height' => self::CELL_HEIGHT];
         }
 
         $metrics = $footprint->map(fn (Booth $booth) => self::metricsForBooth($booth));
@@ -86,8 +129,8 @@ class BoothFloorMap
         return [
             'left' => $left,
             'top' => $top,
-            'width' => max(60, $right - $left),
-            'height' => max(68, $bottom - $top),
+            'width' => max(self::CELL_WIDTH, $right - $left),
+            'height' => max(self::CELL_HEIGHT, $bottom - $top),
         ];
     }
     public static function segmentsForFootprint(Collection $footprint): array
@@ -145,10 +188,10 @@ class BoothFloorMap
                 return [
                     'ids' => $segment['ids'],
                     'numbers' => $segment['numbers'],
-                    'left' => max((int) $segment['left'] - 4, 0),
-                    'top' => max((int) $segment['top'] - 4, 0),
-                    'width' => max(60, (int) ($segment['right'] - $segment['left']) + 8),
-                    'height' => max(68, (int) ($segment['bottom'] - $segment['top']) + 8),
+                    'left' => max((int) $segment['left'], 0),
+                    'top' => max((int) $segment['top'], 0),
+                    'width' => max(self::CELL_WIDTH, (int) ($segment['right'] - $segment['left'])),
+                    'height' => max(self::CELL_HEIGHT, (int) ($segment['bottom'] - $segment['top'])),
                 ];
             })
             ->values()
