@@ -5,7 +5,6 @@ namespace App\Domain\Shared\Services;
 use App\Domain\Visitor\Models\VisitorTicket;
 use App\Support\DbGuard;
 use App\Support\LiveContent;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class EventsHomePageData
@@ -280,16 +279,10 @@ class EventsHomePageData
     private function eventImageUrl($branding): ?string
     {
         foreach ([$branding?->banner_path, $branding?->logo_path] as $path) {
-            if (! filled($path)) {
-                continue;
-            }
+            $resolved = LiveContent::resolveCompanyEventBannerUrl($path);
 
-            if (Str::startsWith($path, ['http://', 'https://', '/'])) {
-                return $path;
-            }
-
-            if (Storage::disk('public')->exists($path)) {
-                return asset('storage/' . $path);
+            if ($resolved) {
+                return $resolved;
             }
         }
 

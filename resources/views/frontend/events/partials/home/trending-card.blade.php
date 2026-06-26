@@ -5,8 +5,10 @@
 @endphp
 
 <article class="overflow-hidden rounded-[9px] border border-[#E8EAF3] bg-white shadow-[0_8px_18px_rgba(31,42,106,0.06)]">
-    <a href="{{ url('/events/listings/' . $eventSlug) }}" class="relative block aspect-[16/9] overflow-hidden bg-[#071044]">
-        <img src="{{ $eventImage }}" alt="{{ $event['title'] }}" class="block h-full w-full object-cover" onerror="this.onerror=null;this.src='{{ $fallbackEventImage }}';">
+    <a href="{{ url('/events/listings/' . $eventSlug) }}" class="group relative block aspect-[16/9] overflow-hidden bg-[#071044]">
+        <img src="{{ $eventImage }}" alt="{{ $event['title'] }}" class="block h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" onerror="this.onerror=null;this.src='{{ $fallbackEventImage }}';">
+        <span class="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#071044]/35 via-transparent to-transparent"></span>
+        <span class="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/15 to-transparent transition-transform duration-1000 group-hover:translate-x-full"></span>
         <span class="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-[5px] px-2.5 py-1 text-[10px] font-extrabold leading-none shadow-[0_8px_16px_rgba(7,16,68,0.18)] {{ $event['badgeClass'] }}">
             <span class="h-1.5 w-1.5 rounded-full bg-current opacity-80"></span>
             {{ $event['badge'] }}

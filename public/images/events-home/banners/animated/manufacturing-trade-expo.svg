@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title">
+  <title id="title">Manufacturing Trade Expo animated banner</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0c4a6e"/>
+      <stop offset="100%" stop-color="#164e63"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#bg)"/>
+  <rect width="640" height="360" fill="#0891b2" opacity="0.12">
+    <animate attributeName="opacity" values="0.08;0.18;0.08" dur="6s" repeatCount="indefinite"/>
+  </rect>
+  <g stroke="#67e8f9" stroke-width="2" fill="none" opacity="0.45">
+    <path d="M0 280 H640"/>
+    <path d="M80 280 V180 H160 V280"/>
+    <path d="M220 280 V140 H300 V280"/>
+    <path d="M360 280 V160 H440 V280"/>
+    <path d="M500 280 V120 H580 V280"/>
+  </g>
+  <g fill="#22d3ee" opacity="0.85">
+    <rect x="95" y="200" width="50" height="18" rx="4">
+      <animate attributeName="x" values="95;115;95" dur="2.5s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="235" y="170" width="50" height="18" rx="4">
+      <animate attributeName="x" values="235;255;235" dur="3s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="375" y="190" width="50" height="18" rx="4">
+      <animate attributeName="x" values="375;395;375" dur="2.8s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+  <g transform="translate(250 72)">
+    <circle cx="70" cy="70" r="58" fill="none" stroke="#a5f3fc" stroke-width="8" stroke-dasharray="18 12">
+      <animateTransform attributeName="transform" type="rotate" from="0 70 70" to="360 70 70" dur="10s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="70" cy="70" r="34" fill="#155e75"/>
+    <circle cx="70" cy="70" r="12" fill="#67e8f9">
+      <animate attributeName="r" values="10;14;10" dur="2s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+  <g opacity="0.2" fill="#ffffff">
+    <rect x="-60" y="40" width="40" height="280" transform="skewX(-12)">
+      <animateTransform attributeName="transform" type="translate" values="-60 0;700 0" dur="4.5s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+</svg>

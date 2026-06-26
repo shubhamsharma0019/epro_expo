@@ -56,7 +56,9 @@
             <div class="space-y-4">
                 @forelse (($dbEvents ?? collect()) as $event)
                         @php
-                            $eventBanner = $event->branding?->banner_path ? asset('storage/' . $event->branding->banner_path) : 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&h=350&fit=crop';
+                            $eventBanner = \App\Support\LiveContent::resolveCompanyEventBannerUrl($event->branding?->banner_path)
+                                ?: \App\Support\LiveContent::resolveCompanyEventBannerUrl($event->branding?->logo_path)
+                                ?: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&h=350&fit=crop';
                             $eventDates = $event->starts_at ? $event->starts_at->format('M d') . ($event->ends_at ? ' - ' . $event->ends_at->format('d, Y') : $event->starts_at->format(', Y')) : 'Date TBD';
                             $eventCountry = trim((string) ($event->country ?: 'India'));
                             $eventCity = trim((string) $event->city);

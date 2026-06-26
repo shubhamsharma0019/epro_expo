@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title">
+  <title id="title">Innovation Tech Summit animated banner</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a">
+        <animate attributeName="stop-color" values="#0f172a;#1e1b4b;#0f172a" dur="8s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="55%" stop-color="#312e81">
+        <animate attributeName="stop-color" values="#312e81;#4c1d95;#312e81" dur="8s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" stop-color="#7c3aed">
+        <animate attributeName="stop-color" values="#7c3aed;#a855f7;#7c3aed" dur="8s" repeatCount="indefinite"/>
+      </stop>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#c4b5fd" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#312e81" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#bg)"/>
+  <rect width="640" height="360" fill="url(#glow)">
+    <animate attributeName="opacity" values="0.5;0.9;0.5" dur="5s" repeatCount="indefinite"/>
+  </rect>
+  <g opacity="0.35" stroke="#c4b5fd" stroke-width="1.5" fill="none">
+    <path d="M40 90 H180 L250 150 H360 L430 80 H600">
+      <animate attributeName="stroke-dashoffset" values="0;120;0" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="stroke-dasharray" values="8 12" dur="6s" repeatCount="indefinite"/>
+    </path>
+    <path d="M60 260 H200 L280 210 H390 L470 250 H590">
+      <animate attributeName="stroke-dashoffset" values="120;0;120" dur="7s" repeatCount="indefinite"/>
+      <animate attributeName="stroke-dasharray" values="8 12" dur="7s" repeatCount="indefinite"/>
+    </path>
+  </g>
+  <g fill="#ede9fe">
+    <circle cx="180" cy="90" r="6"><animate attributeName="r" values="4;8;4" dur="2.4s" repeatCount="indefinite"/></circle>
+    <circle cx="250" cy="150" r="5"><animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite"/></circle>
+    <circle cx="430" cy="80" r="7"><animate attributeName="r" values="5;9;5" dur="3s" repeatCount="indefinite"/></circle>
+    <circle cx="280" cy="210" r="5"><animate attributeName="opacity" values="1;0.3;1" dur="2.8s" repeatCount="indefinite"/></circle>
+    <circle cx="470" cy="250" r="6"><animate attributeName="r" values="4;8;4" dur="2.2s" repeatCount="indefinite"/></circle>
+  </g>
+  <g transform="translate(220 58)">
+    <rect x="0" y="0" width="200" height="244" rx="28" fill="#1e1b4b" opacity="0.85"/>
+    <rect x="18" y="24" width="164" height="196" rx="22" fill="#312e81"/>
+    <circle cx="100" cy="92" r="34" fill="#6366f1">
+      <animate attributeName="r" values="30;38;30" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <path d="M66 170 Q100 130 134 170" stroke="#c4b5fd" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <rect x="36" y="198" width="128" height="10" rx="5" fill="#a5b4fc" opacity="0.8">
+      <animate attributeName="width" values="90;128;90" dur="3.5s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+  <g opacity="0.25">
+    <rect x="-80" y="0" width="120" height="360" fill="#ffffff" transform="skewX(-18)">
+      <animateTransform attributeName="transform" type="translate" values="-80 0;720 0" dur="5s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+</svg>

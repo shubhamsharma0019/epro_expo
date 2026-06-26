@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title">
+  <title id="title">Founders Investors Mixer animated banner</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1c1917"/>
+      <stop offset="100%" stop-color="#451a03"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#bg)"/>
+  <circle cx="320" cy="180" r="120" fill="#f59e0b" opacity="0.12">
+    <animate attributeName="r" values="110;130;110" dur="5s" repeatCount="indefinite"/>
+  </circle>
+  <g stroke="#fbbf24" stroke-width="2" fill="none" opacity="0.55">
+    <path d="M120 180 C220 80, 420 80, 520 180"/>
+    <path d="M120 180 C220 280, 420 280, 520 180"/>
+    <path d="M320 60 V300"/>
+    <animate attributeName="opacity" values="0.35;0.75;0.35" dur="4s" repeatCount="indefinite"/>
+  </g>
+  <g fill="#fde68a">
+    <circle cx="120" cy="180" r="10"><animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite"/></circle>
+    <circle cx="320" cy="60" r="8"><animate attributeName="r" values="6;10;6" dur="2.5s" repeatCount="indefinite"/></circle>
+    <circle cx="520" cy="180" r="10"><animate attributeName="opacity" values="1;0.4;1" dur="2.2s" repeatCount="indefinite"/></circle>
+    <circle cx="320" cy="300" r="8"><animate attributeName="r" values="7;11;7" dur="3s" repeatCount="indefinite"/></circle>
+  </g>
+  <g transform="translate(268 118)">
+    <rect x="0" y="0" width="104" height="124" rx="18" fill="#78350f" opacity="0.9"/>
+    <rect x="14" y="18" width="76" height="76" rx="38" fill="#f59e0b">
+      <animate attributeName="opacity" values="0.85;1;0.85" dur="3s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="24" y="104" width="56" height="8" rx="4" fill="#fde68a"/>
+  </g>
+  <g opacity="0.18" fill="#fff">
+    <circle cx="80" cy="60" r="3"><animate attributeName="cy" values="60;300;60" dur="7s" repeatCount="indefinite"/></circle>
+    <circle cx="560" cy="300" r="3"><animate attributeName="cy" values="300;40;300" dur="6s" repeatCount="indefinite"/></circle>
+    <circle cx="420" cy="40" r="2"><animate attributeName="cy" values="40;320;40" dur="8s" repeatCount="indefinite"/></circle>
+  </g>
+</svg>

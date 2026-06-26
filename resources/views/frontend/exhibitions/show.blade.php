@@ -21,6 +21,10 @@
     $sponsors = $sponsors ?? collect();
     $faqs = $faqs ?? collect();
     $halls = $halls ?? collect();
+    $displayPavilions = $halls->pluck('pavilion.title')->filter()->unique()->count();
+    $displayHalls = $halls->count();
+    $description = $exhibition->description ?: 'Explore the latest technologies, interact with global business leaders, and discover innovative solutions. Enter virtual lobbies, book corporate meetings, download brochures, and attend live product demos.';
+    $heroBadge = strtoupper($eventType ?: 'Expo & Innovation');
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -29,557 +33,533 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $title }} - Exhibition Details - EproExpo</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
-                    colors: {
-                        primary: { 500: '#5A32FA', 600: '#4A22E0' }
-                    }
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
                 }
             }
         }
     </script>
     <style>
-        body { background-color: #FFFFFF; }
+        body { background-color: #f0f2f9; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .perspective-1000 { perspective: 1000px; }
     </style>
 </head>
-<body class="min-h-screen bg-white text-[#1E293B] font-sans">
+<body class="min-h-screen bg-[#f0f2f9] text-[#0f172a] font-sans antialiased selection:bg-indigo-200 selection:text-indigo-900">
 
-
-
-    <!-- Main Content Area -->
-    <main class="flex min-h-screen w-full flex-col bg-white">
-        
-        <!-- Header Container -->
-        <div id="header-container" class="relative z-40 w-full shrink-0">
+    <main class="flex min-h-screen w-full flex-col">
+        <div id="header-container" class="relative z-40 w-full shrink-0 bg-white">
             @include('frontend.exhibitions.tickets.header', ['hideMobileMenu' => true])
         </div>
-        <!-- Scrollable Content -->
-        <div class="relative flex-1 overflow-y-auto bg-[#F8FAFC] px-4 py-6 sm:px-8 sm:py-8 md:px-12">
-            
-            <!-- Back button -->
-            <a href="{{ url('/exhibitions') }}" class="inline-flex items-center gap-1.5 text-indigo-600 font-semibold hover:text-indigo-700 transition-colors mb-6 text-sm">
-                <i class="ph ph-arrow-left text-base"></i> Back to Exhibitions
-            </a>
 
-            <!-- Header Section (Hero Card Banner) -->
-            <div class="relative mb-8 overflow-hidden rounded-3xl border border-indigo-100/40 bg-gradient-to-r from-[#EEF2FF] via-[#F4F2FF] to-[#FAF5FF] p-5 shadow-sm sm:p-6 md:p-8 lg:p-10">
-                <!-- Dotted pattern decorations -->
-                <div class="absolute top-6 left-6 text-indigo-300/30 opacity-60">
-                    <svg width="40" height="60" fill="currentColor">
-                        <pattern id="dot-pattern-1" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">
-                            <circle cx="2" cy="2" r="1.5"></circle>
-                        </pattern>
-                        <rect width="40" height="60" fill="url(#dot-pattern-1)"></rect>
-                    </svg>
-                </div>
-                <div class="absolute bottom-6 right-6 text-indigo-300/30 opacity-60">
-                    <svg width="40" height="60" fill="currentColor">
-                        <pattern id="dot-pattern-2" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">
-                            <circle cx="2" cy="2" r="1.5"></circle>
-                        </pattern>
-                        <rect width="40" height="60" fill="url(#dot-pattern-2)"></rect>
-                    </svg>
-                </div>
+        <div class="relative flex-1 overflow-y-auto pb-6 sm:pb-8">
+            <div class="w-full space-y-8 pb-4 md:pb-8">
 
-                <div class="relative z-10 flex flex-col lg:flex-row gap-8 lg:items-center justify-between">
-                    <div class="flex-1 flex flex-col">
-                        <!-- Pill Badges -->
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            @foreach ($tags as $tag)
-                                <span class="bg-indigo-50 border border-indigo-150/60 text-indigo-700 rounded-full px-3.5 py-1 text-[11px] font-bold tracking-wide uppercase shadow-sm">{{ $tag }}</span>
-                            @endforeach
-                        </div>
+                {{-- HERO --}}
+                <section class="relative overflow-hidden rounded-b-[2.5rem] border border-t-0 border-white/60 bg-gradient-to-br from-[#ffffff] via-[#faf8ff] to-[#f4efff] pb-2 shadow-[0_20px_40px_-15px_rgba(109,40,217,0.15)] lg:pb-3">
+                    <div class="relative h-full w-full overflow-hidden rounded-b-[2.25rem] border border-t-0 border-white/50 bg-white/40 p-6 backdrop-blur-3xl sm:p-8 lg:p-12">
+                        <div class="pointer-events-none absolute right-0 top-0 h-full w-full opacity-30" style="background-image: radial-gradient(#d8b4fe 2px, transparent 2px); background-size: 30px 30px;"></div>
+                        <div class="absolute -right-40 -top-40 h-96 w-96 animate-pulse rounded-full bg-purple-400 opacity-30 mix-blend-multiply blur-3xl filter"></div>
+                        <div class="absolute -bottom-40 -left-40 h-96 w-96 animate-pulse rounded-full bg-indigo-400 opacity-30 mix-blend-multiply blur-3xl filter" style="animation-delay: 2s;"></div>
 
-                        <!-- Heading -->
-                        <h1 id="exh-name" class="text-3xl md:text-4xl lg:text-[40px] font-extrabold text-[#1E1B4B] tracking-tight leading-tight mb-4">{{ $title }}</h1>
+                        <div class="relative z-10 grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
+                            <div>
+                                <a href="{{ url('/exhibitions') }}" class="mb-8 inline-flex cursor-pointer items-center gap-2 text-sm font-semibold uppercase tracking-wide text-indigo-600 transition-colors hover:text-indigo-800">
+                                    <i data-lucide="arrow-left" class="h-4 w-4"></i>
+                                    Back to Exhibitions
+                                </a>
 
-                        <!-- Date & Location Meta Row -->
-                        <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-[#475569] text-sm font-medium mb-4">
-                            <div class="flex items-center gap-1.5">
-                                <i class="ph ph-calendar-blank text-[18px] text-indigo-600"></i>
-                                <span id="exh-dates">{{ $dateStr }}</span>
-                            </div>
-                            <span class="hidden md:inline w-1 h-1 rounded-full bg-gray-300"></span>
-                            <div class="flex items-center gap-1.5">
-                                <i class="ph ph-clock text-[18px] text-indigo-600"></i>
-                                <span>{{ $timeStr }}</span>
-                            </div>
-                            <span class="hidden md:inline w-1 h-1 rounded-full bg-gray-300"></span>
-                            <div class="flex items-center gap-1.5">
-                                <i class="ph ph-map-pin text-[18px] text-indigo-600"></i>
-                                <span id="exh-venue">{{ $location }}</span>
-                            </div>
-                        </div>
-
-                        <!-- Description -->
-                        <p id="exh-description" class="text-[#64748B] text-[15px] font-medium leading-relaxed max-w-[550px] mb-6">
-                            {{ $exhibition->description ?: 'Explore the latest technologies, interact with global business leaders, and discover innovative solutions. Enter virtual lobbies, book corporate meetings, download brochures, and attend live product demos.' }}
-                        </p>
-
-                        <!-- CTA Buttons -->
-                        <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                            <a id="get-pass-btn-hero" href="{{ $ticketUrl }}" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#4A22E0] px-6 py-3 text-sm font-bold text-white shadow-[0_4px_14px_rgba(74,34,224,0.25)] transition-all hover:bg-[#3D1CBA] sm:w-auto">
-                                <i class="ph ph-ticket text-[18px]"></i> Get Visitor Pass
-                            </a>
-                            <a href="{{ route('exhibitions.visitor.floor-map', $slug) }}" class="inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[#E0D7FF] bg-white px-6 py-3 text-sm font-bold text-[#4A22E0] shadow-sm transition-colors hover:bg-[#F5F3FF] sm:w-auto">
-                                <i class="ph ph-map-trifold text-[18px]"></i> View Floor Plan
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Right Column (Large Banner Image) -->
-                    <div class="w-full shrink-0 lg:w-[460px] xl:w-[520px]">
-                        <img src="{{ $bannerImage }}" alt="{{ $title }}" class="h-[200px] w-full rounded-3xl border-4 border-white object-cover shadow-[0_15px_30px_rgba(74,34,224,0.1)] sm:h-[240px] md:h-[280px]">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Stats Row (4 Individual Cards) -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-                <!-- Companies Card -->
-                <div class="bg-white rounded-[20px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] border border-gray-100 flex items-center gap-4 relative overflow-hidden">
-                    <div class="w-12 h-12 rounded-2xl bg-[#EEF2FF] text-[#4F46E5] flex items-center justify-center flex-shrink-0">
-                        <i class="ph ph-buildings text-[24px]"></i>
-                    </div>
-                    <div>
-                        <div class="text-3xl font-extrabold text-[#1E1B4B] flex items-center leading-none">
-                            <span id="exh-companies-count">{{ $displayCompanies }}</span>
-                        </div>
-                        <div class="text-[13px] text-gray-400 font-bold tracking-wide mt-1.5">Companies</div>
-                    </div>
-                    <!-- Corner wavy decoration -->
-                    <div class="absolute bottom-0 right-0 w-12 h-12 bg-gradient-to-br from-transparent to-indigo-50/30 rounded-tl-full pointer-events-none"></div>
-                </div>
-
-                <!-- Countries Card -->
-                <div class="bg-white rounded-[20px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] border border-gray-100 flex items-center gap-4 relative overflow-hidden">
-                    <div class="w-12 h-12 rounded-2xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center flex-shrink-0">
-                        <i class="ph ph-globe text-[24px]"></i>
-                    </div>
-                    <div>
-                        <div class="text-3xl font-extrabold text-[#1E1B4B] leading-none">
-                            <span>{{ $displayCountries }}</span>
-                        </div>
-                        <div class="text-[13px] text-gray-400 font-bold tracking-wide mt-1.5">Countries</div>
-                    </div>
-                    <!-- Corner wavy decoration -->
-                    <div class="absolute bottom-0 right-0 w-12 h-12 bg-gradient-to-br from-transparent to-blue-50/30 rounded-tl-full pointer-events-none"></div>
-                </div>
-
-                <!-- Speakers Card -->
-                <div class="bg-white rounded-[20px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] border border-gray-100 flex items-center gap-4 relative overflow-hidden">
-                    <div class="w-12 h-12 rounded-2xl bg-[#ECFDF5] text-[#059669] flex items-center justify-center flex-shrink-0">
-                        <i class="ph ph-users text-[24px]"></i>
-                    </div>
-                    <div>
-                        <div class="text-3xl font-extrabold text-[#1E1B4B] leading-none">
-                            <span>{{ $displaySpeakers }}</span>
-                        </div>
-                        <div class="text-[13px] text-gray-400 font-bold tracking-wide mt-1.5">Speakers</div>
-                    </div>
-                    <!-- Corner wavy decoration -->
-                    <div class="absolute bottom-0 right-0 w-12 h-12 bg-gradient-to-br from-transparent to-emerald-50/30 rounded-tl-full pointer-events-none"></div>
-                </div>
-
-                <!-- Sessions Card -->
-                <div class="bg-white rounded-[20px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] border border-gray-100 flex items-center gap-4 relative overflow-hidden">
-                    <div class="w-12 h-12 rounded-2xl bg-[#FFF7ED] text-[#EA580C] flex items-center justify-center flex-shrink-0">
-                        <i class="ph ph-calendar text-[24px]"></i>
-                    </div>
-                    <div>
-                        <div class="text-3xl font-extrabold text-[#1E1B4B] leading-none">
-                            <span>{{ $displaySessions }}</span>
-                        </div>
-                        <div class="text-[13px] text-gray-400 font-bold tracking-wide mt-1.5">Sessions</div>
-                    </div>
-                    <!-- Corner wavy decoration -->
-                    <div class="absolute bottom-0 right-0 w-12 h-12 bg-gradient-to-br from-transparent to-orange-50/30 rounded-tl-full pointer-events-none"></div>
-                </div>
-            </div>
-
-            <!-- Tabs (Horizontal scrollable strip with prefix icons) -->
-            <div class="mb-8 flex items-center gap-2 overflow-x-auto rounded-2xl border border-gray-150 bg-white p-1.5 shadow-[0_4px_15px_rgba(0,0,0,0.01)] no-scrollbar select-none">
-                @foreach ($visibleTabs as $tab)
-                    <button id="tab-{{ $tab['id'] }}" data-tab="{{ $tab['id'] }}" onclick="switchTab('{{ $tab['id'] }}', this)" class="tab-btn shrink-0 flex items-center gap-2 px-4 py-3 rounded-xl text-[13px] sm:px-5 sm:text-[14px] font-bold transition-all focus:outline-none {{ $loop->first ? 'bg-[#F5F3FF] text-[#4A22E0]' : 'text-gray-500 hover:text-gray-950 hover:bg-gray-50' }}">
-                        <i class="ph {{ $tab['icon'] }} text-lg"></i> {{ $tab['label'] }}
-                    </button>
-                @endforeach
-            </div>
-
-            <!-- Tab Panels -->
-            <div id="tab-panels-container">
-                
-                <!-- Overview Panel -->
-                <div id="panel-overview" class="tab-panel {{ $firstTabId === 'overview' ? '' : 'hidden' }} grid grid-cols-1 gap-6 pb-10 lg:grid-cols-[1.1fr_1.1fr_0.8fr]">
-                    <!-- Left: What to Expect -->
-                    <div class="border border-gray-100 rounded-3xl p-5 sm:p-8 shadow-[0_4px_25px_rgba(0,0,0,0.02)] bg-white flex flex-col relative overflow-hidden">
-                        <!-- Decorative dome outline sketch watermark -->
-                        <div class="absolute bottom-12 right-0 w-48 h-32 pointer-events-none select-none">
-                            <svg class="w-full h-full" viewBox="0 0 100 60" fill="none" stroke="#4A22E0" stroke-opacity="0.04" stroke-width="0.75">
-                                <ellipse cx="50" cy="45" rx="42" ry="12" />
-                                <ellipse cx="50" cy="40" rx="38" ry="10" />
-                                <ellipse cx="50" cy="35" rx="32" ry="8" />
-                                <path d="M12 43 L12 55 M20 38 L20 53 M30 33 L30 50 M40 31 L40 48 M50 30 L50 48 M60 31 L60 48 M70 33 L70 50 M80 38 L80 53 M88 43 L88 55" />
-                                <line x1="2" y1="55" x2="98" y2="55" />
-                            </svg>
-                        </div>
-
-                        <h2 class="text-[20px] font-bold text-[#1E1B4B] mb-8">What to Expect</h2>
-                        
-                        <div class="space-y-6 mb-8 flex-1 relative z-10">
-                            @foreach ($expectations as [$icon, $label])
-                                <div class="flex items-center gap-4">
-                                    <div class="w-10 h-10 rounded-full bg-[#EEF2FF] border border-[#E0D7FF] flex items-center justify-center text-[#4A22E0] flex-shrink-0">
-                                        <i class="ph {{ $icon }} text-[20px]"></i>
-                                    </div>
-                                    <span class="text-[14px] text-gray-600 font-semibold">{{ $label }}</span>
+                                <div class="mb-5 flex flex-wrap gap-2">
+                                    <span class="inline-flex items-center gap-2 rounded-full border border-indigo-200/50 bg-gradient-to-r from-purple-100 to-indigo-100 px-4 py-1.5 text-xs font-bold tracking-widest text-indigo-800 shadow-sm">
+                                        <span class="h-2 w-2 animate-pulse rounded-full bg-indigo-600"></span>
+                                        {{ $heroBadge }}
+                                    </span>
+                                    @foreach (collect($tags)->take(2) as $tag)
+                                        <span class="rounded-full border border-indigo-100 bg-white px-4 py-1.5 text-xs font-bold tracking-widest text-indigo-700 shadow-sm">{{ strtoupper($tag) }}</span>
+                                    @endforeach
                                 </div>
-                            @endforeach
-                        </div>
-                        
-                        <a id="get-pass-btn" href="{{ $ticketUrl }}" class="w-full inline-block text-center bg-[#4A22E0] hover:bg-[#3D1CBA] text-white py-4 rounded-xl font-bold shadow-[0_4px_14px_rgba(74,34,224,0.25)] transition-all text-[15px] flex items-center justify-center gap-2 relative z-10">
-                            <i class="ph ph-ticket text-lg"></i> Get Visitor Pass
-                        </a>
-                    </div>
 
-                    <!-- Middle: Participating Companies -->
-                    <div class="border border-gray-100 rounded-3xl p-5 sm:p-8 shadow-[0_4px_25px_rgba(0,0,0,0.02)] bg-white flex flex-col">
-                        <div class="flex items-center gap-2 mb-8 text-[#1E1B4B]">
-                            <i class="ph ph-buildings text-[22px] text-indigo-600"></i>
-                            <h2 class="text-[20px] font-bold">Participating Companies</h2>
-                        </div>
-                        
-                        <div class="space-y-4">
-                            @forelse ($participatingCompanies->take(6) as $company)
-                                <div class="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_2px_8px_rgba(0,0,0,0.01)] transition-all duration-300 hover:border-indigo-100 hover:shadow-md sm:flex-row sm:items-center sm:justify-between">
-                                    <div class="flex items-center gap-4">
-                                        <!-- Logo container -->
-                                        <div class="w-14 h-14 bg-gray-50 border border-gray-100 rounded-xl overflow-hidden flex items-center justify-center p-2 flex-shrink-0">
-                                            @if($company['logo_url'])
-                                                <img src="{{ $company['logo_url'] }}" alt="{{ $company['name'] }}" class="max-w-full max-h-full object-contain">
-                                            @else
-                                                <div class="w-full h-full flex items-center justify-center bg-indigo-50 text-indigo-700 font-bold text-xs uppercase rounded">
-                                                    {{ substr($company['name'], 0, 2) }}
-                                                </div>
-                                            @endif
-                                        </div>
-                                        <!-- Details -->
-                                        <div>
-                                            <h4 class="font-bold text-[#1E1B4B] text-[15px]">{{ $company['name'] }}</h4>
-                                            <p class="mt-0.5 text-xs font-medium text-gray-400">{{ $company['location'] }}</p>
-                                        </div>
-                                    </div>
-                                    <!-- Action -->
-                                    <a href="{{ route('exhibitions.visitor.companies.show', ['slug' => $slug, 'companySlug' => $company['slug']]) }}" class="w-full rounded-lg border border-[#E0D7FF] bg-white px-4 py-2.5 text-center text-xs font-bold text-[#4A22E0] transition-colors hover:bg-[#F5F3FF] sm:w-auto sm:whitespace-nowrap">
-                                        View Company
+                                <h1 id="exh-name" class="mb-4 bg-gradient-to-r from-slate-900 via-indigo-900 to-purple-900 bg-clip-text text-5xl font-black tracking-tighter text-transparent md:text-7xl">{{ $title }}</h1>
+
+                                <p class="mb-8 text-2xl font-light text-slate-600">
+                                    Where <span class="bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text font-bold text-transparent">Innovation</span> Meets the Future
+                                </p>
+
+                                <div class="mb-6 inline-flex flex-wrap gap-6 rounded-2xl border border-white/60 bg-white/50 p-4 font-medium text-slate-700 shadow-sm backdrop-blur-md">
+                                    <span class="flex items-center gap-2"><i data-lucide="calendar" class="h-5 w-5 text-indigo-500"></i> <span id="exh-dates">{{ $dateStr }}</span></span>
+                                    <span class="flex items-center gap-2"><i data-lucide="clock" class="h-5 w-5 text-indigo-500"></i> {{ $timeStr }}</span>
+                                    <span class="flex items-center gap-2"><i data-lucide="map-pin" class="h-5 w-5 text-indigo-500"></i> <span id="exh-venue">{{ $location }}</span></span>
+                                </div>
+
+                                <div class="mb-6 flex flex-wrap gap-3">
+                                    @foreach ($tags as $tag)
+                                        <span class="rounded-full border border-indigo-100 bg-white px-4 py-1 text-sm font-bold text-indigo-700 shadow-sm">{{ $tag }}</span>
+                                    @endforeach
+                                </div>
+
+                                <p id="exh-description" class="mb-8 max-w-xl text-lg leading-relaxed text-slate-600">{{ $description }}</p>
+
+                                <div class="flex flex-wrap gap-4">
+                                    <a id="get-pass-btn-hero" href="{{ $ticketUrl }}" class="group flex items-center gap-3 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-fuchsia-600 px-8 py-4 font-bold text-white shadow-lg shadow-purple-500/30 transition-all hover:-translate-y-0.5 hover:shadow-purple-500/50">
+                                        Get Visitor Pass <i data-lucide="arrow-right" class="h-5 w-5 transition-transform group-hover:translate-x-1"></i>
+                                    </a>
+                                    <a href="{{ route('exhibitions.visitor.floor-map', $slug) }}" class="flex items-center gap-3 rounded-xl border-2 border-indigo-100 bg-white/50 px-8 py-4 font-bold text-indigo-900 shadow-sm transition-all hover:border-indigo-200 hover:bg-white">
+                                        <i data-lucide="map" class="h-5 w-5 text-indigo-600"></i> View Floor Plan
                                     </a>
                                 </div>
-                            @empty
-                                <div class="py-12 text-center text-[14px] font-semibold text-[#7A819A]">No exhibitors registered yet.</div>
-                            @endforelse
+                            </div>
+
+                            <div class="group relative mt-8 perspective-1000 lg:mt-0">
+                                <div class="absolute -inset-4 rounded-[3rem] bg-gradient-to-br from-purple-500 to-indigo-500 opacity-20 blur-2xl transition-opacity duration-500 group-hover:opacity-40"></div>
+                                <div class="relative overflow-hidden rounded-[2.5rem] border-[8px] border-white/80 shadow-2xl transition-transform duration-500 hover:rotate-1 hover:scale-[1.02]">
+                                    <img src="{{ $bannerImage }}" alt="{{ $title }}" class="h-[360px] w-full scale-105 object-cover lg:h-[450px]">
+                                    <div class="absolute inset-0 bg-gradient-to-t from-indigo-900/40 to-transparent mix-blend-multiply"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {{-- STATS --}}
+                <section class="relative overflow-hidden rounded-[2rem] border border-indigo-100 bg-white shadow-xl">
+                    <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03]"></div>
+                    <div class="absolute right-1/4 top-0 h-96 w-96 rounded-full bg-purple-200/40 blur-3xl"></div>
+                    <div class="absolute bottom-0 left-1/4 h-96 w-96 rounded-full bg-blue-200/40 blur-3xl"></div>
+
+                    <div class="relative grid grid-cols-1 gap-8 divide-y divide-indigo-100 p-8 sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4 lg:p-12">
+                        <div class="flex flex-col items-center px-4 pt-6 text-center sm:pt-0">
+                            <div class="mb-6 h-16 w-16 -rotate-3 transform rounded-2xl bg-gradient-to-br from-purple-200 to-indigo-300 p-[2px] shadow-[0_0_20px_-5px_rgba(139,92,246,0.3)]">
+                                <div class="flex h-full w-full items-center justify-center rounded-[14px] bg-white">
+                                    <i data-lucide="building-2" class="h-8 w-8 text-purple-600"></i>
+                                </div>
+                            </div>
+                            <h2 class="mb-2 text-4xl font-black tracking-tight text-indigo-950 md:text-5xl"><span id="exh-companies-count">{{ $displayCompanies }}</span></h2>
+                            <p class="mb-1 text-sm font-bold uppercase tracking-wider text-purple-600">Companies</p>
+                            <p class="text-sm text-slate-500">Leading the future of innovation</p>
+                        </div>
+
+                        <div class="flex flex-col items-center px-4 pt-6 text-center sm:pt-0">
+                            <div class="mb-6 h-16 w-16 rotate-3 transform rounded-2xl bg-gradient-to-br from-blue-200 to-cyan-300 p-[2px] shadow-[0_0_20px_-5px_rgba(59,130,246,0.3)]">
+                                <div class="flex h-full w-full items-center justify-center rounded-[14px] bg-white">
+                                    <i data-lucide="globe" class="h-8 w-8 text-blue-600"></i>
+                                </div>
+                            </div>
+                            <h2 class="mb-2 text-4xl font-black tracking-tight text-indigo-950 md:text-5xl">{{ $displayCountries }}</h2>
+                            <p class="mb-1 text-sm font-bold uppercase tracking-wider text-blue-600">Countries</p>
+                            <p class="text-sm text-slate-500">Global participation</p>
+                        </div>
+
+                        <div class="flex flex-col items-center px-4 pt-6 text-center sm:pt-0">
+                            <div class="mb-6 h-16 w-16 -rotate-3 transform rounded-2xl bg-gradient-to-br from-fuchsia-200 to-pink-300 p-[2px] shadow-[0_0_20px_-5px_rgba(217,70,239,0.3)]">
+                                <div class="flex h-full w-full items-center justify-center rounded-[14px] bg-white">
+                                    <i data-lucide="users" class="h-8 w-8 text-fuchsia-600"></i>
+                                </div>
+                            </div>
+                            <h2 class="mb-2 text-4xl font-black tracking-tight text-indigo-950 md:text-5xl">{{ $displaySpeakers }}</h2>
+                            <p class="mb-1 text-sm font-bold uppercase tracking-wider text-fuchsia-600">Speakers</p>
+                            <p class="text-sm text-slate-500">Industry thought leaders</p>
+                        </div>
+
+                        <div class="flex flex-col items-center px-4 pt-6 text-center sm:pt-0">
+                            <div class="mb-6 h-16 w-16 rotate-3 transform rounded-2xl bg-gradient-to-br from-amber-200 to-orange-300 p-[2px] shadow-[0_0_20px_-5px_rgba(245,158,11,0.3)]">
+                                <div class="flex h-full w-full items-center justify-center rounded-[14px] bg-white">
+                                    <i data-lucide="mic" class="h-8 w-8 text-amber-600"></i>
+                                </div>
+                            </div>
+                            <h2 class="mb-2 text-4xl font-black tracking-tight text-indigo-950 md:text-5xl">{{ $displaySessions }}</h2>
+                            <p class="mb-1 text-sm font-bold uppercase tracking-wider text-amber-600">Sessions</p>
+                            <p class="text-sm text-slate-500">Power-packed insights</p>
+                        </div>
+                    </div>
+                </section>
+
+                {{-- CONTENT --}}
+                <section class="grid grid-cols-1 gap-8 lg:grid-cols-[2fr_1fr]">
+                    <div class="rounded-[2rem] border border-slate-200/60 bg-white p-6 shadow-sm sm:p-8 lg:p-10">
+                        <nav class="no-scrollbar mb-8 flex gap-8 overflow-x-auto border-b border-slate-100 pb-1 font-semibold text-slate-500">
+                            @foreach ($visibleTabs as $tab)
+                                <button
+                                    id="tab-{{ $tab['id'] }}"
+                                    data-tab="{{ $tab['id'] }}"
+                                    onclick="switchTab('{{ $tab['id'] }}', this)"
+                                    class="tab-btn whitespace-nowrap px-1 pb-4 transition-colors {{ $loop->first ? 'border-b-2 border-indigo-600 text-indigo-700' : 'hover:text-slate-800' }}"
+                                >{{ $tab['label'] }}</button>
+                            @endforeach
+                        </nav>
+
+                        <div id="tab-panels-container">
+                            {{-- Overview --}}
+                            <div id="panel-overview" class="tab-panel {{ $firstTabId === 'overview' ? '' : 'hidden' }}">
+                                <div class="group mb-6 rounded-2xl border border-slate-100 bg-slate-50/50 p-6 transition-all duration-300 hover:bg-white hover:shadow-xl hover:shadow-indigo-100/50">
+                                    <div class="flex gap-5">
+                                        <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white">
+                                            <i data-lucide="star" class="h-6 w-6"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h3 class="mb-3 text-xl font-bold text-slate-800">What to Expect</h3>
+                                            <ul class="space-y-4 leading-relaxed text-slate-600">
+                                                @foreach ($expectations as [, $label])
+                                                    <li class="flex items-start gap-3">
+                                                        <i data-lucide="check-circle-2" class="mt-0.5 h-5 w-5 shrink-0 text-indigo-500"></i>
+                                                        {{ $label }}
+                                                    </li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="group mb-6 rounded-2xl border border-slate-100 bg-slate-50/50 p-6 transition-all duration-300 hover:bg-white hover:shadow-xl hover:shadow-indigo-100/50">
+                                    <div class="flex gap-5">
+                                        <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white">
+                                            <i data-lucide="info" class="h-6 w-6"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h3 class="mb-3 text-xl font-bold text-slate-800">About This Exhibition</h3>
+                                            <p class="leading-relaxed text-slate-600">{{ $description }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="group mb-6 rounded-2xl border border-slate-100 bg-slate-50/50 p-6 transition-all duration-300 hover:bg-white hover:shadow-xl hover:shadow-indigo-100/50">
+                                    <div class="flex gap-5">
+                                        <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white">
+                                            <i data-lucide="building-2" class="h-6 w-6"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h3 class="mb-4 text-xl font-bold text-slate-800">Participating Companies</h3>
+                                            <div class="space-y-4">
+                                                @forelse ($participatingCompanies->take(6) as $company)
+                                                    <div class="rounded-xl border border-slate-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
+                                                        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                                            <div class="flex items-center gap-4">
+                                                                <div class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-50 p-2">
+                                                                    @if($company['logo_url'])
+                                                                        <img src="{{ $company['logo_url'] }}" alt="{{ $company['name'] }}" class="max-h-full max-w-full object-contain">
+                                                                    @else
+                                                                        <div class="flex h-full w-full items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-xs font-bold uppercase text-white">
+                                                                            {{ substr($company['name'], 0, 2) }}
+                                                                        </div>
+                                                                    @endif
+                                                                </div>
+                                                                <div>
+                                                                    <h4 class="font-black text-slate-800">{{ $company['name'] }}</h4>
+                                                                    <p class="text-sm text-slate-500">{{ $company['location'] }}</p>
+                                                                </div>
+                                                            </div>
+                                                            <a href="{{ route('exhibitions.visitor.companies.show', ['slug' => $slug, 'companySlug' => $company['slug']]) }}" class="w-full rounded-lg border-2 border-indigo-100 py-2 text-center text-sm font-bold text-indigo-700 transition-colors hover:border-indigo-600 sm:w-auto sm:px-5">View Booth</a>
+                                                        </div>
+                                                    </div>
+                                                @empty
+                                                    <p class="py-6 text-center text-sm font-semibold text-slate-500">No exhibitors registered yet.</p>
+                                                @endforelse
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <a id="get-pass-btn" href="{{ $ticketUrl }}" class="group flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-3.5 font-bold text-white shadow-md transition-all hover:bg-indigo-600 hover:shadow-indigo-500/30">
+                                    Get Visitor Pass <i data-lucide="arrow-right" class="h-4 w-4 transition-transform group-hover:translate-x-1"></i>
+                                </a>
+                            </div>
+
+                            {{-- Agenda --}}
+                            <div id="panel-agenda" class="tab-panel {{ $firstTabId === 'agenda' ? '' : 'hidden' }}">
+                                <h2 class="mb-6 text-xl font-bold text-slate-800">Conference Agenda / Schedule</h2>
+                                <div class="space-y-6">
+                                    @forelse ($agenda as $session)
+                                        <div class="flex flex-col gap-4 border-b border-slate-100 pb-6 last:border-0 last:pb-0 sm:flex-row sm:items-start sm:gap-6">
+                                            <div class="w-full shrink-0 sm:w-[120px]">
+                                                <div class="mb-0.5 text-sm font-bold text-indigo-600">{{ $session->start_time }}</div>
+                                                <div class="text-[11px] font-semibold uppercase text-slate-400">{{ $session->end_time ?: 'Session' }}</div>
+                                                @if($session->date)
+                                                    <div class="mt-1 text-[10px] font-semibold text-slate-400">{{ $session->date }}</div>
+                                                @endif
+                                            </div>
+                                            <div class="flex-1">
+                                                <h3 class="mb-1.5 text-[15px] font-bold text-slate-800">{{ $session->title }}</h3>
+                                                <p class="mb-3 text-[13px] leading-relaxed text-slate-500">{{ $session->description }}</p>
+                                                <div class="flex flex-wrap gap-4 text-[12px] font-semibold text-slate-600">
+                                                    @if($session->speaker_name)
+                                                        <div class="flex items-center gap-1.5"><i class="ph ph-user text-[16px] text-indigo-500"></i> {{ $session->speaker_name }}</div>
+                                                    @endif
+                                                    @if($session->hall_name)
+                                                        <div class="flex items-center gap-1.5"><i class="ph ph-map-pin text-[16px] text-indigo-500"></i> {{ $session->hall_name }}</div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @empty
+                                        <div class="py-6 text-sm text-slate-400">No agenda sessions listed for this event.</div>
+                                    @endforelse
+                                </div>
+                            </div>
+
+                            {{-- Speakers --}}
+                            <div id="panel-speakers" class="tab-panel {{ $firstTabId === 'speakers' ? '' : 'hidden' }}">
+                                <h2 class="mb-6 text-xl font-bold text-slate-800">Keynote Speakers</h2>
+                                <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                                    @forelse ($speakerCards as $sp)
+                                        <div class="flex flex-col items-center rounded-2xl border border-slate-100 bg-white p-6 text-center shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-indigo-100 hover:shadow-md">
+                                            @if($sp->avatar_url)
+                                                <img src="{{ $sp->avatar_url }}" alt="{{ $sp->name }}" class="mb-4 h-16 w-16 rounded-full border-2 border-indigo-50 object-cover">
+                                            @else
+                                                <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-indigo-100 bg-indigo-50 text-xl font-bold text-indigo-600">
+                                                    {{ substr($sp->name, 0, 1) }}
+                                                </div>
+                                            @endif
+                                            <h4 class="mb-1 text-[15px] font-bold text-slate-800">{{ $sp->name }}</h4>
+                                            <div class="mb-3 text-[11px] font-bold text-indigo-600">{{ $sp->title }} @if($sp->company) • {{ $sp->company }} @endif</div>
+                                            <p class="line-clamp-3 text-[12px] font-medium leading-relaxed text-slate-500">{{ $sp->bio }}</p>
+                                        </div>
+                                    @empty
+                                        <div class="col-span-full py-6 text-center text-sm text-slate-400">No keynote speakers listed.</div>
+                                    @endforelse
+                                </div>
+                            </div>
+
+                            {{-- Sponsors --}}
+                            <div id="panel-sponsors" class="tab-panel {{ $firstTabId === 'sponsors' ? '' : 'hidden' }}">
+                                <h2 class="mb-8 text-center text-xl font-bold text-slate-800">Event Sponsors & Partners</h2>
+                                @php
+                                    $platinumSponsors = $sponsors->where('level', 'Platinum');
+                                    $goldSponsors = $sponsors->where('level', 'Gold');
+                                    $silverSponsors = $sponsors->where('level', 'Silver');
+                                @endphp
+                                <div class="space-y-12">
+                                    <div>
+                                        <div class="mb-4 flex items-center gap-4">
+                                            <span class="rounded border border-indigo-100 bg-indigo-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-indigo-700">Platinum Sponsors</span>
+                                            <div class="h-px flex-1 bg-slate-100"></div>
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-6 md:grid-cols-4">
+                                            @forelse ($platinumSponsors as $sp)
+                                                <div class="flex h-[90px] flex-col items-center justify-center rounded-xl border border-slate-100 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-md">
+                                                    @if($sp->logo_url)
+                                                        <img src="{{ $sp->logo_url }}" alt="{{ $sp->name }}" class="mb-1 h-7 max-w-full object-contain">
+                                                    @endif
+                                                    <span class="text-[9px] font-bold uppercase tracking-wide text-slate-400">{{ $sp->name }}</span>
+                                                </div>
+                                            @empty
+                                                <div class="col-span-full text-center text-[12px] text-slate-400">No Platinum Sponsors.</div>
+                                            @endforelse
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div class="mb-4 flex items-center gap-4">
+                                            <span class="rounded border border-yellow-100 bg-yellow-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-yellow-700">Gold Sponsors</span>
+                                            <div class="h-px flex-1 bg-slate-100"></div>
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-6 md:grid-cols-4">
+                                            @forelse ($goldSponsors as $sp)
+                                                <div class="flex h-[90px] flex-col items-center justify-center rounded-xl border border-slate-100 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-md">
+                                                    @if($sp->logo_url)
+                                                        <img src="{{ $sp->logo_url }}" alt="{{ $sp->name }}" class="mb-1 h-7 max-w-full object-contain">
+                                                    @endif
+                                                    <span class="text-[9px] font-bold uppercase tracking-wide text-slate-400">{{ $sp->name }}</span>
+                                                </div>
+                                            @empty
+                                                <div class="col-span-full text-center text-[12px] text-slate-400">No Gold Sponsors.</div>
+                                            @endforelse
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div class="mb-4 flex items-center gap-4">
+                                            <span class="rounded border border-gray-100 bg-gray-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-600">Silver Sponsors</span>
+                                            <div class="h-px flex-1 bg-slate-100"></div>
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-6 md:grid-cols-4">
+                                            @forelse ($silverSponsors as $sp)
+                                                <div class="flex h-[90px] flex-col items-center justify-center rounded-xl border border-slate-100 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-md">
+                                                    @if($sp->logo_url)
+                                                        <img src="{{ $sp->logo_url }}" alt="{{ $sp->name }}" class="mb-1 h-7 max-w-full object-contain">
+                                                    @endif
+                                                    <span class="text-[9px] font-bold uppercase tracking-wide text-slate-400">{{ $sp->name }}</span>
+                                                </div>
+                                            @empty
+                                                <div class="col-span-full text-center text-[12px] text-slate-400">No Silver Sponsors.</div>
+                                            @endforelse
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Floor Plan --}}
+                            <div id="panel-floorplan" class="tab-panel {{ $firstTabId === 'floorplan' ? '' : 'hidden' }}">
+                                <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                    <h2 class="text-xl font-bold text-slate-800">Exhibition Halls Floor Plan</h2>
+                                    <a href="{{ route('exhibitions.visitor.floor-map', $slug) }}" class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-[13px] font-bold text-white shadow-sm transition-colors hover:bg-indigo-700 sm:w-auto">
+                                        <i class="ph ph-map-trifold text-[18px]"></i> Full Floor Map
+                                    </a>
+                                </div>
+                                <p class="mb-8 text-[13px] leading-relaxed text-slate-500">Select any hall below to explore interactive booths, find registered exhibitors, or book B2B meeting slots.</p>
+                                <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+                                    @forelse ($halls as $hall)
+                                        @php
+                                            $hallLogo = $hall->image ? (str_starts_with($hall->image, 'http') ? $hall->image : (str_starts_with($hall->image, 'storage/') ? asset($hall->image) : asset('storage/' . $hall->image))) : asset('images/exhibitions/hall-fallback.jpg');
+                                            $badge = $hall->pavilion?->title ?: 'Hall';
+                                            $exhibitorsCount = $hall->boothBookings()->where('payment_status', 'paid')->whereIn('booking_status', ['confirmed', 'active'])->where('admin_status', 'approved')->count();
+                                        @endphp
+                                        <div onclick="window.location.href='{{ route('exhibitions.visitor.floor-map', [$slug, 'hall' => $hall->id]) }}'" class="flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-transform hover:-translate-y-1">
+                                            <div class="relative h-28">
+                                                <img src="{{ $hallLogo }}" class="h-full w-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=400&q=80'">
+                                                <div class="absolute left-2 top-2 rounded bg-indigo-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">{{ $badge }}</div>
+                                            </div>
+                                            <div class="flex flex-1 flex-col p-4">
+                                                <h4 class="mb-1.5 truncate text-[13px] font-bold text-slate-800">{{ $hall->title }}</h4>
+                                                <p class="mb-3 line-clamp-2 flex-1 text-[11px] font-medium leading-relaxed text-slate-500">{{ $hall->description }}</p>
+                                                <div class="flex items-center justify-between text-[11px] font-bold text-indigo-700">
+                                                    <span>{{ $exhibitorsCount }} Exhibitors</span>
+                                                    <i class="ph ph-arrow-right"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @empty
+                                        <div class="col-span-full py-6 text-center text-sm text-slate-400">No halls active in this exhibition.</div>
+                                    @endforelse
+                                </div>
+                            </div>
+
+                            {{-- FAQs --}}
+                            <div id="panel-faqs" class="tab-panel {{ $firstTabId === 'faqs' ? '' : 'hidden' }}">
+                                <h2 class="mb-6 text-xl font-bold text-slate-800">Frequently Asked Questions</h2>
+                                <div class="space-y-4">
+                                    @forelse ($faqs as $idx => $faq)
+                                        <div class="overflow-hidden rounded-xl border border-slate-100 bg-slate-50/50">
+                                            <button onclick="toggleFaqAccordion({{ $idx }})" class="flex w-full items-center justify-between p-4 text-left text-[13px] font-bold text-slate-800 transition-colors hover:bg-white">
+                                                <div class="flex items-center gap-3">
+                                                    <i class="ph {{ $faq->icon ?: 'ph-question' }} text-[18px] text-indigo-600"></i>
+                                                    <span>{{ $faq->question }}</span>
+                                                </div>
+                                                <i id="faq-chevron-{{ $idx }}" class="ph ph-caret-down text-[16px] text-slate-400 transition-transform"></i>
+                                            </button>
+                                            <div id="faq-answer-{{ $idx }}" class="hidden border-t border-slate-100 bg-white p-4 pt-0 text-[12px] leading-relaxed text-slate-600">
+                                                {{ $faq->answer }}
+                                            </div>
+                                        </div>
+                                    @empty
+                                        <div class="py-6 text-center text-sm text-slate-400">No FAQs available.</div>
+                                    @endforelse
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Right: Sidebar widgets -->
-                    <div class="flex flex-col gap-6">
-                        <!-- Event Information Card -->
-                        <div class="border border-gray-100 rounded-3xl p-6 shadow-[0_4px_25px_rgba(0,0,0,0.02)] bg-white">
-                            <div class="flex items-center gap-2 mb-6 text-[#1E1B4B]">
-                                <i class="ph ph-calendar-blank text-[20px] text-indigo-600"></i>
-                                <h3 class="font-bold text-[16px]">Event Information</h3>
+                    <aside class="space-y-6">
+                        <div class="rounded-[1.5rem] border border-slate-200/60 bg-white p-6 shadow-sm transition-shadow hover:shadow-md lg:p-8">
+                            <h3 class="mb-6 flex items-center gap-3 text-xl font-black text-slate-800">
+                                <span class="h-6 w-1.5 rounded-full bg-indigo-600"></span>
+                                Event Information
+                            </h3>
+                            <div class="flex items-center justify-between border-b border-slate-50 py-3.5">
+                                <span class="font-medium text-slate-500">Date</span>
+                                <span class="text-right font-bold text-slate-800">{{ $dateStr }}</span>
                             </div>
-                            <div class="space-y-4">
-                                <div class="flex justify-between items-start text-xs font-semibold">
-                                    <span class="text-gray-400">Date</span>
-                                    <span class="text-[#1E1B4B] text-right">{{ $dateStr }}</span>
-                                </div>
-                                <div class="flex justify-between items-start text-xs font-semibold">
-                                    <span class="text-gray-400">Time</span>
-                                    <span class="text-[#1E1B4B] text-right">{{ $timeStr }}</span>
-                                </div>
-                                <div class="flex justify-between items-start text-xs font-semibold">
-                                    <span class="text-gray-400">Venue</span>
-                                    <span class="text-[#1E1B4B] text-right">{{ $location }}</span>
-                                </div>
-                                <div class="flex justify-between items-center text-xs font-semibold">
-                                    <span class="text-gray-400">Event Type</span>
-                                    <span class="rounded-full border border-indigo-150 bg-indigo-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-indigo-700">{{ $eventType }}</span>
-                                </div>
+                            <div class="flex items-center justify-between border-b border-slate-50 py-3.5">
+                                <span class="font-medium text-slate-500">Time</span>
+                                <span class="text-right font-bold text-slate-800">{{ $timeStr }}</span>
                             </div>
+                            <div class="flex items-center justify-between border-b border-slate-50 py-3.5">
+                                <span class="font-medium text-slate-500">Venue</span>
+                                <span class="text-right font-bold text-slate-800">{{ $location }}</span>
+                            </div>
+                            <div class="flex items-center justify-between border-b border-slate-50 py-3.5">
+                                <span class="font-medium text-slate-500">Event Type</span>
+                                <span class="text-right font-bold text-slate-800">{{ $eventType }}</span>
+                            </div>
+                            @if($displayPavilions > 0)
+                                <div class="flex items-center justify-between border-b border-slate-50 py-3.5">
+                                    <span class="font-medium text-slate-500">Pavilions</span>
+                                    <span class="text-right font-bold text-slate-800">{{ $displayPavilions }}</span>
+                                </div>
+                            @endif
+                            @if($displayHalls > 0)
+                                <div class="flex items-center justify-between py-3.5">
+                                    <span class="font-medium text-slate-500">Halls</span>
+                                    <span class="text-right font-bold text-slate-800">{{ $displayHalls }}</span>
+                                </div>
+                            @endif
                         </div>
 
-                        <!-- Organizer Card -->
-                        <div class="border border-gray-100 rounded-3xl p-6 shadow-[0_4px_25px_rgba(0,0,0,0.02)] bg-white">
-                            <div class="flex items-center gap-2 mb-6 text-[#1E1B4B]">
-                                <i class="ph ph-user text-[20px] text-indigo-600"></i>
-                                <h3 class="font-bold text-[16px]">Organizer</h3>
-                            </div>
+                        <div class="rounded-[1.5rem] border border-slate-200/60 bg-white p-6 shadow-sm transition-shadow hover:shadow-md lg:p-8">
+                            <h3 class="mb-6 flex items-center gap-3 text-xl font-black text-slate-800">
+                                <span class="h-6 w-1.5 rounded-full bg-indigo-600"></span>
+                                Organizer
+                            </h3>
                             <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 bg-[#EEF2FF] rounded-2xl flex items-center justify-center text-[#4A22E0] font-bold text-lg flex-shrink-0">
+                                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-lg font-bold text-indigo-600">
                                     @if($exhibition->organizer_logo)
-                                        <img src="{{ str_starts_with($exhibition->organizer_logo, 'http') ? $exhibition->organizer_logo : asset('storage/' . $exhibition->organizer_logo) }}" alt="Organizer" class="w-full h-full object-contain rounded-2xl">
+                                        <img src="{{ str_starts_with($exhibition->organizer_logo, 'http') ? $exhibition->organizer_logo : asset('storage/' . $exhibition->organizer_logo) }}" alt="Organizer" class="h-full w-full rounded-2xl object-contain">
                                     @else
-                                        <i class="ph ph-user text-[22px]"></i>
+                                        <i data-lucide="user" class="h-5 w-5"></i>
                                     @endif
                                 </div>
                                 <div>
-                                    <h4 class="font-bold text-[#1E1B4B] text-sm">{{ $exhibition->organizer_name ?: $title }}</h4>
-                                    <p class="text-xs text-gray-400 font-medium mt-0.5">Exhibition Organizer</p>
+                                    <h4 class="text-sm font-bold text-slate-800">{{ $exhibition->organizer_name ?: $title }}</h4>
+                                    <p class="mt-0.5 text-xs font-medium text-slate-400">Exhibition Organizer</p>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Quick Actions Card -->
-                        <div class="border border-gray-100 rounded-3xl p-6 shadow-[0_4px_25px_rgba(0,0,0,0.02)] bg-white">
-                            <div class="flex items-center gap-2 mb-6 text-[#1E1B4B]">
-                                <i class="ph ph-lightning text-[20px] text-indigo-600"></i>
-                                <h3 class="font-bold text-[16px]">Quick Actions</h3>
-                            </div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <a href="{{ route('exhibitions.visitor.floor-map', $slug) }}" class="bg-white border border-[#E0D7FF] text-[#4A22E0] py-2.5 rounded-xl font-bold flex items-center justify-center gap-1.5 hover:bg-[#F5F3FF] transition-colors text-xs text-center">
-                                    <i class="ph ph-map-trifold text-base"></i> View Floor Plan
-                                </a>
-                                <button onclick="shareExhibition()" class="bg-white border border-[#E0D7FF] text-[#4A22E0] py-2.5 rounded-xl font-bold flex items-center justify-center gap-1.5 hover:bg-[#F5F3FF] transition-colors text-xs text-center">
-                                    <i class="ph ph-share-network text-base"></i> Share Event
-                                </button>
-                            </div>
+                        <div class="rounded-[1.5rem] border border-slate-200/60 bg-white p-6 shadow-sm transition-shadow hover:shadow-md lg:p-8">
+                            <h3 class="mb-6 flex items-center gap-3 text-xl font-black text-slate-800">
+                                <span class="h-6 w-1.5 rounded-full bg-indigo-600"></span>
+                                Quick Actions
+                            </h3>
+                            <a href="{{ $ticketUrl }}" class="group flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-3.5 font-bold text-white shadow-md transition-all hover:bg-indigo-600 hover:shadow-indigo-500/30">
+                                Get Visitor Pass <i data-lucide="arrow-right" class="h-4 w-4 transition-transform group-hover:translate-x-1"></i>
+                            </a>
+                            <a href="{{ route('exhibitions.visitor.floor-map', $slug) }}" class="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-slate-200 py-3.5 font-bold text-slate-700 transition-colors hover:border-indigo-600 hover:text-indigo-700">
+                                <i data-lucide="map" class="h-4 w-4"></i> View Floor Plan
+                            </a>
+                            <button onclick="shareExhibition()" class="mt-3 w-full rounded-xl border-2 border-slate-200 py-3.5 font-bold text-slate-700 transition-colors hover:border-indigo-600 hover:text-indigo-700">
+                                Share Event
+                            </button>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Agenda Panel -->
-                <div id="panel-agenda" class="tab-panel hidden border border-gray-100 rounded-[20px] p-8 shadow-[0_2px_15px_rgba(0,0,0,0.02)] bg-white mb-10">
-                    <h2 class="text-[18px] font-bold text-[#1E1B4B] mb-6">Conference Agenda / Schedule</h2>
-                    <div class="space-y-6">
-                        @forelse ($agenda as $session)
-                            <div class="flex flex-col gap-4 border-b border-gray-100 pb-6 last:border-0 last:pb-0 sm:flex-row sm:items-start sm:gap-6">
-                                <div class="w-full shrink-0 sm:w-[120px]">
-                                    <div class="text-indigo-600 font-bold text-[14px] mb-0.5">{{ $session->start_time }}</div>
-                                    <div class="text-gray-400 font-semibold text-[11px] uppercase">{{ $session->end_time ?: 'Session' }}</div>
-                                    @if($session->date)
-                                        <div class="text-[10px] text-gray-400 font-semibold mt-1">{{ $session->date }}</div>
-                                    @endif
-                                </div>
-                                <div class="flex-1">
-                                    <h3 class="font-bold text-[#1E1B4B] text-[15px] mb-1.5">{{ $session->title }}</h3>
-                                    <p class="text-gray-500 text-[13px] leading-relaxed mb-3">{{ $session->description }}</p>
-                                    <div class="flex flex-wrap gap-4 text-[12px] font-semibold text-gray-600">
-                                        @if($session->speaker_name)
-                                            <div class="flex items-center gap-1.5"><i class="ph ph-user text-indigo-500 text-[16px]"></i> {{ $session->speaker_name }}</div>
-                                        @endif
-                                        @if($session->hall_name)
-                                            <div class="flex items-center gap-1.5"><i class="ph ph-map-pin text-indigo-500 text-[16px]"></i> {{ $session->hall_name }}</div>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                        @empty
-                            <div class="text-gray-400 text-sm py-6">No agenda sessions listed for this event.</div>
-                        @endforelse
-                    </div>
-                </div>
-
-                <!-- Speakers Panel -->
-                <div id="panel-speakers" class="tab-panel hidden border border-gray-100 rounded-[20px] p-8 shadow-[0_2px_15px_rgba(0,0,0,0.02)] bg-white mb-10">
-                    <h2 class="text-[18px] font-bold text-[#1E1B4B] mb-6">Keynote Speakers</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        @forelse ($speakerCards as $sp)
-                            <div class="border border-gray-100 rounded-2xl bg-white p-6 shadow-[0_2px_15px_rgba(0,0,0,0.02)] flex flex-col items-center text-center hover:border-indigo-100 transition-colors hover:-translate-y-1 hover:shadow-md transition-all duration-300">
-                                @if($sp->avatar_url)
-                                    <img src="{{ $sp->avatar_url }}" alt="{{ $sp->name }}" class="w-16 h-16 rounded-full object-cover border-2 border-indigo-50 mb-4">
-                                @else
-                                    <div class="w-16 h-16 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold mb-4 text-xl">
-                                        {{ substr($sp->name, 0, 1) }}
-                                    </div>
-                                @endif
-                                <h4 class="font-bold text-[#1E1B4B] text-[15px] mb-1">{{ $sp->name }}</h4>
-                                <div class="text-indigo-600 font-bold text-[11px] mb-3">{{ $sp->title }} @if($sp->company) • {{ $sp->company }} @endif</div>
-                                <p class="text-[12px] text-gray-500 leading-relaxed font-medium line-clamp-3">{{ $sp->bio }}</p>
-                            </div>
-                        @empty
-                            <div class="col-span-full text-gray-400 text-sm py-6 text-center">No keynote speakers listed.</div>
-                        @endforelse
-                    </div>
-                </div>
-
-                <!-- Sponsors Panel -->
-                <div id="panel-sponsors" class="tab-panel hidden border border-gray-100 rounded-[20px] p-8 shadow-[0_2px_15px_rgba(0,0,0,0.02)] bg-white mb-10">
-                    <h2 class="text-[18px] font-bold text-[#1E1B4B] mb-8 text-center">Event Sponsors & Partners</h2>
-                    
-                    <div class="space-y-12">
-                        @php
-                            $platinumSponsors = $sponsors->where('level', 'Platinum');
-                            $goldSponsors = $sponsors->where('level', 'Gold');
-                            $silverSponsors = $sponsors->where('level', 'Silver');
-                        @endphp
-
-                        <!-- Platinum Sponsors -->
-                        <div>
-                            <div class="flex items-center gap-4 mb-4">
-                                <span class="bg-indigo-50 border border-indigo-150 text-indigo-700 font-bold px-3 py-1 rounded text-[11px] uppercase tracking-wider">Platinum Sponsors</span>
-                                <div class="h-px bg-gray-100 flex-1"></div>
-                            </div>
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                                @forelse ($platinumSponsors as $sp)
-                                    <div class="bg-white border border-gray-100 rounded-xl p-4 flex flex-col items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.02)] h-[90px] hover:border-indigo-200 transition-colors hover:-translate-y-1 hover:shadow-md transition-all duration-300">
-                                        @if($sp->logo_url)
-                                            <img src="{{ $sp->logo_url }}" alt="{{ $sp->name }}" class="h-7 max-w-full object-contain mb-1">
-                                        @endif
-                                        <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wide">{{ $sp->name }}</span>
-                                    </div>
-                                @empty
-                                    <div class="text-[12px] text-gray-400 col-span-full text-center">No Platinum Sponsors.</div>
-                                @endforelse
-                            </div>
-                        </div>
-
-                        <!-- Gold Sponsors -->
-                        <div>
-                            <div class="flex items-center gap-4 mb-4">
-                                <span class="bg-yellow-50 border border-yellow-150 text-yellow-700 font-bold px-3 py-1 rounded text-[11px] uppercase tracking-wider">Gold Sponsors</span>
-                                <div class="h-px bg-gray-100 flex-1"></div>
-                            </div>
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                                @forelse ($goldSponsors as $sp)
-                                    <div class="bg-white border border-gray-100 rounded-xl p-4 flex flex-col items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.02)] h-[90px] hover:border-indigo-200 transition-colors hover:-translate-y-1 hover:shadow-md transition-all duration-300">
-                                        @if($sp->logo_url)
-                                            <img src="{{ $sp->logo_url }}" alt="{{ $sp->name }}" class="h-7 max-w-full object-contain mb-1">
-                                        @endif
-                                        <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wide">{{ $sp->name }}</span>
-                                    </div>
-                                @empty
-                                    <div class="text-[12px] text-gray-400 col-span-full text-center">No Gold Sponsors.</div>
-                                @endforelse
-                            </div>
-                        </div>
-
-                        <!-- Silver Sponsors -->
-                        <div>
-                            <div class="flex items-center gap-4 mb-4">
-                                <span class="bg-gray-50 border border-gray-150 text-gray-600 font-bold px-3 py-1 rounded text-[11px] uppercase tracking-wider">Silver Sponsors</span>
-                                <div class="h-px bg-gray-100 flex-1"></div>
-                            </div>
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                                @forelse ($silverSponsors as $sp)
-                                    <div class="bg-white border border-gray-100 rounded-xl p-4 flex flex-col items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.02)] h-[90px] hover:border-indigo-200 transition-colors hover:-translate-y-1 hover:shadow-md transition-all duration-300">
-                                        @if($sp->logo_url)
-                                            <img src="{{ $sp->logo_url }}" alt="{{ $sp->name }}" class="h-7 max-w-full object-contain mb-1">
-                                        @endif
-                                        <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wide">{{ $sp->name }}</span>
-                                    </div>
-                                @empty
-                                    <div class="text-[12px] text-gray-400 col-span-full text-center">No Silver Sponsors.</div>
-                                @endforelse
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Floor Plan Panel -->
-                <div id="panel-floorplan" class="tab-panel hidden border border-gray-100 rounded-[20px] p-8 shadow-[0_2px_15px_rgba(0,0,0,0.02)] bg-white mb-10">
-                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-                        <h2 class="text-[18px] font-bold text-[#1E1B4B]">Exhibition Halls Floor Plan</h2>
-                        <a href="{{ route('exhibitions.visitor.floor-map', $slug) }}" class="inline-flex w-full sm:w-auto items-center justify-center gap-2 bg-[#4A22E0] hover:bg-[#3D1CBA] text-white px-5 py-2.5 rounded-lg font-bold text-[13px] transition-colors shadow-sm">
-                            <i class="ph ph-map-trifold text-[18px]"></i> Full Floor Map
-                        </a>
-                    </div>
-                    <p class="text-[13px] text-gray-500 mb-8 leading-relaxed">Select any hall below to explore interactive booths, find registered exhibitors, or book B2B meeting slots.</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        @forelse ($halls as $hall)
-                            @php
-                                $hallLogo = $hall->image ? (str_starts_with($hall->image, 'http') ? $hall->image : (str_starts_with($hall->image, 'storage/') ? asset($hall->image) : asset('storage/' . $hall->image))) : asset('images/exhibitions/hall-fallback.jpg');
-                                $badge = $hall->pavilion?->title ?: 'Hall';
-                                $exhibitorsCount = $hall->boothBookings()->where('payment_status', 'paid')->whereIn('booking_status', ['confirmed', 'active'])->where('admin_status', 'approved')->count();
-                            @endphp
-                            <div onclick="window.location.href='{{ route('exhibitions.visitor.floor-map', [$slug, 'hall' => $hall->id]) }}'" class="border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm flex flex-col hover:-translate-y-1 transition-transform cursor-pointer">
-                                <div class="h-28 relative">
-                                    <img src="{{ $hallLogo }}" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=400&q=80'">
-                                    <div class="absolute top-2 left-2 bg-[#4A22E0] text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">{{ $badge }}</div>
-                                </div>
-                                <div class="p-4 flex flex-col flex-1">
-                                    <h4 class="font-bold text-[#1E1B4B] text-[13px] mb-1.5 truncate">{{ $hall->title }}</h4>
-                                    <p class="text-[11px] text-gray-500 font-medium line-clamp-2 leading-relaxed mb-3 flex-1">{{ $hall->description }}</p>
-                                    <div class="flex items-center justify-between text-[11px] font-bold text-indigo-700">
-                                        <span>{{ $exhibitorsCount }} Exhibitors</span>
-                                        <i class="ph ph-arrow-right"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        @empty
-                            <div class="col-span-full text-gray-400 text-sm py-6 text-center">No halls active in this exhibition.</div>
-                        @endforelse
-                    </div>
-                </div>
-
-                <!-- FAQs Panel -->
-                <div id="panel-faqs" class="tab-panel hidden border border-gray-100 rounded-[20px] p-8 shadow-[0_2px_15px_rgba(0,0,0,0.02)] bg-white mb-10">
-                    <h2 class="text-[18px] font-bold text-[#1E1B4B] mb-6">Frequently Asked Questions</h2>
-                    <div class="space-y-4">
-                        @forelse ($faqs as $idx => $faq)
-                            <div class="border border-gray-150 rounded-xl overflow-hidden bg-[#FAFAFC]">
-                                <button onclick="toggleFaqAccordion({{ $idx }})" class="w-full flex items-center justify-between p-4 text-left font-bold text-[#1E1B4B] text-[13px] hover:bg-gray-50 transition-colors">
-                                    <div class="flex items-center gap-3">
-                                        <i class="ph {{ $faq->icon ?: 'ph-question' }} text-[18px] text-indigo-600"></i>
-                                        <span>{{ $faq->question }}</span>
-                                    </div>
-                                    <i id="faq-chevron-{{ $idx }}" class="ph ph-caret-down text-[16px] text-gray-400 transition-transform"></i>
-                                </button>
-                                <div id="faq-answer-{{ $idx }}" class="hidden p-4 pt-0 border-t border-gray-150 text-[12px] text-gray-600 leading-relaxed bg-white">
-                                    {{ $faq->answer }}
-                                </div>
-                            </div>
-                        @empty
-                            <div class="text-gray-400 text-sm py-6 text-center">No FAQs available.</div>
-                        @endforelse
-                    </div>
-                </div>
-
+                    </aside>
+                </section>
             </div>
-            
         </div>
     </main>
 
     <script>
-        // Switch tabs dynamically
         function switchTab(tabId, el, updateHash = true) {
-            // Hide all tab panels
             document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
-            
-            // Show target tab panel
+
             const targetPanel = document.getElementById(`panel-${tabId}`);
             if (targetPanel) targetPanel.classList.remove('hidden');
 
-            // Reset active tab button styles
             document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('bg-[#F5F3FF]', 'text-[#4A22E0]');
-                btn.classList.add('text-gray-500', 'hover:text-gray-950', 'hover:bg-gray-50');
+                btn.classList.remove('border-b-2', 'border-indigo-600', 'text-indigo-700');
+                btn.classList.add('text-slate-500', 'hover:text-slate-800');
             });
 
-            // Set current tab button active styles
-            el.classList.remove('text-gray-500', 'hover:text-gray-950', 'hover:bg-gray-50');
-            el.classList.add('bg-[#F5F3FF]', 'text-[#4A22E0]');
+            el.classList.remove('text-slate-500', 'hover:text-slate-800');
+            el.classList.add('border-b-2', 'border-indigo-600', 'text-indigo-700');
 
             if (updateHash) {
                 window.location.hash = `tab-${tabId}`;
             }
+
+            if (window.lucide) lucide.createIcons();
         }
 
         function openTabFromHash() {
             const hash = window.location.hash.replace('#', '');
-            if (!hash.startsWith('tab-')) {
-                return;
-            }
+            if (!hash.startsWith('tab-')) return;
 
             const tabId = hash.replace('tab-', '');
             const tabButton = document.getElementById(`tab-${tabId}`);
@@ -589,7 +569,6 @@
             }
         }
 
-        // FAQ accordion toggle helper
         function toggleFaqAccordion(idx) {
             const answer = document.getElementById(`faq-answer-${idx}`);
             const chevron = document.getElementById(`faq-chevron-${idx}`);
@@ -608,7 +587,7 @@
         function shareExhibition() {
             if (navigator.share) {
                 navigator.share({
-                    title: '{{ $title }}',
+                    title: @json($title),
                     url: window.location.href
                 }).catch(console.error);
             } else {
@@ -617,7 +596,10 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', openTabFromHash);
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) lucide.createIcons();
+            openTabFromHash();
+        });
         window.addEventListener('hashchange', openTabFromHash);
     </script>
 </body>

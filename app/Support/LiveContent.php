@@ -286,6 +286,33 @@ class LiveContent
         return asset('storage/' . ltrim($path, '/'));
     }
 
+    public static function resolveCompanyEventBannerUrl(?string $path): ?string
+    {
+        $path = trim((string) $path);
+
+        if ($path === '') {
+            return null;
+        }
+
+        if (\Illuminate\Support\Str::startsWith($path, ['http://', 'https://'])) {
+            return $path;
+        }
+
+        if (\Illuminate\Support\Str::startsWith($path, ['images/', 'assets/'])) {
+            return file_exists(public_path($path)) ? asset($path) : null;
+        }
+
+        if (\Illuminate\Support\Str::startsWith($path, 'storage/')) {
+            return file_exists(public_path($path)) ? asset($path) : null;
+        }
+
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+            return asset('storage/' . ltrim($path, '/'));
+        }
+
+        return null;
+    }
+
     public static function homeFeaturedBooths(int $limit = 6): Collection
     {
         return DbGuard::whenAvailable(function () use ($limit) {
