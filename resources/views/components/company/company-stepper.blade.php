@@ -6,8 +6,6 @@
         ['Hall', '/company/booth-booking/halls'],
         ['Floor Plan', '/company/booth-booking/floor-plan'],
         ['Booth Size', '/company/booth-booking/sizes'],
-        ['Booth Slot', '/company/booth-booking/slots'],
-        ['Customize', '/company/booth-booking/customize'],
         ['Summary', '/company/booth-booking/summary'],
         ['Services', '/company/booth-booking/services'],
         ['Review', '/company/booth-booking/review'],

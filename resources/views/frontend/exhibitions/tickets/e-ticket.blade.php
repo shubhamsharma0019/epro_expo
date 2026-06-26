@@ -86,10 +86,14 @@
     }
 
     if ($visitor) {
-        session(['visitor_pass_active' => true]);
-        session(['selected_visitor_booking_id' => $visitor->booking_id]);
+        session([
+            'visitor_pass_active' => true,
+            'selected_visitor_booking_id' => $visitor->booking_id,
+            'activeExhibitionSlug' => $exhibition->slug,
+        ]);
     }
 
+    $showVisitorSidebar = \App\Support\ExhibitionTicketFlow::shouldShowVisitorSidebar($exhibition->slug);
     $title = $exhibition->title ?: $exhibition->name;
     
     // Resolve banner image (prioritize booth setup banner or logo)
@@ -180,7 +184,10 @@
     </style>
     @include('frontend.exhibitions.visitor.partials.ticket-responsive')
 </head>
-<body class="text-[#1E293B] font-sans flex h-screen overflow-hidden">
+<body @class([
+    'text-[#1E293B] font-sans flex h-screen overflow-hidden',
+    'lg:pl-[260px]' => $showVisitorSidebar ?? false,
+])>
 
     <!-- Sidebar Overlay for mobile -->
     @include('frontend.exhibitions.tickets.partials.visitor-sidebar-shell')

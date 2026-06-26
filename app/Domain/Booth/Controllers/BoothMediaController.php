@@ -19,7 +19,7 @@ class BoothMediaController extends BaseBoothSetupController
         $booking = $this->setupBooking($booking);
         $media = $booking->boothMedia()->latest()->get();
         $used = $media->sum('file_size');
-        return view('backend.company.booth-setup.media', $this->commonData($booking, $steps) + ['mediaItems' => $media, 'storageUsagePercent' => min(100, (int) round($used / (100 * 1024 * 1024) * 100))]);
+        return view('company.booth-setup.media', $this->commonData($booking, $steps) + ['mediaItems' => $media, 'storageUsagePercent' => min(100, (int) round($used / (100 * 1024 * 1024) * 100))]);
     }
     public function create(BoothBooking $booking, BoothSetupStepService $steps): View { return $this->index($booking, $steps); }
     public function show(BoothBooking $booking, BoothMedia $medium, BoothSetupStepService $steps): View { return $this->edit($booking, $medium, $steps); }
@@ -78,7 +78,7 @@ class BoothMediaController extends BaseBoothSetupController
     {
         abort_unless($medium->company_id === (int) session('company_id') && $medium->booth_booking_id === $booking->id, 403);
         $booking = $this->setupBooking($booking);
-        return view('backend.company.booth-setup.media', $this->commonData($booking, $steps) + ['mediaItem' => $medium, 'mediaItems' => $booking->boothMedia()->latest()->get()]);
+        return view('company.booth-setup.media', $this->commonData($booking, $steps) + ['mediaItem' => $medium, 'mediaItems' => $booking->boothMedia()->latest()->get()]);
     }
     public function update(BoothMediaRequest $request, BoothBooking $booking, BoothMedia $medium, BoothFileUploadService $files, BoothSetupStepService $steps): RedirectResponse
     {

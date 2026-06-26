@@ -4,6 +4,7 @@ namespace App\Domain\Company\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Domain\Booth\Models\BookingService;
+use App\Domain\Booth\Models\Booth;
 use App\Domain\Booth\Models\BoothBooking;
 use App\Domain\Booth\Models\BoothBookingDay;
 use App\Domain\Booth\Models\BoothBookingSummary;
@@ -273,18 +274,32 @@ class CompanyBoothBookingController extends Controller
         $availableCount = max($totalBooths - $bookedCount, 0);
         $currentCompany = Company::find((int) session('company_id'));
         $requiredSpaces = $this->boothUnitsForSize($selectedSize);
+        $minimumNewBookingIndex = \App\Support\SequentialBoothAllocation::minimumStartIndexAfterBlocked(
+            $layoutBooths,
+            $groupedBookedBoothIds
+        );
+        $boothsForNewBooking = $booths
+            ->filter(function ($booth) use ($groupedBookedBoothIds, $minimumNewBookingIndex) {
+                if (in_array($booth->id, $groupedBookedBoothIds, true)) {
+                    return false;
+                }
+
+                $index = \App\Support\VisitorFloorMap::layoutIndexForBoothNumber((string) $booth->booth_number);
+
+                return $index !== null && $index >= $minimumNewBookingIndex;
+            })
+            ->values();
 
         if (! $request->query('booth') && $selectedSize) {
-            $selectedBooth = $booths
+            $selectedBooth = $boothsForNewBooking
                 ->sortBy(function ($booth) {
                     $number = (int) preg_replace('/\D+/', '', (string) $booth->booth_number);
 
                     return sprintf('%08d-%08d', $number ?: $booth->id, $booth->id);
                 })
                 ->where('status', 'available')
-                ->reject(fn ($booth) => in_array($booth->id, $groupedBookedBoothIds, true))
                 ->first(fn ($booth) => $this->boothFootprintForSize($hall, $booth, $selectedSize, $groupedBookedBoothIds)->count() >= $requiredSpaces)
-                ?? $booths->first(fn ($booth) => $booth->status === 'available' && ! in_array($booth->id, $groupedBookedBoothIds, true));
+                ?? $boothsForNewBooking->first(fn ($booth) => $booth->status === 'available');
         }
 
         $selectedFootprint = ($selectedBooth && $selectedSize && $selectedBooth->status === 'available' && ! in_array($selectedBooth->id, $groupedBookedBoothIds, true))
@@ -410,26 +425,34 @@ class CompanyBoothBookingController extends Controller
 
         $bookingDraft = session('company_booth_booking', []);
 
-        session([
-            'company_booth_booking' => array_filter(array_merge($bookingDraft, [
-                'hall_id' => $hall->id,
-                'pavilion_id' => $hall->pavilion_id,
-                'exhibition_id' => $hall->pavilion?->exhibition_id,
-                'exhibition_slug' => $hall->pavilion?->exhibition?->slug ?: ($bookingDraft['exhibition_slug'] ?? null),
-                'booth_id' => $booth->id,
-                'selected_booth_ids' => $selectedBooths->pluck('id')->values()->all(),
-                'booth_size_id' => $selectedSize?->id,
-                'slots' => [],
-                'slots_subtotal' => 0,
-            ])),
-        ]);
+        $bookingDraft = array_filter(array_merge($bookingDraft, [
+            'hall_id' => $hall->id,
+            'pavilion_id' => $hall->pavilion_id,
+            'exhibition_id' => $hall->pavilion?->exhibition_id,
+            'exhibition_slug' => $hall->pavilion?->exhibition?->slug ?: ($bookingDraft['exhibition_slug'] ?? null),
+            'booth_id' => $booth->id,
+            'selected_booth_ids' => $selectedBooths->pluck('id')->values()->all(),
+            'booth_size_id' => $selectedSize?->id,
+            'slots' => [],
+            'slots_subtotal' => 0,
+        ]));
 
-        return redirect('/company/booth-booking/slots?' . http_build_query(array_filter([
-            'hall' => $hall->id,
-            'booth' => $booth->id,
-            'size' => $selectedSize?->id,
-            'exhibition' => $hall->pavilion?->exhibition?->slug ?: session('company_booth_booking.exhibition_slug'),
-        ])));
+        $result = $this->applyAdminBoothDaysAndSync($hall, $booth, $selectedSize, $bookingDraft);
+
+        if ($result['selectedSlots']->isEmpty()) {
+            session(['company_booth_booking' => $bookingDraft]);
+
+            return $this->redirectToBookingFloorPlan(
+                $hall,
+                $selectedSize?->id,
+                $booth->id,
+                'No booth days are available for this selection. Please choose another booth.'
+            );
+        }
+
+        session(['company_booth_booking' => $result['bookingDraft']]);
+
+        return $this->redirectToBookingSummary($hall->pavilion?->exhibition?->slug);
     }
 
     public function sizes(Request $request): View|RedirectResponse
@@ -454,9 +477,7 @@ class CompanyBoothBookingController extends Controller
 
         $boothSizes = $hall
             ? $this->allowedBoothSizesForHall($hall)
-            : BoothSize::where('status', 'active')
-                ->orderBy('area')
-                ->get();
+            : \App\Support\SequentialBoothSizes::activeOrdered();
 
         $selectedSize = $selectedSizeId
             ? $boothSizes->firstWhere('id', (int) $selectedSizeId)
@@ -634,7 +655,7 @@ class CompanyBoothBookingController extends Controller
             ->with('status', 'Custom booth size request noted. Please contact the event team for tailored booth options.');
     }
 
-    public function slots(Request $request): View|RedirectResponse
+    public function slots(Request $request): RedirectResponse
     {
         if (! session('company_id')) {
             return redirect('/company/login');
@@ -701,61 +722,21 @@ class CompanyBoothBookingController extends Controller
         $selectedSize = $sizeId
             ? BoothSize::where('status', 'active')->find($sizeId)
             : $booth->boothSize;
-        $slotPrice = 1999;
-        $requestedDays = (int) ($bookingDraft['booking_days_count'] ?? 0);
-        $slotGroups = $this->slotGroupsForHall($hall, $slotPrice, $requestedDays > 0 ? $requestedDays : null);
-        $validSlotKeys = collect($slotGroups)
-            ->flatMap(fn ($group) => $group['slots'])
-            ->pluck('key')
-            ->all();
-        $draftBookingId = $bookingDraft['booth_booking_id'] ?? null;
-        $bookedDayKeys = BoothBookingDay::query()
-            ->where('booth_id', $booth->id)
-            ->when($draftBookingId, fn ($query) => $query->where('booth_booking_id', '!=', $draftBookingId))
-            ->whereIn('booking_date', collect($slotGroups)->pluck('date')->all())
-            ->pluck('booking_date')
-            ->map(fn ($date) => $date . '|full-day')
-            ->all();
-        $selectedSlots = collect($bookingDraft['slots'] ?? [])
-            ->filter(fn ($slot) => isset($slot['key'])
-                && in_array($slot['key'], $validSlotKeys, true)
-                && ! in_array($slot['key'], $bookedDayKeys, true))
-            ->values();
-        $selectedSlotKeys = $selectedSlots->pluck('key')->all();
-        $slotsSubtotal = $selectedSlots->sum('price');
-        $selectedDaysCount = $selectedSlots->count();
-        $bookingDaysCount = max($requestedDays, $selectedDaysCount, 1);
-        $bookingDraft = $this->syncDraftBooking($hall, $booth, $selectedSize, $selectedSlots, array_merge($bookingDraft, [
-            'booking_days_count' => $bookingDaysCount,
-        ]));
 
-        session([
-            'company_booth_booking' => array_filter(array_merge($bookingDraft, [
-                'hall_id' => $hall->id,
-                'pavilion_id' => $hall->pavilion_id,
-                'exhibition_id' => $hall->pavilion?->exhibition_id,
-                'booth_id' => $booth->id,
-                'booth_size_id' => $selectedSize?->id,
-                'slot_price' => $slotPrice,
-                'booking_days_count' => $bookingDaysCount,
-                'booth_booking_id' => $bookingDraft['booth_booking_id'] ?? null,
-                'slots' => $selectedSlots->all(),
-                'slots_subtotal' => $slotsSubtotal,
-            ])),
-        ]);
+        $result = $this->applyAdminBoothDaysAndSync($hall, $booth, $selectedSize, $bookingDraft);
 
-        return view('company.booth-booking.slots', compact(
-            'hall',
-            'booth',
-            'selectedSize',
-            'slotGroups',
-            'slotPrice',
-            'selectedSlots',
-            'selectedSlotKeys',
-            'bookedDayKeys',
-            'slotsSubtotal',
-            'bookingDaysCount',
-        ));
+        if ($result['selectedSlots']->isEmpty()) {
+            return $this->redirectToBookingFloorPlan(
+                $hall,
+                $selectedSize?->id,
+                $booth->id,
+                'No booth days are available for this selection.'
+            );
+        }
+
+        session(['company_booth_booking' => $result['bookingDraft']]);
+
+        return $this->redirectToBookingSummary($hall->pavilion?->exhibition?->slug);
     }
 
     public function updateDays(Request $request): RedirectResponse
@@ -770,7 +751,6 @@ class CompanyBoothBookingController extends Controller
             'hall_id' => ['required', 'integer', 'exists:halls,id'],
             'booth_id' => ['required', 'integer', 'exists:booths,id'],
             'size_id' => ['nullable', 'integer', 'exists:booth_sizes,id'],
-            'days_count' => ['required', 'integer', 'min:1', 'max:60'],
         ]);
 
         $hall = Hall::with('pavilion.exhibition')->findOrFail($validated['hall_id']);
@@ -778,52 +758,21 @@ class CompanyBoothBookingController extends Controller
             ->whereKey($validated['booth_id'])
             ->where('status', 'available')
             ->firstOrFail();
-        $slotGroups = $this->slotGroupsForHall($hall, 1999, (int) $validated['days_count']);
-        $bookedDates = BoothBookingDay::query()
-            ->where('booth_id', $booth->id)
-            ->whereIn('booking_date', collect($slotGroups)->pluck('date')->all())
-            ->pluck('booking_date')
-            ->all();
-        $selectedSlots = collect($slotGroups)
-            ->flatMap(fn ($group) => $group['slots'])
-            ->reject(fn ($slot) => in_array($slot['date'], $bookedDates, true))
-            ->values();
+        $selectedSize = ! empty($validated['size_id']) ? BoothSize::find($validated['size_id']) : null;
+        $result = $this->applyAdminBoothDaysAndSync($hall, $booth, $selectedSize, session('company_booth_booking', []));
 
-        $bookingDraft = array_filter(array_merge(session('company_booth_booking', []), [
-                'hall_id' => $hall->id,
-                'pavilion_id' => $hall->pavilion_id,
-                'exhibition_id' => $hall->pavilion?->exhibition_id,
-                'booth_id' => $booth->id,
-                'booth_size_id' => $validated['size_id'] ?? null,
-                'slot_price' => 1999,
-                'booking_days_count' => (int) $validated['days_count'],
-                'slots' => $selectedSlots->all(),
-                'slots_subtotal' => $selectedSlots->sum('price'),
-        ]));
+        if ($result['selectedSlots']->isEmpty()) {
+            return $this->redirectToBookingFloorPlan(
+                $hall,
+                $selectedSize?->id,
+                $booth->id,
+                'No booth days are available for this selection.'
+            );
+        }
 
-        $bookingDraft = $this->syncDraftBooking(
-            $hall,
-            $booth,
-            $validated['size_id'] ? BoothSize::find($validated['size_id']) : null,
-            $selectedSlots,
-            $bookingDraft
-        );
+        session(['company_booth_booking' => $result['bookingDraft']]);
 
-        session(['company_booth_booking' => array_filter(array_merge($bookingDraft, [
-            'slots' => $selectedSlots->all(),
-            'slots_subtotal' => $selectedSlots->sum('price'),
-        ]))]);
-
-        $message = $selectedSlots->count() < (int) $validated['days_count']
-            ? 'Some days are already booked, so only available days were selected.'
-            : 'Booking days updated. Amount recalculated.';
-
-        return redirect('/company/booth-booking/slots?' . http_build_query(array_filter([
-            'hall' => $hall->id,
-            'booth' => $booth->id,
-            'size' => $validated['size_id'] ?? null,
-            'exhibition' => $hall->pavilion?->exhibition?->slug ?: session('company_booth_booking.exhibition_slug'),
-        ])))->with('status', $message);
+        return $this->redirectToBookingSummary($hall->pavilion?->exhibition?->slug);
     }
 
     public function selectSlot(Request $request): RedirectResponse
@@ -855,60 +804,22 @@ class CompanyBoothBookingController extends Controller
             ])))->with('status', 'Please select an available booth before booking booth days.');
         }
 
-        $bookingDraft = session('company_booth_booking', []);
-        $requestedDays = (int) ($bookingDraft['booking_days_count'] ?? 0);
-        $slot = collect($this->slotGroupsForHall($hall, 1999, $requestedDays > 0 ? $requestedDays : null))
-            ->flatMap(fn ($group) => $group['slots'])
-            ->firstWhere('key', $validated['slot_key']);
-
-        if (! $slot) {
-            return redirect()->back()->withErrors(['slot_key' => 'Selected day is not available.']);
-        }
-
-        $isDayAlreadyBooked = BoothBookingDay::query()
-            ->where('booth_id', (int) $validated['booth_id'])
-            ->whereDate('booking_date', $slot['date'])
-            ->when($bookingDraft['booth_booking_id'] ?? null, fn ($query, $bookingId) => $query->where('booth_booking_id', '!=', $bookingId))
-            ->exists();
-
-        if ($isDayAlreadyBooked) {
-            return redirect()->back()->withErrors(['slot_key' => 'This booth is already booked for the selected day.']);
-        }
-
-        $selectedSlots = collect($bookingDraft['slots'] ?? []);
-        $alreadySelected = $selectedSlots->contains(fn ($item) => ($item['key'] ?? null) === $slot['key']);
-        $selectedSlots = $alreadySelected
-            ? $selectedSlots->reject(fn ($item) => ($item['key'] ?? null) === $slot['key'])->values()
-            : $selectedSlots->push($slot)->values();
-
-        session([
-            'company_booth_booking' => array_filter(array_merge($bookingDraft, [
-                'hall_id' => $hall->id,
-                'pavilion_id' => $hall->pavilion_id,
-                'exhibition_id' => $hall->pavilion?->exhibition_id,
-                'booth_id' => (int) $validated['booth_id'],
-                'booth_size_id' => $validated['size_id'] ?? ($bookingDraft['booth_size_id'] ?? null),
-                'slots' => $selectedSlots->all(),
-                'booking_days_count' => max($selectedSlots->count(), 1),
-                'slots_subtotal' => $selectedSlots->sum('price'),
-            ])),
-        ]);
-
         $booth = $hall->booths()->findOrFail($validated['booth_id']);
         $selectedSize = ! empty($validated['size_id']) ? BoothSize::find($validated['size_id']) : null;
-        $bookingDraft = $this->syncDraftBooking($hall, $booth, $selectedSize, $selectedSlots, session('company_booth_booking', []));
-        session(['company_booth_booking' => array_filter(array_merge($bookingDraft, [
-            'slots' => $selectedSlots->all(),
-            'booking_days_count' => max($selectedSlots->count(), 1),
-            'slots_subtotal' => $selectedSlots->sum('price'),
-        ]))]);
+        $result = $this->applyAdminBoothDaysAndSync($hall, $booth, $selectedSize, session('company_booth_booking', []));
 
-        return redirect('/company/booth-booking/slots?' . http_build_query(array_filter([
-            'hall' => $hall->id,
-            'booth' => $validated['booth_id'],
-            'size' => $validated['size_id'] ?? null,
-            'exhibition' => $hall->pavilion?->exhibition?->slug ?: session('company_booth_booking.exhibition_slug'),
-        ])));
+        if ($result['selectedSlots']->isEmpty()) {
+            return $this->redirectToBookingFloorPlan(
+                $hall,
+                $selectedSize?->id,
+                $booth->id,
+                'No booth days are available for this selection.'
+            );
+        }
+
+        session(['company_booth_booking' => $result['bookingDraft']]);
+
+        return $this->redirectToBookingSummary($hall->pavilion?->exhibition?->slug);
     }
 
     public function continueFromSlots(Request $request): RedirectResponse
@@ -923,72 +834,24 @@ class CompanyBoothBookingController extends Controller
             'hall_id' => ['required', 'integer', 'exists:halls,id'],
             'booth_id' => ['required', 'integer', 'exists:booths,id'],
             'size_id' => ['nullable', 'integer', 'exists:booth_sizes,id'],
-            'days_count' => ['nullable', 'integer', 'min:1', 'max:60'],
         ]);
 
-        $bookingDraft = session('company_booth_booking', []);
-        $draftBooking = ! empty($bookingDraft['booth_booking_id'])
-            ? BoothBooking::with('days')
-                ->where('company_id', (int) session('company_id'))
-                ->find($bookingDraft['booth_booking_id'])
-            : null;
         $hall = Hall::with('pavilion.exhibition')->findOrFail($validated['hall_id']);
         $booth = $hall->booths()->findOrFail($validated['booth_id']);
         $selectedSize = ! empty($validated['size_id']) ? BoothSize::find($validated['size_id']) : null;
+        $result = $this->applyAdminBoothDaysAndSync($hall, $booth, $selectedSize, session('company_booth_booking', []));
 
-        if (! empty($validated['days_count'])) {
-            $slotGroups = $this->slotGroupsForHall($hall, 1999, (int) $validated['days_count']);
-            $bookedDates = BoothBookingDay::query()
-                ->where('booth_id', $booth->id)
-                ->when($bookingDraft['booth_booking_id'] ?? null, fn ($query, $bookingId) => $query->where('booth_booking_id', '!=', $bookingId))
-                ->whereIn('booking_date', collect($slotGroups)->pluck('date')->all())
-                ->pluck('booking_date')
-                ->all();
-            $selectedSlots = collect($slotGroups)
-                ->flatMap(fn ($group) => $group['slots'])
-                ->reject(fn ($slot) => in_array($slot['date'], $bookedDates, true))
-                ->values();
-        } else {
-            $selectedSlots = collect($bookingDraft['slots'] ?? []);
+        if ($result['selectedSlots']->isEmpty()) {
+            return $this->redirectToBookingFloorPlan(
+                $hall,
+                $selectedSize?->id,
+                $booth->id
+            )->withErrors(['slots' => 'Please select at least one day to continue.']);
         }
 
-        if ($draftBooking && $draftBooking->days->count() > $selectedSlots->count()) {
-            $selectedSlots = $draftBooking->days->sortBy('booking_date')->map(fn ($day) => [
-                'key' => $day->booking_date->toDateString() . '|full-day',
-                'date' => $day->booking_date->toDateString(),
-                'date_label' => $day->label ?: $day->booking_date->format('M d, D'),
-                'time' => 'full-day',
-                'label' => 'Full Day',
-                'price' => (float) $day->price,
-            ])->values();
-        }
+        session(['company_booth_booking' => $result['bookingDraft']]);
 
-        if ($selectedSlots->isEmpty()) {
-            return redirect('/company/booth-booking/slots?' . http_build_query(array_filter([
-                'hall' => $validated['hall_id'],
-                'booth' => $validated['booth_id'],
-                'size' => $validated['size_id'] ?? null,
-                'exhibition' => $hall->pavilion?->exhibition?->slug ?: session('company_booth_booking.exhibition_slug'),
-            ])))->withErrors(['slots' => 'Please select at least one day to continue.']);
-        }
-
-        $bookingDraft = $this->syncDraftBooking($hall, $booth, $selectedSize, $selectedSlots, array_filter(array_merge($bookingDraft, [
-            'hall_id' => (int) $validated['hall_id'],
-            'booth_id' => (int) $validated['booth_id'],
-            'booth_size_id' => $validated['size_id'] ?? ($bookingDraft['booth_size_id'] ?? null),
-            'booking_days_count' => ! empty($validated['days_count']) ? (int) $validated['days_count'] : max($selectedSlots->count(), 1),
-            'slots_subtotal' => $selectedSlots->sum('price'),
-        ])));
-
-        session(['company_booth_booking' => array_filter(array_merge($bookingDraft, [
-            'slots' => $selectedSlots->all(),
-            'booking_days_count' => ! empty($validated['days_count']) ? (int) $validated['days_count'] : max($selectedSlots->count(), 1),
-            'slots_subtotal' => $selectedSlots->sum('price'),
-        ]))]);
-
-        return redirect('/company/booth-booking/summary?' . http_build_query(array_filter([
-            'exhibition' => $hall->pavilion?->exhibition?->slug ?: session('company_booth_booking.exhibition_slug'),
-        ])));
+        return $this->redirectToBookingSummary($hall->pavilion?->exhibition?->slug);
     }
 
     public function summary(Request $request): View|RedirectResponse
@@ -1075,10 +938,42 @@ class CompanyBoothBookingController extends Controller
         }
 
         if (! $booking) {
-            return redirect('/company/booth-booking/slots?' . http_build_query(array_filter([
+            if (! empty($bookingDraft['hall_id']) && ! empty($bookingDraft['booth_id'])) {
+                $hall = Hall::with('pavilion.exhibition')->find($bookingDraft['hall_id']);
+                $booth = \App\Domain\Booth\Models\Booth::find($bookingDraft['booth_id']);
+                $selectedSize = ! empty($bookingDraft['booth_size_id'])
+                    ? BoothSize::find($bookingDraft['booth_size_id'])
+                    : null;
+
+                if ($hall && $booth) {
+                    $result = $this->applyAdminBoothDaysAndSync($hall, $booth, $selectedSize, $bookingDraft);
+
+                    if ($result['selectedSlots']->isNotEmpty()) {
+                        session(['company_booth_booking' => $result['bookingDraft']]);
+                        $booking = BoothBooking::with(['pavilion', 'hall', 'booth', 'boothSize', 'days'])
+                            ->where('company_id', (int) session('company_id'))
+                            ->find($result['bookingDraft']['booth_booking_id'] ?? null);
+                    }
+                }
+            }
+        }
+
+        if (! $booking) {
+            $hall = ! empty($bookingDraft['hall_id'])
+                ? Hall::with('pavilion.exhibition')->find($bookingDraft['hall_id'])
+                : null;
+
+            if ($hall) {
+                return $this->redirectToBookingFloorPlan(
+                    $hall,
+                    $bookingDraft['booth_size_id'] ?? null,
+                    $bookingDraft['booth_id'] ?? null
+                )->withErrors(['booking' => 'Please select a booth before opening summary.']);
+            }
+
+            return redirect('/company/booth-booking/halls?' . http_build_query(array_filter([
                 'exhibition' => session('company_booth_booking.exhibition_slug'),
-            ])))
-                ->withErrors(['booking' => 'Please select booth days before opening summary.']);
+            ])))->withErrors(['booking' => 'Please select a booth before opening summary.']);
         }
 
         $selectedDays = $booking->days->sortBy('booking_date')->values();
@@ -1090,12 +985,27 @@ class CompanyBoothBookingController extends Controller
             ])->values();
         }
         if ($selectedDays->isEmpty()) {
-            return redirect('/company/booth-booking/slots?' . http_build_query(array_filter([
-                'hall' => $booking->hall_id,
-                'booth' => $booking->booth_id,
-                'size' => $booking->booth_size_id,
-                'exhibition' => $booking->exhibition?->slug ?: session('company_booth_booking.exhibition_slug'),
-            ])))->withErrors(['slots' => 'Please select at least one day to continue.']);
+            $hall = $booking->hall ?: Hall::with('pavilion.exhibition')->find($booking->hall_id);
+            $booth = $booking->booth ?: \App\Domain\Booth\Models\Booth::find($booking->booth_id);
+            $selectedSize = $booking->boothSize ?: BoothSize::find($booking->booth_size_id);
+
+            if ($hall && $booth) {
+                $result = $this->applyAdminBoothDaysAndSync($hall, $booth, $selectedSize, $bookingDraft);
+
+                if ($result['selectedSlots']->isNotEmpty()) {
+                    session(['company_booth_booking' => $result['bookingDraft']]);
+                    $booking->refresh()->load(['pavilion', 'hall', 'booth', 'boothSize', 'days']);
+                    $selectedDays = $booking->days->sortBy('booking_date')->values();
+                }
+            }
+
+            if ($selectedDays->isEmpty() && $hall) {
+                return $this->redirectToBookingFloorPlan(
+                    $hall,
+                    $booking->booth_size_id,
+                    $booking->booth_id
+                )->withErrors(['slots' => 'No booth days are available for this selection.']);
+            }
         }
 
         $boothPrice = max((float) $booking->amount - (float) $selectedDays->sum('price'), 0);
@@ -1677,12 +1587,19 @@ class CompanyBoothBookingController extends Controller
             ])),
         ]);
 
-        return redirect('/company/booth-booking/slots?' . http_build_query(array_filter([
-            'hall' => $validated['hall_id'],
-            'booth' => $validated['booth_id'],
-            'size' => $validated['size_id'] ?? null,
-            'exhibition' => $hall->pavilion?->exhibition?->slug ?: session('company_booth_booking.exhibition_slug'),
-        ])))->with('status', 'Custom day request noted. Our team will help with a longer or tailored duration.');
+        $result = $this->applyAdminBoothDaysAndSync(
+            $hall,
+            $booth,
+            $selectedSize,
+            session('company_booth_booking', [])
+        );
+
+        if ($result['selectedSlots']->isNotEmpty()) {
+            session(['company_booth_booking' => $result['bookingDraft']]);
+        }
+
+        return $this->redirectToBookingSummary($hall->pavilion?->exhibition?->slug)
+            ->with('status', 'Custom day request noted. Our team will help with a longer or tailored duration.');
     }
 
     public function confirmed(): View|RedirectResponse
@@ -1980,92 +1897,7 @@ class CompanyBoothBookingController extends Controller
 
     private function bookedBoothGroupsForHall(Hall $hall, $booths): \Illuminate\Support\Collection
     {
-        $hall->loadMissing('pavilion.exhibition');
-
-        $boothsById = $booths->keyBy('id');
-
-        if ($boothsById->isEmpty()) {
-            return collect();
-        }
-
-        return BoothBooking::query()
-            ->with(['company', 'boothProfile', 'boothSize'])
-            ->where('hall_id', $hall->id)
-            ->where('payment_status', 'paid')
-            ->whereIn('booking_status', ['confirmed', 'active'])
-            ->whereIn('admin_status', ['pending', 'approved'])
-            ->orderBy('created_at')
-            ->orderBy('id')
-            ->get()
-            ->filter(fn (BoothBooking $booking) => $booking->company_id && $booking->booth_id)
-            ->map(function (BoothBooking $booking) use ($hall, $boothsById) {
-                $allocatedBooths = collect($booking->selected_booth_ids ?: [$booking->booth_id])
-                    ->push($booking->booth_id)
-                    ->filter()
-                    ->map(fn ($id) => (int) $id)
-                    ->unique()
-                    ->filter(fn (int $id) => $boothsById->has($id))
-                    ->map(fn (int $id) => $boothsById->get($id))
-                    ->sortBy(function ($booth) {
-                        $number = (int) preg_replace('/\D+/', '', (string) $booth->booth_number);
-
-                        return sprintf('%08d-%08d', $number ?: $booth->id, $booth->id);
-                    })
-                    ->values();
-
-                if ($allocatedBooths->isEmpty()) {
-                    return null;
-                }
-
-                $items = $allocatedBooths
-                    ->map(function ($booth) use ($booking) {
-                        $metrics = \App\Support\BoothFloorMap::metricsForBooth($booth);
-
-                        return [
-                            'booking' => $booking,
-                            'booth' => $booth,
-                            'left' => $metrics['left'],
-                            'top' => $metrics['top'],
-                            'right' => $metrics['right'],
-                            'bottom' => $metrics['bottom'],
-                        ];
-                    })
-                    ->values();
-
-                $profileLogo = $booking->boothProfile?->company_logo;
-                $companyLogo = $booking->company?->logo;
-                $logo = $profileLogo
-                    ? asset(str_starts_with($profileLogo, 'storage/') ? $profileLogo : 'storage/' . $profileLogo)
-                    : ($companyLogo ? asset($companyLogo) : null);
-
-                return [
-                    'company_id' => $booking->company_id,
-                    'company_name' => $booking->company?->company_name ?? $booking->company?->name ?? 'Booked Company',
-                    'logo_url' => $logo,
-                    'booth_ids' => $items->pluck('booth.id')->values()->all(),
-                    'booth_numbers' => $items->pluck('booth.booth_number')->values()->all(),
-                    'segments' => \App\Support\BoothFloorMap::segmentsForFootprint($allocatedBooths),
-                    'space_label' => trim(($items->count() > 1 ? $items->count() . ' spaces' : '1 space') . ' ' . ($booking->boothSize?->title ? '- ' . $booking->boothSize->title : '')),
-                    'exhibition_name' => $hall->pavilion?->exhibition?->title ?? $hall->pavilion?->exhibition?->name ?? 'Exhibition',
-                    'hall_name' => $hall->title,
-                    'pavilion_name' => $hall->pavilion?->title ?? 'Pavilion',
-                    'size_title' => $booking->boothSize?->title ?? 'Custom size',
-                    'booth_count' => $items->count(),
-                    'status' => ucfirst((string) ($booking->booking_status ?: 'confirmed')),
-                    'contact_person' => $booking->company?->contact_person_name ?: $booking->company?->owner_name,
-                    'email' => $booking->company?->email,
-                    'phone' => $booking->company?->phone,
-                    'website' => $booking->company?->website,
-                    'category' => $booking->company?->industry,
-                    'location' => trim(implode(', ', array_filter([$booking->company?->city, $booking->company?->country]))) ?: null,
-                    'left' => max(min($items->min('left'), 700), 0),
-                    'top' => max(min($items->min('top'), 350), 0),
-                    'width' => min($items->max('right') - $items->min('left'), 700),
-                    'height' => min($items->max('bottom') - $items->min('top'), 350),
-                ];
-            })
-            ->filter()
-            ->values();
+        return \App\Support\HallBookedBoothGroups::forHall($hall, $booths);
     }
     private function bookedBoothIdsForHall(Hall $hall): \Illuminate\Support\Collection
     {
@@ -2205,13 +2037,104 @@ class CompanyBoothBookingController extends Controller
         );
     }
 
+    private function exhibitionBoothBookingDays(?Exhibition $exhibition): int
+    {
+        return max($exhibition?->boothBookingDays() ?? 1, 1);
+    }
+
+    /**
+     * @return array{bookingDraft: array, selectedSlots: \Illuminate\Support\Collection, adminBoothDays: int}
+     */
+    private function applyAdminBoothDaysAndSync(
+        Hall $hall,
+        Booth $booth,
+        ?BoothSize $selectedSize,
+        array $bookingDraft,
+        int $slotPrice = 1999
+    ): array {
+        $adminBoothDays = $this->exhibitionBoothBookingDays($hall->pavilion?->exhibition);
+        $selectedSlots = $this->autoSelectedSlotsForHall(
+            $hall,
+            $booth,
+            $slotPrice,
+            $bookingDraft['booth_booking_id'] ?? null
+        );
+
+        if ($selectedSlots->isEmpty()) {
+            return [
+                'bookingDraft' => $bookingDraft,
+                'selectedSlots' => $selectedSlots,
+                'adminBoothDays' => $adminBoothDays,
+            ];
+        }
+
+        $bookingDraft = $this->syncDraftBooking($hall, $booth, $selectedSize, $selectedSlots, array_filter(array_merge($bookingDraft, [
+            'hall_id' => $hall->id,
+            'pavilion_id' => $hall->pavilion_id,
+            'exhibition_id' => $hall->pavilion?->exhibition_id,
+            'booth_id' => $booth->id,
+            'booth_size_id' => $selectedSize?->id ?? ($bookingDraft['booth_size_id'] ?? null),
+            'slot_price' => $slotPrice,
+            'booking_days_count' => $adminBoothDays,
+            'slots_subtotal' => $selectedSlots->sum('price'),
+        ])));
+
+        return [
+            'bookingDraft' => array_filter(array_merge($bookingDraft, [
+                'slots' => $selectedSlots->all(),
+                'slots_subtotal' => $selectedSlots->sum('price'),
+                'booking_days_count' => $adminBoothDays,
+            ])),
+            'selectedSlots' => $selectedSlots,
+            'adminBoothDays' => $adminBoothDays,
+        ];
+    }
+
+    private function redirectToBookingSummary(?string $exhibitionSlug = null): RedirectResponse
+    {
+        return redirect('/company/booth-booking/summary?' . http_build_query(array_filter([
+            'exhibition' => $exhibitionSlug ?: session('company_booth_booking.exhibition_slug'),
+        ])));
+    }
+
+    private function redirectToBookingFloorPlan(
+        Hall $hall,
+        ?int $sizeId = null,
+        ?int $boothId = null,
+        ?string $message = null
+    ): RedirectResponse {
+        $redirect = redirect('/company/booth-booking/floor-plan?' . http_build_query(array_filter([
+            'hall' => $hall->id,
+            'size' => $sizeId,
+            'booth' => $boothId,
+            'exhibition' => $hall->pavilion?->exhibition?->slug ?: session('company_booth_booking.exhibition_slug'),
+        ])));
+
+        return $message ? $redirect->with('status', $message) : $redirect;
+    }
+
+    private function autoSelectedSlotsForHall(Hall $hall, Booth $booth, int $slotPrice, ?int $excludeBookingId = null): \Illuminate\Support\Collection
+    {
+        $adminBoothDays = $this->exhibitionBoothBookingDays($hall->pavilion?->exhibition);
+        $slotGroups = $this->slotGroupsForHall($hall, $slotPrice, $adminBoothDays);
+        $bookedDates = BoothBookingDay::query()
+            ->where('booth_id', $booth->id)
+            ->when($excludeBookingId, fn ($query) => $query->where('booth_booking_id', '!=', $excludeBookingId))
+            ->whereIn('booking_date', collect($slotGroups)->pluck('date')->all())
+            ->pluck('booking_date')
+            ->all();
+
+        return collect($slotGroups)
+            ->flatMap(fn ($group) => $group['slots'])
+            ->reject(fn ($slot) => in_array($slot['date'], $bookedDates, true))
+            ->values();
+    }
+
     private function slotGroupsForHall(Hall $hall, int $slotPrice, ?int $daysCount = null): array
     {
         $exhibition = $hall->pavilion?->exhibition;
         $startDate = Carbon::parse($exhibition?->start_date ?: now());
-        $defaultEndDate = Carbon::parse($exhibition?->end_date ?: now()->addDays(2));
-        $defaultDaysCount = $startDate->diffInDays($defaultEndDate) + 1;
-        $effectiveDaysCount = max($daysCount ?? $defaultDaysCount, 1);
+        $effectiveDaysCount = max($daysCount ?? $this->exhibitionBoothBookingDays($exhibition), 1);
         $endDate = $startDate->copy()->addDays($effectiveDaysCount - 1);
         $period = CarbonPeriod::create($startDate, $endDate);
         return collect($period)->map(function ($date) use ($slotPrice) {
@@ -2232,16 +2155,6 @@ class CompanyBoothBookingController extends Controller
 
     private function allowedBoothSizesForHall(Hall $hall): \Illuminate\Support\Collection
     {
-        return BoothSize::query()
-            ->where('status', 'active')
-            ->whereIn('id', function ($query) use ($hall) {
-                $query->select('booth_size_id')
-                    ->from('booths')
-                    ->where('hall_id', $hall->id)
-                    ->whereNotNull('booth_size_id')
-                    ->distinct();
-            })
-            ->orderBy('area')
-            ->get();
+        return \App\Support\SequentialBoothSizes::availableForHall($hall);
     }
 }

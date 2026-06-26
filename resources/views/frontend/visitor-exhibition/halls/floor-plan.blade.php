@@ -10,6 +10,13 @@
     $exhibitionName = $exhibition ? ($exhibition->title ?: $exhibition->name) : str($slug)->replace('-', ' ')->title();
     $exhibitionDescription = $exhibition?->description
         ?: 'Preview booth locations and details. Active pass holders can save booths, book meetings, chat, download brochures and join sessions.';
+    $categoryLegend = $visitorFloorMap['categoryLegend'] ?? [];
+    $hallOptions = collect($pavilions ?? [])
+        ->flatMap(fn ($pavilion) => ($pavilion->halls ?? collect())->map(fn ($hallOption) => [
+            'id' => $hallOption->id,
+            'label' => trim(($pavilion->title ?? 'Pavilion') . ' · ' . ($hallOption->title ?? 'Hall')),
+        ]))
+        ->values();
 @endphp
 
 <section class="visitor-flow-page mx-auto w-full max-w-[1500px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
@@ -34,6 +41,32 @@
         </div>
     </div>
 
+    @if ($hallOptions->count() > 1)
+        <div class="mb-6 flex flex-col gap-3 rounded-xl border border-borderColor bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <p class="text-[13px] font-semibold uppercase tracking-[0.12em] text-purple">Hall selector</p>
+                <p class="mt-1 text-[14px] font-medium text-[#5A6480]">Switch halls to view live booth layout and availability.</p>
+            </div>
+            <form method="GET" action="{{ route('exhibitions.visitor.floor-map', $slug) }}" class="min-w-[260px]">
+                <select
+                    name="hall"
+                    onchange="this.form.submit()"
+                    class="h-11 w-full rounded-lg border border-borderColor bg-white px-4 text-[14px] font-semibold text-navy">
+                    @foreach ($hallOptions as $hallOption)
+                        <option value="{{ $hallOption['id'] }}" @selected(($hall->id ?? null) === $hallOption['id'])>
+                            {{ $hallOption['label'] }}
+                        </option>
+                    @endforeach
+                </select>
+            </form>
+        </div>
+    @elseif ($hall)
+        <div class="mb-6 rounded-xl border border-borderColor bg-white px-5 py-4 shadow-sm">
+            <p class="text-[13px] font-semibold uppercase tracking-[0.12em] text-purple">Current hall</p>
+            <p class="mt-1 text-[16px] font-semibold text-navy">{{ $hall->title }}</p>
+        </div>
+    @endif
+
     @unless ($isPassActive)
         <div class="mb-6 rounded-xl border border-[#EADCFD] bg-[#FBFAFF] p-5">
             <h2 class="text-[18px] font-semibold text-navy">Guest floor preview</h2>
@@ -42,20 +75,32 @@
     @endunless
 
     <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div class="floor-map-scroll overflow-hidden rounded-xl border border-borderColor bg-white p-4 shadow-sm sm:p-5">
-            @include('frontend.exhibitions.booths.partials.floor-diagram', ['hideDetailsPanel' => true])
+        <div class="floor-map-scroll min-h-[420px] overflow-x-auto overflow-y-visible rounded-xl border border-borderColor bg-white p-4 shadow-sm sm:p-5">
+            @include('frontend.exhibitions.booths.partials.floor-diagram', [
+                'hideDetailsPanel' => true,
+                'visitorFloorMap' => $visitorFloorMap ?? null,
+                'hall' => $hall ?? null,
+                'slug' => $slug,
+            ])
         </div>
 
         <aside class="space-y-5">
             <div class="rounded-xl border border-borderColor bg-white p-6 shadow-sm">
                 <h2 class="text-[20px] font-semibold text-navy">Map Legend</h2>
                 <div class="mt-5 space-y-3">
-                    @foreach ([['Technology', '#5b2eff'], ['Cloud', '#246BFF'], ['Sustainability', '#16A34A'], ['Healthcare', '#EC4899'], ['Finance', '#F59E0B'], ['Education', '#0F766E']] as [$label, $color])
+                    @forelse ($categoryLegend as $legendItem)
                         <div class="flex items-center gap-3 text-[14px] font-medium text-[#34405F]">
-                            <span class="h-3 w-3 rounded-full" style="background: {{ $color }}"></span>
-                            {{ $label }}
+                            <span class="h-3 w-3 rounded-full" style="background: {{ $legendItem['color'] }}"></span>
+                            {{ $legendItem['label'] }}
                         </div>
-                    @endforeach
+                    @empty
+                        @foreach ([['Technology', '#5b2eff'], ['Cloud', '#246BFF'], ['Sustainability', '#16A34A'], ['Healthcare', '#EC4899'], ['Finance', '#F59E0B'], ['Education', '#0F766E']] as [$label, $color])
+                            <div class="flex items-center gap-3 text-[14px] font-medium text-[#34405F]">
+                                <span class="h-3 w-3 rounded-full" style="background: {{ $color }}"></span>
+                                {{ $label }}
+                            </div>
+                        @endforeach
+                    @endforelse
                 </div>
             </div>
 

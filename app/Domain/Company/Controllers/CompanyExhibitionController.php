@@ -61,7 +61,7 @@ class CompanyExhibitionController extends Controller
             }
         });
 
-        return view('backend.company.exhibitions.exhibition-list', compact('exhibitions', 'search'));
+        return view('company.exhibitions.exhibition-list', compact('exhibitions', 'search'));
     }
 
     public function show(string $slug): View|RedirectResponse
@@ -91,6 +91,6 @@ class CompanyExhibitionController extends Controller
             $exhibition->user_booking_status = 'available';
         }
 
-        return view('backend.company.exhibitions.exhibition-details', compact('exhibition', 'userBooking'));
+        return view('company.exhibitions.exhibition-details', compact('exhibition', 'userBooking'));
     }
 }

@@ -66,7 +66,7 @@ class AdminBoothBookingController extends Controller
             ];
         });
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'Booth Management',
             'pageDescription' => 'Manage paid booth bookings and admin approval status.',
             'search' => $search,
@@ -113,7 +113,7 @@ class AdminBoothBookingController extends Controller
         $booking = BoothBooking::with(['company', 'exhibition', 'pavilion', 'hall', 'booth', 'boothSize', 'days'])
             ->findOrFail($id);
 
-        return view('backend.admin.booth-bookings.show', compact('booking'));
+        return view('admin.booth-bookings.show', compact('booking'));
     }
 
     public function approve($id): RedirectResponse

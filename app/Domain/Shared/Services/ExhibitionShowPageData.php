@@ -113,9 +113,7 @@ class ExhibitionShowPageData
             ['ph-certificate', 'One-to-one meetings and visitor pass access'],
         ];
 
-        $ticketUrl = auth()->check()
-            ? route('exhibitions.visitor.dashboard', $slug)
-            : route('exhibitions.visitor.login', ['exhibition' => $slug]);
+        $ticketUrl = \App\Support\ExhibitionTicketFlow::visitorPassEntryUrl($slug);
 
         return array_merge($context, [
             'slug' => $slug,

@@ -13,7 +13,7 @@ class BoothAnalyticsController extends BaseBoothSetupController
     {
         $booking = $this->setupBooking($booking);
 
-        return view('backend.company.booth-setup.analytics', $this->commonData($booking, $steps) + [
+        return view('company.booth-setup.analytics', $this->commonData($booking, $steps) + [
             'analytics' => $analyticsService->snapshot($booking),
             'topProducts' => $booking->boothProducts()->orderByDesc('views')->take(5)->get(),
             'recentActivities' => [],

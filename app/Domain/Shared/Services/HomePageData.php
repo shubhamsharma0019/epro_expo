@@ -336,7 +336,7 @@ class HomePageData
 
         if ($slug) {
             try {
-                return route('exhibitions.tickets.select', ['slug' => $slug]);
+                return route('exhibitions.tickets.visitor-details', ['slug' => $slug]);
             } catch (\Throwable) {
                 return route('exhibitions.index');
             }

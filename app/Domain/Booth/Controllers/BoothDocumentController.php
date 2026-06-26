@@ -15,7 +15,7 @@ class BoothDocumentController extends BaseBoothSetupController
     public function index(BoothBooking $booking, BoothSetupStepService $steps): View
     {
         $booking = $this->setupBooking($booking);
-        return view('backend.company.booth-setup.documents', $this->commonData($booking, $steps) + ['documents' => $booking->boothDocuments()->latest()->get()]);
+        return view('company.booth-setup.documents', $this->commonData($booking, $steps) + ['documents' => $booking->boothDocuments()->latest()->get()]);
     }
 
     public function create(BoothBooking $booking, BoothSetupStepService $steps): View { return $this->index($booking, $steps); }
@@ -46,7 +46,7 @@ class BoothDocumentController extends BaseBoothSetupController
     {
         abort_unless($document->company_id === (int) session('company_id') && $document->booth_booking_id === $booking->id, 403);
         $booking = $this->setupBooking($booking);
-        return view('backend.company.booth-setup.documents', $this->commonData($booking, $steps) + ['document' => $document, 'documents' => $booking->boothDocuments()->latest()->get()]);
+        return view('company.booth-setup.documents', $this->commonData($booking, $steps) + ['document' => $document, 'documents' => $booking->boothDocuments()->latest()->get()]);
     }
 
     public function update(BoothDocumentRequest $request, BoothBooking $booking, BoothDocument $document, BoothFileUploadService $files, BoothSetupStepService $steps): RedirectResponse

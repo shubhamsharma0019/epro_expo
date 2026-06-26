@@ -31,7 +31,7 @@ class AdminWebsiteController extends Controller
             ? Company::where('status', 'approved')->orderBy('company_name')->orderBy('name')->get(['id', 'company_name', 'name', 'is_home_featured'])
             : collect();
 
-        return view('backend.admin.website.home', [
+        return view('admin.website.home', [
             'hero' => WebsiteContent::hero(),
             'sectionHeadings' => WebsiteContent::sectionHeadings(),
             'cta' => WebsiteContent::cta(),

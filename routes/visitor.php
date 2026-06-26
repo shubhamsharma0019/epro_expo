@@ -126,7 +126,7 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
     })->name('booths.sizes');
 
     Route::get('/booths/slots', function () {
-        return redirect('/company/booth-booking/slots');
+        return redirect('/company/booth-booking/summary');
     })->name('booths.slots');
 
     Route::get('/booths/customize', function () {
@@ -240,32 +240,16 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
         Route::get('/select', function ($slug) {
             session([
                 'activeExhibitionSlug' => $slug,
-                'exhibition_booking_path' => route('exhibitions.tickets.select', $slug),
+                'exhibition_booking_path' => route('exhibitions.tickets.visitor-details', $slug),
                 'user_flow_context' => 'exhibition_ticket',
             ]);
 
-            if (! \App\Support\ExhibitionTicketFlow::shouldShowVisitorSidebar($slug)) {
-                session()->forget('visitor_pass_active');
-            }
-
-            if (! auth()->check()) {
-                session()->put('url.intended', route('exhibitions.tickets.select', $slug));
-                session()->put('exhibition_booking_path', route('exhibitions.tickets.select', $slug));
-                session()->put('user_flow_context', 'exhibition_ticket');
-
-                return redirect()->route('exhibitions.visitor.login', ['exhibition' => $slug]);
-            }
-
-            return view('frontend.exhibitions.tickets.select', compact('slug'));
+            return redirect()->route('exhibitions.tickets.visitor-details', $slug);
         })->name('select');
 
-        Route::get('/visitor-details', function (string $slug, \App\Domain\Shared\Services\ExhibitionTicketVisitorDetailsPageData $pageData) {
-            $data = $pageData->build($slug);
-
-            abort_unless($data, 404);
-
-            return view('frontend.exhibitions.tickets.visitor-details', $data);
-        })->name('visitor-details');
+        Route::get('/visitor-details', [\App\Domain\Visitor\Controllers\VisitorTicketController::class, 'visitorRegistration'])->name('visitor-details');
+        Route::post('/visitor-details', [\App\Domain\Visitor\Controllers\VisitorTicketController::class, 'storeVisitorRegistration'])->name('visitor-details.store');
+        Route::get('/pass-details', [\App\Domain\Visitor\Controllers\VisitorTicketController::class, 'passDetails'])->name('pass-details');
 
         Route::post('/register', [VisitorTicketController::class, 'register'])->name('register');
 
@@ -278,6 +262,10 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
         })->name('summary');
 
         Route::get('/payment', function ($slug) {
+            if (! \App\Support\ExhibitionTicketFlow::hasVisitorRegistration($slug)) {
+                return redirect()->route('exhibitions.tickets.visitor-details', $slug);
+            }
+
             return view('frontend.exhibitions.tickets.payment', compact('slug'));
         })->name('payment');
 
@@ -305,6 +293,7 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
     Route::get('/{slug}/companies/{companySlug}', [ExhibitionBoothController::class, 'show'])->name('visitor.companies.show');
     
     Route::post('/{slug}/companies/{companySlug}/meetings/book', [ExhibitionBoothController::class, 'bookMeeting'])->name('visitor.meetings.book');
+    Route::post('/{slug}/companies/{companySlug}/meetings/{id}/join', [ExhibitionBoothController::class, 'requestMeetingJoin'])->name('visitor.meetings.join');
     Route::post('/{slug}/companies/{companySlug}/enquiry', [ExhibitionBoothController::class, 'sendEnquiry'])->name('visitor.enquiry.send');
     
     Route::get('/{slug}/floor-map', [VisitorExhibitionController::class, 'floorMap'])->name('visitor.floor-map');
@@ -312,16 +301,11 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
     Route::get('/{slug}/register-pass', function ($slug) {
         session([
             'activeExhibitionSlug' => $slug,
-            'url.intended' => route('exhibitions.tickets.select', $slug),
-            'exhibition_booking_path' => route('exhibitions.tickets.select', $slug),
+            'exhibition_booking_path' => route('exhibitions.tickets.visitor-details', $slug),
             'user_flow_context' => 'exhibition_ticket',
         ]);
 
-        if (auth()->check()) {
-            return redirect()->route('exhibitions.visitor.dashboard', $slug);
-        }
-
-        return redirect()->route('exhibitions.visitor.login', ['exhibition' => $slug]);
+        return redirect()->route('exhibitions.tickets.visitor-details', $slug);
     })->name('visitor.register-pass');
 
     Route::get('/{slug}/visitor-dashboard', [VisitorExhibitionController::class, 'dashboard'])->name('visitor.dashboard');

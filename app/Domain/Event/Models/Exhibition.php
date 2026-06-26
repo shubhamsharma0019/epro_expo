@@ -21,6 +21,7 @@ class Exhibition extends Model
         'venue',
         'start_date',
         'end_date',
+        'booth_booking_days',
         'banner_image',
         'banner_url',
         'companies_count',
@@ -40,7 +41,21 @@ class Exhibition extends Model
             'approved_at' => 'datetime',
             'published_at' => 'datetime',
             'is_home_featured' => 'boolean',
+            'booth_booking_days' => 'integer',
         ];
+    }
+
+    public function boothBookingDays(): int
+    {
+        if ((int) ($this->booth_booking_days ?? 0) > 0) {
+            return min((int) $this->booth_booking_days, 60);
+        }
+
+        if ($this->start_date && $this->end_date) {
+            return min(max($this->start_date->diffInDays($this->end_date) + 1, 1), 60);
+        }
+
+        return 1;
     }
 
     public function scopeLiveForVisitors(Builder $query): Builder

@@ -10,7 +10,6 @@ use App\Domain\Event\Models\Exhibition;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 
 class UserAuthController extends Controller
@@ -68,6 +67,12 @@ class UserAuthController extends Controller
 
     public function login(Request $request): RedirectResponse
     {
+        if (! \App\Support\DbGuard::available()) {
+            return back()
+                ->withInput($request->except('password'))
+                ->withErrors(['email' => 'Database is unavailable. Start MySQL80, then try again.']);
+        }
+
         if (in_array($request->input('flow_context'), ['event_ticket', 'exhibition_ticket'], true)) {
             $request->session()->put('user_flow_context', $request->input('flow_context'));
         }
@@ -158,6 +163,12 @@ class UserAuthController extends Controller
 
     public function register(Request $request): RedirectResponse
     {
+        if (! \App\Support\DbGuard::available()) {
+            return back()
+                ->withInput($request->except('password', 'password_confirmation'))
+                ->withErrors(['email' => 'Database is unavailable. Start MySQL80, then try again.']);
+        }
+
         if (in_array($request->input('flow_context'), ['event_ticket', 'exhibition_ticket'], true)) {
             $request->session()->put('user_flow_context', $request->input('flow_context'));
         }
@@ -173,35 +184,43 @@ class UserAuthController extends Controller
             'name' => $data['name'],
             'email' => $data['email'],
             'phone' => $data['phone'] ?? null,
-            'password' => Hash::make($data['password']),
+            'password' => $data['password'],
             'role' => 'user',
         ]);
 
         Auth::login($user);
         $request->session()->regenerate();
 
+        $flowContext = $request->session()->get('user_flow_context');
+
+        if ($flowContext === 'exhibition_ticket') {
+            $activeSlug = session('activeExhibitionSlug');
+            $intended = $request->session()->get('url.intended')
+                ?: ($request->session()->get('exhibition_booking_path')
+                ?: ($activeSlug ? route('exhibitions.tickets.select', $activeSlug) : route('exhibitions.index')));
+            $request->session()->forget(['url.intended', 'user_flow_context']);
+
+            return redirect($intended);
+        }
+
+        if ($flowContext === 'event_ticket') {
+            $intended = $request->session()->get('url.intended')
+                ?: ($request->session()->get('event_booking_path') ?: url('/events/tickets/select'));
+            $request->session()->forget(['url.intended', 'user_flow_context']);
+
+            return redirect($intended);
+        }
+
         $activeSlug = session('activeExhibitionSlug') ?? 'global-tech-expo-2024';
         $exhibition = Exhibition::where('slug', $activeSlug)->first();
-        
+
         $visitor = Visitor::where('email', $user->email)
-            ->when($exhibition, fn($q) => $q->where('exhibition_id', $exhibition->id))
+            ->when($exhibition, fn ($q) => $q->where('exhibition_id', $exhibition->id))
             ->first();
 
         if ($visitor) {
             session(['visitor_pass_active' => true]);
             session(['selected_visitor_booking_id' => $visitor->booking_id]);
-        }
-
-        if ($request->session()->get('user_flow_context') === 'exhibition_ticket') {
-            $intended = $request->session()->get('url.intended') ?: ($request->session()->get('exhibition_booking_path') ?: route('exhibitions.tickets.select', $activeSlug));
-            $request->session()->forget(['url.intended', 'user_flow_context']);
-            return redirect($intended);
-        }
-
-        if ($request->session()->get('user_flow_context') === 'event_ticket') {
-            $intended = $request->session()->get('url.intended') ?: ($request->session()->get('event_booking_path') ?: url('/events/tickets/select'));
-            $request->session()->forget(['url.intended', 'user_flow_context']);
-            return redirect($intended);
         }
 
         return $this->redirectAfterAuthentication($request, $exhibition);

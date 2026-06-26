@@ -11,6 +11,6 @@ class PreviewController extends BaseCompanyEventController
     {
         $companyEvent = $this->setupEvent($companyEvent);
 
-        return view('backend.company.event-company-flow.preview', $this->commonData($companyEvent));
+        return view('company.event-company-flow.preview', $this->commonData($companyEvent));
     }
 }

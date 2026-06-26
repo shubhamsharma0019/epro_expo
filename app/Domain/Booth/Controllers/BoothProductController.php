@@ -36,7 +36,7 @@ class BoothProductController extends BaseBoothSetupController
             ->orderBy('category')
             ->pluck('category');
 
-        return view('backend.company.booth-setup.products', $this->commonData($booking, $steps) + [
+        return view('company.booth-setup.products', $this->commonData($booking, $steps) + [
             'products' => $productsQuery->paginate(5)->withQueryString(),
             'categories' => $categories,
         ]);
@@ -52,7 +52,7 @@ class BoothProductController extends BaseBoothSetupController
             ->orderBy('category')
             ->pluck('category');
 
-        return view('backend.company.booth-setup.products', $this->commonData($booking, $steps) + [
+        return view('company.booth-setup.products', $this->commonData($booking, $steps) + [
             'product' => null,
             'products' => $booking->boothProducts()->latest()->paginate(5),
             'categories' => $categories,
@@ -93,7 +93,7 @@ class BoothProductController extends BaseBoothSetupController
             ->orderBy('category')
             ->pluck('category');
 
-        return view('backend.company.booth-setup.products', $this->commonData($booking, $steps) + [
+        return view('company.booth-setup.products', $this->commonData($booking, $steps) + [
             'product' => $product,
             'products' => $booking->boothProducts()->latest()->paginate(5),
             'categories' => $categories,

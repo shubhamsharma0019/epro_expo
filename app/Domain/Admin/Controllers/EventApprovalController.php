@@ -64,7 +64,7 @@ class EventApprovalController extends Controller
                 ];
             });
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'Event Approval',
             'pageDescription' => 'Review company event publish requests before they go live.',
             'search' => '',
@@ -110,7 +110,7 @@ class EventApprovalController extends Controller
 
     public function show(CompanyEventPublishRequest $publishRequest): View
     {
-        return view('backend.admin.event-approvals.show', [
+        return view('admin.event-approvals.show', [
             'publishRequest' => $publishRequest->load(['company', 'companyEvent.branding', 'companyEvent.ticketTypes']),
         ]);
     }

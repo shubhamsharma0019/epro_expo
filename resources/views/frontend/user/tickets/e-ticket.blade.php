@@ -5,13 +5,14 @@
 
 @section('content')
 @php
+    use App\Support\EventTicketQr;
     $eventName = $ticket->companyEvent ? $ticket->companyEvent->title : 'Event';
     if (!$ticket->companyEvent && $ticket->event_slug == 'global-tech-summit-2024') {
         $eventName = 'Global Tech Summit 2024';
     }
     $dateInfo = $ticket->companyEvent ? ($ticket->companyEvent->starts_at?->format('M d, Y') ?? 'Date TBD') : 'May 15 - May 17, 2024';
-    $timeInfo = $ticket->companyEvent ? \Carbon\Carbon::parse($ticket->companyEvent->start_time)->format('h:i A') : '10:00 AM';
-    $qrData = urlencode($ticket->order_number . '|' . $eventName . '|' . $ticket->attendee_name);
+    $timeInfo = $ticket->companyEvent && $ticket->companyEvent->start_time ? \Carbon\Carbon::parse($ticket->companyEvent->start_time)->format('h:i A') : '10:00 AM';
+    $qrImageUrl = EventTicketQr::imageUrl($ticket, 220);
     $initials = collect(explode(' ', $ticket->attendee_name))->map(fn($w) => substr($w, 0, 1))->take(2)->implode('');
 @endphp
 <section class="space-y-6 px-4 py-6 sm:px-8">
@@ -41,7 +42,7 @@
 
                 <div class="flex flex-col items-center justify-center border-t border-dashed border-[#D8DDF0] bg-[#F8FAFF] p-8 text-center lg:border-l lg:border-t-0">
                     <x-shared.qr-ticket-card
-                        src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=12&data={{ $qrData }}"
+                        src="{{ $qrImageUrl }}"
                         alt="Event ticket QR code"
                         size-class="h-[150px] w-[150px]"
                         card-class="px-5 pb-6 pt-5"

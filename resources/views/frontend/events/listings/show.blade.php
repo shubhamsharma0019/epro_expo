@@ -158,8 +158,8 @@
                             <p class="mb-0.5 text-[14px] text-[#4E567A]">Starts from</p>
                             <p class="text-[22px] font-bold tracking-[-0.02em] text-[#1F2A6A] sm:text-[26px]">{{ $event['price'] }}</p>
                         </div>
-                        <button onclick="window.location.href='{{ url('/events/tickets/select?event=' . $eventSlug) }}'" class="w-full rounded-xl bg-[#4318FF] px-7 py-3.5 text-[15px] font-semibold text-white shadow-[0_8px_20px_rgba(67,24,255,0.25)] transition hover:bg-[#3412C9] sm:w-auto sm:px-9">
-                            Book Tickets
+                        <button onclick="window.location.href='{{ \App\Support\EventTicketFlow::visitorPassEntryUrl($eventSlug) }}'" class="w-full rounded-xl bg-[#4318FF] px-7 py-3.5 text-[15px] font-semibold text-white shadow-[0_8px_20px_rgba(67,24,255,0.25)] transition hover:bg-[#3412C9] sm:w-auto sm:px-9">
+                            Get Visitor Pass
                         </button>
                     </div>
                 </div>

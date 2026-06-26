@@ -18,7 +18,7 @@ class BoothProfileController extends BaseBoothSetupController
         $booking = $this->setupBooking($booking);
         $steps->markStepInProgress($booking, 'profile');
 
-        return view('backend.company.booth-setup.company-profile', $this->commonData($booking, $steps) + [
+        return view('company.booth-setup.company-profile', $this->commonData($booking, $steps) + [
             'profile' => $booking->boothProfile,
         ]);
     }

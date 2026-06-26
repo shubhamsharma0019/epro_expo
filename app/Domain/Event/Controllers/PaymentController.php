@@ -20,7 +20,7 @@ class PaymentController extends BaseCompanyEventController
         $razorpayCurrency = config('services.razorpay.currency', 'INR');
         $razorpayEnabled = filled($razorpayKey) && filled(config('services.razorpay.secret'));
 
-        return view('backend.company.event-company-flow.payment', compact('companyEvent', 'razorpayKey', 'razorpayCurrency', 'razorpayEnabled'));
+        return view('company.event-company-flow.payment', compact('companyEvent', 'razorpayKey', 'razorpayCurrency', 'razorpayEnabled'));
     }
 
     public function createRazorpayOrder(Request $request, CompanyEvent $companyEvent)

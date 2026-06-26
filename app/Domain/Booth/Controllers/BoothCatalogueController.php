@@ -15,7 +15,7 @@ class BoothCatalogueController extends BaseBoothSetupController
     public function index(BoothBooking $booking, BoothSetupStepService $steps): View
     {
         $booking = $this->setupBooking($booking);
-        return view('backend.company.booth-setup.catalogues', $this->commonData($booking, $steps) + ['catalogues' => $booking->boothCatalogues()->latest()->get()]);
+        return view('company.booth-setup.catalogues', $this->commonData($booking, $steps) + ['catalogues' => $booking->boothCatalogues()->latest()->get()]);
     }
     public function create(BoothBooking $booking, BoothSetupStepService $steps): View { return $this->index($booking, $steps); }
     public function show(BoothBooking $booking, BoothCatalogue $catalogue, BoothSetupStepService $steps): View { return $this->edit($booking, $catalogue, $steps); }
@@ -36,7 +36,7 @@ class BoothCatalogueController extends BaseBoothSetupController
     {
         abort_unless($catalogue->company_id === (int) session('company_id') && $catalogue->booth_booking_id === $booking->id, 403);
         $booking = $this->setupBooking($booking);
-        return view('backend.company.booth-setup.catalogues', $this->commonData($booking, $steps) + ['catalogue' => $catalogue, 'catalogues' => $booking->boothCatalogues()->latest()->get()]);
+        return view('company.booth-setup.catalogues', $this->commonData($booking, $steps) + ['catalogue' => $catalogue, 'catalogues' => $booking->boothCatalogues()->latest()->get()]);
     }
     public function update(BoothCatalogueRequest $request, BoothBooking $booking, BoothCatalogue $catalogue, BoothFileUploadService $files, BoothSetupStepService $steps): RedirectResponse
     {

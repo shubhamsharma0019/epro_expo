@@ -11,7 +11,7 @@ class BookingDetailsController extends BaseBoothSetupController
     {
         $booking = $this->ownedBooking($booking);
 
-        return view('backend.company.bookings.booking-details', [
+        return view('company.bookings.booking-details', [
             'booking' => $booking,
             'bookingServices' => $booking->services()->get(),
             'bookingDays' => $booking->days()->orderBy('booking_date')->get(),
@@ -23,7 +23,7 @@ class BookingDetailsController extends BaseBoothSetupController
         $booking = $this->ownedBooking($booking);
         abort_unless($booking->payment_status === 'paid', 404);
 
-        return view('backend.company.bookings.invoice', [
+        return view('company.bookings.invoice', [
             'booking' => $booking,
             'bookingServices' => $booking->services()->get(),
             'bookingDays' => $booking->days()->orderBy('booking_date')->get(),

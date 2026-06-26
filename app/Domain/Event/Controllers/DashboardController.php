@@ -100,11 +100,14 @@ class DashboardController extends BaseCompanyEventController
                 ?? config('services.razorpay.currency', 'INR'),
         ];
 
-        return view('backend.company.event-company-flow.event-dashboard', compact(
+        $charts = $this->buildChartData($events, $confirmedTickets);
+
+        return view('company.event-company-flow.event-dashboard', compact(
             'events',
             'upcomingEvents',
             'recentActivities',
             'stats',
+            'charts',
             'currentCompany'
         ));
     }
@@ -155,6 +158,74 @@ class DashboardController extends BaseCompanyEventController
         }
 
         return asset('storage/' . $normalized);
+    }
+
+    private function buildChartData(Collection $events, Collection $confirmedTickets): array
+    {
+        $months = collect(range(5, 0))->map(fn (int $offset) => now()->subMonths($offset)->startOfMonth());
+
+        $monthlyLabels = $months->map(fn ($monthStart) => $monthStart->format('M'))->all();
+        $monthlyRegistrations = $months->map(function ($monthStart) use ($confirmedTickets) {
+            $monthEnd = $monthStart->copy()->endOfMonth();
+
+            return (int) $confirmedTickets
+                ->filter(fn (VisitorTicket $ticket) => $ticket->created_at?->between($monthStart, $monthEnd))
+                ->sum('quantity');
+        })->all();
+        $monthlyRevenue = $months->map(function ($monthStart) use ($confirmedTickets) {
+            $monthEnd = $monthStart->copy()->endOfMonth();
+
+            return (float) $confirmedTickets
+                ->filter(fn (VisitorTicket $ticket) => $ticket->created_at?->between($monthStart, $monthEnd))
+                ->sum('total_amount');
+        })->all();
+        $monthlyRegistrationTotal = (int) array_sum($monthlyRegistrations);
+        $monthlyRevenueTotal = (float) array_sum($monthlyRevenue);
+
+        $publishedEvents = $events->filter(
+            fn (CompanyEvent $event) => $event->isLiveForVisitors() || $event->status === 'approved'
+        )->count();
+        $inReviewEvents = $events->filter(function (CompanyEvent $event) {
+            if ($event->isLiveForVisitors() || $event->status === 'approved') {
+                return false;
+            }
+
+            return in_array($event->status, ['submitted', 'pending_review'], true)
+                || $event->latestPublishRequest?->status === 'pending';
+        })->count();
+        $draftEvents = max($events->count() - $publishedEvents - $inReviewEvents, 0);
+        $pipelineTotal = $events->count();
+
+        $topEvents = $events
+            ->sortByDesc('dashboard_tickets_sold')
+            ->take(5)
+            ->values();
+
+        return [
+            'monthly' => [
+                'labels' => $monthlyLabels,
+                'registrations' => $monthlyRegistrations,
+                'revenue' => $monthlyRevenue,
+                'total_registrations' => $monthlyRegistrationTotal,
+                'total_revenue' => $monthlyRevenueTotal,
+                'has_data' => $monthlyRegistrationTotal > 0 || $monthlyRevenueTotal > 0,
+            ],
+            'event_status' => [
+                'labels' => ['Draft', 'In Review', 'Published'],
+                'values' => [$draftEvents, $inReviewEvents, $publishedEvents],
+                'total' => $pipelineTotal,
+                'items' => [
+                    ['label' => 'Draft', 'value' => $draftEvents, 'color' => '#9CA3AF'],
+                    ['label' => 'In Review', 'value' => $inReviewEvents, 'color' => '#F59E0B'],
+                    ['label' => 'Published', 'value' => $publishedEvents, 'color' => '#5B32F6'],
+                ],
+            ],
+            'top_events' => [
+                'labels' => $topEvents->map(fn (CompanyEvent $event) => (string) str($event->title)->limit(28))->all(),
+                'registrations' => $topEvents->map(fn (CompanyEvent $event) => (int) $event->dashboard_tickets_sold)->all(),
+                'has_data' => $topEvents->sum('dashboard_tickets_sold') > 0,
+            ],
+        ];
     }
 
     private function recentActivities(Collection $events, Collection $recentTickets, Collection $publishRequests): Collection

@@ -4,12 +4,101 @@ namespace App\Domain\Visitor\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Domain\Event\Models\Exhibition;
+use App\Domain\Shared\Models\User;
+use App\Domain\Shared\Services\ExhibitionTicketVisitorDetailsPageData;
 use App\Domain\Visitor\Models\Visitor;
+use App\Http\Requests\Visitor\ExhibitionVisitorRegistrationRequest;
+use App\Support\ExhibitionTicketFlow;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\View\View;
 
 class VisitorTicketController extends Controller
 {
+    public function visitorRegistration(string $slug, ExhibitionTicketVisitorDetailsPageData $pageData): View
+    {
+        session([
+            'activeExhibitionSlug' => $slug,
+            'exhibition_booking_path' => ExhibitionTicketFlow::visitorPassEntryUrl($slug),
+            'user_flow_context' => 'exhibition_ticket',
+        ]);
+
+        $data = $pageData->buildRegistration($slug);
+        abort_unless($data, 404);
+
+        return view('frontend.exhibitions.tickets.visitor-details', $data);
+    }
+
+    public function storeVisitorRegistration(ExhibitionVisitorRegistrationRequest $request): RedirectResponse
+    {
+        $slug = $request->input('slug');
+        $data = app(ExhibitionTicketVisitorDetailsPageData::class)->buildRegistration($slug);
+        abort_if($data === null, 404);
+
+        $existingUser = User::query()->where('email', $request->input('email'))->first();
+
+        if ($existingUser) {
+            if (! Hash::check($request->input('password'), $existingUser->password)) {
+                return back()
+                    ->withInput($request->except('password'))
+                    ->withErrors(['email' => 'An account with this email already exists. Please enter the correct password.']);
+            }
+
+            $existingUser->update([
+                'name' => $request->input('name'),
+                'phone' => $request->input('phone'),
+                'gender' => $request->input('gender'),
+                'city' => $request->input('city'),
+            ]);
+
+            $user = $existingUser;
+        } else {
+            $user = User::create([
+                'name' => $request->input('name'),
+                'email' => $request->input('email'),
+                'phone' => $request->input('phone'),
+                'gender' => $request->input('gender'),
+                'city' => $request->input('city'),
+                'password' => $request->input('password'),
+                'role' => 'user',
+            ]);
+        }
+
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        session([
+            ExhibitionTicketFlow::sessionRegistrationKey($slug) => true,
+            'activeExhibitionSlug' => $slug,
+            'exhibition_booking_path' => ExhibitionTicketFlow::passSelectionUrl($slug),
+            'user_flow_context' => 'exhibition_ticket',
+        ]);
+
+        return redirect()->route('exhibitions.tickets.pass-details', $slug)
+            ->with('success', 'Visitor details saved. Select your pass to continue.');
+    }
+
+    public function passDetails(string $slug, ExhibitionTicketVisitorDetailsPageData $pageData): View|RedirectResponse
+    {
+        if (! ExhibitionTicketFlow::hasVisitorRegistration($slug)) {
+            return redirect()->route('exhibitions.tickets.visitor-details', $slug);
+        }
+
+        session([
+            'activeExhibitionSlug' => $slug,
+            'exhibition_booking_path' => ExhibitionTicketFlow::passSelectionUrl($slug),
+            'user_flow_context' => 'exhibition_ticket',
+        ]);
+
+        $data = $pageData->build($slug);
+        abort_unless($data, 404);
+
+        return view('frontend.exhibitions.tickets.pass-details', $data);
+    }
+
     public function register(Request $request, string $slug): JsonResponse
     {
         $exhibition = Exhibition::where('slug', $slug)->firstOrFail();

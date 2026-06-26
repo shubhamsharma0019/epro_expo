@@ -3,6 +3,17 @@
 @section('title', 'Attendee Details - ' . (isset($dbEvent) ? $dbEvent->title : 'Global Tech Summit 2024'))
 
 @section('content')
+@php
+    $eventSlugForOrder = isset($dbEvent) ? $dbEvent->slug : ($slug ?? 'global-tech-summit-2024');
+    $eventTicketDuration = 'Event Duration';
+
+    if (isset($dbEvent) && $dbEvent->starts_at) {
+        $eventDays = $dbEvent->ends_at
+            ? max(1, $dbEvent->starts_at->copy()->startOfDay()->diffInDays($dbEvent->ends_at->copy()->startOfDay()) + 1)
+            : 1;
+        $eventTicketDuration = $eventDays . ' ' . str('Day')->plural($eventDays);
+    }
+@endphp
 <main class="px-4 md:px-[44px] pt-6 pb-12 flex-1 max-w-[1200px] w-full mx-auto">
             <!-- Breadcrumbs -->
             <div class="mb-8 flex items-center gap-2 text-[14px] text-[#6A708F]">
@@ -22,14 +33,18 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
-                <span class="font-medium text-[#1F2A6A]">Attendee Details</span>
+                <span class="font-medium text-[#1F2A6A]">Select Tickets</span>
             </div>
+
+            @include('frontend.events.tickets.partials.event-flow-stepper', ['currentStep' => 2])
 
             <!-- Page content -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 
-                <!-- Left Column: Attendee Forms -->
+                <!-- Left Column: Ticket Selection + Attendee Forms -->
                 <div class="lg:col-span-8">
+                    @include('frontend.events.tickets.partials.ticket-type-selection', ['dbEvent' => $dbEvent ?? null, 'eventTicketDuration' => $eventTicketDuration])
+
                     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                         <div>
                             <h2 class="text-[22px] font-bold text-[#1F2A6A]">Attendee Information</h2>
@@ -50,7 +65,7 @@
                             Back
                         </button>
                         <button onclick="validateAndProceed()" class="rounded-xl bg-[#4318FF] px-10 py-3.5 text-[15px] font-bold text-white transition hover:bg-[#3412C9] shadow-[0_8px_20px_rgba(67,24,255,0.25)]">
-                            Continue
+                            Continue to Payment
                         </button>
                     </div>
                 </div>
@@ -126,34 +141,180 @@
 
 @push('scripts')
 <script>
-    // Prefill data using logged-in Laravel User details
     const loggedInUser = {
         name: @json(auth()->user()->name ?? ''),
         email: @json(auth()->user()->email ?? ''),
-        phone: @json(auth()->user()->phone ?? '')
+        phone: @json(auth()->user()->phone ?? ''),
+        gender: @json(auth()->user()->gender ?? ''),
+        city: @json(auth()->user()->city ?? '')
     };
+    const eventSlugForOrder = @json($eventSlugForOrder);
 
-    const ticketStockByType = {
-        @if (isset($dbEvent))
-            @foreach ($dbEvent->ticketTypes as $ticketType)
-                '{{ Str::slug($ticketType->name) }}': {{ max(0, (int) ($ticketType->quantity_total ?? 0) - (int) ($ticketType->quantity_sold ?? 0)) ?: 'Number.MAX_SAFE_INTEGER' }},
-            @endforeach
-        @endif
+@if (isset($dbEvent) && $dbEvent->ticketTypes->isNotEmpty())
+    const prices = {
+        @foreach ($dbEvent->ticketTypes as $ticketType)
+            '{{ Str::slug($ticketType->name) }}': {{ (float) $ticketType->price }},
+        @endforeach
     };
-    const ticketPriceByType = {
-        @if (isset($dbEvent))
-            @foreach ($dbEvent->ticketTypes as $ticketType)
-                '{{ Str::slug($ticketType->name) }}': {{ (float) $ticketType->price }},
-            @endforeach
-        @endif
+    const quantities = {
+        @foreach ($dbEvent->ticketTypes as $ticketType)
+            '{{ Str::slug($ticketType->name) }}': 0,
+        @endforeach
     };
-    const ticketCurrencyByType = {
-        @if (isset($dbEvent))
-            @foreach ($dbEvent->ticketTypes as $ticketType)
-                '{{ Str::slug($ticketType->name) }}': @json($ticketType->currency),
-            @endforeach
-        @endif
+    const maxQuantities = {
+        @foreach ($dbEvent->ticketTypes as $ticketType)
+            '{{ Str::slug($ticketType->name) }}': {{ max(0, (int) ($ticketType->quantity_total ?? 0) - (int) ($ticketType->quantity_sold ?? 0)) ?: 'Number.MAX_SAFE_INTEGER' }},
+        @endforeach
     };
+    const passNames = {
+        @foreach ($dbEvent->ticketTypes as $ticketType)
+            '{{ Str::slug($ticketType->name) }}': @json($ticketType->name),
+        @endforeach
+    };
+    const currencyLabel = @json($dbEvent->ticketTypes->first()?->currency ?? 'INR');
+@else
+    const prices = { general: 49.00 };
+    const quantities = { general: 1 };
+    const maxQuantities = { general: Number.MAX_SAFE_INTEGER };
+    const passNames = { general: 'General Pass' };
+    const currencyLabel = 'INR';
+@endif
+
+    const ticketStockByType = maxQuantities;
+    const ticketPriceByType = prices;
+    const ticketCurrencyByType = Object.fromEntries(Object.keys(prices).map((key) => [key, currencyLabel]));
+
+    function selectPass(type) {
+        for (const key in quantities) {
+            if (key !== type && quantities[key] > 0) {
+                quantities[key] = 0;
+                updateTicketUI(key);
+            }
+        }
+
+        if (quantities[type] === 0) {
+            quantities[type] = 1;
+        }
+
+        updateTicketUI(type);
+        syncEventOrderFromSelection();
+    }
+
+    function updateQty(type, delta, clickEvent) {
+        if (clickEvent) clickEvent.stopPropagation();
+        if (quantities[type] + delta < 0) return;
+        if (delta > 0 && quantities[type] >= maxQuantities[type]) return;
+
+        if (delta > 0) {
+            for (const key in quantities) {
+                if (key !== type && quantities[key] > 0) {
+                    quantities[key] = 0;
+                    updateTicketUI(key);
+                }
+            }
+        }
+
+        quantities[type] += delta;
+        updateTicketUI(type);
+        syncEventOrderFromSelection();
+    }
+
+    function updateTicketUI(type) {
+        const qtyElement = document.getElementById(`qty-${type}`);
+        if (qtyElement) qtyElement.innerText = quantities[type];
+
+        const card = document.getElementById(`card-${type}`);
+        const radio = document.getElementById(`radio-${type}`);
+        const iconWrapper = document.getElementById(`icon-wrapper-${type}`);
+
+        if (quantities[type] > 0) {
+            if (card) card.className = 'flex cursor-pointer flex-col gap-4 rounded-xl border border-[#5B35D5] bg-[#FBFAFE] p-5 shadow-[0_2px_10px_rgba(91,53,213,0.05)] transition sm:flex-row sm:items-center sm:justify-between';
+            if (radio) {
+                radio.innerHTML = '<div class="h-2.5 w-2.5 rounded-full bg-[#5B35D5]"></div>';
+                radio.className = 'mt-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-[#5B35D5] bg-white transition';
+            }
+            if (iconWrapper) iconWrapper.className = 'flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-lg bg-[#5B35D5] text-white transition';
+        } else {
+            if (card) card.className = 'flex cursor-pointer flex-col gap-4 rounded-xl border border-[#E8E3F0] bg-white p-5 transition hover:border-[#D0D4EA] sm:flex-row sm:items-center sm:justify-between';
+            if (radio) {
+                radio.innerHTML = '';
+                radio.className = 'mt-1 h-5 w-5 rounded-full border-2 border-[#D0D4EA] transition';
+            }
+            if (iconWrapper) iconWrapper.className = 'flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-lg bg-[#F4F0FF] text-[#5B35D5] transition';
+        }
+    }
+
+    function getActivePassSelection() {
+        let activePass = null;
+        let totalQty = 0;
+        let totalAmt = 0;
+
+        for (const key in quantities) {
+            if (quantities[key] > 0) {
+                activePass = key;
+                totalQty += quantities[key];
+                totalAmt += quantities[key] * prices[key];
+            }
+        }
+
+        return { activePass, totalQty, totalAmt };
+    }
+
+    function syncEventOrderFromSelection() {
+        const { activePass, totalQty, totalAmt } = getActivePassSelection();
+        if (!activePass || totalQty === 0) {
+            localStorage.removeItem('eventOrder');
+            updateOrderSummary(null);
+            return null;
+        }
+
+        const existing = JSON.parse(localStorage.getItem('eventOrder') || '{}');
+        const orderData = {
+            eventSlug: eventSlugForOrder,
+            passType: activePass,
+            passName: passNames[activePass] || activePass,
+            quantity: totalQty,
+            price: prices[activePass],
+            priceCurrency: currencyLabel,
+            totalAmount: totalAmt,
+            attendees: existing.attendees || [],
+            attendee_name: existing.attendee_name || '',
+            attendee_email: existing.attendee_email || '',
+            attendee_phone: existing.attendee_phone || '',
+        };
+
+        localStorage.setItem('eventOrder', JSON.stringify(orderData));
+        updateOrderSummary(orderData);
+
+        const qty = totalQty;
+        if (document.getElementById('attendees-container')?.children.length !== qty) {
+            renderAttendeeCards(qty, orderData.attendees || []);
+        } else {
+            syncOrderQuantity(qty, readAttendeesFromForm());
+        }
+
+        return orderData;
+    }
+
+    function restoreTicketSelectionFromOrder(orderData) {
+        if (!orderData?.passType || quantities[orderData.passType] === undefined) {
+            const firstKey = Object.keys(quantities)[0];
+            if (firstKey) {
+                quantities[firstKey] = orderData?.quantity || 1;
+                updateTicketUI(firstKey);
+            }
+            return syncEventOrderFromSelection();
+        }
+
+        for (const key in quantities) {
+            quantities[key] = 0;
+            updateTicketUI(key);
+        }
+
+        quantities[orderData.passType] = orderData.quantity || 1;
+        updateTicketUI(orderData.passType);
+        return syncEventOrderFromSelection();
+    }
 
     function getCurrencySymbol(orderData) {
         const currency = orderData?.priceCurrency || (orderData?.eventSlug && orderData.eventSlug !== 'global-tech-summit-2024' ? 'INR' : '₹');
@@ -368,10 +529,10 @@
     }
 
     function validateAndProceed() {
-        const orderData = JSON.parse(localStorage.getItem("eventOrder"));
+        const orderData = syncEventOrderFromSelection();
         if (!orderData) {
-            alert("Order details not found. Please select tickets again.");
-            window.location.href = "{{ url('/events/tickets/select') }}";
+            alert('Please select at least one ticket to continue.');
+            document.getElementById('ticket-selection-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             return;
         }
         
@@ -401,68 +562,45 @@
                 return;
             }
             
-            attendees.push({
-                name: name,
-                email: email,
-                phone: phone,
-                company: company,
-                jobTitle: jobTitle
-            });
+            attendees.push({ name, email, phone, company, jobTitle });
         }
         
-        // Save primary attendee details at root of orderData for database compatibility
         orderData.attendee_name = attendees[0].name;
         orderData.attendee_email = attendees[0].email;
         orderData.attendee_phone = attendees[0].phone;
+        orderData.attendee_gender = loggedInUser.gender || '';
+        orderData.attendee_city = loggedInUser.city || '';
         orderData.attendee_company = attendees[0].company;
         orderData.attendee_job_title = attendees[0].jobTitle;
+        orderData.attendees = attendees;
+        orderData.quantity = qty;
+        orderData.totalAmount = Number(orderData.price || 0) * qty;
+
+        localStorage.setItem('eventOrder', JSON.stringify(orderData));
         
-        const syncedOrderData = syncOrderQuantity(qty, attendees) || orderData;
-        syncedOrderData.attendee_name = attendees[0].name;
-        syncedOrderData.attendee_email = attendees[0].email;
-        syncedOrderData.attendee_phone = attendees[0].phone;
-        syncedOrderData.attendee_company = attendees[0].company;
-        syncedOrderData.attendee_job_title = attendees[0].jobTitle;
-        localStorage.setItem("eventOrder", JSON.stringify(syncedOrderData));
-        
-        // Proceed to summary page with event query param
-        const eventParam = syncedOrderData.eventSlug ? `?event=${encodeURIComponent(syncedOrderData.eventSlug)}` : '';
-        window.location.href = "{{ url('/events/tickets/summary') }}" + eventParam;
+        window.location.href = "{{ route('events.tickets.payment') }}?event=" + encodeURIComponent(orderData.eventSlug);
     }
 
     // Initialize UI on page load
-    document.addEventListener("DOMContentLoaded", () => {
-        const orderData = JSON.parse(localStorage.getItem("eventOrder"));
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedOrder = JSON.parse(localStorage.getItem('eventOrder') || 'null');
+        const orderData = savedOrder && savedOrder.eventSlug === eventSlugForOrder
+            ? restoreTicketSelectionFromOrder(savedOrder)
+            : syncEventOrderFromSelection();
+
         if (orderData) {
-            const qty = orderData.quantity || 1;
-            
-            const syncedOrderData = syncOrderQuantity(qty, orderData.attendees || []);
-            
-            // Render forms for quantity of attendees
-            renderAttendeeCards(syncedOrderData.quantity, syncedOrderData.attendees);
-            
-            // Set tickets summary in right column
-            const passLabel = document.getElementById("summary-pass-qty-label");
-            if (passLabel) {
-                passLabel.innerHTML = `${orderData.passName} &times; ${orderData.quantity}`;
-            }
-            
-            const currency = orderData.priceCurrency || (orderData.eventSlug && orderData.eventSlug !== 'global-tech-summit-2024' ? 'INR' : '₹');
-            const currencySymbol = currency === 'USD' ? '$' : (currency === 'INR' || currency === '₹' ? '₹' : currency + ' ');
-            
-            const passTotal = document.getElementById("summary-pass-total");
-            if (passTotal) {
-                passTotal.innerText = `${currencySymbol}${(orderData.price * orderData.quantity).toFixed(2)}`;
-            }
-            
-            const totalAmount = document.getElementById("summary-total-amount");
-            if (totalAmount) {
-                totalAmount.innerText = `${currencySymbol}${(orderData.totalAmount).toFixed(2)}`;
-            }
-            updateOrderSummary(syncedOrderData);
+            renderAttendeeCards(orderData.quantity || 1, orderData.attendees || []);
+            updateOrderSummary(orderData);
         } else {
-            // Default fallback
-            renderAttendeeCards(1);
+            const firstKey = Object.keys(quantities)[0];
+            if (firstKey) {
+                quantities[firstKey] = 1;
+                updateTicketUI(firstKey);
+                const initialized = syncEventOrderFromSelection();
+                renderAttendeeCards(initialized?.quantity || 1, initialized?.attendees || []);
+            } else {
+                renderAttendeeCards(1);
+            }
         }
     });
 </script>

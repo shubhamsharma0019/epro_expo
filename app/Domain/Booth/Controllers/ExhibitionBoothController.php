@@ -93,6 +93,7 @@ class ExhibitionBoothController extends Controller
                 'boothMedia' => fn ($query) => $query->where('status', 'active')->orderBy('sort_order')->latest(),
                 'boothTeamMembers' => fn ($query) => $query->where('status', 'active')->latest(),
                 'boothMeetingSlots' => fn ($query) => $query->where('status', 'available')->orderBy('date')->orderBy('start_time'),
+                'boothMeetingAvailability',
                 'boothSessions' => fn ($query) => $query->whereIn('status', ['upcoming', 'live'])->orderBy('session_date')->orderBy('start_time'),
             ])
             ->get()
@@ -120,6 +121,7 @@ class ExhibitionBoothController extends Controller
                 'slug' => $slug,
                 'companySlug' => $companySlug,
                 'isPassActive' => $this->isPassActive($slug),
+                'visitorMeetings' => collect(),
             ]);
         }
 
@@ -140,6 +142,7 @@ class ExhibitionBoothController extends Controller
             'mediaItems' => $booking->boothMedia,
             'teamMembers' => $booking->boothTeamMembers,
             'meetingSlots' => $booking->boothMeetingSlots,
+            'meetingAvailability' => $booking->boothMeetingAvailability,
             'companyMeetings' => CompanyMeeting::query()
                 ->where('company_id', $booking->company_id)
                 ->where('status', 'approved')
@@ -147,6 +150,7 @@ class ExhibitionBoothController extends Controller
                 ->orderBy('start_time')
                 ->get(),
             'sessions' => $booking->boothSessions,
+            'visitorMeetings' => $this->resolveVisitorMeetingsForCompany((int) $booking->company_id),
         ]);
     }
 
@@ -267,6 +271,17 @@ class ExhibitionBoothController extends Controller
             return back()->with('error', 'Company not found.');
         }
 
+        $availability = $booking->boothMeetingAvailability;
+        $reqMeetingType = $validated['meeting_type'] ?? 'one-to-one';
+
+        if ($reqMeetingType === 'one-to-one' && $availability && ! $availability->allow_one_to_one) {
+            return back()->with('error', 'One-to-One meetings are not available for this exhibitor.')->withInput();
+        }
+
+        if ($reqMeetingType === 'one-to-many' && $availability && ! $availability->allow_one_to_many) {
+            return back()->with('error', 'One-to-Many meetings are not available for this exhibitor.')->withInput();
+        }
+
         $slot = null;
         if (! empty($validated['booth_meeting_slot_id'])) {
             $slot = \App\Domain\Booth\Models\BoothMeetingSlot::where('booth_booking_id', $booking->id)
@@ -278,14 +293,12 @@ class ExhibitionBoothController extends Controller
             $startTime = $slot->date->format('Y-m-d') . ' ' . $slot->start_time;
             $endTime = $slot->date->format('Y-m-d') . ' ' . $slot->end_time;
             $title = $validated['meeting_topic'];
-            $reqMeetingType = $validated['meeting_type'] ?? ($slot->allow_one_to_many ? 'one-to-many' : 'one-to-one');
         } else {
-            $preferredDate = $validated['preferred_date'] ?? now()->addDay()->toDateString();
+            $preferredDate = $validated['preferred_date'] ?? $this->defaultMeetingDateForExhibition($booking->exhibition);
             $preferredTime = $validated['preferred_time'] ?? '10:00';
             $startTime = $preferredDate . ' ' . $preferredTime;
             $endTime = \Carbon\Carbon::parse($startTime)->addMinutes(30)->format('Y-m-d H:i:s');
             $title = $validated['meeting_topic'];
-            $reqMeetingType = $validated['meeting_type'] ?? 'one-to-one';
         }
 
         // Validate using SmartSchedulingEngine
@@ -393,6 +406,86 @@ class ExhibitionBoothController extends Controller
         return back()->with('success', $successMsg);
     }
 
+    public function requestMeetingJoin(Request $request, string $slug, string $companySlug, int $id): RedirectResponse
+    {
+        if (! $this->isPassActive($slug)) {
+            return back()->with('error', 'You must be a verified ticket holder to join meetings.');
+        }
+
+        if (! auth()->check()) {
+            return back()->with('error', 'Please log in to join this meeting.');
+        }
+
+        $booking = $this->findBookingQuery($slug, true)
+            ->get()
+            ->first(fn (BoothBooking $booking) => $this->companySlug($booking) === $companySlug);
+
+        if (! $booking) {
+            $booking = $this->findBookingQuery($slug, false)
+                ->get()
+                ->first(fn (BoothBooking $booking) => $this->companySlug($booking) === $companySlug);
+        }
+
+        if (! $booking?->company_id) {
+            return back()->with('error', 'Company not found.');
+        }
+
+        $meeting = VisitorMeetingBooking::with('companyMeeting')
+            ->where('id', $id)
+            ->where('company_id', $booking->company_id)
+            ->where(function ($query) {
+                $query->where('visitor_id', auth()->id())
+                    ->orWhere('visitor_email', auth()->user()->email);
+            })
+            ->firstOrFail();
+
+        $joinUrl = $meeting->companyMeeting?->meeting_link ?: $meeting->companyMeeting?->zoom_join_url;
+        $topic = $meeting->meeting_topic ?: $meeting->companyMeeting?->title ?: 'Meeting';
+        $visitorName = auth()->user()->name ?: $meeting->visitor_name;
+
+        if ($joinUrl && in_array($meeting->status, ['confirmed', 'accepted', 'rescheduled'], true)) {
+            return redirect()->away($joinUrl);
+        }
+
+        if ($joinUrl && $meeting->status === 'pending') {
+            $meeting->update(['status' => 'confirmed']);
+            $meeting->companyMeeting?->update(['status' => 'confirmed']);
+
+            \Illuminate\Support\Facades\DB::table('meeting_notifications')->insert([
+                'visitor_id' => auth()->id(),
+                'company_id' => $booking->company_id,
+                'visitor_meeting_booking_id' => $meeting->id,
+                'type' => 'confirmed',
+                'title' => 'Meeting Accepted',
+                'message' => 'Your meeting "' . $topic . '" is ready. Join here: ' . $joinUrl,
+                'status' => 'unread',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return redirect()->away($joinUrl);
+        }
+
+        \Illuminate\Support\Facades\DB::table('meeting_notifications')->insert([
+            'visitor_id' => auth()->id(),
+            'company_id' => $booking->company_id,
+            'visitor_meeting_booking_id' => $meeting->id,
+            'type' => 'join_request',
+            'title' => 'Visitor ready to join',
+            'message' => $visitorName . ' is at your booth and requested to join "' . $topic . '".',
+            'status' => 'unread',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $hostName = $booking->boothProfile?->company_name ?: $booking->company?->company_name ?: $booking->company?->name ?: 'the host';
+
+        return back()->with(
+            'success',
+            'Join request sent to ' . $hostName . '. The host will confirm and share the meeting link shortly.'
+        );
+    }
+
     public function sendEnquiry(Request $request, string $slug, string $companySlug): RedirectResponse
     {
         $validated = $request->validate([
@@ -460,6 +553,50 @@ class ExhibitionBoothController extends Controller
     private function companySlug(BoothBooking $booking): string
     {
         return Str::slug($booking->boothProfile?->company_name ?: $booking->company?->company_name ?: $booking->company?->name ?: '');
+    }
+
+    private function resolveVisitorMeetingsForCompany(int $companyId): \Illuminate\Support\Collection
+    {
+        if (! $companyId || ! auth()->check()) {
+            return collect();
+        }
+
+        return VisitorMeetingBooking::query()
+            ->with('companyMeeting')
+            ->where('company_id', $companyId)
+            ->whereNotIn('status', ['cancelled', 'rejected', 'completed'])
+            ->where(function ($query) {
+                $query->where('visitor_id', auth()->id())
+                    ->orWhere('visitor_email', auth()->user()->email);
+            })
+            ->latest()
+            ->get();
+    }
+
+    private function defaultMeetingDateForExhibition(?Exhibition $exhibition): string
+    {
+        $candidate = now()->addDay()->startOfDay();
+
+        if (! $exhibition) {
+            return $candidate->toDateString();
+        }
+
+        $start = \Carbon\Carbon::parse($exhibition->start_date)->startOfDay();
+        $end = \Carbon\Carbon::parse($exhibition->end_date)->endOfDay();
+
+        if (now()->gt($end)) {
+            return $candidate->toDateString();
+        }
+
+        if ($candidate->lt($start)) {
+            return $start->toDateString();
+        }
+
+        if ($candidate->gt($end)) {
+            return $end->toDateString();
+        }
+
+        return $candidate->toDateString();
     }
 
     private function isPassActive(string $slug): bool

@@ -15,7 +15,7 @@ class BrandingController extends BaseCompanyEventController
     {
         $companyEvent = $this->setupEvent($companyEvent);
 
-        return view('backend.company.event-company-flow.branding', $this->commonData($companyEvent));
+        return view('company.event-company-flow.branding', $this->commonData($companyEvent));
     }
 
     public function update(CompanyEventBrandingRequest $request, CompanyEventFileUploadService $files, ?CompanyEvent $companyEvent = null): RedirectResponse

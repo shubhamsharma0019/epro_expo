@@ -51,7 +51,7 @@ class BoothApprovalController extends Controller
                 ];
             });
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'Booth Setup Review',
             'pageDescription' => 'Review exhibitor booth setup submissions before publishing.',
             'search' => '',
@@ -92,7 +92,7 @@ class BoothApprovalController extends Controller
 
     public function show(BoothPublishRequest $publishRequest): View
     {
-        return view('backend.admin.booth-approvals.show', [
+        return view('admin.booth-approvals.show', [
             'publishRequest' => $publishRequest->load(['boothBooking.company', 'boothBooking.booth']),
         ]);
     }

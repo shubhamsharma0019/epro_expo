@@ -11,7 +11,7 @@
         </nav>
 
         <div class="hidden items-center gap-4 lg:flex">
-            <a href="{{ route('events.home') }}" class="rounded-lg bg-gradient-to-r from-[#6D28D9] to-[#4B16D8] px-6 py-3 text-[14px] font-bold text-white shadow-[0_12px_24px_rgba(91,46,255,0.26)]">Get Started</a>
+            <x-frontend.get-started-menu menu-id="sharedGetStarted" />
         </div>
 
         <button type="button" data-mobile-menu-button class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#E0E4EF] text-[#071044] lg:hidden" aria-label="Open menu">
@@ -26,9 +26,7 @@
             <a href="{{ route('home') }}#features">Features</a>
             <a href="{{ route('home') }}#pricing">Pricing</a>
             <a href="{{ route('home') }}#about">About Us</a>
-            <div class="grid grid-cols-1 gap-3 pt-2">
-                <a href="{{ route('events.home') }}" class="rounded-lg bg-[#5726E8] px-5 py-3 text-center font-bold text-white">Get Started</a>
-            </div>
+            <x-frontend.get-started-menu variant="mobile" />
         </div>
     </div>
 </header>

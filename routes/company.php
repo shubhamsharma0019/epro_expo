@@ -21,6 +21,7 @@ use App\Domain\Company\Controllers\CompanyEnquiryController;
 use App\Domain\Company\Controllers\CompanyExhibitionController;
 use App\Domain\Company\Controllers\CompanyMeetingController;
 use App\Domain\Company\Controllers\CompanyProfileController;
+use App\Domain\Company\Services\CompanyNotificationService;
 use App\Domain\Event\Controllers\BrandingController as CompanyEventBrandingController;
 use App\Domain\Event\Controllers\DashboardController as CompanyEventDashboardController;
 use App\Domain\Event\Controllers\EventDraftController as CompanyEventDraftController;
@@ -98,105 +99,35 @@ Route::prefix('company')->name('company.')->group(function () {
             : redirect()->route('company.bookings.index');
     })->middleware('company')->name('payments-invoices');
 
-    Route::get('/notifications', function () {
+    Route::get('/notifications', function (CompanyNotificationService $notifications) {
         $company = \App\Domain\Company\Models\Company::find((int) session('company_id'));
 
         if (! $company) {
             return redirect('/company/login');
         }
 
-        $enquiries = $company->enquiries()
-            ->latest()
-            ->take(10)
-            ->get()
-            ->map(fn ($enquiry) => [
-                'title' => 'New enquiry received',
-                'message' => ($enquiry->name ?: $enquiry->email) . ' sent an enquiry.',
-                'time' => $enquiry->created_at,
-                'icon' => 'ph ph-envelope-simple',
-            ]);
+        $notifications->markAsSeen($company);
+        $items = $notifications->forCompany($company);
 
-        $meetings = $company->visitorMeetingBookings()
-            ->latest()
-            ->take(10)
-            ->get()
-            ->map(fn ($meeting) => [
-                'title' => 'Meeting request received',
-                'message' => ($meeting->visitor_name ?: $meeting->visitor_email) . ' requested a meeting.',
-                'time' => $meeting->created_at,
-                'icon' => 'ph ph-calendar-check',
-            ]);
-
-        // Booth booking status notifications (pending approval, approved, cancelled, draft).
-        $bookings = $company->boothBookings()
-            ->with(['exhibition', 'booth'])
-            ->latest()
-            ->take(15)
-            ->get()
-            ->map(function ($booking) {
-                $exhibitionName = $booking->exhibition?->title ?: 'your exhibition';
-                $boothLabel = $booking->booth ? 'Booth ' . $booking->booth->booth_number : 'Your booth';
-                $time = $booking->paid_at ?? $booking->updated_at ?? $booking->created_at;
-
-                if (($booking->admin_status === 'rejected') || ($booking->booking_status === 'cancelled')) {
-                    return [
-                        'title' => 'Booth booking cancelled',
-                        'message' => $boothLabel . ' for ' . $exhibitionName . ' was cancelled or rejected.',
-                        'time' => $time,
-                        'icon' => 'ph ph-x-circle',
-                    ];
-                }
-
-                if ($booking->admin_status === 'approved') {
-                    return [
-                        'title' => 'Booth booking approved',
-                        'message' => $boothLabel . ' for ' . $exhibitionName . ' has been approved. You can start your booth setup.',
-                        'time' => $time,
-                        'icon' => 'ph ph-seal-check',
-                    ];
-                }
-
-                if ($booking->payment_status === 'paid' && in_array($booking->booking_status, ['confirmed', 'active'], true)) {
-                    return [
-                        'title' => 'Booth booking pending approval',
-                        'message' => $boothLabel . ' for ' . $exhibitionName . ' is awaiting organizer approval.',
-                        'time' => $time,
-                        'icon' => 'ph ph-hourglass-medium',
-                    ];
-                }
-
-                if ($booking->booking_status === 'draft') {
-                    return [
-                        'title' => 'Incomplete booth booking',
-                        'message' => 'Finish booking ' . $boothLabel . ' for ' . $exhibitionName . ' to confirm your space.',
-                        'time' => $time,
-                        'icon' => 'ph ph-warning-circle',
-                    ];
-                }
-
-                return null;
-            })
-            ->filter()
-            ->values();
-
-        $notifications = $enquiries
-            ->concat($meetings)
-            ->concat($bookings)
-            ->filter(fn ($notification) => ! empty($notification['time']))
-            ->sortByDesc('time')
-            ->values();
-
-        // Mark notifications as seen so the topbar bell badge clears.
-        session(['company_notifications_seen_at' => now()]);
-
-        return view('backend.company.notifications.notification-list', compact('company', 'notifications'));
+        return view('company.notifications.notification-list', [
+            'company' => $company,
+            'notifications' => $items,
+        ]);
     })->middleware('company')->name('notifications');
+
+    Route::get('/notifications/unread-count', function (CompanyNotificationService $notifications) {
+        $company = \App\Domain\Company\Models\Company::find((int) session('company_id'));
+
+        return response()->json([
+            'count' => $company ? $notifications->unreadCount($company) : 0,
+        ]);
+    })->middleware('company')->name('notifications.unread-count');
 
     Route::get('/profile', [CompanyProfileController::class, 'edit'])->middleware('company')->name('profile');
     Route::post('/profile', [CompanyProfileController::class, 'update'])->middleware('company')->name('profile.update');
 
     Route::get('/settings', function () {
-        return view('backend.company.settings.company-settings');
+        return view('company.settings.company-settings');
     })->middleware('company')->name('settings');
 
     Route::prefix('exhibitions')->name('exhibitions.')->middleware('company')->group(function () {
@@ -286,7 +217,7 @@ Route::prefix('company')->name('company.')->group(function () {
                 })
                 ->values();
 
-            return view('backend.company.bookings.my-bookings', compact('bookings', 'allBookings', 'activeStatus', 'search'));
+            return view('company.bookings.my-bookings', compact('bookings', 'allBookings', 'activeStatus', 'search'));
         })->name('index');
 
         Route::get('/{booking}', [BookingDetailsController::class, 'show'])->name('show');
@@ -337,6 +268,7 @@ Route::prefix('company')->name('company.')->group(function () {
         Route::resource('/team-members', BoothTeamMemberController::class)->parameters(['team-members' => 'teamMember'])->names('team-members');
         Route::get('/meetings', [BoothMeetingAvailabilityController::class, 'edit'])->name('meetings.edit');
         Route::post('/meetings', [BoothMeetingAvailabilityController::class, 'update'])->name('meetings.update');
+        Route::post('/sessions/meeting-setup', [BoothSessionController::class, 'updateMeetingSetup'])->name('sessions.meeting-setup.update');
         Route::resource('/sessions', BoothSessionController::class)->names('sessions');
         Route::get('/preview', [BoothPreviewController::class, 'show'])->name('preview');
         Route::post('/preview/mark-ready', [BoothPreviewController::class, 'markReady'])->name('preview.mark-ready');

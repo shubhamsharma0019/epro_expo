@@ -123,9 +123,9 @@ class ExhibitorFlowTest extends TestCase
             'size_id' => $size->id,
         ]);
         $response->assertRedirect();
-        $this->assertStringContainsString('/company/booth-booking/slots', $response->headers->get('Location'));
+        $this->assertStringContainsString('/company/booth-booking/summary', $response->headers->get('Location'));
 
-        // 7. Slots
+        // 7. Slots route now skips UI and lands on summary
         $response = $this->withSession([
             'company_id' => $company->id,
             'company_logged_in' => true,
@@ -138,32 +138,13 @@ class ExhibitorFlowTest extends TestCase
                 'booth_id' => $booth->id,
             ]
         ])->get('/company/booth-booking/slots?hall=' . $hall->id . '&booth=' . $booth->id . '&size=' . $size->id);
-        $response->assertStatus(200);
-
-        // Update Days/Slots
-        $response = $this->withSession([
-            'company_id' => $company->id,
-            'company_logged_in' => true,
-            'company_booth_booking' => [
-                'exhibition_id' => $hall->pavilion->exhibition_id,
-                'exhibition_slug' => $hall->pavilion->exhibition->slug,
-                'pavilion_id' => $pavilion->id,
-                'hall_id' => $hall->id,
-                'booth_size_id' => $size->id,
-                'booth_id' => $booth->id,
-            ]
-        ])->post('/company/booth-booking/slots/days', [
-            'hall_id' => $hall->id,
-            'booth_id' => $booth->id,
-            'size_id' => $size->id,
-            'days_count' => 1,
-        ]);
         $response->assertRedirect();
+        $this->assertStringContainsString('/company/booth-booking/summary', $response->headers->get('Location'));
 
         $booking = BoothBooking::where('company_id', $company->id)->where('booking_status', 'draft')->latest()->first();
         if (!$booking) $this->markTestSkipped('No draft booking created.');
 
-        // 8. Continue from Slots
+        // 8. Continue from Slots (legacy route)
         $response = $this->withSession([
             'company_id' => $company->id,
             'company_logged_in' => true,

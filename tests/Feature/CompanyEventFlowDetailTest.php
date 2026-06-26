@@ -270,23 +270,36 @@ class CompanyEventFlowDetailTest extends TestCase
         $response->assertSee('Acme Global Summit 2026');
         $response->assertSee('Silicon Valley Center');
         $response->assertSee('Accelerating Innovation');
-        $response->assertSee('Rs. 99.00'); // Minimum price check
+        $response->assertSee('Get Visitor Pass');
 
-        // 11. Navigate to ticket booking screen and verify actual database ticket types load
-        $visitorUser = \App\Domain\Shared\Models\User::create([
-            'name' => 'Visitor User',
-            'email' => 'visitor@example.com',
-            'password' => Hash::make('password'),
-            'role' => 'user',
-        ]);
-        $this->actingAs($visitorUser);
+        // 11. Navigate to visitor pass flow
+        $response->assertRedirect(route('events.tickets.visitor-details', ['event' => $event->slug]));
 
-        $response = $this->get(route('events.tickets.select', ['event' => $event->slug]));
+        $response = $this->get(route('events.tickets.visitor-details', ['event' => $event->slug]));
         $response->assertStatus(200);
         $response->assertSee('Acme Global Summit 2026');
+        $response->assertSee('Get Visitor Pass');
+        $response->assertSee('Visitor Registration');
+        $response->assertSee('Continue to Ticket Selection');
+
+        $response = $this->post(route('events.tickets.visitor-details.store'), [
+            'event' => $event->slug,
+            'name' => 'Flow Test Visitor',
+            'email' => 'flowvisitor@example.com',
+            'password' => 'password123',
+            'phone' => '9876543210',
+            'gender' => 'male',
+            'city' => 'Bengaluru',
+        ]);
+        $response->assertRedirect(route('events.tickets.attendee-details', ['event' => $event->slug]));
+
+        $response = $this->get(route('events.tickets.attendee-details', ['event' => $event->slug]));
+        $response->assertStatus(200);
+        $response->assertSee('Select Your Tickets');
         $response->assertSee('Regular Pass');
         $response->assertSee('VIP Pass');
         $response->assertSee('INR 99.00');
         $response->assertSee('INR 299.00');
+        $response->assertSee('Continue to Payment');
     }
 }

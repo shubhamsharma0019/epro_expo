@@ -192,8 +192,8 @@ class WebsiteContent
         return [
             ['icon' => 'far fa-calendar-alt', 'color' => '#6D28D9', 'bg' => '#F4F0FF', 'title' => 'Event User Flow', 'body' => 'Explore events, view details, book tickets, and access event features.', 'link_label' => 'Open Events', 'link_url' => null, 'route' => 'events.home', 'border' => '#6D28D9'],
             ['icon' => 'far fa-building', 'color' => '#0F9F8F', 'bg' => '#E9FFF8', 'title' => 'Exhibition Visitor Flow', 'body' => 'Browse exhibitions, visit companies, get visitor pass, and open dashboard.', 'link_label' => 'Open Exhibitions', 'link_url' => '/exhibitions', 'route' => null, 'border' => '#0F9F8F'],
-            ['icon' => 'fas fa-store', 'color' => '#FF8A1D', 'bg' => '#FFF4E8', 'title' => 'Exhibition Company Flow', 'body' => 'Choose an exhibition, book booth space, and manage exhibitor tools.', 'link_label' => 'Book Booth', 'link_url' => null, 'route' => 'backend.company.dashboard', 'border' => '#FF9B41'],
-            ['icon' => 'fas fa-calendar-plus', 'color' => '#5B32F6', 'bg' => '#F4F0FF', 'title' => 'Event Company Flow', 'body' => 'Login as a company, create your own event, set tickets, preview, and submit for review.', 'link_label' => 'Create Event', 'link_url' => null, 'route' => 'backend.company.event-company.login', 'border' => '#5B32F6'],
+            ['icon' => 'fas fa-store', 'color' => '#FF8A1D', 'bg' => '#FFF4E8', 'title' => 'Exhibition Company Flow', 'body' => 'Choose an exhibition, book booth space, and manage exhibitor tools.', 'link_label' => 'Book Booth', 'link_url' => null, 'route' => 'company.dashboard', 'border' => '#FF9B41'],
+            ['icon' => 'fas fa-calendar-plus', 'color' => '#5B32F6', 'bg' => '#F4F0FF', 'title' => 'Event Company Flow', 'body' => 'Login as a company, create your own event, set tickets, preview, and submit for review.', 'link_label' => 'Create Event', 'link_url' => null, 'route' => 'company.event-company.login', 'border' => '#5B32F6'],
         ];
     }
 

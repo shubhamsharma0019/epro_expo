@@ -20,6 +20,7 @@ use App\Domain\Visitor\Models\Bookmark;
 use App\Domain\Booth\Models\BoothCatalogue;
 use App\Domain\Visitor\Models\VisitorBoothMessage;
 use App\Domain\Visitor\Models\VisitorSessionRegistration;
+use App\Domain\Visitor\Services\SessionRegistrationMeetingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -369,6 +370,7 @@ class VisitorExhibitionController extends Controller
         }
 
         $isPassActive = $this->isPassActive($slug);
+        $visitorFloorMap = $hall ? \App\Support\VisitorFloorMap::prepare($hall) : null;
 
         return view('frontend.visitor-exhibition.halls.floor-plan', [
             'slug' => $slug,
@@ -376,6 +378,7 @@ class VisitorExhibitionController extends Controller
             'exhibition' => $exhibition,
             'pavilions' => $pavilions,
             'hall' => $hall,
+            'visitorFloorMap' => $visitorFloorMap,
         ]);
     }
 
@@ -675,7 +678,7 @@ class VisitorExhibitionController extends Controller
                 ->publiclyVisible())
             ->firstOrFail();
 
-        VisitorSessionRegistration::firstOrCreate(
+        $registration = VisitorSessionRegistration::firstOrCreate(
             [
                 'booth_session_id' => $boothSession->id,
                 'exhibition_id' => $exhibition->id,
@@ -686,6 +689,12 @@ class VisitorExhibitionController extends Controller
                 'visitor_email' => $visitor?->email ?: auth()->user()?->email,
                 'status' => 'registered',
             ]
+        );
+
+        app(SessionRegistrationMeetingService::class)->syncFromRegistration(
+            $registration,
+            $boothSession,
+            $visitor
         );
 
         return back()->with('success', 'Session registration saved.');

@@ -23,7 +23,7 @@ class BoothPreviewController extends BaseBoothSetupController
             'boothMeetingSlots',
         ]);
 
-        return view('backend.company.booth-setup.preview', $this->commonData($booking, $steps) + [
+        return view('company.booth-setup.preview', $this->commonData($booking, $steps) + [
             'products' => $booking->boothProducts
                 ->sortBy([['sort_order', 'asc'], ['created_at', 'desc']])
                 ->values(),

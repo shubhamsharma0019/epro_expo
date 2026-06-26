@@ -30,8 +30,8 @@
         : (auth()->user()->name ?? 'Visitor');
     $headerRole = $headerVisitor ? 'Visitor' : ucfirst(auth()->user()->role ?? 'Visitor');
     $headerInitial = strtoupper(substr(trim($headerName) ?: 'V', 0, 1));
-    $passFlowHref = route('exhibitions.tickets.select', $activeSlug);
-    $passFlowLocked = auth()->check() && (! $headerVisitor || $headerVisitor->payment_status !== 'completed') && session('exhibition_booking_path');
+    $passFlowHref = route('exhibitions.tickets.visitor-details', $activeSlug);
+    $passFlowLocked = session('exhibition_booking_path') && ! session('visitor_pass_active');
 
     $drawerPrimaryLinks = [
         ['Visitor Dashboard', $passFlowLocked ? $passFlowHref : route('exhibitions.visitor.dashboard', $activeSlug), request()->routeIs('exhibitions.dashboard') || request()->routeIs('exhibitions.visitor.dashboard'), 'ph ph-house'],
@@ -39,7 +39,7 @@
         ['Browse Exhibitions', route('exhibitions.index'), request()->routeIs('exhibitions.index') || request()->routeIs('exhibitions.browse') || request()->routeIs('exhibitions.show'), 'ph ph-magnifying-glass'],
         ['Companies', route('exhibitions.visitor.companies', $activeSlug), request()->routeIs('exhibitions.visitor.companies*'), 'ph ph-storefront'],
         ['Halls & Map', route('exhibitions.visitor.floor-map', $activeSlug), request()->routeIs('exhibitions.visitor.floor-map') || request()->routeIs('exhibitions.halls.*') || request()->routeIs('exhibitions.visitor-halls.*'), 'ph ph-map-trifold'],
-        ['Get Visitor Pass', route('exhibitions.tickets.select', $activeSlug), request()->routeIs('exhibitions.tickets.*'), 'ph ph-identification-card'],
+        ['Get Visitor Pass', route('exhibitions.tickets.visitor-details', $activeSlug), request()->routeIs('exhibitions.tickets.*'), 'ph ph-identification-card'],
     ];
 
     $drawerVisitorLinks = [

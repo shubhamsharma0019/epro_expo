@@ -25,6 +25,8 @@
                 <span>Payment</span>
             </div>
 
+            @include('frontend.events.tickets.partials.event-flow-stepper', ['currentStep' => 3])
+
             <div class="grid grid-cols-1 gap-[18px] lg:grid-cols-[1fr_457px]">
                 <!-- Left payment column -->
                 <section>
@@ -156,7 +158,7 @@
                         <div class="mt-[24px]">
                             <div class="mb-3 flex items-center justify-between">
                                 <h3 class="text-[15px] font-bold text-[#07105C]">Tickets</h3>
-                                <a href="{{ url('/events/tickets/select') }}" class="text-[13px] font-bold text-[#351EEA]">Edit</a>
+                                <a href="{{ route('events.tickets.attendee-details', ['event' => $slug ?? '']) }}" class="text-[13px] font-bold text-[#351EEA]">Edit</a>
                             </div>
                             <div class="flex items-center justify-between text-[14px] font-medium text-[#07105C]">
                                 <span id="right-pass-name">General Pass &times; 2</span>
@@ -180,7 +182,7 @@
                     <div class="rounded-lg border border-[#E5E3F0] bg-white px-6 pb-6 pt-5 shadow-[0_1px_4px_rgba(31,42,107,0.02)]">
                         <div class="mb-[18px] flex items-center justify-between">
                             <h2 class="text-[15px] font-bold text-[#070A50]" id="right-attendees-title">Attendee Details (2)</h2>
-                            <a href="{{ url('/events/tickets/attendee-details') }}" class="text-[13px] font-bold text-[#351EEA]">Edit</a>
+                            <a href="{{ route('events.tickets.attendee-details', ['event' => $slug ?? '']) }}" class="text-[13px] font-bold text-[#351EEA]">Edit</a>
                         </div>
 
                         <div class="space-y-[26px]" id="right-attendees-list">
@@ -345,7 +347,10 @@ const options = document.querySelectorAll('.payment-option');
         // Initialize UI from localStorage
         document.addEventListener("DOMContentLoaded", () => {
             const orderData = JSON.parse(localStorage.getItem("eventOrder"));
-            if (!orderData) return;
+            if (!orderData) {
+                window.location.href = "{{ route('events.tickets.attendee-details', ['event' => $slug ?? '']) }}";
+                return;
+            }
 
             const qty = orderData.quantity || 1;
             const currency = orderData.priceCurrency || (orderData.eventSlug && orderData.eventSlug !== 'global-tech-summit-2024' ? 'INR' : '₹');

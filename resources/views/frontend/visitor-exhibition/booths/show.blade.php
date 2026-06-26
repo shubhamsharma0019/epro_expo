@@ -19,6 +19,7 @@
     $meetingSlots = collect($meetingSlots ?? []);
     $companyMeetings = collect($companyMeetings ?? []);
     $sessions = collect($sessions ?? []);
+    $visitorMeetings = collect($visitorMeetings ?? []);
 
     // Resolve visitor booking ID if user is logged in
     $visitor = auth()->check() ? \App\Domain\Visitor\Models\Visitor::where('email', auth()->user()->email)->where('exhibition_id', $booking->exhibition_id ?? null)->first() : null;
@@ -89,6 +90,9 @@
                 </div>
                 <div class="mt-6 flex flex-wrap gap-3">
                     @if ($isPassActive)
+                        @if ($visitorMeetings->isNotEmpty())
+                            <a href="#my-meetings" class="inline-flex h-11 items-center justify-center rounded-lg bg-[#0F9D58] px-5 text-[14px] font-bold text-white">My Meetings Here</a>
+                        @endif
                         <a href="#meeting" class="inline-flex h-11 items-center justify-center rounded-lg bg-gradient-to-r from-[#5b2eff] to-[#4310d8] px-5 text-[14px] font-bold text-white">Book Meeting</a>
                         <a href="#chat" class="inline-flex h-11 items-center justify-center rounded-lg border border-[#E7EAF3] bg-white px-5 text-[14px] font-bold text-[#071044] hover:bg-[#F8F7FF]">Live Chat</a>
                     @else
@@ -267,6 +271,50 @@
             </div>
 
             <aside class="space-y-6">
+                @if ($isPassActive && $visitorMeetings->isNotEmpty())
+                    <div id="my-meetings" class="rounded-[16px] border border-[#A7F3D0] bg-[#ECFDF5] p-6 shadow-[0_8px_22px_rgba(7,16,68,0.05)]">
+                        <h2 class="text-[20px] font-bold text-[#071044]">Your meetings with {{ $company }}</h2>
+                        <p class="mt-2 text-[13px] font-medium leading-6 text-[#047857]">You were notified in My Meetings. Request to join here — the host will let you in via Google Meet.</p>
+                        <div class="mt-4 space-y-3">
+                            @foreach ($visitorMeetings as $visitorMeeting)
+                                @php
+                                    $vmTopic = $visitorMeeting->meeting_topic ?: $visitorMeeting->companyMeeting?->title ?: 'Meeting';
+                                    $vmTime = $visitorMeeting->companyMeeting?->start_time
+                                        ? $visitorMeeting->companyMeeting->start_time->format('M d, h:i A')
+                                        : ($visitorMeeting->preferred_date ? $visitorMeeting->preferred_date->format('M d, Y') . ($visitorMeeting->preferred_time ? ' · ' . \Carbon\Carbon::parse($visitorMeeting->preferred_time)->format('h:i A') : '') : 'Time TBD');
+                                    $vmJoinUrl = $visitorMeeting->companyMeeting?->meeting_link ?: $visitorMeeting->companyMeeting?->zoom_join_url;
+                                    $vmReady = $vmJoinUrl && in_array($visitorMeeting->status, ['confirmed', 'accepted', 'rescheduled'], true);
+                                    $vmPending = in_array($visitorMeeting->status, ['pending', 'waitlisted'], true);
+                                    $vmStatusLabel = \App\Domain\Visitor\Models\VisitorMeetingBooking::displayStatus($visitorMeeting->status);
+                                @endphp
+                                <div class="rounded-lg border border-[#BBF7D0] bg-white p-4">
+                                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                        <div class="min-w-0">
+                                            <p class="text-[15px] font-bold text-[#071044]">{{ $vmTopic }}</p>
+                                            <p class="mt-1 text-[13px] font-medium text-[#5A6480]">{{ $vmTime }}</p>
+                                            <span class="mt-2 inline-flex rounded-md px-2.5 py-1 text-[12px] font-semibold {{ $vmReady ? 'bg-[#EEFDF3] text-[#16A34A]' : 'bg-yellow-50 text-yellow-700' }}">{{ $vmStatusLabel }}</span>
+                                        </div>
+                                        <div class="shrink-0">
+                                            @if ($vmReady)
+                                                <a href="{{ $vmJoinUrl }}" target="_blank" rel="noopener" class="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0F9D58] px-4 text-[13px] font-bold text-white hover:bg-[#0B8043]">
+                                                    <i class="fa-solid fa-video"></i> Join Google Meet
+                                                </a>
+                                            @else
+                                                <form method="POST" action="{{ route('exhibitions.visitor.meetings.join', [$slug, $companySlug, $visitorMeeting->id]) }}">
+                                                    @csrf
+                                                    <button type="submit" class="inline-flex h-10 items-center justify-center rounded-lg bg-[#5b2eff] px-4 text-[13px] font-bold text-white hover:bg-[#4310d8]">
+                                                        {{ $vmJoinUrl ? 'Join via Host' : 'Request to Join' }}
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
                 <div class="rounded-[16px] border border-[#E7EAF3] bg-white p-6">
                     <h2 class="text-[20px] font-bold text-[#071044]">Conference section</h2>
                     <div class="mt-4 space-y-3">
@@ -350,8 +398,20 @@
                     <input type="text" name="visitor_name" value="{{ $userFullName }}" placeholder="Your name" class="mt-3 h-11 w-full rounded-lg border border-[#E7EAF3] px-4 text-[14px] outline-none focus:border-[#5b2eff]" {{ $isPassActive ? 'required' : 'disabled' }}>
                     <input type="email" name="visitor_email" value="{{ $userEmail }}" placeholder="Email" class="mt-3 h-11 w-full rounded-lg border border-[#E7EAF3] px-4 text-[14px] outline-none focus:border-[#5b2eff]" {{ $isPassActive ? 'required' : 'disabled' }}>
                     <select name="meeting_type" class="mt-3 h-11 w-full rounded-lg border border-[#E7EAF3] bg-white px-4 text-[14px] outline-none focus:border-[#5b2eff]" {{ $isPassActive ? 'required' : 'disabled' }}>
-                        <option value="one-to-one">Meeting Type: One-to-One</option>
-                        <option value="one-to-many">Meeting Type: One-to-Many (Group Meeting)</option>
+                        @php
+                            $meetingAvailability = $meetingAvailability ?? $booking?->boothMeetingAvailability;
+                            $allowOneToOne = $meetingAvailability?->allow_one_to_one ?? true;
+                            $allowOneToMany = $meetingAvailability?->allow_one_to_many ?? false;
+                        @endphp
+                        @if ($allowOneToOne)
+                            <option value="one-to-one" @selected(old('meeting_type', 'one-to-one') === 'one-to-one')>Meeting Type: One-to-One</option>
+                        @endif
+                        @if ($allowOneToMany)
+                            <option value="one-to-many" @selected(old('meeting_type') === 'one-to-many')>Meeting Type: One-to-Many (Group Meeting)</option>
+                        @endif
+                        @if (! $allowOneToOne && ! $allowOneToMany)
+                            <option value="one-to-one">Meeting Type: One-to-One</option>
+                        @endif
                     </select>
                     @if ($meetingSlots->isNotEmpty())
                         <select name="booth_meeting_slot_id" class="mt-3 h-11 w-full rounded-lg border border-[#E7EAF3] bg-white px-4 text-[14px] outline-none focus:border-[#5b2eff]" {{ $isPassActive ? '' : 'disabled' }}>

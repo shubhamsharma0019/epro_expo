@@ -1,6 +1,6 @@
 @php
     $title = $title ?? ($exhibition->title ?? $exhibition->name ?? 'Exhibition');
-    $ticketUrl = $ticketUrl ?? route('exhibitions.visitor.login', ['exhibition' => $slug]);
+    $ticketUrl = $ticketUrl ?? \App\Support\ExhibitionTicketFlow::visitorPassEntryUrl($slug);
     $bannerImage = $bannerImage ?? asset('images/exhibitions/hero-pavilion-scene.png');
     $dateStr = $dateStr ?? 'Date TBD';
     $location = $location ?? 'Virtual';

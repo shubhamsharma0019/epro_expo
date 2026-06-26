@@ -85,8 +85,7 @@
         (function() {
             const passName = localStorage.getItem('selectedPassName');
             if (!passName) {
-                alert('Please select a pass first.');
-                window.location.href = "{{ route('exhibitions.tickets.select', $slug) }}";
+                window.location.href = "{{ route('exhibitions.tickets.pass-details', $slug) }}";
                 return;
             }
             const fields = ['first_name', 'last_name', 'email', 'mobile', 'job_title', 'company', 'country', 'state', 'city', 'industry', 'company_size', 'business_address', 'pavilion_id'];
@@ -99,8 +98,7 @@
                 }
             }
             if (!allFilled) {
-                alert('Please fill out all visitor details first.');
-                window.location.href = "{{ route('exhibitions.tickets.visitor-details', $slug) }}";
+                window.location.href = "{{ route('exhibitions.tickets.pass-details', $slug) }}";
             }
         })();
     </script>
@@ -199,43 +197,7 @@
                 </div>
 
                 <!-- Right: Stepper -->
-                <div class="flex flex-col lg:pl-8 w-full lg:w-auto overflow-hidden">
-                    <h2 class="text-[16px] font-bold text-[#1E1B4B] mb-5">Visitor Pass Selection</h2>
-                    <div class="flex items-center ticket-flow-stepper no-scrollbar">
-                        <!-- Step 1 -->
-                        <div class="flex flex-col items-center relative z-10 w-24">
-                            <div class="w-7 h-7 rounded-full bg-primary-500 text-white flex items-center justify-center text-[16px] mb-2 shadow-sm">
-                                <i class="ph-fill ph-check font-bold"></i>
-                            </div>
-                            <span class="text-[12px] font-medium text-[#1E1B4B] text-center leading-tight">Select Pass</span>
-                        </div>
-                        <!-- Line 1 (Completed) -->
-                        <div class="flex-1 h-[2px] bg-primary-500 -mx-6 mt-[calc(-24px)] relative z-0 min-w-[60px]"></div>
-                        <!-- Step 2 -->
-                        <div class="flex flex-col items-center relative z-10 w-24">
-                            <div class="w-7 h-7 rounded-full bg-primary-500 text-white flex items-center justify-center text-[16px] mb-2 shadow-sm">
-                                <i class="ph-fill ph-check font-bold"></i>
-                            </div>
-                            <span class="text-[12px] font-medium text-[#1E1B4B] text-center leading-tight">Visitor Details</span>
-                        </div>
-                        <!-- Line 2 (Completed) -->
-                        <div class="flex-1 h-[2px] bg-primary-500 -mx-6 mt-[calc(-24px)] relative z-0 min-w-[60px]"></div>
-                        <!-- Step 3 -->
-                        <div class="flex flex-col items-center relative z-10 w-24">
-                            <div class="w-7 h-7 rounded-full bg-primary-500 text-white flex items-center justify-center text-[16px] mb-2 shadow-sm">
-                                <i class="ph-fill ph-check font-bold"></i>
-                            </div>
-                            <span class="text-[12px] font-medium text-[#1E1B4B] text-center leading-tight">Review & Confirm</span>
-                        </div>
-                        <!-- Line 3 (Completed) -->
-                        <div class="flex-1 h-[2px] bg-primary-500 -mx-6 mt-[calc(-24px)] relative z-0 min-w-[60px]"></div>
-                        <!-- Step 4 (Active) -->
-                        <div class="flex flex-col items-center relative z-10 w-24">
-                            <div class="w-7 h-7 rounded-full bg-primary-500 text-white flex items-center justify-center text-[12px] font-bold mb-2 shadow-sm">4</div>
-                            <span class="text-[12px] font-bold text-primary-600 text-center leading-tight">Payment</span>
-                        </div>
-                    </div>
-                </div>
+                @include('frontend.exhibitions.tickets.partials.visitor-flow-stepper', ['currentStep' => 3])
             </div>
 
             <!-- Content Area -->
@@ -500,7 +462,7 @@
 
                     <!-- Bottom Buttons -->
                     <div class="flex items-center justify-between pb-10">
-                        <a href="{{ route('exhibitions.tickets.summary', $slug) }}" class="inline-flex items-center gap-2 px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-600 hover:bg-gray-50 transition-colors shadow-sm text-[14px]">
+                        <a href="{{ route('exhibitions.tickets.pass-details', $slug) }}" class="inline-flex items-center gap-2 px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-600 hover:bg-gray-50 transition-colors shadow-sm text-[14px]">
                             <i class="ph ph-arrow-left text-lg"></i> Back
                         </a>
                         <div class="flex items-center gap-1.5 text-gray-400 text-[12px] font-medium mr-4">

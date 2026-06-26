@@ -65,7 +65,13 @@
       </nav>
 
       <div class="hidden items-center gap-4 lg:flex">
-        <a href="{{ route('events.home') }}" class="rounded-lg bg-gradient-to-r from-[#6D28D9] to-[#4B16D8] px-6 py-3 text-[14px] font-bold text-white shadow-[0_12px_24px_rgba(91,46,255,0.26)]">Get Started</a>
+        <x-frontend.get-started-menu
+          menu-id="homeGetStarted"
+          :book-booth-label="$hero['button_3_label'] ?? 'Book a Booth'"
+          :book-booth-url="$hero['button_3_url'] ?? null"
+          :create-event-label="$hero['button_4_label'] ?? 'Create Company Event'"
+          :create-event-url="$hero['button_4_url'] ?? null"
+        />
       </div>
 
       <button id="menuBtn" class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#E0E4EF] lg:hidden" aria-label="Open menu">
@@ -80,11 +86,13 @@
         <a href="{{ route('frontend.features') }}">Features</a>
         <a href="{{ route('frontend.pricing') }}">Pricing</a>
         <a href="{{ route('frontend.about') }}">About Us</a>
-        <div class="grid grid-cols-1 gap-3 pt-2">
-          <a href="{{ route('company.home') }}" class="rounded-lg border border-[#D8DCEB] px-5 py-3 text-center font-bold text-navy">Book a Booth</a>
-          <a href="{{ route('company.event-company.login') }}" class="rounded-lg border border-[#D8DCEB] px-5 py-3 text-center font-bold text-navy">Create Event</a>
-          <a href="{{ route('events.home') }}" class="rounded-lg bg-violet px-5 py-3 text-center font-bold text-white">Get Started</a>
-        </div>
+        <x-frontend.get-started-menu
+          variant="mobile"
+          :book-booth-label="$hero['button_3_label'] ?? 'Book a Booth'"
+          :book-booth-url="$hero['button_3_url'] ?? null"
+          :create-event-label="$hero['button_4_label'] ?? 'Create Company Event'"
+          :create-event-url="$hero['button_4_url'] ?? null"
+        />
       </div>
     </div>
   </header>
@@ -113,14 +121,6 @@
             <a href="{{ $hero['button_2_url'] ?? url('/exhibitions') }}" class="group inline-flex w-full items-center justify-center gap-3 rounded-xl border border-[#D8DCEB] bg-white px-6 py-4 text-[15px] font-bold text-navy shadow-sm transition-all duration-200 hover:border-transparent hover:bg-gradient-to-r hover:from-[#6D28D9] hover:to-[#4B16D8] hover:text-white hover:shadow-[0_14px_30px_rgba(91,46,255,0.28)] sm:w-auto sm:px-7 sm:text-[16px]">
               <i class="far fa-building text-lg text-gray-500 transition-colors group-hover:text-white"></i> {{ $hero['button_2_label'] ?? 'Explore Exhibitions' }}
             </a>
-            <div class="grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto sm:gap-8">
-              <a href="{{ $hero['button_3_url'] ?? route('company.home') }}" class="group inline-flex items-center justify-center gap-3 rounded-xl border border-[#D8DCEB] bg-white px-4 py-4 text-[14px] font-bold text-navy shadow-sm transition-all duration-200 hover:border-transparent hover:bg-gradient-to-r hover:from-[#6D28D9] hover:to-[#4B16D8] hover:text-white hover:shadow-[0_14px_30px_rgba(91,46,255,0.28)] sm:px-7 sm:text-[16px]">
-                <i class="fas fa-store text-lg text-[#FF9B41] transition-colors group-hover:text-white"></i> {{ $hero['button_3_label'] ?? 'Book a Booth' }}
-              </a>
-              <a href="{{ $hero['button_4_url'] ?? route('company.event-company.login') }}" class="group inline-flex items-center justify-center gap-3 rounded-xl border border-[#D8DCEB] bg-white px-4 py-4 text-[14px] font-bold text-navy shadow-sm transition-all duration-200 hover:border-transparent hover:bg-gradient-to-r hover:from-[#6D28D9] hover:to-[#4B16D8] hover:text-white hover:shadow-[0_14px_30px_rgba(91,46,255,0.28)] sm:px-7 sm:text-[16px]">
-                <i class="fas fa-calendar-plus text-lg text-[#6D28D9] transition-colors group-hover:text-white"></i> {{ $hero['button_4_label'] ?? 'Create Company Event' }}
-              </a>
-            </div>
           </div>
         </div>
 

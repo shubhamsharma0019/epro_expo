@@ -113,16 +113,16 @@ class ExhibitionTicketConfirmedPageData
             ],
             'actionButtons' => [
                 [
-                    'label' => 'View E-Ticket',
-                    'icon' => 'ph ph-ticket',
-                    'url' => $eTicketUrl,
-                    'class' => 'btn-e-ticket inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-8 py-3 text-[15px] font-bold text-white shadow-[0_4px_14px_rgba(90,50,250,0.25)] transition-all hover:bg-primary-700 sm:w-auto',
-                    'type' => 'link',
-                ],
-                [
                     'label' => 'Go to Dashboard',
                     'icon' => 'ph ph-monitor',
                     'url' => $dashboardUrl,
+                    'class' => 'inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-8 py-3 text-[15px] font-bold text-white shadow-[0_4px_14px_rgba(90,50,250,0.25)] transition-all hover:bg-primary-700 sm:w-auto',
+                    'type' => 'link',
+                ],
+                [
+                    'label' => 'View E-Ticket',
+                    'icon' => 'ph ph-ticket',
+                    'url' => $eTicketUrl,
                     'class' => 'inline-flex w-full items-center justify-center gap-2 rounded-xl border border-primary-200 bg-white px-8 py-3 text-[15px] font-bold text-primary-600 shadow-sm transition-all hover:bg-primary-50 sm:w-auto',
                     'type' => 'link',
                 ],

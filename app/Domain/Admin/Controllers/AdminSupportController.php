@@ -40,7 +40,7 @@ class AdminSupportController extends Controller
             })
             ->latest();
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'Notifications',
             'pageDescription' => 'Track admin alerts, workflow updates, and important platform signals.',
             'search' => $search,
@@ -85,7 +85,7 @@ class AdminSupportController extends Controller
 
     public function createNotification(): View
     {
-        return view('backend.admin.resources.form', [
+        return view('admin.resources.form', [
             'pageTitle' => 'Add Notification',
             'pageDescription' => 'Create an admin-facing notification entry.',
             'submitUrl' => route('admin.notifications.store'),
@@ -161,7 +161,7 @@ class AdminSupportController extends Controller
             ->orderByDesc('admin_roles.is_system')
             ->orderBy('admin_roles.name');
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'Roles & Permissions',
             'pageDescription' => 'Manage admin roles, permission coverage, and assignment visibility.',
             'search' => $search,
@@ -195,7 +195,7 @@ class AdminSupportController extends Controller
     {
         $this->ensureRoleCatalog();
 
-        return view('backend.admin.resources.form', [
+        return view('admin.resources.form', [
             'pageTitle' => 'Add Role',
             'pageDescription' => 'Create a new admin role and map permissions by slug.',
             'submitUrl' => route('admin.roles.store'),
@@ -251,7 +251,7 @@ class AdminSupportController extends Controller
     {
         $this->ensureGeneralSettings();
 
-        return view('backend.admin.configuration.index', [
+        return view('admin.configuration.index', [
             'pageTitle' => 'Settings',
             'pageDescription' => 'Manage business-facing platform settings without touching the UI shell.',
             'submitUrl' => route('admin.settings.save'),
@@ -272,7 +272,7 @@ class AdminSupportController extends Controller
     {
         $this->ensureSystemSettings();
 
-        return view('backend.admin.configuration.index', [
+        return view('admin.configuration.index', [
             'pageTitle' => 'System Settings',
             'pageDescription' => 'Manage infrastructure-level keys and operational controls from the admin backend.',
             'submitUrl' => route('admin.system-settings.save'),
@@ -308,7 +308,7 @@ class AdminSupportController extends Controller
             })
             ->orderByDesc('support_tickets.created_at');
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'Support',
             'pageDescription' => 'Monitor incoming support tickets from companies and users.',
             'search' => $search,
@@ -348,7 +348,7 @@ class AdminSupportController extends Controller
 
     public function createSupport(): View
     {
-        return view('backend.admin.resources.form', [
+        return view('admin.resources.form', [
             'pageTitle' => 'Add Support Ticket',
             'pageDescription' => 'Create a support ticket from the admin backend.',
             'submitUrl' => route('admin.support.store'),
@@ -410,7 +410,7 @@ class AdminSupportController extends Controller
             })
             ->latest('updated_at');
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'CMS',
             'pageDescription' => 'Manage static pages and editorial content blocks in the admin backend.',
             'search' => $search,
@@ -446,7 +446,7 @@ class AdminSupportController extends Controller
 
     public function createCms(): View
     {
-        return view('backend.admin.resources.form', [
+        return view('admin.resources.form', [
             'pageTitle' => 'Add CMS Page',
             'pageDescription' => 'Create a new page entry for the CMS.',
             'submitUrl' => route('admin.cms.store'),
@@ -506,7 +506,7 @@ class AdminSupportController extends Controller
             })
             ->latest('admin_activity_logs.created_at');
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'Activity Logs',
             'pageDescription' => 'Audit trail of admin-side actions performed across the platform.',
             'search' => $search,
@@ -546,7 +546,7 @@ class AdminSupportController extends Controller
             ->when($status !== 'all', fn ($builder) => $builder->where('company_kyc_verifications.status', $status))
             ->latest('company_kyc_verifications.updated_at');
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'KYC Verification',
             'pageDescription' => 'Review company KYC records and mark verification outcomes.',
             'search' => '',
@@ -633,7 +633,7 @@ class AdminSupportController extends Controller
             ->when($status !== 'all', fn ($builder) => $builder->where('payment_refunds.status', $status))
             ->latest('payment_refunds.created_at');
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'Refund Management',
             'pageDescription' => 'Track refund requests across booth bookings and event tickets.',
             'search' => '',
@@ -672,7 +672,7 @@ class AdminSupportController extends Controller
 
     public function createRefund(): View
     {
-        return view('backend.admin.resources.form', [
+        return view('admin.resources.form', [
             'pageTitle' => 'Add Refund',
             'pageDescription' => 'Create a refund request entry from the admin backend.',
             'submitUrl' => route('admin.refunds.store'),
@@ -727,7 +727,7 @@ class AdminSupportController extends Controller
             ->when($status !== 'all', fn ($builder) => $builder->where('visitor_checkins.status', $status))
             ->latest('visitor_checkins.checked_in_at');
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'Visitor Check-in Analytics',
             'pageDescription' => 'See live visitor entry records across exhibitions and events.',
             'search' => '',
@@ -763,7 +763,7 @@ class AdminSupportController extends Controller
 
     public function createVisitorCheckin(): View
     {
-        return view('backend.admin.resources.form', [
+        return view('admin.resources.form', [
             'pageTitle' => 'Add Check-in',
             'pageDescription' => 'Manually register a visitor check-in record.',
             'submitUrl' => route('admin.visitor-checkins.store'),
@@ -818,7 +818,7 @@ class AdminSupportController extends Controller
             ->when($status !== 'all', fn ($builder) => $builder->where('admin_leads.lead_status', $status))
             ->latest('admin_leads.created_at');
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'Lead Management',
             'pageDescription' => 'Track sales-qualified interest coming from enquiries and meeting activity.',
             'search' => '',
@@ -857,7 +857,7 @@ class AdminSupportController extends Controller
 
     public function createLead(): View
     {
-        return view('backend.admin.resources.form', [
+        return view('admin.resources.form', [
             'pageTitle' => 'Add Lead',
             'pageDescription' => 'Create a lead record manually from the admin backend.',
             'submitUrl' => route('admin.leads.store'),
@@ -906,7 +906,7 @@ class AdminSupportController extends Controller
             ->when($search !== '', fn ($builder) => $builder->where('title', 'like', '%' . $search . '%'))
             ->latest();
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'Meeting Management',
             'pageDescription' => 'Review company-side meeting inventory and schedule status.',
             'search' => $search,
@@ -1034,7 +1034,7 @@ class AdminSupportController extends Controller
     {
         $meeting = CompanyMeeting::findOrFail($id);
 
-        return view('backend.admin.resources.form', [
+        return view('admin.resources.form', [
             'pageTitle' => 'Reschedule Meeting',
             'pageDescription' => 'Select a new date and time slot for the meeting: ' . $meeting->title,
             'submitUrl' => route('admin.meetings.reschedule', $id),
@@ -1162,7 +1162,7 @@ class AdminSupportController extends Controller
             ->when($search !== '', fn ($builder) => $builder->where('title', 'like', '%' . $search . '%'))
             ->latest('updated_at');
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'Flow Diagrams',
             'pageDescription' => 'Store process maps and operational flow diagrams for the admin team.',
             'search' => $search,
@@ -1193,7 +1193,7 @@ class AdminSupportController extends Controller
 
     public function createFlowDiagram(): View
     {
-        return view('backend.admin.resources.form', [
+        return view('admin.resources.form', [
             'pageTitle' => 'Add Flow Diagram',
             'pageDescription' => 'Create a new process or flow-diagram entry.',
             'submitUrl' => route('admin.flow-diagrams.store'),
@@ -1263,7 +1263,7 @@ class AdminSupportController extends Controller
         $totalBooths = Booth::count();
         $bookedBooths = Booth::where('status', 'booked')->count();
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'Occupancy Analytics',
             'pageDescription' => 'See booth occupancy progress across halls and exhibitions.',
             'search' => '',
@@ -1288,7 +1288,7 @@ class AdminSupportController extends Controller
         $ticketRevenue = (float) VisitorTicket::whereIn('status', ['paid', 'confirmed', 'completed'])->sum('total_amount');
         $refunds = (float) DB::table('payment_refunds')->where('status', 'processed')->sum('amount');
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'Revenue Breakdown',
             'pageDescription' => 'Summarised revenue split for booth bookings, tickets, and refunds.',
             'search' => '',

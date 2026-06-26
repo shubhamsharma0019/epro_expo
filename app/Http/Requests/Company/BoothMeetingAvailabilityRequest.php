@@ -8,6 +8,15 @@ class BoothMeetingAvailabilityRequest extends FormRequest
 {
     public function authorize(): bool { return session()->has('company_id'); }
 
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'allow_one_to_one' => $this->boolean('allow_one_to_one'),
+            'allow_one_to_many' => $this->boolean('allow_one_to_many'),
+            'allow_conference' => $this->boolean('allow_conference'),
+        ]);
+    }
+
     public function rules(): array
     {
         return [
@@ -24,8 +33,9 @@ class BoothMeetingAvailabilityRequest extends FormRequest
             'assigned_team_member_id' => ['nullable', 'integer', 'exists:booth_team_members,id'],
             'timezone' => ['nullable', 'string', 'max:100'],
             'max_capacity' => ['nullable', 'integer', 'min:1'],
-            'allow_one_to_one' => ['nullable', 'in:0,1,true,false'],
-            'allow_one_to_many' => ['nullable', 'in:0,1,true,false'],
+            'allow_one_to_one' => ['boolean'],
+            'allow_one_to_many' => ['boolean'],
+            'allow_conference' => ['boolean'],
         ];
     }
 }

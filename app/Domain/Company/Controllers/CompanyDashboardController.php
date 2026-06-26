@@ -231,7 +231,7 @@ class CompanyDashboardController extends Controller
             session()->forget(['company_booth_booked', 'company_booking_id']);
         }
 
-        return view('backend.company.dashboard.company-dashboard', compact(
+        return view('company.dashboard.company-dashboard', compact(
             'currentCompany',
             'stats',
             'latestBooking',
@@ -813,7 +813,7 @@ class CompanyDashboardController extends Controller
             }, $filename, ['Content-Type' => 'text/csv']);
         }
 
-        return view('backend.company.analytics.company-analytics', compact(
+        return view('company.analytics.company-analytics', compact(
             'currentCompany',
             'latestBooking',
             'rangeOptions',

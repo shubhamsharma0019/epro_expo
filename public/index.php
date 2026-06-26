@@ -5,6 +5,10 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
+if (($_ENV['APP_ENV'] ?? getenv('APP_ENV') ?: 'production') === 'local') {
+    @ini_set('max_execution_time', '120');
+}
+
 // Determine if the application is in maintenance mode...
 if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
     require $maintenance;

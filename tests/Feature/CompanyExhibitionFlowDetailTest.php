@@ -263,33 +263,17 @@ class CompanyExhibitionFlowDetailTest extends TestCase
             'size_id' => $this->size->id,
         ]);
         $response->assertRedirect();
-
-        // 5. Navigate to Slots screen (Triggers syncDraftBooking, creating draft booking in DB)
-        $response = $this->get(route('company.booth-booking.slots', [
-            'hall' => $this->hall->id,
-            'booth' => $this->booth->id,
-            'size' => $this->size->id,
-        ]));
-        $response->assertStatus(200);
-
-        // Save selected slot / days
-        $response = $this->post(route('company.booth-booking.slots.days'), [
-            'hall_id' => $this->hall->id,
-            'booth_id' => $this->booth->id,
-            'size_id' => $this->size->id,
-            'days_count' => 2,
-        ]);
-        $response->assertRedirect();
+        $this->assertStringContainsString('/company/booth-booking/summary', $response->headers->get('Location'));
 
         $booking = BoothBooking::firstOrFail();
 
-        // Continue to summary from slots
+        // Legacy slots routes still sync admin days and continue to summary
         $response = $this->post(route('company.booth-booking.slots.continue'), [
             'hall_id' => $this->hall->id,
             'booth_id' => $this->booth->id,
             'size_id' => $this->size->id,
         ]);
-        $response->assertRedirect();
+        $response->assertRedirect(route('company.booth-booking.summary', ['exhibition' => $this->exhibition->slug]));
 
         // 6. View Summary and Select Services
         $response = $this->get(route('company.booth-booking.summary'));
@@ -547,23 +531,29 @@ class CompanyExhibitionFlowDetailTest extends TestCase
         $publishRequest = \App\Domain\Booth\Models\BoothPublishRequest::where('booth_booking_id', $booking->id)->firstOrFail();
         $this->assertEquals('approved', $publishRequest->status);
 
-        // 12. Visitor Flow
-        // Create a user and log in to pass the auth middleware
-        $visitorUser = \App\Domain\Shared\Models\User::create([
-            'name' => 'Visitor User',
-            'email' => 'visitor@example.com',
-            'password' => \Illuminate\Support\Facades\Hash::make('password'),
-            'role' => 'user',
-        ]);
-        $this->actingAs($visitorUser);
-
-        // Visit the pass select page
+        // 12. Visitor Flow (no login required)
         $response = $this->get(route('exhibitions.tickets.select', $this->exhibition->slug));
-        $response->assertStatus(200);
+        $response->assertRedirect(route('exhibitions.tickets.visitor-details', $this->exhibition->slug));
 
-        // Visit details
         $response = $this->get(route('exhibitions.tickets.visitor-details', $this->exhibition->slug));
         $response->assertStatus(200);
+        $response->assertSee('Visitor Registration');
+        $response->assertSee('Continue to Pass Selection');
+
+        $response = $this->post(route('exhibitions.tickets.visitor-details.store'), [
+            'slug' => $this->exhibition->slug,
+            'name' => 'Exhibition Flow Visitor',
+            'email' => 'exhibitionflow@example.com',
+            'password' => 'password123',
+            'phone' => '9876543210',
+            'gender' => 'male',
+            'city' => 'Delhi',
+        ]);
+        $response->assertRedirect(route('exhibitions.tickets.pass-details', $this->exhibition->slug));
+
+        $response = $this->get(route('exhibitions.tickets.pass-details', $this->exhibition->slug));
+        $response->assertStatus(200);
+        $response->assertSee('Visitor Details');
 
         // Get confirmed (sets visitor_pass_active to true in session)
         $response = $this->get(route('exhibitions.tickets.confirmed', $this->exhibition->slug));

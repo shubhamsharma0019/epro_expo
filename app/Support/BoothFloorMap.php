@@ -8,14 +8,26 @@ use Illuminate\Support\Collection;
 
 class BoothFloorMap
 {
-    public const CELL_WIDTH = 48;
+    public static function cellWidth(): int
+    {
+        return VisitorFloorMap::boothWidth();
+    }
 
-    public const CELL_HEIGHT = 44;
+    public static function cellHeight(): int
+    {
+        return VisitorFloorMap::boothHeight();
+    }
 
     public static function unitsForSize(?BoothSize $selectedSize): int
     {
         if (! $selectedSize) {
             return 1;
+        }
+
+        $area = (float) ($selectedSize->area ?: 0);
+
+        if ($area > 0 && SequentialBoothSizes::isSequentialArea($area)) {
+            return max(1, (int) round($area / SequentialBoothSizes::UNIT_AREA));
         }
 
         $width = (float) $selectedSize->width;
@@ -25,9 +37,7 @@ class BoothFloorMap
             return max(1, (int) ceil($width / 3) * (int) ceil($height / 3));
         }
 
-        $area = (float) ($selectedSize->area ?: 0);
-
-        return max(1, (int) ceil($area / 9));
+        return max(1, (int) ceil($area / SequentialBoothSizes::UNIT_AREA));
     }
 
     public static function visualForArea(float $area): array
@@ -44,79 +54,22 @@ class BoothFloorMap
     public static function metricsForBooth(Booth $booth): array
     {
         $booth->loadMissing('boothSize');
-
-        $left = (int) ($booth->position_x ?? 0);
-        $top = (int) ($booth->position_y ?? 0);
-
-        if ($left > 0 || $top > 0) {
-            $visual = self::hallCoordinateVisual($left, $top);
-
-            $left = min($left, 720 - $visual['width'] - 16);
-            $top = min($top, 400 - $visual['height'] - 16);
-
-            return [
-                'left' => $left,
-                'top' => $top,
-                'right' => $left + $visual['width'],
-                'bottom' => $top + $visual['height'],
-                'width' => $visual['width'],
-                'height' => $visual['height'],
-            ];
-        }
-
-        [$left, $top] = self::fallbackPositionForBooth($booth);
-
-        $width = 60;
-        $height = 68;
-
-        $left = min($left, 720 - $width - 16);
-        $top = min($top, 400 - $height - 16);
+        $metrics = VisitorFloorMap::metricsForBooth($booth);
 
         return [
-            'left' => $left,
-            'top' => $top,
-            'right' => $left + $width,
-            'bottom' => $top + $height,
-            'width' => $width,
-            'height' => $height,
+            'left' => $metrics['left'],
+            'top' => $metrics['top'],
+            'right' => $metrics['right'],
+            'bottom' => $metrics['bottom'],
+            'width' => $metrics['width'],
+            'height' => $metrics['height'],
         ];
-    }
-
-    /** @return array{width:int,height:int} */
-    private static function hallCoordinateVisual(int $left, int $top): array
-    {
-        $cornerPositions = [
-            '18-28' => true,
-            '18-304' => true,
-            '640-304' => true,
-        ];
-
-        if (isset($cornerPositions["{$left}-{$top}"])) {
-            return ['width' => 48, 'height' => 44];
-        }
-
-        if ($top === 122) {
-            return ['width' => 86, 'height' => 70];
-        }
-
-        return ['width' => 48, 'height' => 44];
-    }
-
-    private static function fallbackPositionForBooth(Booth $booth): array
-    {
-        $number = (int) preg_replace('/\D+/', '', (string) $booth->booth_number);
-        $index = max($number - 1, 0);
-        $columns = 10;
-        $column = $index % $columns;
-        $row = intdiv($index, $columns);
-
-        return [16 + ($column * 68), 30 + ($row * 88)];
     }
 
     public static function boundsForFootprint(Collection $footprint): array
     {
         if ($footprint->isEmpty()) {
-            return ['left' => 0, 'top' => 0, 'width' => self::CELL_WIDTH, 'height' => self::CELL_HEIGHT];
+            return ['left' => 0, 'top' => 0, 'width' => self::cellWidth(), 'height' => self::cellHeight()];
         }
 
         $metrics = $footprint->map(fn (Booth $booth) => self::metricsForBooth($booth));
@@ -129,14 +82,79 @@ class BoothFloorMap
         return [
             'left' => $left,
             'top' => $top,
-            'width' => max(self::CELL_WIDTH, $right - $left),
-            'height' => max(self::CELL_HEIGHT, $bottom - $top),
+            'width' => max(self::cellWidth(), $right - $left),
+            'height' => max(self::cellHeight(), $bottom - $top),
         ];
     }
     public static function segmentsForFootprint(Collection $footprint): array
     {
         if ($footprint->isEmpty()) {
             return [];
+        }
+
+        $cells = $footprint
+            ->map(function (Booth $booth) {
+                $index = VisitorFloorMap::layoutIndexForBoothNumber((string) $booth->booth_number);
+
+                if ($index === null) {
+                    return null;
+                }
+
+                return [
+                    'id' => $booth->id,
+                    'number' => $booth->booth_number,
+                    'index' => $index,
+                    'row' => intdiv($index, 10),
+                    'col' => $index % 10,
+                ];
+            })
+            ->filter()
+            ->sortBy('index')
+            ->values();
+
+        if ($cells->isNotEmpty()) {
+            $segments = [];
+
+            foreach ($cells as $cell) {
+                $lastIndex = count($segments) - 1;
+                $last = $lastIndex >= 0 ? $segments[$lastIndex] : null;
+
+                if ($last && $last['row'] === $cell['row'] && $cell['col'] === ($last['endCol'] + 1)) {
+                    $segments[$lastIndex]['endCol'] = $cell['col'];
+                    $segments[$lastIndex]['ids'][] = $cell['id'];
+                    $segments[$lastIndex]['numbers'][] = $cell['number'];
+
+                    continue;
+                }
+
+                $segments[] = [
+                    'row' => $cell['row'],
+                    'startCol' => $cell['col'],
+                    'endCol' => $cell['col'],
+                    'ids' => [$cell['id']],
+                    'numbers' => [$cell['number']],
+                ];
+            }
+
+            return collect($segments)
+                ->map(function (array $segment) {
+                    $bounds = VisitorFloorMap::boundsForGridRange(
+                        $segment['row'],
+                        $segment['startCol'],
+                        $segment['endCol']
+                    );
+
+                    return [
+                        'ids' => $segment['ids'],
+                        'numbers' => $segment['numbers'],
+                        'left' => $bounds['left'],
+                        'top' => $bounds['top'],
+                        'width' => $bounds['width'],
+                        'height' => $bounds['height'],
+                    ];
+                })
+                ->values()
+                ->all();
         }
 
         $items = $footprint
@@ -156,8 +174,8 @@ class BoothFloorMap
             ->values();
 
         $segments = [];
-        $rowTolerance = 8;
-        $gapTolerance = 18;
+        $rowTolerance = 12;
+        $gapTolerance = VisitorFloorMap::gridColumnStep();
 
         foreach ($items as $item) {
             $lastIndex = count($segments) - 1;
@@ -170,6 +188,7 @@ class BoothFloorMap
                 $segments[$lastIndex]['top'] = min($last['top'], $item['top']);
                 $segments[$lastIndex]['right'] = max($last['right'], $item['right']);
                 $segments[$lastIndex]['bottom'] = max($last['bottom'], $item['bottom']);
+
                 continue;
             }
 
@@ -190,8 +209,8 @@ class BoothFloorMap
                     'numbers' => $segment['numbers'],
                     'left' => max((int) $segment['left'], 0),
                     'top' => max((int) $segment['top'], 0),
-                    'width' => max(self::CELL_WIDTH, (int) ($segment['right'] - $segment['left'])),
-                    'height' => max(self::CELL_HEIGHT, (int) ($segment['bottom'] - $segment['top'])),
+                    'width' => max(self::cellWidth(), (int) ($segment['right'] - $segment['left'])),
+                    'height' => max(self::cellHeight(), (int) ($segment['bottom'] - $segment['top'])),
                 ];
             })
             ->values()
@@ -209,89 +228,38 @@ class BoothFloorMap
             return collect([$anchorBooth]);
         }
 
-        $sequentialFootprint = self::sequentialFootprintForSize($hall, $anchorBooth, $requiredSpaces, $blockedBoothIds);
+        $hallBooths = $hall->booths()->get();
+        $minimumStartIndex = SequentialBoothAllocation::minimumStartIndexAfterBlocked($hallBooths, $blockedBoothIds);
+
+        $sequentialFootprint = SequentialBoothAllocation::footprintForAnchor(
+            $hallBooths,
+            $anchorBooth,
+            $requiredSpaces,
+            $blockedBoothIds,
+            $minimumStartIndex
+        );
+
         if ($sequentialFootprint->count() >= $requiredSpaces) {
-            return $sequentialFootprint;
+            return $sequentialFootprint->take($requiredSpaces)->values();
         }
 
         $rectangularFootprint = self::rectangularFootprintForSize($hall, $anchorBooth, $selectedSize, $requiredSpaces, $blockedBoothIds);
         if ($rectangularFootprint->count() >= $requiredSpaces) {
-            return $rectangularFootprint;
+            return $rectangularFootprint->take($requiredSpaces)->values();
         }
 
-        $touchScore = function (array $a, array $b) {
-            $horizontalOverlap = $a['top'] <= $b['bottom'] && $a['bottom'] >= $b['top'];
-            $verticalOverlap = $a['left'] <= $b['right'] && $a['right'] >= $b['left'];
-            $horizontalGap = max($b['left'] - $a['right'], $a['left'] - $b['right'], 0);
-            $verticalGap = max($b['top'] - $a['bottom'], $a['top'] - $b['bottom'], 0);
-
-            if ($horizontalOverlap && $horizontalGap <= 32) {
-                return $horizontalGap;
-            }
-
-            if ($verticalOverlap && $verticalGap <= 32) {
-                return $verticalGap + 20;
-            }
-
-            return null;
-        };
-
-        $selectedBooths = collect([$anchorBooth]);
-        $candidateBooths = $hall->booths()
-            ->where('status', 'available')
-            ->whereKeyNot($anchorBooth->id)
-            ->whereNotIn('id', $blockedBoothIds)
-            ->get();
-
-        while ($selectedBooths->count() < $requiredSpaces && $candidateBooths->isNotEmpty()) {
-            $best = null;
-
-            foreach ($candidateBooths as $candidate) {
-                $candidateMetrics = self::metricsForBooth($candidate);
-                $candidateScore = null;
-
-                foreach ($selectedBooths as $selectedBooth) {
-                    $score = $touchScore(self::metricsForBooth($selectedBooth), $candidateMetrics);
-                    $candidateScore = $score === null ? $candidateScore : min($candidateScore ?? $score, $score);
-                }
-
-                if ($candidateScore !== null && (! $best || $candidateScore < $best['score'])) {
-                    $best = ['booth' => $candidate, 'score' => $candidateScore];
-                }
-            }
-
-            if (! $best) {
-                break;
-            }
-
-            $selectedBooths->push($best['booth']);
-            $candidateBooths = $candidateBooths->reject(fn ($booth) => $booth->id === $best['booth']->id)->values();
-        }
-
-        return $selectedBooths->values();
+        return collect();
     }
 
     private static function sequentialFootprintForSize($hall, Booth $anchorBooth, int $requiredSpaces, array $blockedBoothIds): Collection
     {
-        $availableBooths = $hall->booths()
-            ->where('status', 'available')
-            ->whereNotIn('id', $blockedBoothIds)
-            ->get()
-            ->sortBy(function (Booth $booth) {
-                $number = (int) preg_replace('/\D+/', '', (string) $booth->booth_number);
-
-                return sprintf('%08d-%08d', $number ?: $booth->id, $booth->id);
-            })
-            ->values();
-
-        $anchorIndex = $availableBooths->search(fn (Booth $booth) => $booth->id === $anchorBooth->id);
-        if ($anchorIndex === false) {
-            return collect([$anchorBooth]);
-        }
-
-        return $availableBooths
-            ->slice($anchorIndex, $requiredSpaces)
-            ->values();
+        return SequentialBoothAllocation::footprintForAnchor(
+            $hall->booths()->get(),
+            $anchorBooth,
+            $requiredSpaces,
+            $blockedBoothIds,
+            SequentialBoothAllocation::minimumStartIndexAfterBlocked($hall->booths()->get(), $blockedBoothIds)
+        );
     }
     private static function rectangularFootprintForSize($hall, Booth $anchorBooth, ?BoothSize $selectedSize, int $requiredSpaces, array $blockedBoothIds): Collection
     {
@@ -312,8 +280,8 @@ class BoothFloorMap
             ->keyBy('id');
 
         $anchorMetrics = self::metricsForBooth($anchorBooth);
-        $cellX = 60;
-        $cellY = 54;
+        $cellX = VisitorFloorMap::gridColumnStep();
+        $cellY = VisitorFloorMap::gridRowStep();
         $best = null;
 
         foreach ($shapes as [$cols, $rows]) {

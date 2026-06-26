@@ -34,7 +34,7 @@ class BoothPublishController extends BaseBoothSetupController
         $startDate = $availability?->available_start_date;
         $endDate = $availability?->available_end_date;
 
-        return view('backend.company.booth-setup.publish', $this->commonData($booking, $steps) + [
+        return view('company.booth-setup.publish', $this->commonData($booking, $steps) + [
             'readiness' => $steps->checkPublishReadiness($booking),
             'publishRequest' => $booking->boothPublishRequest,
             'summaryCounts' => [

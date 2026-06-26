@@ -15,7 +15,7 @@ class SubmitReviewController extends BaseCompanyEventController
     {
         $companyEvent = $this->setupEvent($companyEvent);
 
-        return view('backend.company.event-company-flow.submit-review', $this->commonData($companyEvent));
+        return view('company.event-company-flow.submit-review', $this->commonData($companyEvent));
     }
 
     public function submit(CompanyEventSubmitReviewRequest $request, ?CompanyEvent $companyEvent = null): RedirectResponse

@@ -13,7 +13,7 @@
         ? $meeting->companyMeeting->start_time->format('h:i A')
         : ($meeting->preferred_time ? \Carbon\Carbon::parse($meeting->preferred_time)->format('h:i A') : 'TBD');
     $meetingTitle = $meeting->meeting_topic ?: $meeting->companyMeeting?->title ?: 'Meeting';
-    $zoomJoinUrl = $meeting->companyMeeting?->zoom_join_url ?: $meeting->companyMeeting?->meeting_link;
+    $zoomJoinUrl = $meeting->companyMeeting?->meeting_link ?: $meeting->companyMeeting?->zoom_join_url;
     $statusLabel = \App\Domain\Visitor\Models\VisitorMeetingBooking::displayStatus($meeting->status);
     $statusClass = match ($meeting->status) {
         'confirmed', 'accepted' => 'bg-[#EEFDF3] text-[#16A34A]',
@@ -41,9 +41,13 @@
             {{ $statusLabel }}
         </span>
 
-        @if (in_array($meeting->status, ['confirmed', 'accepted', 'completed'], true) && $zoomJoinUrl)
+        @if (in_array($meeting->status, ['confirmed', 'accepted', 'rescheduled', 'completed'], true) && $zoomJoinUrl)
             <a href="{{ $zoomJoinUrl }}" target="_blank" rel="noopener" class="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#0F9D58] px-4 text-[13px] font-semibold text-white hover:bg-[#0B8043]">
                 <i class="fa-solid fa-video"></i> Join Google Meet
+            </a>
+        @elseif (in_array($meeting->status, ['pending', 'waitlisted'], true))
+            <a href="{{ route('exhibitions.visitor.companies.show', [$slug, $companySlug]) }}#my-meetings" class="inline-flex h-10 items-center justify-center rounded-md bg-[#5b2eff] px-4 text-[13px] font-semibold text-white hover:bg-[#4310d8]">
+                Request at Booth
             </a>
         @endif
 

@@ -2,11 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Domain\Event\Models\Exhibition;
-use App\Domain\Booth\Models\Booth;
 use App\Domain\Booth\Models\BoothSize;
+use App\Domain\Event\Models\Exhibition;
 use App\Domain\Event\Models\Hall;
 use App\Domain\Event\Models\Pavilion;
+use App\Support\HallBoothLayoutSync;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -92,13 +92,6 @@ class CompanyPavilionDemoSeeder extends Seeder
                 array_merge($size, ['status' => 'active'])
             );
         })->values();
-
-        $boothPositions = [
-            [18, 28, 'reserved'], [78, 30, 'reserved'], [138, 30, 'reserved'], [198, 30, 'reserved'], [258, 30, 'reserved'], [318, 30, 'reserved'], [386, 30, 'available'], [446, 30, 'available'], [506, 30, 'available'], [640, 28, 'reserved'],
-            [18, 82, 'available'], [640, 82, 'available'], [18, 136, 'available'], [640, 136, 'available'], [18, 190, 'available'], [640, 190, 'available'], [18, 244, 'available'], [640, 244, 'available'], [18, 304, 'reserved'], [640, 304, 'reserved'],
-            [120, 122, 'available'], [250, 122, 'available'], [380, 122, 'available'], [510, 122, 'booked'], [78, 248, 'available'], [138, 248, 'available'], [198, 248, 'reserved'], [258, 248, 'reserved'], [318, 248, 'reserved'], [386, 248, 'reserved'],
-            [446, 248, 'available'], [506, 248, 'available'], [78, 306, 'available'], [138, 306, 'available'], [198, 306, 'reserved'], [258, 306, 'reserved'], [318, 306, 'available'], [386, 306, 'available'], [446, 306, 'available'], [506, 306, 'available'],
-        ];
 
         // Seeding Pavilion Map by Exhibition Slug
         $pavilionMap = [
@@ -250,40 +243,7 @@ class CompanyPavilionDemoSeeder extends Seeder
                         ]
                     );
 
-                    foreach ($boothPositions as $positionIndex => [$x, $y, $status]) {
-                        // Skip overlapping coordinates to accommodate larger booths
-                        if ($positionIndex === 23 || $positionIndex === 29 || $positionIndex === 30 || $positionIndex === 31) {
-                            continue;
-                        }
-
-                        $sizeIndex = 0; // Default 3x3
-                        if ($positionIndex === 4) {
-                            $sizeIndex = 1; // 3m x 4m
-                        } elseif ($positionIndex === 20) {
-                            $sizeIndex = 2; // 6m x 3m
-                        } elseif ($positionIndex === 21) {
-                            $sizeIndex = 3; // 6m x 6m
-                        } elseif ($positionIndex === 22) {
-                            $sizeIndex = 4; // 9m x 9m
-                        }
-
-                        $boothSize = $boothSizes[$sizeIndex];
-                        $boothNumber = 'B' . str_pad((string) ($positionIndex + 1), 2, '0', STR_PAD_LEFT);
-
-                        Booth::updateOrCreate(
-                            [
-                                'hall_id' => $hall->id,
-                                'booth_number' => $boothNumber,
-                            ],
-                            [
-                                'booth_size_id' => $boothSize->id,
-                                'position_x' => $x,
-                                'position_y' => $y,
-                                'price' => $boothSize->price,
-                                'status' => $status,
-                            ]
-                        );
-                    }
+                    HallBoothLayoutSync::sync($hall, $boothSizes);
                 }
             }
         }

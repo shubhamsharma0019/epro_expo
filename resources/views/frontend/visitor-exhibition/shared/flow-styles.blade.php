@@ -172,4 +172,16 @@
             margin-right: -0.25rem;
         }
     }
+
+    .visitor-flow-page .floor-map-scroll {
+        overflow-y: visible;
+    }
+
+    .visitor-flow-page .floor-map-canvas {
+        position: relative;
+        width: 720px;
+        height: 380px;
+        min-height: 380px;
+        overflow: visible;
+    }
 </style>

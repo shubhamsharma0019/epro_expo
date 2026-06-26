@@ -18,11 +18,16 @@ class VisitorTicket extends Model
         'quantity',
         'total_amount',
         'status',
+        'payment_status',
+        'razorpay_order_id',
+        'razorpay_payment_id',
         'qr_code_path',
         'attendee_name',
         'attendee_email',
         'attendee_phone',
-        'event_slug'
+        'attendee_gender',
+        'attendee_city',
+        'event_slug',
     ];
 
     public function user()

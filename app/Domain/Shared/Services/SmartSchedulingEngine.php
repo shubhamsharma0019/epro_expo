@@ -42,11 +42,24 @@ class SmartSchedulingEngine
         // 1. Check Exhibition Dates
         $exhibition = Exhibition::find($exhibitionId);
         if ($exhibition) {
-            $meetingDate = Carbon::parse($date);
-            $startDate = Carbon::parse($exhibition->start_date);
-            $endDate = Carbon::parse($exhibition->end_date);
-            if ($meetingDate->lt($startDate->startOfDay()) || $meetingDate->gt($endDate->endOfDay())) {
+            $meetingDate = Carbon::parse($date)->startOfDay();
+            $startDate = Carbon::parse($exhibition->start_date)->startOfDay();
+            $endDate = Carbon::parse($exhibition->end_date)->endOfDay();
+            $exhibitionEnded = now()->gt($endDate);
+
+            if ($exhibitionEnded) {
+                if ($meetingDate->lt(now()->startOfDay())) {
+                    $suggestion = $this->suggestNextBestSlot($companyId, $visitorId, $visitorEmail, now()->toDateTimeString(), $meetingType, $exhibitionId);
+
+                    return [
+                        'valid' => false,
+                        'conflict' => 'Please choose a future date for your meeting request.',
+                        'suggest_slot' => $suggestion,
+                    ];
+                }
+            } elseif ($meetingDate->lt($startDate) || $meetingDate->gt($endDate->copy()->startOfDay())) {
                 $suggestion = $this->suggestNextBestSlot($companyId, $visitorId, $visitorEmail, now()->toDateTimeString(), $meetingType, $exhibitionId);
+
                 return [
                     'valid' => false,
                     'conflict' => "Meeting date must be within exhibition dates: {$startDate->format('M d, Y')} to {$endDate->format('M d, Y')}.",
@@ -78,13 +91,12 @@ class SmartSchedulingEngine
         // 3. Check Company Representative / Slot Availability
         // Check if there are other confirmed meetings for the company overlapping with this time
         $companyConflictExists = CompanyMeeting::where('company_id', $companyId)
-            ->whereIn('status', ['confirmed', 'accepted', 'rescheduled'])
+            ->whereIn('status', ['confirmed', 'accepted', 'rescheduled', 'pending'])
             ->where('start_time', '<', $end->toDateTimeString())
             ->where('end_time', '>', $start->toDateTimeString())
-            ->where(function($q) use ($meetingType) {
-                // If it's a one-to-one meeting, or the existing meeting is one-to-one, we cannot share it.
+            ->where(function ($q) use ($meetingType) {
                 $q->where('meeting_type', 'one-to-one')
-                  ->orWhereRaw('? = ?', [$meetingType, 'one-to-one']);
+                    ->orWhereRaw('? = ?', [$meetingType, 'one-to-one']);
             })
             ->exists();
 
@@ -101,7 +113,22 @@ class SmartSchedulingEngine
         if ($slotId) {
             $slot = BoothMeetingSlot::find($slotId);
             if ($slot) {
-                // If the slot is one-to-one, check if anyone else has already booked it
+                if ($meetingType === 'one-to-one' && ! $slot->allow_one_to_one) {
+                    return [
+                        'valid' => false,
+                        'conflict' => 'One-to-One meetings are not enabled for the selected time slot.',
+                        'suggest_slot' => $this->suggestNextBestSlot($companyId, $visitorId, $visitorEmail, now()->toDateTimeString(), $meetingType, $exhibitionId),
+                    ];
+                }
+
+                if ($meetingType === 'one-to-many' && ! $slot->allow_one_to_many) {
+                    return [
+                        'valid' => false,
+                        'conflict' => 'One-to-Many meetings are not enabled for the selected time slot.',
+                        'suggest_slot' => $this->suggestNextBestSlot($companyId, $visitorId, $visitorEmail, now()->toDateTimeString(), $meetingType, $exhibitionId),
+                    ];
+                }
+
                 $bookingCount = VisitorMeetingBooking::where('company_id', $companyId)
                     ->where(function ($q) use ($slot) {
                         $q->whereHas('companyMeeting', function ($sub) use ($slot) {
@@ -116,24 +143,22 @@ class SmartSchedulingEngine
 
                 $maxCapacity = $slot->max_capacity ?? 1;
 
-                if ($meetingType === 'one-to-one' || $slot->allow_one_to_one && !$slot->allow_one_to_many) {
+                if ($meetingType === 'one-to-one') {
                     if ($bookingCount >= 1) {
                         $suggestion = $this->suggestNextBestSlot($companyId, $visitorId, $visitorEmail, now()->toDateTimeString(), $meetingType, $exhibitionId);
+
                         return [
                             'valid' => false,
-                            'conflict' => "This time slot is already booked for a One-to-One meeting.",
+                            'conflict' => 'This time slot is already booked for a One-to-One meeting.',
                             'suggest_slot' => $suggestion,
                         ];
                     }
-                } else {
-                    // One-to-many capacity check
-                    if ($bookingCount >= $maxCapacity) {
-                        return [
-                            'valid' => true, // Valid for waitlisting!
-                            'conflict' => 'waitlist',
-                            'suggest_slot' => null,
-                        ];
-                    }
+                } elseif ($bookingCount >= $maxCapacity) {
+                    return [
+                        'valid' => true,
+                        'conflict' => 'waitlist',
+                        'suggest_slot' => null,
+                    ];
                 }
             }
         }

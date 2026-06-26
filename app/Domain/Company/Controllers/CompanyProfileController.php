@@ -35,7 +35,7 @@ class CompanyProfileController extends Controller
             ->first()
             ?->boothProfile;
 
-        return view('backend.company.profile.company-profile', compact('company', 'latestBoothProfile'));
+        return view('company.profile.company-profile', compact('company', 'latestBoothProfile'));
     }
 
     public function update(CompanyProfileRequest $request): RedirectResponse|JsonResponse

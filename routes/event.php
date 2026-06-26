@@ -161,47 +161,31 @@ Route::prefix('events')->name('events.')->group(function () use ($eventHomeHandl
         })->name('legacy-my-bookings');
 
         Route::get('/select', function (\Illuminate\Http\Request $request) {
-            if (! auth()->check()) {
-                session()->put('url.intended', $request->fullUrl());
-                session()->put('event_booking_path', $request->fullUrl());
-                session()->put('user_flow_context', 'event_ticket');
-
-                return redirect()->route('events.visitor.login', array_filter([
-                    'event' => $request->query('event'),
-                ]));
-            }
-
             $slug = $request->query('event');
-            $dbEvent = null;
-            if ($slug) {
-                $dbEvent = \App\Support\LiveContent::companyEventQuery()
-                    ->with([
-                    'ticketTypes' => fn ($query) => $query->orderBy('price'),
-                ])
-                    ->where('slug', $slug)
-                    ->first();
-            }
-            return view('frontend.events.tickets.select', compact('dbEvent', 'slug'));
+
+            session([
+                'event_booking_path' => \App\Support\EventTicketFlow::visitorPassEntryUrl($slug),
+                'user_flow_context' => 'event_ticket',
+            ]);
+
+            return redirect()->route('events.tickets.visitor-details', ['event' => $slug]);
         })->name('select');
 
-        Route::middleware('auth')->group(function () {
-            Route::get('/attendee-details', [\App\Domain\Visitor\Controllers\PurchaseController::class, 'attendeeDetails'])->name('attendee-details');
-            
-            Route::get('/summary', [\App\Domain\Visitor\Controllers\PurchaseController::class, 'summary'])->name('summary');
-            
-            Route::get('/payment', [\App\Domain\Visitor\Controllers\PurchaseController::class, 'payment'])->name('payment');
-            Route::post('/payment/razorpay-order', [\App\Domain\Visitor\Controllers\PurchaseController::class, 'createRazorpayOrder'])->name('payment.razorpay-order');
-            Route::post('/payment/verify', [\App\Domain\Visitor\Controllers\PurchaseController::class, 'confirmPayment'])->name('payment.verify');
-            Route::post('/payment/confirm', [\App\Domain\Visitor\Controllers\PurchaseController::class, 'confirmPayment'])->name('payment.confirm');
-            
-            Route::get('/confirmed', [\App\Domain\Visitor\Controllers\PurchaseController::class, 'confirmed'])->name('confirmed');
-            
-            Route::get('/e-ticket', [\App\Domain\Visitor\Controllers\PurchaseController::class, 'eTicket'])->name('e-ticket');
-            
-            Route::get('/invoice', function () {
-                return view('frontend.events.tickets.invoice');
-            })->name('invoice');
-        });
+        Route::get('/visitor-details', [\App\Domain\Visitor\Controllers\PurchaseController::class, 'visitorDetails'])->name('visitor-details');
+        Route::post('/visitor-details', [\App\Domain\Visitor\Controllers\PurchaseController::class, 'storeVisitorDetails'])->name('visitor-details.store');
+
+        Route::get('/attendee-details', [\App\Domain\Visitor\Controllers\PurchaseController::class, 'attendeeDetails'])->name('attendee-details');
+        Route::get('/summary', [\App\Domain\Visitor\Controllers\PurchaseController::class, 'summary'])->name('summary');
+        Route::get('/payment', [\App\Domain\Visitor\Controllers\PurchaseController::class, 'payment'])->name('payment');
+        Route::post('/payment/razorpay-order', [\App\Domain\Visitor\Controllers\PurchaseController::class, 'createRazorpayOrder'])->name('payment.razorpay-order');
+        Route::post('/payment/verify', [\App\Domain\Visitor\Controllers\PurchaseController::class, 'confirmPayment'])->name('payment.verify');
+        Route::post('/payment/confirm', [\App\Domain\Visitor\Controllers\PurchaseController::class, 'confirmPayment'])->name('payment.confirm');
+        Route::get('/confirmed', [\App\Domain\Visitor\Controllers\PurchaseController::class, 'confirmed'])->name('confirmed');
+        Route::get('/e-ticket', [\App\Domain\Visitor\Controllers\PurchaseController::class, 'eTicket'])->name('e-ticket');
+        Route::post('/send-ticket-email', [\App\Domain\Visitor\Controllers\PurchaseController::class, 'sendTicketEmail'])->name('send-ticket-email');
+        Route::get('/invoice', function () {
+            return view('frontend.events.tickets.invoice');
+        })->name('invoice');
     });
 
     Route::prefix('agenda')->name('agenda.')->group(function () {

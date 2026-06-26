@@ -21,7 +21,7 @@
             const passName = localStorage.getItem('selectedPassName');
             if (!passName) {
                 alert('Please select a pass first.');
-                window.location.href = "{{ route('exhibitions.tickets.select', $slug) }}";
+                window.location.href = "{{ route('exhibitions.tickets.pass-details', $slug) }}";
                 return;
             }
             const fields = ['first_name', 'last_name', 'email', 'mobile', 'job_title', 'company', 'country', 'state', 'city', 'industry', 'company_size', 'business_address', 'pavilion_id'];
@@ -35,7 +35,7 @@
             }
             if (!allFilled) {
                 alert('Please fill out all visitor details first.');
-                window.location.href = "{{ route('exhibitions.tickets.visitor-details', $slug) }}";
+                window.location.href = "{{ route('exhibitions.tickets.pass-details', $slug) }}";
             }
         })();
     </script>
@@ -190,7 +190,7 @@
                     <div class="mb-6 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
                         <div class="mb-5 flex items-center justify-between border-b border-gray-50 pb-4">
                             <h3 class="text-[15px] font-bold text-[#1E1B4B]">2. Visitor Details</h3>
-                            <a href="{{ route('exhibitions.tickets.visitor-details', $slug) }}?edit=true" class="flex items-center gap-1.5 text-[13px] font-bold text-primary-600 hover:underline">
+                            <a href="{{ route('exhibitions.tickets.pass-details', $slug) }}?edit=true" class="flex items-center gap-1.5 text-[13px] font-bold text-primary-600 hover:underline">
                                 <i class="ph ph-pencil-simple text-[15px]"></i> Edit
                             </a>
                         </div>
@@ -266,7 +266,7 @@
 
                     <!-- Bottom Buttons -->
                     <div class="pb-10">
-                        <a href="{{ route('exhibitions.tickets.visitor-details', $slug) }}?edit=true" class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 px-6 py-3 text-[14px] font-bold text-gray-600 shadow-sm transition-colors hover:bg-gray-50 sm:w-auto">
+                        <a href="{{ route('exhibitions.tickets.pass-details', $slug) }}?edit=true" class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 px-6 py-3 text-[14px] font-bold text-gray-600 shadow-sm transition-colors hover:bg-gray-50 sm:w-auto">
                             <i class="ph ph-arrow-left text-lg"></i> Back
                         </a>
                     </div>

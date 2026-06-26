@@ -27,7 +27,7 @@ class AdminCompanyManageController extends Controller
             ->take(10)
             ->get();
 
-        return view('backend.admin.companies.manage', [
+        return view('admin.companies.manage', [
             'company' => $company,
             'bookings' => $bookings,
             'events' => $events,

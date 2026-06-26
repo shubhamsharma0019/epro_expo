@@ -18,7 +18,7 @@ class BoothBrandingController extends BaseBoothSetupController
         $booking = $this->setupBooking($booking);
         $steps->markStepInProgress($booking, 'branding');
 
-        return view('backend.company.booth-setup.branding', $this->commonData($booking, $steps) + [
+        return view('company.booth-setup.branding', $this->commonData($booking, $steps) + [
             'branding' => $booking->boothBranding,
         ]);
     }

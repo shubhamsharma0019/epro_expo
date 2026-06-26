@@ -24,7 +24,7 @@ class TicketTypeController extends BaseCompanyEventController
     {
         $companyEvent = $this->setupEvent($companyEvent);
 
-        return view('backend.company.event-company-flow.ticket-setup', $this->commonData($companyEvent));
+        return view('company.event-company-flow.ticket-setup', $this->commonData($companyEvent));
     }
 
     public function store(CompanyEventTicketTypeRequest $request, ?CompanyEvent $companyEvent = null): RedirectResponse

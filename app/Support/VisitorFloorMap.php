@@ -14,11 +14,88 @@ class VisitorFloorMap
 
     private const CANVAS_HEIGHT = 400;
 
-    private const CORNER_POSITIONS = [
-        '18-28' => true,
-        '18-304' => true,
-        '640-304' => true,
-    ];
+    private const BOOTHS_PER_ROW = 10;
+
+    private const MAX_LAYOUT_BOOTHS = 40;
+
+    /** @return array{padding:int,gap:int,boothW:int,boothH:int,colStep:int,rowStep:int} */
+    public static function gridSpec(): array
+    {
+        static $spec = null;
+
+        if ($spec !== null) {
+            return $spec;
+        }
+
+        $padding = 10;
+        $gap = 2;
+        $rows = intdiv(self::MAX_LAYOUT_BOOTHS, self::BOOTHS_PER_ROW);
+        $boothW = (int) floor(
+            (self::CANVAS_WIDTH - (2 * $padding) - ((self::BOOTHS_PER_ROW - 1) * $gap)) / self::BOOTHS_PER_ROW
+        );
+        $boothH = (int) floor(
+            (self::CANVAS_HEIGHT - (2 * $padding) - (($rows - 1) * $gap)) / $rows
+        );
+
+        $spec = [
+            'padding' => $padding,
+            'gap' => $gap,
+            'boothW' => $boothW,
+            'boothH' => $boothH,
+            'colStep' => $boothW + $gap,
+            'rowStep' => $boothH + $gap,
+        ];
+
+        return $spec;
+    }
+
+    public static function boothWidth(): int
+    {
+        return self::gridSpec()['boothW'];
+    }
+
+    public static function boothHeight(): int
+    {
+        return self::gridSpec()['boothH'];
+    }
+
+    public static function gridColumnStep(): int
+    {
+        return self::gridSpec()['colStep'];
+    }
+
+    public static function gridRowStep(): int
+    {
+        return self::gridSpec()['rowStep'];
+    }
+
+    /** @return array{left:int,top:int,width:int,height:int} */
+    public static function boundsForGridRange(int $row, int $startCol, int $endCol): array
+    {
+        $spec = self::gridSpec();
+        $count = max($endCol - $startCol + 1, 1);
+
+        return [
+            'left' => $spec['padding'] + ($startCol * $spec['colStep']),
+            'top' => $spec['padding'] + ($row * $spec['rowStep']),
+            'width' => ($count * $spec['boothW']) + (($count - 1) * $spec['gap']),
+            'height' => $spec['boothH'],
+        ];
+    }
+
+    /** @return array{x:int,y:int,status:string} */
+    public static function layoutForIndex(int $index): array
+    {
+        $spec = self::gridSpec();
+        $column = $index % self::BOOTHS_PER_ROW;
+        $row = intdiv($index, self::BOOTHS_PER_ROW);
+
+        return [
+            'x' => $spec['padding'] + ($column * $spec['colStep']),
+            'y' => $spec['padding'] + ($row * $spec['rowStep']),
+            'status' => 'available',
+        ];
+    }
 
     private const CATEGORY_COLORS = [
         'technology' => '#5b2eff',
@@ -32,59 +109,34 @@ class VisitorFloorMap
         'retail' => '#0891B2',
     ];
 
-    /** @var array<int, array{x:int,y:int,status:string}> */
-    private static array $layoutByIndex = [
-        // B01–B10: top row, left → right
-        ['x' => 18, 'y' => 28, 'status' => 'reserved'],
-        ['x' => 78, 'y' => 30, 'status' => 'reserved'],
-        ['x' => 138, 'y' => 30, 'status' => 'reserved'],
-        ['x' => 198, 'y' => 30, 'status' => 'reserved'],
-        ['x' => 258, 'y' => 30, 'status' => 'reserved'],
-        ['x' => 318, 'y' => 30, 'status' => 'reserved'],
-        ['x' => 378, 'y' => 30, 'status' => 'available'],
-        ['x' => 438, 'y' => 30, 'status' => 'available'],
-        ['x' => 498, 'y' => 30, 'status' => 'available'],
-        ['x' => 558, 'y' => 30, 'status' => 'reserved'],
-        // B11–B20: middle row, left → right
-        ['x' => 18, 'y' => 248, 'status' => 'available'],
-        ['x' => 78, 'y' => 248, 'status' => 'available'],
-        ['x' => 138, 'y' => 248, 'status' => 'available'],
-        ['x' => 198, 'y' => 248, 'status' => 'available'],
-        ['x' => 258, 'y' => 248, 'status' => 'reserved'],
-        ['x' => 318, 'y' => 248, 'status' => 'reserved'],
-        ['x' => 378, 'y' => 248, 'status' => 'reserved'],
-        ['x' => 438, 'y' => 248, 'status' => 'reserved'],
-        ['x' => 498, 'y' => 248, 'status' => 'available'],
-        ['x' => 558, 'y' => 248, 'status' => 'available'],
-        // B21–B30: bottom row, left → right
-        ['x' => 18, 'y' => 304, 'status' => 'reserved'],
-        ['x' => 78, 'y' => 306, 'status' => 'available'],
-        ['x' => 138, 'y' => 306, 'status' => 'available'],
-        ['x' => 198, 'y' => 306, 'status' => 'available'],
-        ['x' => 258, 'y' => 306, 'status' => 'reserved'],
-        ['x' => 318, 'y' => 306, 'status' => 'reserved'],
-        ['x' => 378, 'y' => 306, 'status' => 'available'],
-        ['x' => 438, 'y' => 306, 'status' => 'available'],
-        ['x' => 498, 'y' => 306, 'status' => 'available'],
-        ['x' => 640, 'y' => 304, 'status' => 'reserved'],
-        // B31–B36: side row below top aisle, left → right (flanking center)
-        ['x' => 18, 'y' => 190, 'status' => 'available'],
-        ['x' => 78, 'y' => 190, 'status' => 'available'],
-        ['x' => 138, 'y' => 190, 'status' => 'available'],
-        ['x' => 438, 'y' => 190, 'status' => 'available'],
-        ['x' => 498, 'y' => 190, 'status' => 'available'],
-        ['x' => 558, 'y' => 190, 'status' => 'available'],
-        // B37–B40: large center booths
-        ['x' => 122, 'y' => 122, 'status' => 'available'],
-        ['x' => 252, 'y' => 122, 'status' => 'available'],
-        ['x' => 382, 'y' => 122, 'status' => 'available'],
-        ['x' => 512, 'y' => 122, 'status' => 'booked'],
-    ];
+    public static function layoutIndexForBoothNumber(string $number): ?int
+    {
+        $normalized = self::normalizeBoothNumber($number);
+
+        if (! preg_match('/^(\d+)/', $normalized, $matches)) {
+            return null;
+        }
+
+        $index = ((int) $matches[1]) - 1;
+
+        if ($index < 0 || $index >= self::MAX_LAYOUT_BOOTHS) {
+            return null;
+        }
+
+        return $index;
+    }
+
+    private static function isCornerIndex(int $index): bool
+    {
+        return in_array($index, [0, self::BOOTHS_PER_ROW - 1, self::MAX_LAYOUT_BOOTHS - self::BOOTHS_PER_ROW, self::MAX_LAYOUT_BOOTHS - 1], true);
+    }
 
     /** @return array<int, array{x:int,y:int,status:string}> */
     public static function layoutTemplate(): array
     {
-        return self::$layoutByIndex;
+        return collect(range(0, self::MAX_LAYOUT_BOOTHS - 1))
+            ->map(fn (int $index) => self::layoutForIndex($index))
+            ->all();
     }
 
     public static function syncBoothLayout(Booth $booth): void
@@ -99,32 +151,33 @@ class VisitorFloorMap
             ->values();
 
         $bookingMetaByBoothId = self::bookingMetaByBoothId($hall);
+        $bookedGroups = HallBookedBoothGroups::forHall($hall, $dbBooths);
+        $groupedBookedBoothIds = HallBookedBoothGroups::groupedBoothIds($bookedGroups);
 
-        $booths = $dbBooths->map(function (Booth $booth) use ($bookingMetaByBoothId) {
+        $booths = $dbBooths->map(function (Booth $booth) use ($bookingMetaByBoothId, $groupedBookedBoothIds) {
             $metrics = self::metricsForBooth($booth);
             $meta = $bookingMetaByBoothId->get((int) $booth->id, []);
             $state = self::resolveBoothState($booth, $meta);
+            $isGroupedBooking = in_array((int) $booth->id, $groupedBookedBoothIds, true);
 
             return [
                 'label' => self::formatBoothLabel($booth->booth_number),
                 'shape' => $metrics['shape'],
                 'left' => $metrics['left'],
                 'top' => $metrics['top'],
-                'state' => $state,
+                'state' => $isGroupedBooking ? 'booked' : $state,
                 'company' => $meta['company_name'] ?? null,
                 'width' => $metrics['width'],
                 'height' => $metrics['height'],
                 'font' => $metrics['font'],
                 'category' => $meta['category'] ?? null,
-                'is_hidden' => false,
+                'is_hidden' => $isGroupedBooking,
             ];
         })->values()->all();
 
-        $bookedGroups = self::bookedGroupsFromMeta($bookingMetaByBoothId, $dbBooths);
-
         return [
             'booths' => $booths,
-            'overlayBookedBoothGroups' => [],
+            'overlayBookedBoothGroups' => $bookedGroups->all(),
             'totalBoothsCount' => $dbBooths->count(),
             'availableBoothsCount' => collect($booths)->where('state', 'available')->count(),
             'selectedBoothsCount' => collect($booths)->where('state', 'selected')->count(),
@@ -136,36 +189,39 @@ class VisitorFloorMap
 
     public static function metricsForBooth(Booth $booth): array
     {
-        $left = (int) ($booth->position_x ?? 0);
-        $top = (int) ($booth->position_y ?? 0);
+        $layoutIndex = self::layoutIndexForBoothNumber((string) $booth->booth_number);
 
-        if ($left <= 0 && $top <= 0) {
-            $layout = self::layoutForBoothNumber($booth->booth_number);
-            $left = (int) ($layout['x'] ?? 16);
-            $top = (int) ($layout['y'] ?? 30);
-        }
-
-        $positionKey = $left . '-' . $top;
-
-        if (isset(self::CORNER_POSITIONS[$positionKey])) {
-            $width = 48;
-            $height = 44;
-            $shape = 'circle';
-            $font = 14;
-        } elseif ($top === 122) {
-            $width = 86;
-            $height = 70;
-            $shape = 'large';
-            $font = 18;
+        if ($layoutIndex !== null) {
+            $layout = self::layoutForIndex($layoutIndex);
+            $left = (int) $layout['x'];
+            $top = (int) $layout['y'];
         } else {
-            $width = 48;
-            $height = 44;
-            $shape = 'square';
-            $font = 14;
+            $left = (int) ($booth->position_x ?? 0);
+            $top = (int) ($booth->position_y ?? 0);
+
+            if ($left > 0 || $top > 0) {
+                $canonicalKey = HallBoothLayoutSync::canonicalPositionKey($left, $top);
+
+                if ($canonicalKey !== "{$left}-{$top}") {
+                    [$left, $top] = array_map('intval', explode('-', $canonicalKey));
+                }
+            }
+
+            if ($left <= 0 && $top <= 0) {
+                $left = self::gridSpec()['padding'];
+                $top = self::gridSpec()['padding'];
+            }
         }
 
-        $left = min($left, self::CANVAS_WIDTH - $width - 8);
-        $top = min($top, self::CANVAS_HEIGHT - $height - 8);
+        $width = self::boothWidth();
+        $height = self::boothHeight();
+        $isCorner = $layoutIndex !== null && self::isCornerIndex($layoutIndex);
+        $shape = $isCorner ? 'circle' : 'square';
+        $font = $isCorner ? 14 : 15;
+
+        $padding = self::gridSpec()['padding'];
+        $left = min($left, self::CANVAS_WIDTH - $width - $padding);
+        $top = min($top, self::CANVAS_HEIGHT - $height - $padding);
 
         return [
             'left' => $left,
@@ -302,7 +358,7 @@ class VisitorFloorMap
     /** @return Collection<int, Booth> */
     private static function templateBoothCollection(Hall $hall): Collection
     {
-        return collect(self::$layoutByIndex)->map(function (array $layout, int $index) use ($hall) {
+        return collect(self::layoutTemplate())->map(function (array $layout, int $index) use ($hall) {
             $number = 'B' . str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT);
 
             $booth = new Booth([
@@ -340,15 +396,9 @@ class VisitorFloorMap
     /** @return array{x:int,y:int,status:string}|null */
     private static function layoutForBoothNumber(string $number): ?array
     {
-        $normalized = self::normalizeBoothNumber($number);
+        $index = self::layoutIndexForBoothNumber($number);
 
-        if (! preg_match('/^(\d+)/', $normalized, $matches)) {
-            return null;
-        }
-
-        $index = ((int) $matches[1]) - 1;
-
-        return self::$layoutByIndex[$index] ?? null;
+        return $index === null ? null : self::layoutForIndex($index);
     }
 
     private static function normalizeBoothNumber(string $number): string

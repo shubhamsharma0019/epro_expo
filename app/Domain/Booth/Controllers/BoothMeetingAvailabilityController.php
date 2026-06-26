@@ -17,7 +17,7 @@ class BoothMeetingAvailabilityController extends BaseBoothSetupController
         $booking = $this->setupBooking($booking);
         $steps->markStepInProgress($booking, 'meetings');
 
-        return view('backend.company.booth-setup.meetings', $this->commonData($booking, $steps) + [
+        return view('company.booth-setup.meetings', $this->commonData($booking, $steps) + [
             'availability' => $booking->boothMeetingAvailability,
             'meetingSlots' => $booking->boothMeetingSlots()->orderBy('date')->orderBy('start_time')->get(),
             'teamMembers' => $booking->boothTeamMembers()->where('status', 'active')->get(),

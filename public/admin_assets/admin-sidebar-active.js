@@ -25,7 +25,7 @@
 
     function setActiveSidebarItem() {
         const currentPath = normalizePath(window.location.pathname);
-        const sidebar = document.querySelector('#admin-sidebar, aside');
+        const sidebar = document.querySelector('#admin-sidebar, #user-sidebar-aside, aside');
         if (!sidebar) {
             return;
         }

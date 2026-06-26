@@ -17,6 +17,7 @@ use App\Domain\Shared\Models\User;
 use App\Domain\Visitor\Models\VisitorTicket;
 use App\Domain\Admin\Services\DashboardMetrics;
 use App\Support\AdminAudit;
+use App\Support\HallBoothLayoutSync;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -28,7 +29,7 @@ class AdminContentController extends Controller
 {
     public function dashboard(DashboardMetrics $dashboardMetrics): View
     {
-        return view('backend.admin.dashboard.index', $dashboardMetrics->data());
+        return view('admin.dashboard.index', $dashboardMetrics->data());
     }
 
     public function companies(Request $request): View
@@ -47,7 +48,7 @@ class AdminContentController extends Controller
             })
             ->latest();
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'Company Management',
             'pageDescription' => 'Manage all registered companies on the platform.',
             'search' => $search,
@@ -130,7 +131,7 @@ class AdminContentController extends Controller
                 ];
             });
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'Company Approval',
             'pageDescription' => 'Review pending and rejected company registrations.',
             'search' => $search,
@@ -180,7 +181,7 @@ class AdminContentController extends Controller
 
     public function createCompany(): View
     {
-        return view('backend.admin.resources.form', [
+        return view('admin.resources.form', [
             'pageTitle' => 'Add Company',
             'pageDescription' => 'Register a new company on the platform.',
             'submitUrl' => route('admin.companies.store'),
@@ -248,7 +249,7 @@ class AdminContentController extends Controller
             })
             ->latest();
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'Exhibition Management',
             'pageDescription' => 'Manage all exhibitions on the platform.',
             'search' => $search,
@@ -312,7 +313,7 @@ class AdminContentController extends Controller
 
     public function createExhibition(): View
     {
-        return view('backend.admin.resources.form', [
+        return view('admin.resources.form', [
             'pageTitle' => 'Add Exhibition',
             'pageDescription' => 'Create a new exhibition record.',
             'submitUrl' => route('admin.exhibitions.store'),
@@ -322,6 +323,7 @@ class AdminContentController extends Controller
                 ['name' => 'location', 'label' => 'Location', 'type' => 'text'],
                 ['name' => 'start_date', 'label' => 'Start Date', 'type' => 'date'],
                 ['name' => 'end_date', 'label' => 'End Date', 'type' => 'date'],
+                ['name' => 'booth_booking_days', 'label' => 'Booth Booking Days', 'type' => 'number', 'required' => true, 'value' => 3, 'placeholder' => 'Number of exhibition days for booth booking'],
                 ['name' => 'status', 'label' => 'Status', 'type' => 'select', 'options' => ['active' => 'Active', 'draft' => 'Draft', 'published' => 'Published'], 'value' => 'active'],
                 ['name' => 'description', 'label' => 'Description', 'type' => 'textarea'],
             ],
@@ -334,7 +336,8 @@ class AdminContentController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'location' => ['nullable', 'string', 'max:255'],
             'start_date' => ['nullable', 'date'],
-            'end_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'booth_booking_days' => ['required', 'integer', 'min:1', 'max:60'],
             'status' => ['required', 'string', 'max:50'],
             'description' => ['nullable', 'string'],
         ]);
@@ -422,7 +425,7 @@ class AdminContentController extends Controller
             ->when($search !== '', fn ($builder) => $builder->where('title', 'like', '%' . $search . '%'))
             ->latest();
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'Pavilion Management',
             'pageDescription' => 'Manage pavilions linked to exhibitions.',
             'search' => $search,
@@ -459,7 +462,7 @@ class AdminContentController extends Controller
 
     public function createPavilion(): View
     {
-        return view('backend.admin.resources.form', [
+        return view('admin.resources.form', [
             'pageTitle' => 'Add Pavilion',
             'pageDescription' => 'Create a new pavilion inside an exhibition.',
             'submitUrl' => route('admin.pavilions.store'),
@@ -495,7 +498,7 @@ class AdminContentController extends Controller
 
     public function editPavilion(Pavilion $pavilion): View
     {
-        return view('backend.admin.resources.form', [
+        return view('admin.resources.form', [
             'pageTitle' => 'Edit Pavilion',
             'pageDescription' => 'Edit the pavilion details.',
             'submitUrl' => route('admin.pavilions.update', $pavilion->id),
@@ -540,7 +543,7 @@ class AdminContentController extends Controller
             ->when($search !== '', fn ($builder) => $builder->where('title', 'like', '%' . $search . '%'))
             ->latest();
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'Hall Management',
             'pageDescription' => 'Manage halls and booth capacity under each pavilion.',
             'search' => $search,
@@ -576,7 +579,7 @@ class AdminContentController extends Controller
 
     public function createHall(): View
     {
-        return view('backend.admin.resources.form', [
+        return view('admin.resources.form', [
             'pageTitle' => 'Add Hall',
             'pageDescription' => 'Create a new hall under a pavilion.',
             'submitUrl' => route('admin.halls.store'),
@@ -601,6 +604,11 @@ class AdminContentController extends Controller
 
         $hall = Hall::create($data + ['slug' => Str::slug($data['title']), 'total_booths' => 0]);
 
+        $boothSizes = HallBoothLayoutSync::resolveBoothSizes();
+        if ($boothSizes->isNotEmpty()) {
+            HallBoothLayoutSync::sync($hall, $boothSizes);
+        }
+
         AdminAudit::log('hall_created', 'halls', 'hall', $hall->id, [
             'title' => $data['title'],
             'status' => $data['status'],
@@ -611,7 +619,7 @@ class AdminContentController extends Controller
 
     public function editHall(Hall $hall): View
     {
-        return view('backend.admin.resources.form', [
+        return view('admin.resources.form', [
             'pageTitle' => 'Edit Hall',
             'pageDescription' => 'Edit the hall details.',
             'submitUrl' => route('admin.halls.update', $hall->id),
@@ -657,7 +665,7 @@ class AdminContentController extends Controller
             ->when($search !== '', fn ($builder) => $builder->where('booth_number', 'like', '%' . $search . '%'))
             ->latest();
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'Booth Management',
             'pageDescription' => 'Manage booth inventory and assignment status.',
             'search' => $search,
@@ -712,7 +720,7 @@ class AdminContentController extends Controller
             })
             ->all();
 
-        return view('backend.admin.resources.form', [
+        return view('admin.resources.form', [
             'pageTitle' => 'Add Booth',
             'pageDescription' => 'Create a booth slot inside a hall.',
             'submitUrl' => route('admin.booths.store'),
@@ -761,7 +769,7 @@ class AdminContentController extends Controller
             })
             ->all();
 
-        return view('backend.admin.resources.form', [
+        return view('admin.resources.form', [
             'pageTitle' => 'Edit Booth',
             'pageDescription' => 'Edit the booth slot details.',
             'submitUrl' => route('admin.booths.update', $booth->id),
@@ -806,7 +814,7 @@ class AdminContentController extends Controller
             ->when($search !== '', fn ($builder) => $builder->where('title', 'like', '%' . $search . '%'))
             ->latest();
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'Event Management',
             'pageDescription' => 'Review company-created event inventory.',
             'search' => $search,
@@ -843,7 +851,7 @@ class AdminContentController extends Controller
             ->when($search !== '', fn ($builder) => $builder->where('order_number', 'like', '%' . $search . '%'))
             ->latest();
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'Ticket Management',
             'pageDescription' => 'Track booked event tickets and attendee allocations.',
             'search' => $search,
@@ -910,7 +918,7 @@ class AdminContentController extends Controller
                 ];
             });
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'Payments',
             'pageDescription' => 'Monitor incoming revenue across booth bookings and ticket sales.',
             'search' => '',
@@ -936,7 +944,7 @@ class AdminContentController extends Controller
             ->when($search !== '', fn ($builder) => $builder->where('subject', 'like', '%' . $search . '%'))
             ->latest();
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'Enquiries',
             'pageDescription' => 'Track all platform enquiries sent to companies.',
             'search' => $search,
@@ -972,7 +980,7 @@ class AdminContentController extends Controller
             ->when($search !== '', fn ($builder) => $builder->where('name', 'like', '%' . $search . '%'))
             ->latest();
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'Users',
             'pageDescription' => 'Review registered user accounts and visitor roles.',
             'search' => $search,
@@ -1008,7 +1016,7 @@ class AdminContentController extends Controller
         $data['pageTitle'] = 'Exhibition Lifecycle';
         $data['pageDescription'] = 'Track exhibition status from draft through publish and completion.';
 
-        return view('backend.admin.resources.index', $data);
+        return view('admin.resources.index', $data);
     }
 
     public function boothEngineeringReview(Request $request): View
@@ -1037,7 +1045,7 @@ class AdminContentController extends Controller
                 ];
             });
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'Booth Engineering Review',
             'pageDescription' => 'Engineering and compliance review for submitted booth setups.',
             'search' => '',
@@ -1081,7 +1089,7 @@ class AdminContentController extends Controller
                 ];
             });
 
-        return view('backend.admin.resources.index', [
+        return view('admin.resources.index', [
             'pageTitle' => 'Event Logistics Review',
             'pageDescription' => 'Review event logistics, venue, and operational readiness.',
             'search' => '',
@@ -1108,7 +1116,7 @@ class AdminContentController extends Controller
     {
         $data = $dashboardMetrics->data();
 
-        return view('backend.admin.reports.dynamic', $data);
+        return view('admin.reports.dynamic', $data);
     }
 
     public function resolveImportedPage(string $page): RedirectResponse|View
@@ -1196,8 +1204,8 @@ class AdminContentController extends Controller
             return redirect($aliases[$page]);
         }
 
-        $legacyView = 'backend.admin.legacy.' . $page;
-        $view = view()->exists($legacyView) ? $legacyView : 'backend.admin.' . $page;
+        $legacyView = 'admin.legacy.' . $page;
+        $view = view()->exists($legacyView) ? $legacyView : 'admin.' . $page;
         abort_unless(view()->exists($view), 404);
 
         return view($view);

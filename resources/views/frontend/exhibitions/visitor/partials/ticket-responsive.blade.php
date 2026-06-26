@@ -2,6 +2,29 @@
     html, body { overflow-x: hidden; max-width: 100%; }
     .ticket-flow-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .ticket-flow-stepper { overflow-x: auto; padding-bottom: 0.25rem; -webkit-overflow-scrolling: touch; }
+    @media (min-width: 1024px) {
+        #exhibition-sidebar {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            bottom: 0 !important;
+            width: 260px !important;
+            transform: translateX(0) !important;
+            z-index: 50 !important;
+        }
+
+        body:has(#exhibition-sidebar) {
+            padding-left: 260px !important;
+            box-sizing: border-box !important;
+        }
+
+        body:has(#exhibition-sidebar) main {
+            margin-left: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+        }
+    }
     @media (max-width: 1023px) {
         .ticket-flow-main { padding-left: 1rem !important; padding-right: 1rem !important; }
         .ticket-flow-two-col { flex-direction: column !important; }

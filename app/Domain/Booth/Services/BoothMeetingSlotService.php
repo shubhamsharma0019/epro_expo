@@ -45,6 +45,7 @@ class BoothMeetingSlotService
                         'max_capacity' => $availability->max_capacity ?? 1,
                         'allow_one_to_one' => (bool) ($availability->allow_one_to_one ?? true),
                         'allow_one_to_many' => (bool) ($availability->allow_one_to_many ?? false),
+                        'allow_conference' => (bool) ($availability->allow_conference ?? false),
                     ]);
                 }
 

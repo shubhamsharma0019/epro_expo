@@ -125,116 +125,57 @@
             $reservedBoothsCount = 0;
         }
     } else {
-        // Fetch dynamic bookings for the current exhibition
-        $exhibition = \App\Domain\Event\Models\Exhibition::where('slug', $slug)->first();
-        $liveBookings = $exhibition 
-            ? \App\Domain\Booth\Models\BoothBooking::with(['company', 'boothProfile', 'booth'])
-                ->where('exhibition_id', $exhibition->id)
-                ->where('payment_status', 'paid')
-                ->whereIn('booking_status', ['confirmed', 'active'])
-                ->get()
-            : collect();
+        $dbHall = \App\Domain\Event\Models\Hall::query()
+            ->where('status', 'active')
+            ->whereHas('booths')
+            ->with('booths.boothSize')
+            ->orderBy('id')
+            ->first();
 
-        $staticBooths = [
-            ['01', 'circle', 18, 28, 'reserved'],
-            ['02', 'square', 78, 30, 'reserved'],
-            ['03', 'square', 138, 30, 'reserved'],
-            ['04', 'square', 198, 30, 'reserved'],
-            ['05', 'square', 258, 30, 'reserved'],
-            ['06', 'square', 318, 30, 'reserved'],
-            ['07', 'square', 386, 30, 'available'],
-            ['08', 'square', 446, 30, 'available'],
-            ['09', 'square', 506, 30, 'available'],
-            ['10', 'circle', 640, 28, 'reserved'],
-            ['11', 'square', 18, 82, 'available'],
-            ['12', 'square', 640, 82, 'available'],
-            ['13', 'square', 18, 136, 'available'],
-            ['14', 'square', 640, 136, 'available'],
-            ['15', 'square', 18, 190, 'available'],
-            ['16', 'square', 640, 190, 'available'],
-            ['19', 'square', 18, 244, 'available'],
-            ['18', 'square', 640, 244, 'available'],
-            ['21', 'circle', 18, 304, 'reserved'],
-            ['32', 'circle', 640, 304, 'reserved'],
-            ['22', 'large', 120, 122, 'booked', 'Microsoft'],
-            ['17', 'large', 250, 122, 'warning'],
-            ['16A', 'large', 380, 122, 'available'],
-            ['18A', 'large', 510, 122, 'booked', 'Google'],
-            
-            // This is our dynamically selected booth starting at 24
-            ['24', 'custom', 78, 248, 'selected', '', $w, $h],
-            ['25', 'square', 138, 248, 'available'],
-            ['26', 'square', 198, 248, 'reserved'],
-            ['27', 'square', 258, 248, 'reserved'],
-            ['28', 'square', 318, 248, 'reserved'],
-            ['29', 'square', 386, 248, 'reserved'],
-            
-            ['30', 'custom', 446, 248, 'booked', 'Amazon', 108, 44], // Mocking a 6x3 booked booth
-            // 31 is hidden by Amazon's 6x3 booth
-            
-            ['44', 'square', 78, 306, 'available'],
-            ['45', 'square', 138, 306, 'available'],
-            ['46', 'square', 198, 306, 'reserved'],
-            ['47', 'square', 258, 306, 'reserved'],
-            ['48', 'square', 318, 306, 'available'],
-            ['49', 'square', 386, 306, 'available'],
-            ['50', 'square', 446, 306, 'available'],
-            ['51', 'square', 506, 306, 'available'],
-        ];
+        if ($dbHall && $dbHall->booths->isNotEmpty()) {
+            $resolvedMap = \App\Support\VisitorFloorMap::prepare($dbHall);
+            $mapped = $mapFromVisitorFloorMap($resolvedMap);
+            $booths = $mapped['booths'];
+            $overlayBookedBoothGroups = $mapped['overlayBookedBoothGroups'];
+            $totalBoothsCount = $mapped['totalBoothsCount'];
+            $availableBoothsCount = $mapped['availableBoothsCount'];
+            $selectedBoothsCount = $mapped['selectedBoothsCount'];
+            $bookedBoothsCount = $mapped['bookedBoothsCount'];
+            $reservedBoothsCount = $mapped['reservedBoothsCount'];
+        } else {
+            $booths = collect(\App\Support\VisitorFloorMap::layoutTemplate())
+                ->map(function (array $layout, int $index) use ($hideList, $formatBoothLabel) {
+                    $boothNumber = 'B' . str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT);
+                    $label = $formatBoothLabel($boothNumber);
+                    $booth = new \App\Domain\Booth\Models\Booth([
+                        'booth_number' => $boothNumber,
+                        'position_x' => $layout['x'],
+                        'position_y' => $layout['y'],
+                        'status' => $layout['status'],
+                    ]);
+                    $metrics = \App\Support\VisitorFloorMap::metricsForBooth($booth);
 
-        $bookedBoothGroups = collect();
-        $overlayBookedBoothGroups = collect();
-        $groupedBookedBoothIds = [];
+                    return [
+                        $label,
+                        $metrics['shape'],
+                        $metrics['left'],
+                        $metrics['top'],
+                        $layout['status'],
+                        null,
+                        $metrics['width'],
+                        $metrics['height'],
+                        'is_hidden' => in_array($label, $hideList, true) || in_array((string) ($index + 1), $hideList, true),
+                    ];
+                })
+                ->all();
 
-        $booths = [];
-        foreach ($staticBooths as $b) {
-            $label = $b[0];
-            $shape = $b[1];
-            $left = $b[2];
-            $top = $b[3];
-            $state = $b[4];
-            $company = $b[5] ?? null;
-            $width = $b[6] ?? null;
-            $height = $b[7] ?? null;
-
-            // Try to match a live booking from DB
-            $dbBoothNumber = $normalizeBoothNumber($label);
-            $booking = $liveBookings->first(function ($bk) use ($dbBoothNumber, $normalizeBoothNumber) {
-                // Match main booth number
-                if ($normalizeBoothNumber($bk->booth->booth_number ?? '') === $dbBoothNumber) {
-                    return true;
-                }
-                // Match selected booth ids or json format array
-                if ($bk->selected_booth_ids) {
-                    $ids = is_string($bk->selected_booth_ids) ? json_decode($bk->selected_booth_ids, true) : $bk->selected_booth_ids;
-                    if (is_array($ids)) {
-                        foreach ($ids as $id) {
-                            $boothRecord = \App\Domain\Booth\Models\Booth::find($id);
-                            if ($boothRecord && $normalizeBoothNumber($boothRecord->booth_number) === $dbBoothNumber) {
-                                return true;
-                            }
-                        }
-                    }
-                }
-                return false;
-            });
-
-            if ($booking) {
-                $state = 'booked';
-                $company = $booking->boothProfile?->company_name ?: $booking->company?->company_name ?: $booking->company?->name;
-            }
-
-            $booths[] = [
-                $label, $shape, $left, $top, $state, $company, $width, $height,
-                'is_hidden' => in_array($label, $hideList)
-            ];
+            $overlayBookedBoothGroups = collect();
+            $totalBoothsCount = count($booths);
+            $availableBoothsCount = collect($booths)->where(fn ($booth) => $booth[4] === 'available')->count();
+            $selectedBoothsCount = collect($booths)->where(fn ($booth) => $booth[4] === 'selected')->count();
+            $bookedBoothsCount = collect($booths)->where(fn ($booth) => $booth[4] === 'booked')->count();
+            $reservedBoothsCount = collect($booths)->where(fn ($booth) => $booth[4] === 'reserved')->count();
         }
-
-        $totalBoothsCount = 60;
-        $availableBoothsCount = 45;
-        $selectedBoothsCount = 1;
-        $bookedBoothsCount = 12;
-        $reservedBoothsCount = 2;
     }
 @endphp
 
@@ -257,48 +198,6 @@
 
                     <div class="floor-map-canvas relative w-[720px] max-w-none rounded-md border border-[#BFC8DE] bg-[#F8FAFF]" style="height: 380px; min-height: 380px;">
 
-                        @if (isset($overlayBookedBoothGroups) && $showDetailsPanel && ! $isVisitorMap)
-                            @foreach ($overlayBookedBoothGroups as $group)
-                                @php
-                                    $groupCompany = $group['company_name'] ?? 'Booked Company';
-                                    $groupNumbers = $group['booth_numbers'] ?? [];
-                                    $groupLabel = count($groupNumbers) > 1
-                                        ? count($groupNumbers) . ' booths'
-                                        : 'Booth ' . $formatBoothLabel($groupNumbers[0] ?? '');
-                                    $groupCompanySlug = \Illuminate\Support\Str::slug($groupCompany);
-                                    $groupCompanyUrl = route('exhibitions.visitor.companies.show', [$slug, $groupCompanySlug]);
-                                    $groupSegments = $group['segments'] ?? [[
-                                        'left' => (int) ($group['left'] ?? 0),
-                                        'top' => (int) ($group['top'] ?? 0),
-                                        'width' => max((int) ($group['width'] ?? 48), 48),
-                                        'height' => max((int) ($group['height'] ?? 44), 44),
-                                    ]];
-                                @endphp
-                                @foreach ($groupSegments as $segmentIndex => $segment)
-                                    @php
-                                        $groupLeft = (int) ($segment['left'] ?? 0);
-                                        $groupTop = (int) ($segment['top'] ?? 0);
-                                        $groupWidth = max((int) ($segment['width'] ?? 48), 48);
-                                        $groupHeight = max((int) ($segment['height'] ?? 44), 44);
-                                    @endphp
-                                    <button
-                                        type="button"
-                                        style="position: absolute; left: {{ $groupLeft }}px; top: {{ $groupTop }}px; width: {{ $groupWidth }}px; height: {{ $groupHeight }}px; z-index: 20;"
-                                        class="absolute flex cursor-pointer flex-col items-center justify-center rounded-md bg-[#7B7B7B] px-2 text-center text-[12px] font-bold text-white shadow-sm transition hover:scale-[1.02]"
-                                        title="{{ $groupCompany }} - {{ implode(', ', $groupNumbers) }}"
-                                        onclick="window.location.href='{{ $groupCompanyUrl }}'">
-                                        @if ($segmentIndex === 0)
-                                            @if (! empty($group['logo_url']))
-                                                <img src="{{ $group['logo_url'] }}" alt="{{ $groupCompany }}" class="mb-1 h-6 w-6 rounded-full object-cover" onerror="this.remove();">
-                                            @endif
-                                            <span class="w-full truncate px-1 text-[9px] leading-tight">{{ $groupLabel }}</span>
-                                            <span class="mt-0.5 w-full truncate px-1 text-[8px] font-semibold leading-tight opacity-90">{{ \Illuminate\Support\Str::limit($groupCompany, 10) }}</span>
-                                        @endif
-                                    </button>
-                                @endforeach
-                            @endforeach
-                        @endif
-
                         @foreach ($booths as $booth)
                             @php
                                 $label = $booth[0];
@@ -314,8 +213,8 @@
 
                                 if ($isHidden) continue;
 
-                                $boothWidth = (int) ($width ?: ($shape === 'large' ? 86 : 48));
-                                $boothHeight = (int) ($height ?: ($shape === 'large' ? 70 : 44));
+                                $boothWidth = (int) ($width ?: ($shape === 'large' ? 86 : \App\Support\VisitorFloorMap::boothWidth()));
+                                $boothHeight = (int) ($height ?: ($shape === 'large' ? 70 : \App\Support\VisitorFloorMap::boothHeight()));
                                 $palette = $stateColors[$state] ?? $stateColors['available'];
                                 $style = "position: absolute; left: {$left}px; top: {$top}px; z-index: 10; width: {$boothWidth}px; height: {$boothHeight}px; display: flex; align-items: center; justify-content: center; flex-direction: column; font-size: " . ($shape === 'large' ? '18px' : '14px') . "; font-weight: 600; border-radius: " . ($shape === 'circle' ? '9999px' : '6px') . "; box-shadow: 0 1px 2px rgba(7,16,68,0.12);";
 
@@ -362,11 +261,11 @@
                                 
                                 @if($company && $state === 'booked' && $shape === 'large')
                                     <img src="https://ui-avatars.com/api/?name={{ urlencode($company) }}&background=e0e7ff&color=4B18D9&size=24&rounded=true" class="mb-1 h-6 w-6" alt="{{ $company }}">
-                                    <span class="w-full truncate px-1 text-[9px] leading-tight">{{ $company }}</span>
+                                    <span class="w-full whitespace-normal break-words px-1 text-[9px] leading-tight" title="{{ $company }}">{{ $company }}</span>
                                 @elseif($company && $state === 'booked')
                                     <span class="text-[12px] font-bold leading-none">{{ $label }}</span>
                                     @unless ($isVisitorMap)
-                                        <span class="mt-0.5 w-full truncate px-1 text-[8px] font-semibold leading-tight opacity-90">{{ \Illuminate\Support\Str::limit($company, 8) }}</span>
+                                        <span class="mt-0.5 w-full whitespace-normal break-words px-1 text-[8px] font-semibold leading-tight opacity-90" title="{{ $company }}">{{ $company }}</span>
                                     @endunless
                                 @else
                                     {{ $label }}
@@ -374,6 +273,45 @@
                                 
                             </button>
                         @endforeach
+
+                        @if (collect($overlayBookedBoothGroups ?? [])->isNotEmpty())
+                            @foreach ($overlayBookedBoothGroups as $group)
+                                @php
+                                    $groupCompany = $group['company_name'] ?? 'Booked Company';
+                                    $groupNumbers = $group['booth_numbers'] ?? [];
+                                    $groupCompanySlug = \Illuminate\Support\Str::slug($groupCompany);
+                                    $groupCompanyUrl = filled($slug ?? null)
+                                        ? route('exhibitions.visitor.companies.show', [$slug, $groupCompanySlug])
+                                        : null;
+                                    $groupSegments = $group['segments'] ?? [[
+                                        'left' => (int) ($group['left'] ?? 0),
+                                        'top' => (int) ($group['top'] ?? 0),
+                                        'width' => max((int) ($group['width'] ?? 48), 48),
+                                        'height' => max((int) ($group['height'] ?? 44), 44),
+                                    ]];
+                                @endphp
+                                @foreach ($groupSegments as $segmentIndex => $segment)
+                                    @php
+                                        $groupLeft = (int) ($segment['left'] ?? 0);
+                                        $groupTop = (int) ($segment['top'] ?? 0);
+                                        $groupWidth = max((int) ($segment['width'] ?? 48), 48);
+                                        $groupHeight = max((int) ($segment['height'] ?? 44), 44);
+                                    @endphp
+                                    <button
+                                        type="button"
+                                        style="position: absolute; left: {{ $groupLeft }}px; top: {{ $groupTop }}px; width: {{ $groupWidth }}px; height: {{ $groupHeight }}px; z-index: 40;"
+                                        class="absolute flex cursor-pointer flex-col items-center justify-center gap-1 rounded-md bg-[#7B7B7B] px-1.5 py-1 text-center font-bold text-white shadow-sm transition hover:scale-[1.02]"
+                                        title="{{ $groupCompany }} - {{ implode(', ', $groupNumbers) }}"
+                                        @if ($groupCompanyUrl) onclick="window.location.href='{{ $groupCompanyUrl }}'" @endif>
+                                        @include('shared.floor-map.booked-group-segment', [
+                                            'group' => $group,
+                                            'segment' => $segment,
+                                            'segmentIndex' => $segmentIndex,
+                                        ])
+                                    </button>
+                                @endforeach
+                            @endforeach
+                        @endif
 
                         @if (empty($booths))
                             <div class="absolute inset-0 flex items-center justify-center px-6 text-center text-[15px] font-semibold text-[#5A6480]">

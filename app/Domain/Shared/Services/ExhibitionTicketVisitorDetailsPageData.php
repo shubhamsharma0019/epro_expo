@@ -96,9 +96,13 @@ class ExhibitionTicketVisitorDetailsPageData
             $industries = collect(['Technology', 'Healthcare', 'Finance', 'Education', 'Manufacturing', 'Automotive']);
         }
 
+        $user = auth()->user();
+        $nameParts = $user ? preg_split('/\s+/', trim($user->name), 2) : [];
+
         return [
             'slug' => $slug,
             'exhibition' => $exhibition,
+            'tiers' => ExhibitionTicketFlow::ticketTiers($exhibition),
             'title' => $title,
             'bannerImage' => $bannerImage,
             'dateStr' => $dateStr,
@@ -112,6 +116,42 @@ class ExhibitionTicketVisitorDetailsPageData
             'companySizes' => $companySizes,
             'defaultCountry' => $countries->first(),
             'showVisitorSidebar' => ExhibitionTicketFlow::shouldShowVisitorSidebar($slug),
+            'prefill' => [
+                'name' => old('name', $user?->name ?? ''),
+                'email' => old('email', $user?->email ?? ''),
+                'phone' => old('phone', $user?->phone ?? ''),
+                'gender' => old('gender', $user?->gender ?? ''),
+                'city' => old('city', $user?->city ?? ''),
+                'first_name' => old('first_name', $nameParts[0] ?? ''),
+                'last_name' => old('last_name', $nameParts[1] ?? ''),
+            ],
+        ];
+    }
+
+    /** @return array<string, mixed>|null */
+    public function buildRegistration(string $slug): ?array
+    {
+        $data = $this->build($slug);
+
+        if ($data === null) {
+            return null;
+        }
+
+        $minTier = $data['tiers']->sortBy('price')->first();
+        $priceLabel = $minTier
+            ? '₹' . number_format((float) $minTier->price, 0)
+            : 'Free';
+
+        return [
+            'slug' => $data['slug'],
+            'title' => $data['title'],
+            'bannerImage' => $data['bannerImage'],
+            'dateStr' => $data['dateStr'],
+            'location' => $data['location'],
+            'timeStr' => $data['timeStr'],
+            'priceLabel' => $priceLabel,
+            'showVisitorSidebar' => $data['showVisitorSidebar'],
+            'prefill' => $data['prefill'],
         ];
     }
 

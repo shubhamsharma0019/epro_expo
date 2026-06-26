@@ -20,10 +20,10 @@
 <body class="h-screen overflow-hidden bg-gray-50 font-outfit text-gray-900 antialiased">
     <div id="company-sidebar-overlay" class="fixed inset-0 z-40 hidden bg-gray-900/40 lg:hidden"></div>
     <div class="flex h-screen overflow-hidden">
-        @include('backend.company.layout.sidebar')
+        @include('company.layout.sidebar')
 
         <div class="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
-            @include('backend.company.layout.topbar')
+            @include('company.layout.topbar')
 
             @if (session('admin_impersonator_id'))
                 <div class="border-b border-amber-200 bg-amber-50 px-4 py-3 text-[13px] font-semibold text-amber-900 sm:px-8">
@@ -41,7 +41,7 @@
         </div>
     </div>
     @stack('scripts')
-    @include('backend.company.layout.scripts')
+    @include('company.layout.scripts')
 </body>
 
 </html>

@@ -15,6 +15,7 @@ class VisitorMeetingBooking extends Model
 
     protected $fillable = [
         'company_meeting_id',
+        'booth_session_id',
         'company_id',
         'visitor_id',
         'visitor_name',

@@ -15,7 +15,7 @@ class BoothTeamMemberController extends BaseBoothSetupController
     public function index(BoothBooking $booking, BoothSetupStepService $steps): View
     {
         $booking = $this->setupBooking($booking);
-        return view('backend.company.booth-setup.team', $this->commonData($booking, $steps) + ['teamMembers' => $booking->boothTeamMembers()->latest()->get()]);
+        return view('company.booth-setup.team', $this->commonData($booking, $steps) + ['teamMembers' => $booking->boothTeamMembers()->latest()->get()]);
     }
     public function create(BoothBooking $booking, BoothSetupStepService $steps): View { return $this->index($booking, $steps); }
     public function show(BoothBooking $booking, BoothTeamMember $teamMember, BoothSetupStepService $steps): View { return $this->edit($booking, $teamMember, $steps); }
@@ -35,7 +35,7 @@ class BoothTeamMemberController extends BaseBoothSetupController
     {
         abort_unless($teamMember->company_id === (int) session('company_id') && $teamMember->booth_booking_id === $booking->id, 403);
         $booking = $this->setupBooking($booking);
-        return view('backend.company.booth-setup.team', $this->commonData($booking, $steps) + ['teamMember' => $teamMember, 'teamMembers' => $booking->boothTeamMembers()->latest()->get()]);
+        return view('company.booth-setup.team', $this->commonData($booking, $steps) + ['teamMember' => $teamMember, 'teamMembers' => $booking->boothTeamMembers()->latest()->get()]);
     }
     public function update(BoothTeamMemberRequest $request, BoothBooking $booking, BoothTeamMember $teamMember, BoothFileUploadService $files, BoothSetupStepService $steps): RedirectResponse
     {

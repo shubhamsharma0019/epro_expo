@@ -19,6 +19,7 @@ class BoothMeetingSlot extends Model
             'max_capacity' => 'integer',
             'allow_one_to_one' => 'boolean',
             'allow_one_to_many' => 'boolean',
+            'allow_conference' => 'boolean',
         ];
     }
 

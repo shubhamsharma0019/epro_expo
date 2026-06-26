@@ -89,6 +89,18 @@ class DatabaseOutageResponse
                 ->withInput($request->except('password', 'password_confirmation'))
                 ->withErrors(['email' => 'Database is unavailable. Start MySQL80, then try again.']),
 
+            in_array($routeName, [
+                'exhibitions.visitor.register.store',
+                'exhibitions.visitor.login.store',
+                'frontend.user.register.store',
+                'frontend.user.login.store',
+                'events.visitor.register.store',
+                'events.visitor.login.store',
+            ], true) => redirect()
+                ->back()
+                ->withInput($request->except('password', 'password_confirmation'))
+                ->withErrors(['email' => 'Database is unavailable. Start MySQL80, then try again.']),
+
             default => self::forAuthPath($request, $path) ?? response()->view('errors.database-offline', [
                 'retryUrl' => $request->fullUrl(),
             ], 503),
