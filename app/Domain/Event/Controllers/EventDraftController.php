@@ -171,7 +171,7 @@ class EventDraftController extends BaseCompanyEventController
                     'endsAt' => '2026-10-05 22:00:00',
                     'timezone' => 'Asia/Kolkata',
                     'venueName' => 'Skyline Lounge & Rooftop',
-                    'venueAddress' => 'Mumbai, India',
+                    'venueAddress' => 'Bandra Kurla Complex, Mumbai, India',
                     'city' => 'Mumbai',
                     'country' => 'India',
                     'website' => 'https://foundersmixer.com',

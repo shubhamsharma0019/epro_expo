@@ -129,7 +129,7 @@
                         <div class="relative">
                             <select name="country" class="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-[#6B7280] text-[14px] focus:outline-none focus:border-[#3D1B9B] focus:ring-1 focus:ring-[#3D1B9B] appearance-none bg-white cursor-pointer">
                                 <option value="">Select country</option>
-                                @foreach (['United States', 'Canada', 'United Kingdom', 'India'] as $country)
+                                @foreach (['India', 'United States', 'Canada', 'United Kingdom'] as $country)
                                     <option @selected(old('country', $profile?->country) === $country)>{{ $country }}</option>
                                 @endforeach
                             </select>

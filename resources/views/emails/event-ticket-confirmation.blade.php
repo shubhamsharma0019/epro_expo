@@ -9,7 +9,7 @@
     $event = $ticket->companyEvent;
     $eventName = $event?->title ?? $ticket->ticket_name ?? 'Event';
     $dateInfo = $event?->starts_at?->format('M d, Y') ?? 'Date TBD';
-    $venue = collect([$event?->venue_name, $event?->city, $event?->country])->filter()->join(', ') ?: 'Venue TBD';
+    $venue = \App\Support\LiveContent::formatCompanyEventVenue($event);
 @endphp
 <table width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;">
     <tr>
@@ -25,14 +25,21 @@
 
             <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
                 <tr><td style="padding:8px 0;font-size:14px;color:#64748b;">Order Number</td><td style="padding:8px 0;font-size:14px;font-weight:700;text-align:right;">{{ $ticket->order_number }}</td></tr>
+                @if ($issuedTicket ?? null)
+                    <tr><td style="padding:8px 0;font-size:14px;color:#64748b;">Ticket Number</td><td style="padding:8px 0;font-size:14px;font-weight:700;text-align:right;">{{ $issuedTicket->ticket_no }}</td></tr>
+                @endif
                 <tr><td style="padding:8px 0;font-size:14px;color:#64748b;">Date</td><td style="padding:8px 0;font-size:14px;font-weight:700;text-align:right;">{{ $dateInfo }}</td></tr>
                 <tr><td style="padding:8px 0;font-size:14px;color:#64748b;">Venue</td><td style="padding:8px 0;font-size:14px;font-weight:700;text-align:right;">{{ $venue }}</td></tr>
                 <tr><td style="padding:8px 0;font-size:14px;color:#64748b;">Ticket Type</td><td style="padding:8px 0;font-size:14px;font-weight:700;text-align:right;">{{ $ticket->ticket_name }} × {{ $ticket->quantity }}</td></tr>
             </table>
 
             <div style="text-align:center;margin:24px 0;">
-                <img src="{{ $qrImageUrl }}" alt="Ticket QR Code" width="180" height="180" style="border:1px solid #e2e8f0;border-radius:12px;">
+                <img src="{{ $message->embedData($qrSvg, 'ticket-qr.svg', 'image/svg+xml') }}" alt="Ticket QR Code" width="220" height="220" style="display:block;margin:0 auto;border:1px solid #e2e8f0;border-radius:12px;background:#ffffff;">
             </div>
+
+            <p style="margin:0 0 16px;text-align:center;">
+                <a href="{{ $qrTicketUrl }}" style="display:inline-block;padding:12px 20px;background:#4318FF;color:#ffffff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:700;">View QR Ticket</a>
+            </p>
 
             <p style="margin:0;font-size:13px;color:#64748b;line-height:1.6;">Keep this email handy. You can also view and download your ticket from your visitor dashboard.</p>
         </td>

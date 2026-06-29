@@ -42,7 +42,7 @@
                         <div>
                             <h3 class="mb-5 text-[16px] font-bold text-[#1F2A6A]">Event Summary</h3>
                             <div class="flex flex-col sm:flex-row items-start gap-5 rounded-xl border border-[#E8E3F0] p-4 bg-[#FAFAFC]">
-                                <img src="{{ $dbEvent && $dbEvent->branding?->banner_path ? asset('storage/' . $dbEvent->branding->banner_path) : asset('images/events/banner_bg.png') }}" alt="Event Thumbnail" class="h-[110px] w-[180px] rounded-lg object-cover shadow-sm bg-gray-200" />
+                                <img src="{{ \App\Support\LiveContent::resolveCompanyEventBrandingImageUrl($dbEvent?->branding, asset('images/events/banner_bg.png')) }}" alt="Event Thumbnail" class="h-[110px] w-[180px] rounded-lg object-cover shadow-sm bg-gray-200" />
                                 <div class="flex-1">
                                     <h4 class="mb-2.5 text-[17px] font-bold text-[#1F2A6A]">
                                         {{ $dbEvent ? $dbEvent->title : 'Global Tech Summit 2024' }}
@@ -62,7 +62,7 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                             </svg>
-                                            <span>{{ $dbEvent ? $dbEvent->venue_name . ', ' . $dbEvent->city : 'Jio World Convention Centre, Mumbai' }}</span>
+                                            <span>{{ isset($dbEvent) ? \App\Support\LiveContent::formatCompanyEventVenue($dbEvent) : 'Jio World Convention Centre, Mumbai, India' }}</span>
                                         </div>
                                     </div>
                                     

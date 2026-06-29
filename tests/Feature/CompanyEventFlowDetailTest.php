@@ -44,8 +44,8 @@ class CompanyEventFlowDetailTest extends TestCase
             'event_mode' => 'in_person',
             'starts_at' => '2026-09-10 09:00:00',
             'ends_at' => '2026-09-13 18:00:00',
-            'timezone' => 'America/Chicago',
-            'venue_address' => 'Chicago, IL, USA',
+            'timezone' => 'Asia/Kolkata',
+            'venue_address' => 'Pragati Maidan, New Delhi, India',
             'summary' => 'A physical exhibition for machinery and automation.',
         ];
 
@@ -57,8 +57,8 @@ class CompanyEventFlowDetailTest extends TestCase
             'event_mode' => 'in_person',
             'starts_at' => '2026-10-05 18:00:00',
             'ends_at' => '2026-10-05 22:00:00',
-            'timezone' => 'America/New_York',
-            'venue_address' => 'New York, NY, USA',
+            'timezone' => 'Asia/Kolkata',
+            'venue_address' => 'Bandra Kurla Complex, Mumbai, India',
             'summary' => 'A premium networking dinner and pitch mixer.',
         ];
 
@@ -110,10 +110,10 @@ class CompanyEventFlowDetailTest extends TestCase
             'starts_at' => '2026-07-15 09:00:00',
             'ends_at' => '2026-07-17 18:00:00',
             'timezone' => 'Asia/Kolkata',
-            'venue_name' => 'Silicon Valley Center',
-            'venue_address' => '123 Tech Way',
-            'city' => 'San Jose',
-            'country' => 'USA',
+            'venue_name' => 'Bengaluru Tech Park',
+            'venue_address' => 'Outer Ring Road, Bengaluru',
+            'city' => 'Bengaluru',
+            'country' => 'India',
         ]);
         $response->assertRedirect();
 
@@ -131,10 +131,10 @@ class CompanyEventFlowDetailTest extends TestCase
             'starts_at' => '2026-07-15 09:00:00',
             'ends_at' => '2026-07-17 18:00:00',
             'timezone' => 'Asia/Kolkata',
-            'venue_name' => 'Silicon Valley Center',
-            'venue_address' => '123 Tech Way',
-            'city' => 'San Jose',
-            'country' => 'USA',
+            'venue_name' => 'Bengaluru Tech Park',
+            'venue_address' => 'Outer Ring Road, Bengaluru',
+            'city' => 'Bengaluru',
+            'country' => 'India',
             'next' => 'branding',
         ]);
         $response->assertRedirect(route('company.event-company-flow.branding', $event->id));

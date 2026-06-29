@@ -37,9 +37,15 @@
 
             <div class="booth-preview-hotspot">
                 <p class="text-[11px] font-bold uppercase tracking-wide text-[#5A6480]">Live Session</p>
-                <a href="{{ $isPassActive ? '#meeting' : $ticketUrl }}" class="mt-2 inline-flex h-9 items-center gap-2 rounded-lg bg-[#0F9D58] px-3 text-[12px] font-bold text-white">
-                    <i class="ph ph-calendar-check"></i> Request Meeting
-                </a>
+                @if ($isPassActive)
+                    <a href="#meeting" class="mt-2 inline-flex h-9 items-center gap-2 rounded-lg bg-[#0F9D58] px-3 text-[12px] font-bold text-white">
+                        <i class="ph ph-calendar-check"></i> Request Meeting
+                    </a>
+                @else
+                    <a href="{{ $ticketUrl }}" class="mt-2 inline-flex h-9 items-center gap-2 rounded-lg border border-[#EADCFD] bg-[#FBFAFF] px-3 text-[12px] font-bold text-[#5B32F6]">
+                        Pass Required
+                    </a>
+                @endif
             </div>
 
             <div class="booth-preview-hotspot">

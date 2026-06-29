@@ -56,6 +56,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Ticket QR Base URL
+    |--------------------------------------------------------------------------
+    |
+    | Optional override for QR verification links. Set this to your LAN IP
+    | during local testing so mobile devices can scan tickets, e.g.
+    | http://192.168.1.10:8000
+    |
+    */
+
+    'ticket_qr_base_url' => env('TICKET_QR_BASE_URL'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

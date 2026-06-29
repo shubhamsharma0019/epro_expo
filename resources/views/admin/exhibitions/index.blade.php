@@ -271,7 +271,7 @@
                                     <td class="px-3 py-3">
                                         <div class="flex flex-col">
                                             <span class="text-[#0B132C] font-medium text-[13px]">Tech Expo Center,</span>
-                                            <span class="text-gray-500 text-[12px]">New York, USA</span>
+                                            <span class="text-gray-500 text-[12px]">Mumbai, India</span>
                                         </div>
                                     </td>
                                     <td class="px-3 py-3">
@@ -317,7 +317,7 @@
                                     <td class="px-3 py-3">
                                         <div class="flex flex-col">
                                             <span class="text-[#0B132C] font-medium text-[13px]">Green Arena,</span>
-                                            <span class="text-gray-500 text-[12px]">London, UK</span>
+                                            <span class="text-gray-500 text-[12px]">Bengaluru, India</span>
                                         </div>
                                     </td>
                                     <td class="px-3 py-3">
@@ -363,7 +363,7 @@
                                     <td class="px-3 py-3">
                                         <div class="flex flex-col">
                                             <span class="text-[#0B132C] font-medium text-[13px]">Health Hub Center,</span>
-                                            <span class="text-gray-500 text-[12px]">Berlin, Germany</span>
+                                            <span class="text-gray-500 text-[12px]">Hyderabad, India</span>
                                         </div>
                                     </td>
                                     <td class="px-3 py-3">
@@ -409,7 +409,7 @@
                                     <td class="px-3 py-3">
                                         <div class="flex flex-col">
                                             <span class="text-[#0B132C] font-medium text-[13px]">Industrial World,</span>
-                                            <span class="text-gray-500 text-[12px]">Chicago, USA</span>
+                                            <span class="text-gray-500 text-[12px]">New Delhi, India</span>
                                         </div>
                                     </td>
                                     <td class="px-3 py-3">
@@ -547,7 +547,7 @@
                                     <td class="px-3 py-3">
                                         <div class="flex flex-col">
                                             <span class="text-[#0B132C] font-medium text-[13px]">Property Arena,</span>
-                                            <span class="text-gray-500 text-[12px]">Sydney, Australia</span>
+                                            <span class="text-gray-500 text-[12px]">Pune, India</span>
                                         </div>
                                     </td>
                                     <td class="px-3 py-3">

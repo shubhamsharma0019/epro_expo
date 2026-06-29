@@ -103,7 +103,7 @@ class EventsHomePageData
     private function buildCountries($publishedEvents): array
     {
         $countryCounts = $publishedEvents
-            ->map(fn ($event) => $this->resolveEventCountry($event))
+            ->map(fn ($event) => LiveContent::normalizeCountryLabel((string) ($event->country ?? '')) ?: 'India')
             ->filter()
             ->countBy()
             ->sortDesc();
@@ -197,7 +197,7 @@ class EventsHomePageData
             'date' => $startsAt
                 ? $startsAt->format('M d') . ($endsAt ? ' - ' . $endsAt->format('d, Y') : ', ' . $startsAt->format('Y'))
                 : 'Date TBD',
-            'country' => $this->resolveEventCountry($event) ?: 'Location TBD',
+            'country' => LiveContent::resolveEventCardLocation($event, 'India'),
             'type' => ucfirst(str_replace('_', ' ', $event->event_mode ?: $event->event_type ?: 'Event')),
             'price' => $minTicket
                 ? (($minTicket->currency ?: 'INR') . ' ' . number_format((float) $minTicket->price, 0))
@@ -291,9 +291,7 @@ class EventsHomePageData
 
     private function resolveEventCountry($event): ?string
     {
-        return collect([$event->country, $event->city])
-            ->filter(fn ($value) => filled($value))
-            ->first();
+        return LiveContent::resolveEventCardLocation($event);
     }
 
     private function countryFlag(string $country): string

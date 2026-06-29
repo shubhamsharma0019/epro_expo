@@ -29,7 +29,7 @@
         ? $ticket->companyEvent->starts_at->format('h:i A') . ($ticket->companyEvent->ends_at ? ' - ' . $ticket->companyEvent->ends_at->format('h:i A') : '')
         : 'Time TBD';
     $venueInfo = $ticket->companyEvent
-        ? collect([$ticket->companyEvent->venue_name, $ticket->companyEvent->city, $ticket->companyEvent->country])->filter()->join(', ')
+        ? \App\Support\LiveContent::formatCompanyEventVenue($ticket->companyEvent)
         : 'Venue TBD';
     $heroImage = $resolveAssetUrl(
         $ticket->companyEvent?->branding?->banner_path ?: $ticket->companyEvent?->branding?->logo_path,

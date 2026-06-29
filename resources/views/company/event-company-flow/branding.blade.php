@@ -23,7 +23,7 @@
     $eventTagline = old('tagline', $eventBranding?->tagline ?? '');
     $ctaLabel = old('cta_label', $eventBranding?->cta_label ?? 'Explore Event');
     $eventSummary = $companyEvent->summary ?: $companyEvent->description ?: 'Add an event summary in Basic Details.';
-    $eventLocation = collect([$companyEvent->venue_name, $companyEvent->city, $companyEvent->country])->filter()->join(', ') ?: 'Location TBD';
+    $eventLocation = \App\Support\LiveContent::formatCompanyEventVenue($companyEvent, 'Location TBD');
     $eventVenueName = $companyEvent->venue_name ?: 'Venue TBD';
     $eventDate = $companyEvent->starts_at
         ? $companyEvent->starts_at->format('M d') . ($companyEvent->ends_at ? ' - ' . $companyEvent->ends_at->format('d, Y') : ', ' . $companyEvent->starts_at->format('Y'))

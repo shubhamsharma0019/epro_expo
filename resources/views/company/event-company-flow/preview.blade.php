@@ -13,27 +13,10 @@
     $eventSummary = $companyEvent->summary ?: $companyEvent->description ?: 'Add an event summary in Basic Details.';
     $eventDescription = $companyEvent->description ?: $companyEvent->summary ?: 'Add a detailed event description in Basic Details.';
     $eventVenueName = $companyEvent->venue_name ?: 'Venue TBD';
-    $eventCountry = trim((string) ($companyEvent->country ?: 'India'));
-    $eventCity = trim((string) $companyEvent->city);
-    $eventAddressParts = collect(explode(',', (string) $companyEvent->venue_address))
-        ->map(fn ($part) => trim($part));
-
-    if (strtolower($eventCountry) === 'india') {
-        $nonIndiaParts = ['chicago', 'il', 'usa', 'united states', 'united states of america', 'san francisco', 'ca', 'new york', 'ny'];
-        $eventAddressParts = $eventAddressParts->reject(fn ($part) => in_array(strtolower($part), $nonIndiaParts, true));
-        $eventCity = in_array(strtolower($eventCity), ['chicago', 'san francisco', 'new york'], true) ? '' : $eventCity;
-    }
-
-    $eventAddressParts = $eventAddressParts
-        ->merge([$eventCity, $eventCountry])
-        ->filter()
-        ->unique(fn ($part) => strtolower($part))
-        ->values();
-    $eventAddress = $eventAddressParts->join(', ');
-    $eventLocation = collect([$companyEvent->venue_name, $eventCity, $eventCountry])
-        ->filter()
-        ->unique(fn ($part) => strtolower($part))
-        ->join(', ') ?: 'Location TBD';
+    $eventLocation = \App\Support\LiveContent::formatCompanyEventVenue($companyEvent, 'Location TBD');
+    $eventAddress = $eventLocation !== 'Location TBD'
+        ? collect(explode(',', $eventLocation))->slice(1)->map(fn ($part) => trim($part))->filter()->join(', ')
+        : '';
     $eventDate = $companyEvent->starts_at
         ? $companyEvent->starts_at->format('M d') . ($companyEvent->ends_at ? ' - ' . $companyEvent->ends_at->format('d, Y') : ', ' . $companyEvent->starts_at->format('Y'))
         : 'Date TBD';

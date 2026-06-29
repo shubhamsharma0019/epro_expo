@@ -33,13 +33,12 @@ class EventTicketVisitorDetailsPageData
             ? $dbEvent->starts_at->format('M d') . ($dbEvent->ends_at ? ' - ' . $dbEvent->ends_at->format('M d, Y') : ', ' . $dbEvent->starts_at->format('Y'))
             : 'Date TBD';
 
-        $location = collect([$dbEvent->venue_name, $dbEvent->city, $dbEvent->country])
-            ->filter()
-            ->join(', ') ?: 'Venue TBD';
+        $location = LiveContent::formatCompanyEventVenue($dbEvent);
 
-        $bannerImage = $dbEvent->branding?->banner_path
-            ? asset('storage/' . $dbEvent->branding->banner_path)
-            : 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&h=350&fit=crop';
+        $bannerImage = LiveContent::resolveCompanyEventBrandingImageUrl(
+            $dbEvent->branding,
+            asset('images/events/banner_bg.png')
+        );
 
         $user = auth()->user();
 

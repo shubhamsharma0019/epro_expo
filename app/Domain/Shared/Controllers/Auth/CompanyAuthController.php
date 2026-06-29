@@ -36,7 +36,6 @@ class CompanyAuthController extends Controller
         }
 
         Session::put('company_flow_context', 'event_company');
-        $request->session()->regenerateToken();
 
         return view('frontend.auth.company-event-login');
     }
@@ -134,7 +133,6 @@ class CompanyAuthController extends Controller
         }
 
         Session::put('company_flow_context', 'event_company');
-        $request->session()->regenerateToken();
 
         return view('frontend.auth.company-register', ['flowContext' => 'event_company']);
     }

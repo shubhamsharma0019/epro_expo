@@ -78,12 +78,12 @@
                         <!-- Event Info -->
                         <div class="mb-7 rounded-2xl bg-[#F4F0FF] p-5 border border-[#E8E3F0]">
                             <div class="flex items-start gap-4">
-                                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-[#5B35D5] shadow-[0_2px_8px_rgba(91,53,213,0.08)]">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-[22px] w-[22px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                </div>
-                                <div>
+                                <img
+                                    src="{{ \App\Support\LiveContent::resolveCompanyEventBrandingImageUrl($dbEvent?->branding, asset('images/events/banner_bg.png')) }}"
+                                    alt="{{ $dbEvent?->title ?? 'Event' }}"
+                                    class="h-14 w-14 shrink-0 rounded-xl object-cover bg-white shadow-[0_2px_8px_rgba(91,53,213,0.08)]"
+                                >
+                                <div class="min-w-0">
                                     <h4 class="text-[15px] font-bold text-[#1F2A6A]" id="summary-event-title">
                                         {{ $dbEvent ? $dbEvent->title : 'Global Tech Summit 2024' }}
                                     </h4>
@@ -91,7 +91,7 @@
                                         {{ $dbEvent && $dbEvent->starts_at ? ($dbEvent->starts_at->format('M d') . ' - ' . ($dbEvent->ends_at ? $dbEvent->ends_at->format('M d, Y') : $dbEvent->starts_at->format('Y'))) : 'May 15 - May 17, 2024' }}
                                     </p>
                                     <p class="mt-1 text-[13px] leading-[1.5] text-[#6A708F]" id="summary-event-venue">
-                                        {{ $dbEvent ? $dbEvent->venue_name : 'Jio World Convention Centre' }},<br>{{ $dbEvent ? $dbEvent->city : 'Mumbai' }}
+                                        {{ isset($dbEvent) ? \App\Support\LiveContent::formatCompanyEventVenue($dbEvent) : 'Jio World Convention Centre, Mumbai, India' }}
                                     </p>
                                 </div>
                             </div>

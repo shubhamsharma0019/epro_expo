@@ -60,17 +60,7 @@
                                 ?: \App\Support\LiveContent::resolveCompanyEventBannerUrl($event->branding?->logo_path)
                                 ?: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&h=350&fit=crop';
                             $eventDates = $event->starts_at ? $event->starts_at->format('M d') . ($event->ends_at ? ' - ' . $event->ends_at->format('d, Y') : $event->starts_at->format(', Y')) : 'Date TBD';
-                            $eventCountry = trim((string) ($event->country ?: 'India'));
-                            $eventCity = trim((string) $event->city);
-
-                            if (strtolower($eventCountry) === 'india' && strtolower($eventCity) === 'chicago') {
-                                $eventCity = '';
-                            }
-
-                            $eventLocation = collect([$event->venue_name, $eventCity, $eventCountry])
-                                ->filter()
-                                ->unique(fn ($part) => strtolower($part))
-                                ->join(', ');
+                            $eventLocation = \App\Support\LiveContent::formatCompanyEventVenue($event, 'Location TBD');
                         @endphp
                         <article
                             class="flex flex-col gap-4 rounded-2xl border border-[#E8E3F0] bg-white px-3 py-3 shadow-[0_1px_2px_rgba(27,36,87,0.02)] md:flex-row md:items-center md:justify-between">

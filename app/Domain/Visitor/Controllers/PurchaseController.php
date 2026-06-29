@@ -7,14 +7,18 @@ use App\Domain\Event\Models\CompanyEvent\CompanyEvent;
 use App\Domain\Shared\Models\User;
 use App\Domain\Shared\Services\EventTicketVisitorDetailsPageData;
 use App\Http\Requests\Visitor\EventVisitorRegistrationRequest;
+use App\Domain\Visitor\Services\EventTicketIssuanceService;
 use App\Mail\EventTicketConfirmationMail;
 use App\Support\EventTicketFlow;
+use App\Support\EventTicketMail;
 use App\Support\EventTicketQr;
+use App\Support\EventTicketSchema;
 use App\Support\LiveContent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Throwable;
@@ -253,12 +257,18 @@ class PurchaseController extends Controller
             'qr_code_path' => EventTicketQr::payload($ticket),
         ]);
 
+        $issuedTicket = app(EventTicketIssuanceService::class)->issueFromVisitorTicket($ticket, $user);
+
         session([
             'event_ticket_order' => $orderNumber,
         ]);
         session()->forget('event_booking_path');
 
         $this->dispatchTicketEmail($ticket);
+
+        if ($issuedTicket) {
+            return redirect()->route('qr-ticket.show', $issuedTicket);
+        }
 
         return redirect()->route('events.tickets.confirmed', ['order' => $orderNumber]);
     }
@@ -270,12 +280,14 @@ class PurchaseController extends Controller
 
         abort_unless($ticket, 404);
 
+        $issuedTicket = $this->resolveIssuedTicket($ticket);
+
         session(['event_ticket_order' => $ticket->order_number]);
 
         $emailSent = (bool) session('event_ticket_email_sent_' . $ticket->order_number, false);
-        $emailConfigured = filled(config('mail.default')) && config('mail.default') !== 'log';
+        $emailConfigured = EventTicketMail::isDeliverable();
 
-        return view('frontend.events.tickets.confirmed', compact('ticket', 'emailSent', 'emailConfigured'));
+        return view('frontend.events.tickets.confirmed', compact('ticket', 'issuedTicket', 'emailSent', 'emailConfigured'));
     }
 
     public function eTicket(Request $request)
@@ -285,8 +297,14 @@ class PurchaseController extends Controller
 
         abort_unless($ticket, 404);
 
+        $issuedTicket = $this->resolveIssuedTicket($ticket);
+
+        if ($issuedTicket) {
+            return redirect()->route('qr-ticket.show', $issuedTicket);
+        }
+
         $emailSent = (bool) session('event_ticket_email_sent_' . $ticket->order_number, false);
-        $emailConfigured = filled(config('mail.default')) && config('mail.default') !== 'log';
+        $emailConfigured = EventTicketMail::isDeliverable();
 
         return view('frontend.events.tickets.e-ticket', compact('ticket', 'emailSent', 'emailConfigured'));
     }
@@ -305,7 +323,7 @@ class PurchaseController extends Controller
                 'sent' => $sent,
                 'message' => $sent
                     ? 'Ticket email sent successfully.'
-                    : 'Email could not be sent. Please configure mail settings or download your QR ticket below.',
+                    : (EventTicketMail::configurationHint() ?: 'Email could not be sent. Please configure mail settings or download your QR ticket below.'),
             ]);
         }
 
@@ -313,7 +331,7 @@ class PurchaseController extends Controller
             $sent ? 'success' : 'warning',
             $sent
                 ? 'Ticket email sent successfully.'
-                : 'Email could not be sent. Please configure mail settings or download your QR ticket below.'
+                : (EventTicketMail::configurationHint() ?: 'Email could not be sent. Please configure mail settings or download your QR ticket below.')
         );
     }
 
@@ -342,11 +360,55 @@ class PurchaseController extends Controller
         return null;
     }
 
+    private function resolveIssuedTicket(\App\Domain\Visitor\Models\VisitorTicket $visitorTicket): ?\App\Domain\Visitor\Models\Ticket
+    {
+        if (! EventTicketSchema::isReady()) {
+            return null;
+        }
+
+        $existing = $visitorTicket->issuedTicket;
+
+        if ($existing) {
+            return $existing;
+        }
+
+        if (! in_array($visitorTicket->status, ['confirmed', 'paid', 'completed'], true)) {
+            return null;
+        }
+
+        $user = $visitorTicket->user;
+
+        if (! $user) {
+            return null;
+        }
+
+        return app(EventTicketIssuanceService::class)->issueFromVisitorTicket($visitorTicket, $user);
+    }
+
     private function dispatchTicketEmail(\App\Domain\Visitor\Models\VisitorTicket $ticket): bool
     {
-        $recipient = $ticket->attendee_email ?: $ticket->user?->email;
+        $recipient = EventTicketMail::resolveRecipient($ticket);
 
-        if (! filled($recipient)) {
+        if ($recipient === null) {
+            Log::warning('Event ticket email skipped: no valid visitor email on booking.', [
+                'order_number' => $ticket->order_number,
+            ]);
+
+            return false;
+        }
+
+        $ticket->loadMissing('user');
+
+        if ($ticket->user && EventTicketSchema::isReady()) {
+            app(EventTicketIssuanceService::class)->issueFromVisitorTicket($ticket, $ticket->user);
+        }
+
+        if (! EventTicketMail::isDeliverable()) {
+            Log::info('Event ticket email skipped: mail delivery not configured.', [
+                'order_number' => $ticket->order_number,
+                'recipient' => $recipient,
+            ]);
+
             return false;
         }
 
@@ -355,7 +417,13 @@ class PurchaseController extends Controller
             session(['event_ticket_email_sent_' . $ticket->order_number => true]);
 
             return true;
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            Log::warning('Event ticket email failed.', [
+                'order_number' => $ticket->order_number,
+                'recipient' => $recipient,
+                'error' => $e->getMessage(),
+            ]);
+
             return false;
         }
     }

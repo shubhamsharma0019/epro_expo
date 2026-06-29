@@ -84,7 +84,9 @@
                         <h2 class="mt-2 text-[24px] font-bold text-[#1E1B4B]">Your Information</h2>
                         <p class="mt-2 text-[14px] font-medium text-gray-500">Enter your details to continue with visitor pass booking.</p>
 
-                        @if ($errors->any())
+                        @if ($errors->has('csrf'))
+                            <div class="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[14px] font-medium text-amber-800">{{ $errors->first('csrf') }}</div>
+                        @elseif ($errors->any())
                             <div class="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[14px] font-medium text-red-700">{{ $errors->first() }}</div>
                         @endif
 

@@ -135,7 +135,7 @@
 
                         <div class="rounded-md bg-[#FBFAFF] p-4 shadow-[0_18px_36px_rgba(31,42,107,0.04)]">
                             <div class="flex gap-4">
-                                <img src="{{ $dbEvent && $dbEvent->branding?->banner_path ? asset('storage/' . $dbEvent->branding->banner_path) : asset('images/events/banner_bg.png') }}" alt="Event image" class="h-[69px] w-[74px] shrink-0 rounded object-cover bg-gray-200" />
+                                <img src="{{ \App\Support\LiveContent::resolveCompanyEventBrandingImageUrl($dbEvent?->branding, asset('images/events/banner_bg.png')) }}" alt="Event image" class="h-[69px] w-[74px] shrink-0 rounded object-cover bg-gray-200" />
                                 <div class="min-w-0 pt-1">
                                     <h3 class="truncate text-[15px] font-bold text-[#07105C]">{{ $dbEvent ? $dbEvent->title : 'Global Tech Summit 2024' }}</h3>
                                     <p class="mt-3 flex items-center gap-2 text-[13px] font-medium text-[#20266F]">
@@ -149,7 +149,7 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                         </svg>
-                                        <span>{{ $dbEvent ? $dbEvent->venue_name . ',' : 'Jio World Convention Centre,' }}<br />{{ $dbEvent ? $dbEvent->city : 'Mumbai' }}</span>
+                                        <span>{{ isset($dbEvent) ? \App\Support\LiveContent::formatCompanyEventVenue($dbEvent) : 'Jio World Convention Centre, Mumbai, India' }}</span>
                                     </p>
                                 </div>
                             </div>
@@ -271,13 +271,15 @@ const options = document.querySelectorAll('.payment-option');
                 return;
             }
 
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
             @if(isset($razorpayEnabled) && $razorpayEnabled)
             try {
                 const response = await fetch("{{ route('events.tickets.payment.razorpay-order') }}", {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        'X-CSRF-TOKEN': csrfToken
                     },
                     body: JSON.stringify({ amount: orderData.totalAmount || 98.00 })
                 });
@@ -320,7 +322,7 @@ const options = document.querySelectorAll('.payment-option');
             const csrfToken = document.createElement('input');
             csrfToken.type = 'hidden';
             csrfToken.name = '_token';
-            csrfToken.value = '{{ csrf_token() }}';
+            csrfToken.value = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
             form.appendChild(csrfToken);
 
             const dataInput = document.createElement('input');

@@ -107,7 +107,7 @@
                     
                     <div class="flex items-center gap-2 text-[12px] text-[#5B6B8A]">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                        <span>{{ $companyEvent->venue_name ?? $companyEvent->venue_address ?? 'Location TBD' }}</span>
+                        <span>{{ \App\Support\LiveContent::formatCompanyEventVenue($companyEvent, 'Location TBD') }}</span>
                     </div>
                 </div>
 

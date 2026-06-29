@@ -1,44 +1,8 @@
 @php
-    $activeSlug = request()->route('slug')
-        ?? session('activeExhibitionSlug')
-        ?? \App\Domain\Event\Models\Exhibition::orderBy('start_date')->first()?->slug
-        ?? 'global-tech-expo-2024';
-
-    $exhibition = \App\Domain\Event\Models\Exhibition::where('slug', $activeSlug)->first();
-    $visitor = null;
-    if (auth()->check() && $exhibition) {
-        $visitor = \App\Domain\Visitor\Models\Visitor::where('exhibition_id', $exhibition->id)
-            ->where('email', auth()->user()->email)
-            ->orderBy('created_at', 'desc')
-            ->first();
-    }
-
-    $hasExhibitionPass = $visitor ? $visitor->payment_status === 'completed' : false;
-    $passFlowHref = $exhibition ? route('exhibitions.tickets.visitor-details', $activeSlug) : route('frontend.user.dashboard');
-    $passFlowLocked = $exhibition && auth()->check() && ! $hasExhibitionPass && session('exhibition_booking_path');
-
-    $navLinks = [
-        ['Dashboard', $passFlowLocked ? $passFlowHref : route('frontend.user.dashboard'), 'ph-chart-pie-slice'],
-    ];
-
-    if ($exhibition) {
-        $navLinks = array_merge($navLinks, [
-            ['Exhibition Lobby', route('exhibitions.visit', $activeSlug), 'ph-door-open'],
-            ['Companies', route('exhibitions.visitor.companies', $activeSlug), 'ph-storefront'],
-            ['Halls & Map', route('exhibitions.visitor.floor-map', $activeSlug), 'ph-map-trifold'],
-            ['Sessions', route('exhibitions.visitor.sessions', $activeSlug), 'ph-play-circle'],
-            ['My Meetings', route('exhibitions.visitor.meetings', $activeSlug), 'ph-calendar-check'],
-            ['Notifications', route('exhibitions.visitor.notifications', $activeSlug), 'ph-bell'],
-            ['QR Pass', $passFlowLocked ? $passFlowHref : route('exhibitions.visitor.qr-pass', $activeSlug), 'ph-qr-code'],
-        ]);
-    }
-
-    $navLinks = array_merge($navLinks, [
-        ['My Passes', $passFlowLocked ? $passFlowHref : route('frontend.user.tickets.index'), 'ph-ticket'],
-        ['Upcoming Events', url('/events/listings'), 'ph-calendar-blank'],
-        ['My Bookings', url('/exhibitions/booking/my-bookings'), 'ph-calendar-check'],
-        ['Profile', route('frontend.user.profile'), 'ph-user'],
-    ]);
+    $visitorNav = \App\Support\VisitorDashboardNav::context();
+    $visitorDashboardNavLinks = $visitorNav['links'];
+    $passFlowHref = $visitorNav['passFlowHref'];
+    $passFlowLocked = $visitorNav['passFlowLocked'];
 @endphp
 
 <aside id="user-sidebar-aside" class="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#0b1739] font-sans text-[#a0aabf]">
@@ -57,11 +21,18 @@
 
     <nav class="custom-scrollbar flex-1 overflow-y-auto px-4 pb-6">
         <ul class="space-y-1">
-            @foreach ($navLinks as [$label, $href, $icon])
+            @foreach ($visitorDashboardNavLinks as $link)
                 <li>
-                    <a href="{{ $href }}" class="flex items-center gap-3 rounded-[10px] px-4 py-3 text-[#a0aabf] transition-colors hover:bg-white/5 hover:text-white">
-                        <i class="ph {{ $icon }} text-xl"></i>
-                        <span class="text-[15px] font-medium">{{ $label }}</span>
+                    <a
+                        href="{{ $link['href'] }}"
+                        @class([
+                            'flex items-center gap-3 rounded-[10px] px-4 py-3 transition-colors',
+                            'bg-[#5B32F6] text-white shadow-[0_8px_20px_rgba(91,50,246,0.22)]' => $link['active'] ?? false,
+                            'text-[#a0aabf] hover:bg-white/5 hover:text-white' => ! ($link['active'] ?? false),
+                        ])
+                    >
+                        <i class="ph {{ $link['icon'] }} text-xl"></i>
+                        <span class="text-[15px] font-medium">{{ $link['label'] }}</span>
                     </a>
                 </li>
             @endforeach

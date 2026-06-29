@@ -7,7 +7,7 @@
     @php
         $event = $publishRequest->companyEvent;
         $location = $event
-            ? ($event->venue_name ?: trim(($event->city ?: '') . ($event->country ? ', ' . $event->country : '')) ?: 'Location TBD')
+            ? \App\Support\LiveContent::formatCompanyEventVenue($event, 'Location TBD')
             : 'Location TBD';
     @endphp
 

@@ -6,6 +6,8 @@ use App\Domain\Shared\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use App\Domain\Event\Models\CompanyEvent\CompanyEvent;
 use App\Domain\Event\Models\CompanyEvent\CompanyEventTicketType;
+use App\Domain\Visitor\Models\Booking;
+use App\Domain\Visitor\Models\Ticket;
 
 class VisitorTicket extends Model
 {
@@ -43,5 +45,22 @@ class VisitorTicket extends Model
     public function ticketType()
     {
         return $this->belongsTo(CompanyEventTicketType::class);
+    }
+
+    public function booking()
+    {
+        return $this->hasOne(Booking::class, 'visitor_ticket_id');
+    }
+
+    public function issuedTicket()
+    {
+        return $this->hasOneThrough(
+            Ticket::class,
+            Booking::class,
+            'visitor_ticket_id',
+            'booking_id',
+            'id',
+            'id'
+        );
     }
 }

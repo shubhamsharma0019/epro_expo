@@ -10,7 +10,7 @@
     $dateInfo = $event?->starts_at
         ? $event->starts_at->format('M d, Y') . ($event->ends_at ? ' - ' . $event->ends_at->format('M d, Y') : '')
         : 'Date TBD';
-    $venueInfo = collect([$event?->venue_name, $event?->city, $event?->country])->filter()->join(', ') ?: 'Venue TBD';
+    $venueInfo = \App\Support\LiveContent::formatCompanyEventVenue($event);
     $currency = strtoupper($ticket->ticketType?->currency ?: 'INR');
     $currencySymbols = ['INR' => '₹', 'USD' => '$', 'EUR' => '€', 'GBP' => '£'];
     $currencySymbol = $currencySymbols[$currency] ?? ($currency . ' ');
@@ -128,7 +128,7 @@
                 </div>
 
                 <div class="mx-auto mt-7 grid max-w-[748px] grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
-                    <a href="{{ route('events.tickets.e-ticket', ['order' => $ticket->order_number]) }}"
+                    <a href="{{ ($issuedTicket ?? null) ? route('qr-ticket.show', $issuedTicket) : route('events.tickets.e-ticket', ['order' => $ticket->order_number]) }}"
                         class="flex h-[58px] items-center justify-center rounded-lg bg-gradient-to-r from-[#5B2EFF] to-[#4310D8] text-[16px] font-extrabold text-white shadow-[0_14px_30px_rgba(91,46,255,0.18)] transition hover:-translate-y-0.5 sm:h-[66px] sm:text-[18px]">
                         Get QR Ticket
                     </a>

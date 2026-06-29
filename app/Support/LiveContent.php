@@ -313,6 +313,135 @@ class LiveContent
         return null;
     }
 
+    public static function resolveCompanyEventBrandingImageUrl(?object $branding, ?string $fallback = null): ?string
+    {
+        foreach ([$branding?->banner_path, $branding?->logo_path] as $path) {
+            $resolved = static::resolveCompanyEventBannerUrl($path);
+
+            if ($resolved) {
+                return $resolved;
+            }
+        }
+
+        return $fallback;
+    }
+
+    public static function formatCompanyEventVenue(object|array|null $event, string $fallback = 'Venue TBD'): string
+    {
+        if ($event === null) {
+            return $fallback;
+        }
+
+        $value = fn (string $key): string => trim((string) (is_array($event) ? ($event[$key] ?? '') : ($event->{$key} ?? '')));
+
+        $parts = collect([$value('venue_name')])
+            ->merge(collect(explode(',', $value('venue_address')))->map(fn ($part) => trim($part))->filter())
+            ->push($value('city'), static::normalizeCountryLabel($value('country')))
+            ->map(fn ($part) => static::normalizeLocationPart($part))
+            ->filter(fn ($part) => $part !== '')
+            ->unique(fn ($part) => strtolower(preg_replace('/\s+/', ' ', $part)))
+            ->values();
+
+        $formatted = $parts->join(', ');
+
+        return $formatted !== '' ? $formatted : $fallback;
+    }
+
+    public static function resolveEventCardLocation(object|array|null $event, string $fallback = 'India'): string
+    {
+        if ($event === null) {
+            return $fallback;
+        }
+
+        $value = fn (string $key): string => trim((string) (is_array($event) ? ($event[$key] ?? '') : ($event->{$key} ?? '')));
+
+        foreach ([$value('city'), static::normalizeCountryLabel($value('country'))] as $part) {
+            $normalized = static::normalizeLocationPart($part);
+
+            if ($normalized !== '') {
+                return $normalized;
+            }
+        }
+
+        foreach (explode(',', $value('venue_address')) as $part) {
+            $normalized = static::normalizeLocationPart(trim($part));
+
+            if ($normalized !== '') {
+                return $normalized;
+            }
+        }
+
+        return $fallback;
+    }
+
+    public static function normalizeCountryLabel(string $country): string
+    {
+        return static::isForeignLocationLabel($country) ? 'India' : $country;
+    }
+
+    public static function normalizeLocationPart(string $part): string
+    {
+        $part = trim($part);
+
+        if ($part === '' || static::isForeignLocationLabel($part)) {
+            return '';
+        }
+
+        return $part;
+    }
+
+    public static function isForeignLocationLabel(string $value): bool
+    {
+        $normalized = strtolower(trim($value));
+
+        if ($normalized === '') {
+            return false;
+        }
+
+        $exact = [
+            'usa', 'u.s.a.', 'u.s.', 'united states', 'us',
+            'uk', 'united kingdom', 'great britain',
+            'canada', 'germany', 'australia', 'france', 'singapore',
+            'uae', 'united arab emirates',
+        ];
+
+        if (in_array($normalized, $exact, true)) {
+            return true;
+        }
+
+        $contains = [
+            'new york', 'chicago', 'london', 'toronto', 'berlin', 'sydney',
+            'san francisco', 'san jose', 'los angeles', 'america',
+        ];
+
+        foreach ($contains as $needle) {
+            if (str_contains($normalized, $needle)) {
+                return true;
+            }
+        }
+
+        return (bool) preg_match('/\b(ny|ca|il|tx)\b,\s*usa\b/i', $value);
+    }
+
+    public static function formatExhibitionVenue(object|array|null $exhibition, string $fallback = 'Virtual'): string
+    {
+        if ($exhibition === null) {
+            return $fallback;
+        }
+
+        $value = fn (string $key): string => trim((string) (is_array($exhibition) ? ($exhibition[$key] ?? '') : ($exhibition->{$key} ?? '')));
+
+        $parts = collect([$value('venue')])
+            ->merge(collect(explode(',', $value('location')))->map(fn ($part) => trim($part))->filter())
+            ->filter(fn ($part) => $part !== '')
+            ->unique(fn ($part) => strtolower(preg_replace('/\s+/', ' ', $part)))
+            ->values();
+
+        $formatted = $parts->join(', ');
+
+        return $formatted !== '' ? $formatted : $fallback;
+    }
+
     public static function homeFeaturedBooths(int $limit = 6): Collection
     {
         return DbGuard::whenAvailable(function () use ($limit) {
@@ -396,7 +525,7 @@ class LiveContent
                 $date = $exhibition->start_date && $exhibition->end_date
                     ? $exhibition->start_date->format('M d') . ' - ' . $exhibition->end_date->format('d, Y')
                     : 'The event date will be updated soon.';
-                $venue = $exhibition->venue ?: ($exhibition->location ?: 'The venue will be updated soon.');
+                $venue = static::formatExhibitionVenue($exhibition, 'The venue will be updated soon.');
                 $exhibitorCount = $exhibition->boothBookings
                     ->map(fn ($booking) => $booking->company_id ?: $booking->boothProfile?->company_name ?: $booking->company?->company_name ?: $booking->company?->name)
                     ->filter()

@@ -12,7 +12,7 @@
     }
     $dateInfo = $ticket->companyEvent ? ($ticket->companyEvent->starts_at?->format('M d, Y') ?? 'Date TBD') : 'May 15 - May 17, 2024';
     $timeInfo = $ticket->companyEvent && $ticket->companyEvent->start_time ? \Carbon\Carbon::parse($ticket->companyEvent->start_time)->format('h:i A') : '10:00 AM';
-    $qrImageUrl = EventTicketQr::imageUrl($ticket, 220);
+    $qrImageUrl = EventTicketQr::imageUrl($ticket, 512);
     $initials = collect(explode(' ', $ticket->attendee_name))->map(fn($w) => substr($w, 0, 1))->take(2)->implode('');
 @endphp
 <section class="space-y-6 px-4 py-6 sm:px-8">
@@ -44,7 +44,7 @@
                     <x-shared.qr-ticket-card
                         src="{{ $qrImageUrl }}"
                         alt="Event ticket QR code"
-                        size-class="h-[150px] w-[150px]"
+                        size-class="h-[220px] w-[220px]"
                         card-class="px-5 pb-6 pt-5"
                     />
                     <p class="mt-5 text-[12px] font-medium uppercase tracking-[0.16em] text-[#5A6480]">Ticket ID</p>

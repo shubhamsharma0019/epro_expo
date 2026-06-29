@@ -31,7 +31,6 @@ class UserAuthController extends Controller
     public function showEventTicketLogin(Request $request): View
     {
         $request->session()->put('user_flow_context', 'event_ticket');
-        $request->session()->regenerateToken();
         $eventSlug = $request->query('event') ?: $this->eventSlugFromSession($request);
 
         if ($eventSlug) {
@@ -49,7 +48,6 @@ class UserAuthController extends Controller
     public function showExhibitionTicketLogin(Request $request): View
     {
         $request->session()->put('user_flow_context', 'exhibition_ticket');
-        $request->session()->regenerateToken();
         $exhibitionSlug = $request->query('exhibition') ?: $request->session()->get('activeExhibitionSlug');
 
         if ($exhibitionSlug) {
@@ -135,7 +133,6 @@ class UserAuthController extends Controller
     public function showEventTicketRegister(Request $request): View
     {
         $request->session()->put('user_flow_context', 'event_ticket');
-        $request->session()->regenerateToken();
         $eventSlug = $request->query('event');
 
         if ($eventSlug) {
@@ -149,7 +146,6 @@ class UserAuthController extends Controller
     public function showExhibitionTicketRegister(Request $request): View
     {
         $request->session()->put('user_flow_context', 'exhibition_ticket');
-        $request->session()->regenerateToken();
         $exhibitionSlug = $request->query('exhibition');
 
         if ($exhibitionSlug) {

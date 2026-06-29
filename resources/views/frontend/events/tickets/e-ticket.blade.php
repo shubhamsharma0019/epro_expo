@@ -4,14 +4,12 @@
 
 @section('content')
 @php
-    use App\Support\EventTicketQr;
     $event = $ticket->companyEvent;
     $eventName = $event?->title ?? 'Event';
     $dateInfo = $event?->starts_at
         ? $event->starts_at->format('M d, Y') . ($event->ends_at ? ' - ' . $event->ends_at->format('M d, Y') : '')
         : 'Date TBD';
-    $venueInfo = collect([$event?->venue_name, $event?->city, $event?->country])->filter()->join(', ') ?: 'Venue TBD';
-    $qrImageUrl = EventTicketQr::imageUrl($ticket, 220);
+    $venueInfo = \App\Support\LiveContent::formatCompanyEventVenue($event);
     $initials = collect(explode(' ', $ticket->attendee_name))->map(fn ($w) => substr($w, 0, 1))->take(2)->implode('');
 @endphp
 <main class="mx-auto w-full max-w-[1080px] flex-1 px-4 pb-12 pt-6 md:px-[32px]">
@@ -66,7 +64,7 @@
             </div>
 
             <div class="flex flex-col items-center justify-center border-t border-dashed border-[#D8DDF0] bg-[#F8FAFF] p-8 text-center md:border-l md:border-t-0">
-                <img src="{{ $qrImageUrl }}" alt="Event ticket QR code" class="h-[180px] w-[180px] rounded-xl border border-[#E7EAF3] bg-white p-2 sm:h-[220px] sm:w-[220px]">
+                @include('frontend.events.tickets.partials.qr-code', ['visitorTicket' => $ticket, 'displaySize' => 220])
                 <p class="mt-5 text-[12px] font-bold uppercase tracking-[0.16em] text-[#5A6480]">Booking Code</p>
                 <p class="mt-2 text-[17px] font-bold text-[#071044]">{{ $ticket->order_number }}</p>
                 <div class="mt-5 inline-flex rounded-full bg-emerald-50 px-4 py-2 text-[13px] font-semibold text-emerald-700">Ready for check-in</div>

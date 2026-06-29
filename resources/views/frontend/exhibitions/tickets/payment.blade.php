@@ -65,7 +65,7 @@
     }
     
     // Resolve location
-    $location = $exhibition->venue ?: ($exhibition->location ?: 'Virtual');
+    $location = \App\Support\LiveContent::formatExhibitionVenue($exhibition);
     $firstAgendaSession = \App\Domain\Event\Models\AgendaSession::query()
         ->where('exhibition_id', $exhibition->id)
         ->orderBy('start_time')

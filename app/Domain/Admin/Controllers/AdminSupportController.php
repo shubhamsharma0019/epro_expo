@@ -742,16 +742,20 @@ class AdminSupportController extends Controller
             ],
             'filters' => [
                 'all' => 'All Status',
+                'scanned' => 'QR Scanned',
                 'checked_in' => 'Checked In',
                 'verified' => 'Verified',
             ],
-            'columns' => ['Visitor', 'Ticket', 'Destination', 'Gate', 'Status', 'Checked In'],
+            'columns' => ['Visitor', 'Ticket', 'Destination', 'Device', 'Gate', 'Status', 'Checked In'],
             'rows' => $query->paginate(12)->through(function ($checkin) {
+                $deviceLabel = trim(($checkin->device_name ?: 'Unknown') . ($checkin->device_type ? ' (' . $checkin->device_type . ')' : ''));
+
                 return [
                     'cells' => [
                         $checkin->user_name ?: 'Visitor',
                         $checkin->order_number ?: 'N/A',
                         $checkin->event_title ?: ($checkin->exhibition_title ?: 'General Entry'),
+                        $deviceLabel !== '' ? $deviceLabel : 'N/A',
                         $checkin->entry_gate ?: 'N/A',
                         $this->badge((string) $checkin->status),
                         $this->formatDateTime($checkin->checked_in_at),

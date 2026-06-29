@@ -37,7 +37,7 @@ class ExhibitionTicketFlowContext
             ? $exhibition->start_date->format('M d') . ' – ' . $exhibition->end_date->format('d, Y')
             : ($exhibition->start_date?->format('M d, Y') ?: 'Date TBD');
 
-        $location = $exhibition->venue ?: ($exhibition->location ?: 'Virtual');
+        $location = LiveContent::formatExhibitionVenue($exhibition);
         $timeStr = LiveContent::resolveExhibitionTime($exhibition);
 
         $pavilions = Pavilion::query()

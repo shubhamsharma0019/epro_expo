@@ -25,7 +25,13 @@
                     <p class="mt-2 text-[15px] leading-7 text-[#4E567A]">Enter your details to continue with visitor pass booking for this event.</p>
                 </div>
 
-                @if ($errors->any())
+                @if ($errors->has('csrf'))
+                    <div class="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[14px] font-medium text-amber-800">
+                        {{ $errors->first('csrf') }}
+                    </div>
+                @endif
+
+                @if ($errors->any() && ! $errors->has('csrf'))
                     <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[14px] font-medium text-red-700">
                         {{ $errors->first() }}
                     </div>
@@ -101,7 +107,7 @@
 
         <div class="lg:col-span-4">
             <div class="sticky top-8 rounded-[20px] border border-[#E8E3F0] bg-[#FAFAFC] p-6 sm:p-8">
-                <div class="mb-5 overflow-hidden rounded-2xl bg-cover bg-center h-[140px]" style="background-image:url('{{ $bannerImage }}')"></div>
+                <img src="{{ $bannerImage }}" alt="{{ $title }}" class="mb-5 h-[140px] w-full rounded-2xl object-cover bg-[#E8E3F0]">
                 <h3 class="text-[18px] font-bold text-[#1F2A6A]">{{ $title }}</h3>
                 <div class="mt-4 space-y-3 text-[14px] text-[#4E567A]">
                     <p class="flex items-start gap-2"><span class="font-bold text-[#1F2A6A]">Date:</span> {{ $dateStr }}</p>

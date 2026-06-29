@@ -87,18 +87,23 @@
 
         @include('frontend.visitor-exhibition.booths.partials.header-bar')
 
-        <div class="booth-home-grid">
-            @include('frontend.visitor-exhibition.booths.partials.nav-sidebar')
+        <div class="booth-page-head">
+            @include('frontend.visitor-exhibition.booths.partials.section-tabs')
+        </div>
 
+        <div class="booth-content-grid">
             <div class="booth-home-main min-w-0 space-y-6">
                 @include('frontend.visitor-exhibition.booths.partials.hero-preview')
+
+                @include('frontend.visitor-exhibition.booths.partials.quick-links', [
+                    'quickLinksSectionClass' => 'pt-2',
+                ])
+
                 @include('frontend.visitor-exhibition.booths.partials.content-sections')
             </div>
 
             @include('frontend.visitor-exhibition.booths.partials.right-panel')
         </div>
-
-        @include('frontend.visitor-exhibition.booths.partials.quick-links')
     </div>
 </section>
 

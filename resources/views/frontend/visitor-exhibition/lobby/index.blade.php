@@ -90,6 +90,11 @@
                 </div>
             </aside>
         </div>
+
+        @include('frontend.visitor-exhibition.booths.partials.quick-links', [
+            'quickLinks' => \App\Support\ExhibitionQuickLinks::lobbyLinks($slug),
+            'quickLinksSectionClass' => 'mt-7',
+        ])
     </div>
 </section>
 @endsection

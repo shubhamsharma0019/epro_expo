@@ -21,6 +21,10 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $exception, \Illuminate\Http\Request $request) {
+            return \App\Support\CsrfMismatchResponse::forRequest($request, $exception);
+        });
+
         $exceptions->render(function (\Throwable $exception, \Illuminate\Http\Request $request) {
             return \App\Support\DatabaseOutageResponse::forRequest($request, $exception);
         });

@@ -48,7 +48,7 @@ class EventListingShowPageData
             ? (($currencySymbols[$currency] ?? $currency . ' ') . number_format((float) $minPrice, 2))
             : 'Free';
 
-        $eventVenue = $this->resolveVenue($dbEvent);
+        $eventVenue = LiveContent::formatCompanyEventVenue($dbEvent, 'Location TBD');
         $eventWebsite = $dbEvent->website ?: $dbEvent->company?->website;
         $eventWebsiteUrl = $eventWebsite
             ? (str_starts_with($eventWebsite, 'http') ? $eventWebsite : 'https://' . $eventWebsite)
@@ -169,25 +169,6 @@ class EventListingShowPageData
         ])->filter(fn ($tab) => $tab['show'])->values();
     }
 
-    private function resolveVenue(CompanyEvent $dbEvent): string
-    {
-        $country = trim((string) $dbEvent->country);
-        $addressParts = collect(explode(',', (string) $dbEvent->venue_address))->map(fn ($part) => trim($part));
-        $city = trim((string) $dbEvent->city);
-
-        if (strtolower($country) === 'india') {
-            $addressParts = $addressParts->reject(fn ($part) => in_array(strtolower($part), ['chicago', 'il', 'usa', 'united states', 'united states of america'], true));
-            $city = strtolower($city) === 'chicago' ? '' : $city;
-        }
-
-        return collect([$dbEvent->venue_name])
-            ->merge($addressParts)
-            ->merge([$city, $country])
-            ->filter()
-            ->unique(fn ($part) => strtolower($part))
-            ->join(', ');
-    }
-
     private function eventImageUrl($branding): ?string
     {
         foreach ([$branding?->banner_path, $branding?->logo_path] as $path) {
@@ -273,7 +254,7 @@ class EventListingShowPageData
                 'title' => 'World AI Conference 2024',
                 'tagline' => 'Explore the next generation of intelligent products.',
                 'date' => 'May 18 - May 19, 2024',
-                'venue' => 'London Tech Arena, UK',
+                'venue' => 'Bengaluru International Exhibition Centre, Bengaluru',
                 'price' => 'Rs. 29.00',
                 'image' => asset('images/events-home/trending/world-ai-conference.svg'),
                 'description' => 'World AI Conference 2024 brings together industry leaders, innovators, and enthusiasts to explore the latest trends, products, and opportunities.',
@@ -281,14 +262,14 @@ class EventListingShowPageData
                 'website_url' => url('/events'),
                 'organizer' => 'AI Global Forum',
                 'category' => 'AI, Conference',
-                'event_id' => 'WAI-2024-LDN',
-                'time' => '09:00 AM - 06:00 PM (BST)',
+                'event_id' => 'WAI-2024-BLR',
+                'time' => '09:00 AM - 06:00 PM (IST)',
             ],
             'digital-marketing-summit' => [
                 'title' => 'Digital Marketing Summit',
                 'tagline' => 'Growth, content, performance, and brand strategy.',
                 'date' => 'May 21, 2024',
-                'venue' => 'Toronto Digital Hub, Canada',
+                'venue' => 'Jio World Convention Centre, Mumbai',
                 'price' => 'Rs. 19.00',
                 'image' => asset('images/events-home/trending/digital-marketing-summit.svg'),
                 'description' => 'Digital Marketing Summit brings together industry leaders, innovators, and enthusiasts to explore the latest trends, products, and opportunities.',
@@ -296,23 +277,23 @@ class EventListingShowPageData
                 'website_url' => url('/events'),
                 'organizer' => 'Marketing Assoc',
                 'category' => 'Marketing, Summit',
-                'event_id' => 'DMS-2024-TOR',
-                'time' => '09:00 AM - 05:00 PM (EST)',
+                'event_id' => 'DMS-2024-MUM',
+                'time' => '09:00 AM - 05:00 PM (IST)',
             ],
             'healthcare-innovation-2024' => [
                 'title' => 'Healthcare Innovation 2024',
                 'tagline' => 'Modern healthcare, diagnostics, and patient experience.',
                 'date' => 'May 18 - May 20, 2024',
-                'venue' => 'Berlin MedTech Centre, Germany',
+                'venue' => 'HITEC City Convention Centre, Hyderabad',
                 'price' => 'Rs. 39.00',
                 'image' => asset('images/events-home/trending/healthcare-innovation.svg'),
                 'description' => 'Healthcare Innovation 2024 brings together industry leaders, innovators, and enthusiasts to explore the latest trends, products, and opportunities.',
-                'website' => 'www.healthcare-innovation.de',
+                'website' => 'www.healthcare-innovation.in',
                 'website_url' => url('/events'),
-                'organizer' => 'MedTech Europe',
+                'organizer' => 'MedTech India',
                 'category' => 'Healthcare, Innovation',
-                'event_id' => 'HCI-2024-BER',
-                'time' => '09:00 AM - 06:00 PM (CET)',
+                'event_id' => 'HCI-2024-HYD',
+                'time' => '09:00 AM - 06:00 PM (IST)',
             ],
             'future-of-education-summit' => [
                 'title' => 'Future of Education Summit',
@@ -333,16 +314,16 @@ class EventListingShowPageData
                 'title' => 'Sustainability Forum 2024',
                 'tagline' => 'Climate, circular business, and clean growth.',
                 'date' => 'May 27 - May 28, 2024',
-                'venue' => 'Sydney Convention Centre, Australia',
+                'venue' => 'Pune International Exhibition Centre, Pune',
                 'price' => 'Rs. 19.00',
                 'image' => asset('images/events-home/trending/sustainability-forum.svg'),
                 'description' => 'Sustainability Forum 2024 brings together industry leaders, innovators, and enthusiasts to explore the latest trends, products, and opportunities.',
-                'website' => 'www.sustainabilityforum.au',
+                'website' => 'www.sustainabilityforum.in',
                 'website_url' => url('/events'),
-                'organizer' => 'GreenBusiness Org',
+                'organizer' => 'GreenBusiness India',
                 'category' => 'Sustainability, Forum',
-                'event_id' => 'SUF-2024-SYD',
-                'time' => '09:00 AM - 06:00 PM (AEST)',
+                'event_id' => 'SUF-2024-PUN',
+                'time' => '09:00 AM - 06:00 PM (IST)',
             ],
             'future-of-ai-expo' => [
                 'title' => 'Future of AI Expo',
