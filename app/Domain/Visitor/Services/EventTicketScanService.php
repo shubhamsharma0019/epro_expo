@@ -73,6 +73,38 @@ class EventTicketScanService
         return $this->eventWindowState($event) === 'active';
     }
 
+    public function isTicketOwner(Ticket $ticket, ?int $userId = null): bool
+    {
+        $userId ??= auth()->id();
+
+        if (! $userId) {
+            return false;
+        }
+
+        if ((int) $ticket->visitor_id === (int) $userId) {
+            return true;
+        }
+
+        return $ticket->booking && (int) $ticket->booking->user_id === (int) $userId;
+    }
+
+    public function canAcceptScannerAction(Ticket $ticket): bool
+    {
+        if ($ticket->status === 'cancelled') {
+            return false;
+        }
+
+        if (! $this->isPaymentValid($ticket)) {
+            return false;
+        }
+
+        if (! $this->isVisitorValid($ticket)) {
+            return false;
+        }
+
+        return $this->isWithinEventWindow($ticket->event);
+    }
+
     public function isPaymentValid(Ticket $ticket): bool
     {
         return in_array(strtolower((string) $ticket->payment_status), ['paid', 'confirmed', 'completed'], true);
@@ -108,6 +140,46 @@ class EventTicketScanService
             ->whereBetween('checked_in_at', [$todayStart, $todayEnd])
             ->latest('checked_in_at')
             ->first();
+    }
+
+    public function totalCheckIns(Ticket $ticket): int
+    {
+        return VisitorCheckin::query()
+            ->where('ticket_id', $ticket->id)
+            ->where('status', 'checked_in')
+            ->count();
+    }
+
+    public function totalScans(Ticket $ticket): int
+    {
+        return TicketScanLog::query()
+            ->where('ticket_id', $ticket->id)
+            ->count();
+    }
+
+    public function visitorDisplayName(Ticket $ticket): string
+    {
+        $visitorTicket = $ticket->booking?->visitorTicket;
+
+        return trim((string) (
+            $ticket->meta['attendee_name']
+            ?? $visitorTicket?->attendee_name
+            ?? $ticket->visitor?->name
+            ?? 'Visitor'
+        ));
+    }
+
+    public function visitorDisplayEmail(Ticket $ticket): ?string
+    {
+        $visitorTicket = $ticket->booking?->visitorTicket;
+        $email = trim((string) (
+            $ticket->meta['attendee_email']
+            ?? $visitorTicket?->attendee_email
+            ?? $ticket->visitor?->email
+            ?? ''
+        ));
+
+        return $email !== '' ? $email : null;
     }
 
     public function formatEventWindow(?CompanyEvent $event): ?string
@@ -157,8 +229,6 @@ class EventTicketScanService
             $this->logQrScan($ticket, $request, 'check_in');
         }
 
-        $scannedToday = $this->todayCheckin($ticket, 'scanned');
-
         $payload = [
             'user_id' => $ticket->visitor_id,
             'visitor_ticket_id' => $visitorTicket?->id,
@@ -174,16 +244,11 @@ class EventTicketScanService
             'checked_in_at' => $checkedInAt,
         ];
 
-        if ($scannedToday) {
-            $scannedToday->update($payload);
-            $checkin = $scannedToday->fresh();
-        } else {
-            $checkin = VisitorCheckin::query()->create($payload);
-        }
+        $checkin = VisitorCheckin::query()->create($payload);
 
         $meta = $ticket->meta ?? [];
         $meta['last_checkin_at'] = $checkedInAt->toIso8601String();
-        $meta['total_checkins'] = (int) ($meta['total_checkins'] ?? 0) + 1;
+        $meta['total_checkins'] = $this->totalCheckIns($ticket);
 
         $ticket->update([
             'checked_in' => true,

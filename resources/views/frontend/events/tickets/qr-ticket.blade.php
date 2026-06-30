@@ -15,17 +15,16 @@
         ? $event->starts_at->format('h:i A') . ($event->ends_at ? ' - ' . $event->ends_at->format('h:i A') : '') . ($event->timezone ? ' (' . $event->timezone . ')' : '')
         : 'Time TBD';
     $venueInfo = LiveContent::formatCompanyEventVenue($event);
-    $bannerImage = LiveContent::resolveCompanyEventBrandingImageUrl($event?->branding, asset('images/events/banner_bg.png'));
     $attendeeName = $ticket->meta['attendee_name'] ?? $ticket->visitor?->name ?? 'Attendee';
     $bookingNumber = $ticket->booking?->booking_number ?? $visitorTicket?->order_number ?? 'N/A';
     $scanWindowState = app(\App\Domain\Visitor\Services\EventTicketScanService::class)->eventWindowState($event);
     $scanStatusLabel = match ($scanWindowState) {
-        'not_started' => 'Check-in opens on event day',
-        'expired' => 'Event ended',
-        default => $ticket->checked_in ? 'Checked In' : 'Ready for check-in',
+        'not_started' => 'QR scan opens on event start date',
+        'expired' => 'Event ended — QR scan no longer valid',
+        default => $ticket->checked_in ? 'Checked In Today' : 'Valid for check-in during event dates',
     };
 @endphp
-<main class="mx-auto w-full max-w-[1080px] flex-1 px-4 pb-12 pt-6 md:px-[32px]">
+<main class="mx-auto w-full max-w-[1440px] flex-1 px-4 pb-12 pt-6 sm:px-6 lg:px-8">
     @if ($visitorTicket)
         <a href="{{ route('events.tickets.confirmed', ['order' => $visitorTicket->order_number]) }}"
             class="mb-4 inline-flex items-center gap-3 text-[15px] font-medium text-[#182064] transition hover:text-[#3B19E6]">
@@ -47,10 +46,6 @@
     @if (session('warning'))
         <div class="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[14px] font-medium text-amber-700">{{ session('warning') }}</div>
     @endif
-
-    <div class="mb-6 overflow-hidden rounded-2xl border border-[#E8E3F0]">
-        <img src="{{ $bannerImage }}" alt="{{ $eventName }}" class="h-[140px] w-full object-cover bg-[#E8E3F0]">
-    </div>
 
     <div id="ticketCard" class="overflow-hidden rounded-[16px] border border-[#3B47C8] bg-white shadow-[0_8px_30px_rgba(31,42,107,0.08)]">
         <div class="grid min-h-[292px] grid-cols-1 md:grid-cols-[1fr_330px]">
@@ -112,8 +107,11 @@
         </button>
         <form method="POST" action="{{ route('qr-ticket.send-email', $ticket) }}">
             @csrf
-            <button type="submit" class="inline-flex h-[52px] w-full items-center justify-center rounded-xl border border-[#DDE2F2] bg-white px-5 text-[15px] font-bold text-[#071044] transition hover:bg-[#F8FAFF]">
-                {{ ($emailSent ?? false) ? 'Resend Email' : 'Email Ticket' }}
+            <button type="submit"
+                @disabled(! ($ticketRecipientEmail ?? null))
+                class="inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#4318FF] px-5 text-[15px] font-bold text-white shadow-[0_8px_20px_rgba(67,24,255,0.25)] transition hover:bg-[#3412C9] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                {{ ($emailSent ?? false) ? 'Resend Email' : 'Send Email' }}
             </button>
         </form>
         <a href="{{ route('frontend.user.dashboard') }}"

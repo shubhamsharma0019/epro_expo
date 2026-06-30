@@ -8,7 +8,6 @@ use App\Domain\Shared\Models\User;
 use App\Domain\Shared\Services\EventTicketVisitorDetailsPageData;
 use App\Http\Requests\Visitor\EventVisitorRegistrationRequest;
 use App\Domain\Visitor\Services\EventTicketIssuanceService;
-use App\Mail\EventTicketConfirmationMail;
 use App\Support\EventTicketFlow;
 use App\Support\EventTicketMail;
 use App\Support\EventTicketQr;
@@ -19,9 +18,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
-use Throwable;
 
 class PurchaseController extends Controller
 {
@@ -264,7 +261,11 @@ class PurchaseController extends Controller
         ]);
         session()->forget('event_booking_path');
 
-        $this->dispatchTicketEmail($ticket);
+        $emailResult = EventTicketMail::attemptAutoSend($ticket);
+
+        if (($emailResult['sent'] ?? false) && ! ($emailResult['skipped'] ?? false) && filled($emailResult['message'] ?? null)) {
+            session()->flash('success', $emailResult['message']);
+        }
 
         if ($issuedTicket) {
             return redirect()->route('qr-ticket.show', $issuedTicket);
@@ -317,21 +318,22 @@ class PurchaseController extends Controller
         abort_unless($ticket, 404);
 
         $sent = $this->dispatchTicketEmail($ticket);
+        $recipient = EventTicketMail::resolveRecipient($ticket);
 
         if ($request->expectsJson()) {
             return response()->json([
                 'sent' => $sent,
                 'message' => $sent
-                    ? 'Ticket email sent successfully.'
-                    : (EventTicketMail::configurationHint() ?: 'Email could not be sent. Please configure mail settings or download your QR ticket below.'),
+                    ? 'Your ticket has been sent to ' . ($recipient ?? 'your email') . '.'
+                    : EventTicketMail::visitorSendFailureMessage($recipient),
             ]);
         }
 
         return back()->with(
             $sent ? 'success' : 'warning',
             $sent
-                ? 'Ticket email sent successfully.'
-                : (EventTicketMail::configurationHint() ?: 'Email could not be sent. Please configure mail settings or download your QR ticket below.')
+                ? 'Your ticket has been sent to ' . ($recipient ?? 'your email') . '.'
+                : EventTicketMail::visitorSendFailureMessage($recipient)
         );
     }
 
@@ -387,45 +389,17 @@ class PurchaseController extends Controller
 
     private function dispatchTicketEmail(\App\Domain\Visitor\Models\VisitorTicket $ticket): bool
     {
-        $recipient = EventTicketMail::resolveRecipient($ticket);
+        $result = EventTicketMail::attemptAutoSend($ticket);
 
-        if ($recipient === null) {
-            Log::warning('Event ticket email skipped: no valid visitor email on booking.', [
-                'order_number' => $ticket->order_number,
-            ]);
-
-            return false;
-        }
-
-        $ticket->loadMissing('user');
-
-        if ($ticket->user && EventTicketSchema::isReady()) {
-            app(EventTicketIssuanceService::class)->issueFromVisitorTicket($ticket, $ticket->user);
-        }
-
-        if (! EventTicketMail::isDeliverable()) {
-            Log::info('Event ticket email skipped: mail delivery not configured.', [
-                'order_number' => $ticket->order_number,
-                'recipient' => $recipient,
-            ]);
-
-            return false;
-        }
-
-        try {
-            Mail::to($recipient)->send(new EventTicketConfirmationMail($ticket));
-            session(['event_ticket_email_sent_' . $ticket->order_number => true]);
-
-            return true;
-        } catch (Throwable $e) {
+        if (! ($result['sent'] ?? false) && filled($result['admin_message'] ?? null)) {
             Log::warning('Event ticket email failed.', [
                 'order_number' => $ticket->order_number,
-                'recipient' => $recipient,
-                'error' => $e->getMessage(),
+                'recipient' => $result['recipient'] ?? null,
+                'error' => $result['admin_message'],
             ]);
-
-            return false;
         }
+
+        return (bool) ($result['sent'] ?? false);
     }
 
     private function resolveBookingUser(array $orderData): User

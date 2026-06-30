@@ -6,10 +6,9 @@ use App\Domain\Visitor\Models\VisitorTicket;
 use App\Http\Controllers\Controller;
 use App\Mail\EventTicketConfirmationMail;
 use App\Support\EventTicketMail;
-use App\Domain\Shared\Support\EnvFileUpdater;
+use App\Support\PlatformMailSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 use Throwable;
@@ -23,9 +22,9 @@ class MailSetupController extends Controller
         $latestTicket = VisitorTicket::query()->latest('id')->first();
 
         return view('setup.mail', [
-            'mailUsername' => env('MAIL_USERNAME', ''),
-            'mailFrom' => env('MAIL_FROM_ADDRESS', ''),
-            'hasPassword' => filled(env('MAIL_PASSWORD')),
+            'mailUsername' => PlatformMailSettings::username(),
+            'mailFrom' => PlatformMailSettings::fromAddress(),
+            'hasPassword' => PlatformMailSettings::hasPassword(),
             'isDeliverable' => EventTicketMail::isDeliverable(),
             'exampleVisitorEmail' => $latestTicket ? EventTicketMail::resolveRecipient($latestTicket) : null,
         ]);
@@ -37,26 +36,52 @@ class MailSetupController extends Controller
 
         $validated = $request->validate([
             'mail_username' => ['required', 'email', 'max:255'],
-            'mail_password' => ['required', 'string', 'max:255'],
-            'mail_from_address' => ['required', 'email', 'max:255'],
+            'mail_password' => ['nullable', 'string', 'max:255'],
+            'mail_from_address' => ['nullable', 'email', 'max:255'],
         ]);
 
-        EnvFileUpdater::set([
-            'MAIL_MAILER' => 'smtp',
-            'MAIL_SCHEME' => 'tls',
-            'MAIL_HOST' => 'smtp.gmail.com',
-            'MAIL_PORT' => '587',
-            'MAIL_USERNAME' => $validated['mail_username'],
-            'MAIL_PASSWORD' => $validated['mail_password'],
-            'MAIL_FROM_ADDRESS' => $validated['mail_from_address'],
-            'MAIL_FROM_NAME' => config('app.name', 'EproExpo'),
-        ]);
+        if (filled($validated['mail_password'] ?? null)) {
+            $cleanPassword = PlatformMailSettings::sanitizeAppPassword($validated['mail_password']);
 
-        Artisan::call('config:clear');
+            if (strlen($cleanPassword) !== 16) {
+                return redirect()
+                    ->route('setup.mail.index')
+                    ->withInput()
+                    ->with('error', 'Gmail App Password 16 characters ka hona chahiye. Spaces hata kar paste karo.');
+            }
+
+            $validated['mail_password'] = $cleanPassword;
+        }
+
+        if (! filled($validated['mail_password']) && ! PlatformMailSettings::hasPassword()) {
+            return redirect()
+                ->route('setup.mail.index')
+                ->withInput()
+                ->with('error', 'Gmail App Password is required for the first setup.');
+        }
+
+        try {
+            PlatformMailSettings::verifyConnection([
+                'mail_username' => $validated['mail_username'],
+                'mail_password' => $validated['mail_password'] ?? null,
+                'mail_from_address' => $validated['mail_from_address'] ?? null,
+            ]);
+        } catch (Throwable $e) {
+            return redirect()
+                ->route('setup.mail.index')
+                ->withInput()
+                ->with('error', PlatformMailSettings::friendlySmtpError($e->getMessage()));
+        }
+
+        PlatformMailSettings::save([
+            'mail_username' => $validated['mail_username'],
+            'mail_password' => $validated['mail_password'] ?? null,
+            'mail_from_address' => $validated['mail_from_address'] ?? null,
+        ]);
 
         return redirect()
             ->route('setup.mail.index')
-            ->with('status', 'Platform sender SMTP saved. Ticket emails will go to each visitor email entered at checkout.');
+            ->with('status', 'Platform sender SMTP saved and verified. Ticket emails will go to each visitor email entered at checkout.');
     }
 
     public function test(Request $request): RedirectResponse
@@ -86,6 +111,8 @@ class MailSetupController extends Controller
         }
 
         try {
+            PlatformMailSettings::applyToConfig();
+
             Mail::to($recipient)->send(new EventTicketConfirmationMail($ticket));
 
             return redirect()
@@ -94,7 +121,7 @@ class MailSetupController extends Controller
         } catch (Throwable $e) {
             return redirect()
                 ->route('setup.mail.index')
-                ->with('error', 'Send failed: ' . $e->getMessage());
+                ->with('error', PlatformMailSettings::friendlySmtpError($e->getMessage()));
         }
     }
 }

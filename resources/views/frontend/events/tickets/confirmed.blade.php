@@ -74,7 +74,7 @@
                     <span class="font-extrabold text-[#071044]">{{ $ticket->attendee_email }}</span>
                 </p>
                 @unless ($emailSent || $emailConfigured)
-                    <p class="mx-auto mt-3 max-w-[520px] text-[14px] text-[#64748B]">Email delivery is not configured. Use the buttons below to view, download, or resend your ticket.</p>
+                    <p class="mx-auto mt-3 max-w-[520px] text-[14px] text-[#64748B]">Your ticket is ready below. Download it or open your QR pass anytime from your dashboard.</p>
                 @endunless
 
                 <div class="mx-auto mt-11 max-w-[748px] rounded-xl border border-[#DDE2F2] bg-white px-6 py-5 text-left shadow-[0_2px_10px_rgba(22,30,84,0.02)] sm:px-8">

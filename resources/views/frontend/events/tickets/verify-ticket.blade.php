@@ -54,6 +54,8 @@
             <div class="mt-6 space-y-3 rounded-xl bg-white p-5 text-left text-[15px] text-[#1F2A6A]">
                 <p><span class="font-bold">Visitor Name:</span> {{ $ticket->meta['attendee_name'] ?? $ticket->visitor?->name }}</p>
                 <p><span class="font-bold">Checked-in Time:</span> {{ $todayCheckin?->checked_in_at?->format('M d, Y h:i A') ?? $ticket->checked_in_at?->format('M d, Y h:i A') ?? 'N/A' }}</p>
+                <p><span class="font-bold">Total Check-ins:</span> {{ $checkinCount ?? 0 }}</p>
+                <p><span class="font-bold">Total QR Scans:</span> {{ $scanCount ?? 0 }}</p>
                 <p><span class="font-bold">Ticket Number:</span> {{ $ticket->ticket_no }}</p>
                 <p><span class="font-bold">Event:</span> {{ $ticket->event?->title }}</p>
             </div>
@@ -74,6 +76,8 @@
                 <p><span class="font-bold">Ticket Type:</span> {{ $ticket->ticket_type }} × {{ $ticket->quantity }}</p>
                 <p><span class="font-bold">Payment Status:</span> {{ ucfirst($ticket->payment_status) }}</p>
                 <p><span class="font-bold">Status:</span> {{ ucfirst($ticket->status) }}</p>
+                <p><span class="font-bold">Previous Check-ins:</span> {{ $checkinCount ?? 0 }}</p>
+                <p><span class="font-bold">QR Scans:</span> {{ $scanCount ?? 0 }}</p>
             </div>
 
             <form method="POST" action="{{ route('verify-ticket.check-in', $ticket->qr_token) }}" class="mt-6">

@@ -18,10 +18,12 @@ Route::get('/login', function () {
     return redirect()->route('frontend.user.login');
 })->name('login');
 
-Route::get('/qr-ticket/{ticket}', [\App\Domain\Visitor\Controllers\EventTicketController::class, 'showQrTicket'])
-    ->name('qr-ticket.show');
-Route::post('/qr-ticket/{ticket}/send-email', [\App\Domain\Visitor\Controllers\EventTicketController::class, 'sendTicketEmail'])
-    ->name('qr-ticket.send-email');
+Route::middleware('auth')->group(function () {
+    Route::get('/qr-ticket/{ticket}', [\App\Domain\Visitor\Controllers\EventTicketController::class, 'showQrTicket'])
+        ->name('qr-ticket.show');
+    Route::post('/qr-ticket/{ticket}/send-email', [\App\Domain\Visitor\Controllers\EventTicketController::class, 'sendTicketEmail'])
+        ->name('qr-ticket.send-email');
+});
 Route::get('/verify-ticket/{qr_token}', [\App\Domain\Visitor\Controllers\EventTicketController::class, 'verify'])
     ->name('verify-ticket.show');
 Route::post('/verify-ticket/{qr_token}/check-in', [\App\Domain\Visitor\Controllers\EventTicketController::class, 'checkIn'])

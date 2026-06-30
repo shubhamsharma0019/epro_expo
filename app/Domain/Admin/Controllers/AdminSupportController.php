@@ -721,9 +721,22 @@ class AdminSupportController extends Controller
         $query = DB::table('visitor_checkins')
             ->leftJoin('users', 'visitor_checkins.user_id', '=', 'users.id')
             ->leftJoin('visitor_tickets', 'visitor_checkins.visitor_ticket_id', '=', 'visitor_tickets.id')
+            ->leftJoin('tickets', 'visitor_checkins.ticket_id', '=', 'tickets.id')
             ->leftJoin('company_events', 'visitor_checkins.company_event_id', '=', 'company_events.id')
             ->leftJoin('exhibitions', 'visitor_checkins.exhibition_id', '=', 'exhibitions.id')
-            ->select('visitor_checkins.*', 'users.name as user_name', 'visitor_tickets.order_number', 'company_events.title as event_title', 'exhibitions.title as exhibition_title')
+            ->select(
+                'visitor_checkins.*',
+                'users.name as user_name',
+                'users.email as user_email',
+                'visitor_tickets.order_number',
+                'visitor_tickets.attendee_name',
+                'visitor_tickets.attendee_email',
+                'tickets.ticket_no',
+                'company_events.title as event_title',
+                'exhibitions.title as exhibition_title',
+                DB::raw("(SELECT COUNT(*) FROM visitor_checkins AS vc_count WHERE vc_count.ticket_id = visitor_checkins.ticket_id AND vc_count.status = 'checked_in') AS checkin_count"),
+                DB::raw('(SELECT COUNT(*) FROM ticket_scan_logs AS tsl WHERE tsl.ticket_id = visitor_checkins.ticket_id) AS scan_count'),
+            )
             ->when($status !== 'all', fn ($builder) => $builder->where('visitor_checkins.status', $status))
             ->latest('visitor_checkins.checked_in_at');
 
@@ -746,17 +759,20 @@ class AdminSupportController extends Controller
                 'checked_in' => 'Checked In',
                 'verified' => 'Verified',
             ],
-            'columns' => ['Visitor', 'Ticket', 'Destination', 'Device', 'Gate', 'Status', 'Checked In'],
+            'columns' => ['Visitor', 'Email', 'Ticket', 'Destination', 'Check-ins', 'Scans', 'Status', 'Checked In'],
             'rows' => $query->paginate(12)->through(function ($checkin) {
-                $deviceLabel = trim(($checkin->device_name ?: 'Unknown') . ($checkin->device_type ? ' (' . $checkin->device_type . ')' : ''));
+                $visitorName = $checkin->attendee_name ?: $checkin->user_name ?: 'Visitor';
+                $visitorEmail = $checkin->attendee_email ?: $checkin->user_email ?: 'N/A';
+                $ticketLabel = $checkin->ticket_no ?: ($checkin->order_number ?: 'N/A');
 
                 return [
                     'cells' => [
-                        $checkin->user_name ?: 'Visitor',
-                        $checkin->order_number ?: 'N/A',
+                        $visitorName,
+                        $visitorEmail,
+                        $ticketLabel,
                         $checkin->event_title ?: ($checkin->exhibition_title ?: 'General Entry'),
-                        $deviceLabel !== '' ? $deviceLabel : 'N/A',
-                        $checkin->entry_gate ?: 'N/A',
+                        (string) ((int) ($checkin->checkin_count ?? 0)),
+                        (string) ((int) ($checkin->scan_count ?? 0)),
                         $this->badge((string) $checkin->status),
                         $this->formatDateTime($checkin->checked_in_at),
                     ],

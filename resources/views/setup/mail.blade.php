@@ -13,8 +13,9 @@
         <div class="mt-4 rounded-xl border border-blue-200 bg-blue-50 px-5 py-4 text-[15px] text-blue-900">
             <p class="font-semibold">How ticket emails work</p>
             <ul class="mt-2 list-disc space-y-1 pl-5">
-                <li><strong>.env (MAIL_USERNAME)</strong> = one platform sender Gmail (your company). Same for all tickets.</li>
-                <li><strong>Visitor email at checkout</strong> = where each ticket is delivered. Jo email visitor form mein daalega, wahi par jayegi.</li>
+                <li><strong>Platform Gmail (one time)</strong> = sender for all ticket emails.</li>
+                <li><strong>Visitor checkout email</strong> = where each ticket is delivered automatically.</li>
+                <li>Settings are saved securely on the server — no server restart needed.</li>
             </ul>
         </div>
 
@@ -39,15 +40,22 @@
                 </div>
                 <div>
                     <label class="mb-1 block text-sm font-semibold">Gmail App Password (MAIL_PASSWORD)</label>
-                    <input type="password" name="mail_password" required placeholder="16-character app password"
+                    <input type="password" name="mail_password" {{ $hasPassword ? '' : 'required' }} placeholder="16-character app password"
                         class="w-full rounded-lg border border-[#DDE2F2] px-4 py-3">
                     @if ($hasPassword)
-                        <p class="mt-1 text-xs text-emerald-700">Password already in .env — enter again to update.</p>
+                        <p class="mt-1 text-xs text-emerald-700">Password already saved — leave blank to keep current password.</p>
+                    @else
+                        <ol class="mt-2 list-decimal space-y-1 pl-5 text-xs text-[#64748B]">
+                            <li>Google Account → Security → <strong>2-Step Verification</strong> ON karo</li>
+                            <li>App passwords → app name "EproExpo" → <strong>16-character password</strong> copy karo</li>
+                            <li>Normal Gmail password mat use karo — sirf App Password</li>
+                            <li>Paste karte waqt spaces hata dena (e.g. <code>abcd efgh ijkl mnop</code> → 16 chars)</li>
+                        </ol>
                     @endif
                 </div>
                 <div>
-                    <label class="mb-1 block text-sm font-semibold">From address (MAIL_FROM_ADDRESS)</label>
-                    <input type="email" name="mail_from_address" value="{{ old('mail_from_address', $mailFrom) }}" required
+                    <label class="mb-1 block text-sm font-semibold">From address (optional)</label>
+                    <input type="email" name="mail_from_address" value="{{ old('mail_from_address', $mailFrom ?: $mailUsername) }}"
                         placeholder="Usually same as platform Gmail"
                         class="w-full rounded-lg border border-[#DDE2F2] px-4 py-3">
                 </div>
