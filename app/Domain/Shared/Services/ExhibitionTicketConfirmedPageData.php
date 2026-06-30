@@ -46,7 +46,7 @@ class ExhibitionTicketConfirmedPageData
             : '#';
 
         $eTicketUrl = route('exhibitions.tickets.e-ticket', $slug);
-        $dashboardUrl = route('exhibitions.visitor.dashboard', $slug);
+        $dashboardUrl = route('frontend.user.dashboard', ['slug' => $slug]);
         $confirmedUrl = route('exhibitions.tickets.confirmed', $slug);
         $exhibitionShowUrl = route('exhibitions.show', $slug);
 

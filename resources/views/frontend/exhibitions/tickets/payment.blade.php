@@ -820,7 +820,7 @@
                                     }
                                 }
 
-                                window.location.href = `{{ route('exhibitions.tickets.confirmed', $slug) }}?booking_id=${bookingId}&id=${exhId}`;
+                                window.location.href = `{{ route('frontend.user.dashboard', ['slug' => $slug]) }}?booking_id=${bookingId}`;
                             } else {
                                 throw new Error('Registration failed to return valid visitor details.');
                             }

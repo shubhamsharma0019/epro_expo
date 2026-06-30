@@ -382,14 +382,12 @@ class VisitorExhibitionController extends Controller
         ]);
     }
 
-    public function dashboard(string $slug): View|RedirectResponse
+    public function dashboard(string $slug): RedirectResponse
     {
         if (request()->has('booking_id')) {
             session(['selected_visitor_booking_id' => request()->query('booking_id')]);
         }
 
-        $exhibition = $this->resolveExhibition($slug);
-        $visitor = $this->resolveVisitor($exhibition);
         $isPassActive = $this->isPassActive($slug);
 
         if (! $isPassActive && session('exhibition_booking_path')) {
@@ -400,89 +398,12 @@ class VisitorExhibitionController extends Controller
             return redirect()->route('exhibitions.tickets.select', $slug);
         }
 
-        $meetingsCount = 0;
-        if (auth()->check() || $visitor?->email) {
-            $meetingsCount = VisitorMeetingBooking::query()
-                ->when($exhibition, fn ($query) => $query->whereHas('company.boothBookings', fn ($bookingQuery) => $bookingQuery->where('exhibition_id', $exhibition->id)))
-                ->where(function ($query) use ($visitor) {
-                    if (auth()->check()) {
-                        $query->where('visitor_id', auth()->id());
-                    }
-                    if ($visitor?->email) {
-                        auth()->check()
-                            ? $query->orWhere('visitor_email', $visitor->email)
-                            : $query->where('visitor_email', $visitor->email);
-                    }
-                })
-                ->count();
-        }
+        session(['activeExhibitionSlug' => $slug]);
 
-        $sessionsJoinedCount = $this->resolveRegisteredSessionsCount($exhibition, $visitor);
-
-        $recommendedCompanies = collect();
-        if ($exhibition) {
-            $recommendedCompanies = BoothBooking::query()
-                ->with(['company', 'boothProfile', 'hall', 'booth'])
-                ->where('exhibition_id', $exhibition->id)
-                ->where('payment_status', 'paid')
-                ->whereIn('booking_status', ['confirmed', 'active'])
-                ->where('admin_status', 'approved')
-                ->whereIn('booth_setup_status', ['published', 'approved', 'live'])
-                ->latest()
-                ->take(2)
-                ->get()
-                ->map(function ($booking, $index) {
-                    $companyName = $booking->boothProfile?->company_name
-                        ?: $booking->company?->company_name
-                        ?: $booking->company?->name
-                        ?: 'Company';
-                    $hallName = $booking->hall?->name ?: 'Hall TBD';
-                    $boothNumber = $booking->booth?->booth_number ?: $booking->booth_id;
-
-                    return [
-                        'company' => $companyName,
-                        'location' => trim($hallName . ($boothNumber ? ' - Booth ' . $boothNumber : '')),
-                        'meta' => $booking->boothSessions?->first()?->title ?: 'Explore booth details and sessions',
-                        'status' => $index === 0 ? 'Featured' : 'Open',
-                    ];
-                });
-        }
-
-        $todaySessions = collect();
-        if ($exhibition) {
-            $todaySessions = BoothSession::query()
-                ->whereIn('status', ['live', 'upcoming', 'completed'])
-                ->whereHas('boothBooking', function (Builder $query) use ($exhibition) {
-                    $query
-                        ->where('exhibition_id', $exhibition->id)
-                        ->publiclyVisible();
-                })
-                ->orderBy('session_date')
-                ->orderBy('start_time')
-                ->take(3)
-                ->get()
-                ->map(fn ($session) => [
-                    'time' => $session->start_time
-                        ? \Illuminate\Support\Carbon::parse($session->start_time)->format('h:i A')
-                        : 'TBD',
-                    'title' => $session->title,
-                ]);
-        }
-
-        $notifications = $this->buildVisitorNotifications($exhibition, $visitor);
-        $unreadNotificationsCount = $notifications->count();
-
-        return view('frontend.visitor-exhibition.visitor-dashboard.index', [
+        return redirect()->route('frontend.user.dashboard', array_filter([
             'slug' => $slug,
-            'isPassActive' => $isPassActive,
-            'exhibition' => $exhibition,
-            'visitor' => $visitor,
-            'meetingsCount' => $meetingsCount,
-            'sessionsJoinedCount' => $sessionsJoinedCount,
-            'recommendedCompanies' => $recommendedCompanies,
-            'todaySessions' => $todaySessions,
-            'unreadNotificationsCount' => $unreadNotificationsCount,
-        ]);
+            'booking_id' => request()->query('booking_id'),
+        ]));
     }
 
     public function myPasses(string $slug)

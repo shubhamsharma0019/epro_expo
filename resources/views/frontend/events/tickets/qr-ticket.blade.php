@@ -101,23 +101,23 @@
     </div>
 
     <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <a href="{{ route('frontend.user.dashboard') }}"
+            class="inline-flex h-[52px] items-center justify-center rounded-xl bg-[#4318FF] px-5 text-[15px] font-bold text-white shadow-[0_8px_20px_rgba(67,24,255,0.25)] transition hover:bg-[#3412C9] sm:col-span-1">
+            Continue to Dashboard
+        </a>
         <button type="button" onclick="window.print()"
-            class="inline-flex h-[52px] items-center justify-center rounded-xl bg-[#4318FF] px-5 text-[15px] font-bold text-white shadow-[0_8px_20px_rgba(67,24,255,0.25)] transition hover:bg-[#3412C9]">
+            class="inline-flex h-[52px] items-center justify-center rounded-xl border border-[#907BFF] bg-white px-5 text-[15px] font-bold text-[#4320D6] transition hover:bg-[#F7F4FF]">
             Download Ticket
         </button>
         <form method="POST" action="{{ route('qr-ticket.send-email', $ticket) }}">
             @csrf
             <button type="submit"
                 @disabled(! ($ticketRecipientEmail ?? null))
-                class="inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#4318FF] px-5 text-[15px] font-bold text-white shadow-[0_8px_20px_rgba(67,24,255,0.25)] transition hover:bg-[#3412C9] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none">
+                class="inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-xl border border-[#907BFF] bg-white px-5 text-[15px] font-bold text-[#4320D6] transition hover:bg-[#F7F4FF] disabled:cursor-not-allowed disabled:opacity-50">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                 {{ ($emailSent ?? false) ? 'Resend Email' : 'Send Email' }}
             </button>
         </form>
-        <a href="{{ route('frontend.user.dashboard') }}"
-            class="inline-flex h-[52px] items-center justify-center rounded-xl border border-[#907BFF] bg-white px-5 text-[15px] font-bold text-[#4320D6] transition hover:bg-[#F7F4FF]">
-            Back to Dashboard
-        </a>
     </div>
 </main>
 @endsection

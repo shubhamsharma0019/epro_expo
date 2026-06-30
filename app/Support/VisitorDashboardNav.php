@@ -133,9 +133,9 @@ class VisitorDashboardNav
         return array_merge($links, [
             [
                 'label' => 'My Passes',
-                'href' => $passFlowLocked ? $passFlowHref : route('frontend.user.tickets.index'),
+                'href' => $passFlowLocked ? $passFlowHref : route('frontend.user.passes'),
                 'icon' => 'ph-ticket',
-                'active' => request()->routeIs('frontend.user.tickets.*'),
+                'active' => request()->routeIs('frontend.user.passes', 'frontend.user.tickets.*'),
             ],
             [
                 'label' => 'Upcoming Events',

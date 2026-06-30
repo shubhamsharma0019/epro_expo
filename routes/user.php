@@ -19,9 +19,11 @@ Route::prefix('user')->name('frontend.user.')->group(function () {
 
     Route::middleware('auth')->group(function () {
         Route::get('/dashboard', [VisitorDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/passes', [UserTicketController::class, 'index'])->name('passes');
+        Route::get('/exhibitions/{slug}/halls', [UserTicketController::class, 'exhibitionHalls'])->name('exhibitions.halls');
 
         Route::prefix('tickets')->name('tickets.')->group(function () {
-            Route::get('/', [UserTicketController::class, 'index'])->name('index');
+            Route::get('/', fn () => redirect()->route('frontend.user.passes'))->name('index');
             Route::get('/exhibition/{id}', [UserTicketController::class, 'showExhibitionPass'])->name('exhibition.show');
             Route::get('/exhibition/{id}/pass', [UserTicketController::class, 'downloadExhibitionPass'])->name('exhibition.pass');
             Route::get('/{id}/e-ticket', [UserTicketController::class, 'download'])->name('e-ticket');

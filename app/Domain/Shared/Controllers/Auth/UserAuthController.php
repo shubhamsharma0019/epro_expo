@@ -105,7 +105,7 @@ class UserAuthController extends Controller
 
             if ($request->session()->get('user_flow_context') === 'exhibition_ticket') {
                 $request->session()->forget(['url.intended', 'user_flow_context']);
-                return redirect()->route('exhibitions.visitor.dashboard', $activeSlug);
+                return redirect()->route('frontend.user.dashboard', ['slug' => $activeSlug]);
             }
 
             return $this->redirectAfterAuthentication($request, $exhibition);
@@ -243,7 +243,7 @@ class UserAuthController extends Controller
         if ($exhibition && $request->session()->has('activeExhibitionSlug')) {
             $request->session()->forget(['url.intended', 'user_flow_context']);
 
-            return redirect()->intended(route('exhibitions.visitor.dashboard', $exhibition->slug));
+            return redirect()->intended(route('frontend.user.dashboard', ['slug' => $exhibition->slug]));
         }
 
         $request->session()->forget(['url.intended', 'user_flow_context']);

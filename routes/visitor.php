@@ -26,20 +26,9 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
     })->name('home');
 
     Route::get('/dashboard', function () {
-        $slug = request()->query('slug');
-        if ($slug) {
-            return redirect()->route('exhibitions.visitor.dashboard', $slug);
-        }
-
-        $exhibition = \App\Support\LiveContent::firstLiveExhibition();
-        if ($exhibition) {
-            return redirect()->route('exhibitions.visitor.dashboard', $exhibition->slug);
-        }
-
-        return view('frontend.visitor-exhibition.visitor-dashboard.index', [
-            'slug' => '',
-            'isPassActive' => false,
-        ]);
+        return redirect()->route('frontend.user.dashboard', array_filter([
+            'slug' => request()->query('slug'),
+        ]));
     })->name('dashboard');
 
     Route::get('/booking-dashboard', function () {
@@ -170,7 +159,12 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
             ?: \App\Support\LiveContent::firstLiveExhibitionSlug();
 
         if ($bookingId && $slug) {
-            return redirect()->route('exhibitions.tickets.confirmed', $slug);
+            session(['activeExhibitionSlug' => $slug]);
+
+            return redirect()->route('frontend.user.dashboard', [
+                'slug' => $slug,
+                'booking_id' => $bookingId,
+            ]);
         }
 
         return redirect()->route('exhibitions.index');
@@ -277,7 +271,17 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
             abort_unless($data, 404);
 
             if ($data['visitor'] && $data['visitor']->payment_status === 'completed') {
-                session(['visitor_pass_active' => true]);
+                session([
+                    'visitor_pass_active' => true,
+                    'activeExhibitionSlug' => $slug,
+                    'selected_visitor_booking_id' => $data['visitor']->booking_id,
+                ]);
+                session()->forget('exhibition_booking_path');
+
+                return redirect()->route('frontend.user.dashboard', array_filter([
+                    'slug' => $slug,
+                    'booking_id' => $data['visitor']->booking_id,
+                ]));
             }
 
             return view('frontend.exhibitions.tickets.confirmed', $data);

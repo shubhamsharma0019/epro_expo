@@ -46,7 +46,7 @@ class ExhibitionTicketFlow
                 ->exists();
 
             if ($hasCompletedPass) {
-                return route('exhibitions.visitor.dashboard', $slug);
+                return route('frontend.user.dashboard', ['slug' => $slug]);
             }
         }
 

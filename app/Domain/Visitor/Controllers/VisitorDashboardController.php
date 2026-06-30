@@ -242,7 +242,7 @@ class VisitorDashboardController extends Controller
         $quickActions = [
             ['label' => 'Browse Events', 'href' => url('/events/listings'), 'icon' => 'ph ph-calendar-blank'],
             ['label' => 'Browse Exhibitions', 'href' => route('exhibitions.index'), 'icon' => 'ph ph-buildings'],
-            ['label' => 'My Passes', 'href' => route('frontend.user.tickets.index'), 'icon' => 'ph ph-ticket'],
+            ['label' => 'My Passes', 'href' => route('frontend.user.passes'), 'icon' => 'ph ph-ticket'],
         ];
 
         return view('frontend.user.dashboard', [

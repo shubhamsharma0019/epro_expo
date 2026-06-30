@@ -147,6 +147,7 @@ class VisitorTicketController extends Controller
         session([
             'selected_visitor_booking_id' => $visitor->booking_id,
             'visitor_pass_active' => $visitor->payment_status === 'completed',
+            'activeExhibitionSlug' => $slug,
         ]);
         session()->forget('exhibition_booking_path');
 
@@ -170,6 +171,7 @@ class VisitorTicketController extends Controller
         session([
             'selected_visitor_booking_id' => $visitor->booking_id,
             'visitor_pass_active' => true,
+            'activeExhibitionSlug' => $slug,
         ]);
         session()->forget('exhibition_booking_path');
 
