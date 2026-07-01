@@ -169,7 +169,7 @@ Route::prefix('company')->name('company.')->group(function () {
         Route::get('/payment/summary', [CompanyBoothBookingController::class, 'paymentSummary'])->name('payment.summary');
         Route::post('/payment/razorpay-order', [CompanyBoothBookingController::class, 'createRazorpayOrder'])->name('payment.razorpay-order');
         Route::post('/payment/verify', [CompanyBoothBookingController::class, 'verifyRazorpayPayment'])->name('payment.verify');
-        Route::post('/payment/continue', [CompanyBoothBookingController::class, 'continueAfterPayment'])->name('payment.continue');
+        Route::match(['get', 'post'], '/payment/continue', [CompanyBoothBookingController::class, 'continueAfterPayment'])->name('payment.continue');
 
         Route::get('/confirmed', [CompanyBoothBookingController::class, 'confirmed'])->name('confirmed');
     });
@@ -269,6 +269,8 @@ Route::prefix('company')->name('company.')->group(function () {
         Route::get('/meetings', [BoothMeetingAvailabilityController::class, 'edit'])->name('meetings.edit');
         Route::post('/meetings', [BoothMeetingAvailabilityController::class, 'update'])->name('meetings.update');
         Route::post('/sessions/meeting-setup', [BoothSessionController::class, 'updateMeetingSetup'])->name('sessions.meeting-setup.update');
+        Route::post('/sessions/{session}/create-meet', [BoothSessionController::class, 'createMeet'])->name('sessions.create-meet');
+        Route::post('/sessions/{session}/start-conference', [BoothSessionController::class, 'startConference'])->name('sessions.start-conference');
         Route::resource('/sessions', BoothSessionController::class)->names('sessions');
         Route::get('/preview', [BoothPreviewController::class, 'show'])->name('preview');
         Route::post('/preview/mark-ready', [BoothPreviewController::class, 'markReady'])->name('preview.mark-ready');

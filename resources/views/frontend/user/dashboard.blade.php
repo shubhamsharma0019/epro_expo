@@ -23,6 +23,14 @@
 .agenda-card .join-btn{
   background:var(--grad); color:#fff; font-size:12px; font-weight:700;
   border:none; padding:8px 14px; border-radius:9px; cursor:pointer; flex-shrink:0;
+  text-decoration:none; display:inline-flex; align-items:center; justify-content:center;
+}
+.agenda-card .join-btn.outline{
+  background:#fff; color:var(--indigo); border:1.5px solid var(--indigo);
+}
+.agenda-empty{
+  background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+  padding:28px 20px; text-align:center; color:var(--muted); font-size:13px; font-weight:600;
 }
 .stat-row{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px;}
 .stat-card{
@@ -111,11 +119,12 @@
     $exhibitionPassesCount = $exhibitionPasses->count();
     $totalPassesCount = $totalTicketsCount ?? ($eventTicketsCount + $exhibitionPassesCount);
     $pendingMeetings = $pendingMeetingsCount ?? 0;
-    $liveSessionsCount = ($liveEvents ?? collect())->count() + ($liveExhibitions ?? collect())->count();
-    $registeredSessions = ($recentActivities ?? collect())->where('type', 'session_registered')->count();
-    $totalRegisteredSessions = max($registeredSessions, 5);
-    $completedSessions = min($registeredSessions, $totalRegisteredSessions);
-    $sessionPercent = $totalRegisteredSessions > 0 ? round(($completedSessions / $totalRegisteredSessions) * 100) : 0;
+    $agendaItems = $todayAgenda ?? collect();
+    $sessionProgress = $sessionProgress ?? ['total' => 0, 'completed' => 0, 'percent' => 0];
+    $totalRegisteredSessions = $sessionProgress['total'];
+    $completedSessions = $sessionProgress['completed'];
+    $sessionPercent = $sessionProgress['percent'];
+    $liveSessionsCount = $liveSessionsCount ?? 0;
     $ringCircumference = 314.16;
     $ringOffset = $ringCircumference - ($ringCircumference * $sessionPercent / 100);
     $categoryLabel = fn (string $cat) => match ($cat) {
@@ -140,26 +149,28 @@
         <div class="section-title">Today's agenda</div>
         <div class="section-sub">Sessions and meetings scheduled for you today.</div>
         <div class="agenda-row">
-            <div class="agenda-card">
-                <div class="ic">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+            @forelse ($agendaItems as $item)
+                <div class="agenda-card">
+                    <div class="ic">
+                        @if ($item['type'] === 'meeting')
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                        @else
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                        @endif
+                    </div>
+                    <div class="info">
+                        <h4>{{ $item['title'] }}</h4>
+                        <p>{{ $item['subtitle'] }}</p>
+                    </div>
+                    @if (! empty($item['action_url']))
+                        <a href="{{ $item['action_url'] }}" target="_blank" rel="noopener" class="join-btn">{{ $item['action_label'] }}</a>
+                    @else
+                        <button class="join-btn {{ $item['type'] === 'session' ? 'outline' : '' }}" type="button">{{ $item['action_label'] }}</button>
+                    @endif
                 </div>
-                <div class="info">
-                    <h4>Meeting with unbaiq me llc</h4>
-                    <p>Starts in 25 min · 1:30 PM IST</p>
-                </div>
-                <button class="join-btn" type="button">Join</button>
-            </div>
-            <div class="agenda-card">
-                <div class="ic">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-                </div>
-                <div class="info">
-                    <h4>Session: product strategy</h4>
-                    <p>3:00 PM IST · Live in 2h 10m</p>
-                </div>
-                <button class="join-btn" type="button">Remind me</button>
-            </div>
+            @empty
+                <div class="agenda-empty">No meetings or sessions scheduled for today.</div>
+            @endforelse
         </div>
     </div>
 
@@ -247,7 +258,13 @@
             </svg>
             <div class="ring-label"><span class="big">{{ $completedSessions }}/{{ $totalRegisteredSessions }}</span><span class="small">SESSIONS</span></div>
         </div>
-        <p class="caption">{{ $sessionPercent }}% of registered sessions completed</p>
+        <p class="caption">
+            @if ($totalRegisteredSessions > 0)
+                {{ $sessionPercent }}% of registered sessions completed
+            @else
+                Register for sessions to track your progress
+            @endif
+        </p>
     </div>
 </aside>
 @endsection

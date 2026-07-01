@@ -75,6 +75,7 @@ class HallBookedBoothGroups
                     ?: 'Booked Company';
 
                 return [
+                    'booking_id' => $booking->id,
                     'company_id' => $booking->company_id,
                     'company_name' => $companyName,
                     'logo_url' => $logo,

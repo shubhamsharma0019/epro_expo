@@ -161,6 +161,8 @@ class VisitorFloorMap
             $isGroupedBooking = in_array((int) $booth->id, $groupedBookedBoothIds, true);
 
             return [
+                'booth_id' => (int) $booth->id,
+                'booking_id' => $meta['booking_id'] ?? null,
                 'label' => self::formatBoothLabel($booth->booth_number),
                 'shape' => $metrics['shape'],
                 'left' => $metrics['left'],
@@ -305,10 +307,11 @@ class VisitorFloorMap
                     ->map(fn ($id) => (int) $id)
                     ->unique()
                     ->filter(fn (int $id) => $hallBoothIds->contains($id))
-                    ->each(function (int $id) use ($meta, $companyName, $category) {
+                    ->each(function (int $id) use ($meta, $companyName, $category, $booking) {
                         $meta->put($id, [
                             'company_name' => $companyName,
                             'category' => $category,
+                            'booking_id' => $booking->id,
                         ]);
                     });
             });

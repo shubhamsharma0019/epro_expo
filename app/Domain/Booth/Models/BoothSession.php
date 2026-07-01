@@ -31,4 +31,9 @@ class BoothSession extends Model
     {
         return $this->belongsTo(BoothTeamMember::class, 'team_member_id');
     }
+
+    public function companyMeeting(): BelongsTo
+    {
+        return $this->belongsTo(\App\Domain\Company\Models\CompanyMeeting::class);
+    }
 }

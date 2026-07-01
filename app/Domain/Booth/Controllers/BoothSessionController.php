@@ -7,7 +7,9 @@ use App\Http\Requests\Company\BoothSessionMeetingSetupRequest;
 use App\Domain\Booth\Models\BoothBooking;
 use App\Domain\Booth\Models\BoothMeetingAvailability;
 use App\Domain\Booth\Models\BoothSession;
+use App\Domain\Booth\Services\BoothSessionConferenceService;
 use App\Domain\Booth\Services\BoothSetupStepService;
+use App\Domain\Shared\Services\GoogleMeetService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -41,7 +43,7 @@ class BoothSessionController extends BaseBoothSetupController
         };
 
         return view('company.booth-setup.sessions', $this->commonData($booking, $steps) + [
-            'sessions' => $sessionsQuery->get(),
+            'sessions' => $sessionsQuery->with('companyMeeting')->get(),
             'teamMembers' => $booking->boothTeamMembers()->where('status', 'active')->get(),
             'sessionCounts' => $counts,
             'activeStatus' => $status,
@@ -51,12 +53,20 @@ class BoothSessionController extends BaseBoothSetupController
     }
     public function create(BoothBooking $booking, BoothSetupStepService $steps): View { return $this->index($booking, $steps); }
     public function show(BoothBooking $booking, BoothSession $session, BoothSetupStepService $steps): View { return $this->edit($booking, $session, $steps); }
-    public function store(BoothSessionRequest $request, BoothBooking $booking, BoothSetupStepService $steps): RedirectResponse
+    public function store(BoothSessionRequest $request, BoothBooking $booking, BoothSetupStepService $steps, BoothSessionConferenceService $conference): RedirectResponse
     {
         $booking = $this->setupBooking($booking);
-        BoothSession::create($request->validated() + ['company_id' => $booking->company_id, 'booth_booking_id' => $booking->id]);
+        $session = BoothSession::create($request->validated() + ['company_id' => $booking->company_id, 'booth_booking_id' => $booking->id]);
+        $conference->syncConferenceMeeting($session);
+        $notified = $conference->notifyExhibitionPassHolders($session->fresh());
         $this->syncSessionStep($booking, $steps);
-        return back()->with('status', 'Session saved.');
+
+        $message = 'Session saved.';
+        if ($notified > 0) {
+            $message .= ' ' . $notified . ' exhibition pass holder(s) were notified.';
+        }
+
+        return back()->with('status', $message);
     }
     public function edit(BoothBooking $booking, BoothSession $session, BoothSetupStepService $steps): View
     {
@@ -64,12 +74,14 @@ class BoothSessionController extends BaseBoothSetupController
         $booking = $this->setupBooking($booking);
         return $this->index($booking, $steps)->with('session', $session);
     }
-    public function update(BoothSessionRequest $request, BoothBooking $booking, BoothSession $session, BoothSetupStepService $steps): RedirectResponse
+    public function update(BoothSessionRequest $request, BoothBooking $booking, BoothSession $session, BoothSetupStepService $steps, BoothSessionConferenceService $conference): RedirectResponse
     {
         abort_unless($session->company_id === (int) session('company_id') && $session->booth_booking_id === $booking->id, 403);
         $booking = $this->setupBooking($booking);
         $session->update($request->validated());
+        $conference->syncConferenceMeeting($session->fresh());
         $this->syncSessionStep($booking, $steps);
+
         return back()->with('status', 'Session updated.');
     }
     public function destroy(BoothBooking $booking, BoothSession $session, BoothSetupStepService $steps): RedirectResponse
@@ -105,6 +117,32 @@ class BoothSessionController extends BaseBoothSetupController
         }
 
         return back()->with('meeting_setup_status', 'Meeting setup preferences saved.');
+    }
+
+    public function createMeet(BoothBooking $booking, BoothSession $session, BoothSessionConferenceService $conference, GoogleMeetService $googleMeetService): RedirectResponse
+    {
+        abort_unless($session->company_id === (int) session('company_id') && $session->booth_booking_id === $booking->id, 403);
+
+        $joinUrl = $conference->provisionGoogleMeet($session, $googleMeetService);
+
+        if (! $joinUrl) {
+            return back()->with('error', 'Google Meet is not configured or the link could not be created. Add GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REFRESH_TOKEN to .env.');
+        }
+
+        return back()->with('status', 'Google Meet link is ready. You can start the conference when visitors join.');
+    }
+
+    public function startConference(BoothBooking $booking, BoothSession $session, BoothSessionConferenceService $conference, GoogleMeetService $googleMeetService): RedirectResponse
+    {
+        abort_unless($session->company_id === (int) session('company_id') && $session->booth_booking_id === $booking->id, 403);
+
+        $result = $conference->startConference($session, $googleMeetService);
+
+        if ($result['host_url']) {
+            return redirect()->away($result['host_url']);
+        }
+
+        return back()->with('error', 'Conference marked live but Google Meet link is not available yet. Create the Meet link first.');
     }
 
     private function defaultMeetingAvailabilityData(BoothBooking $booking): array

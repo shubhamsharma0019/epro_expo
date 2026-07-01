@@ -222,6 +222,13 @@ class UserAuthController extends Controller
         return $this->redirectAfterAuthentication($request, $exhibition);
     }
 
+    public function showLogout(): View
+    {
+        return view('frontend.user.logout', [
+            'user' => auth()->user(),
+        ]);
+    }
+
     public function logout(Request $request): RedirectResponse
     {
         Auth::logout();

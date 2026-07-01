@@ -25,6 +25,7 @@ class VisitorMeetingBooking extends Model
         'preferred_date',
         'preferred_time',
         'message',
+        'notes',
         'status',
         'created_by',
         'updated_by',

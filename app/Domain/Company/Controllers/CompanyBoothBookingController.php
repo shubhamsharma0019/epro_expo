@@ -1471,6 +1471,17 @@ class CompanyBoothBookingController extends Controller
         }
 
         $booking = $this->currentDraftBooking();
+
+        if ($booking && $booking->payment_status === 'paid') {
+            return redirect()->route('company.booth-booking.confirmed');
+        }
+
+        $razorpayEnabled = filled(config('services.razorpay.key')) && filled(config('services.razorpay.secret'));
+        if ($razorpayEnabled) {
+            return redirect()->route('company.booth-booking.payment')
+                ->withErrors(['payment' => 'Please complete payment using Razorpay checkout.']);
+        }
+
         if (! $booking) {
             return redirect('/company/booth-booking/summary')
                 ->withErrors(['booking' => 'Please complete booth booking before confirmation.']);

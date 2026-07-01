@@ -408,7 +408,7 @@ class VisitorExhibitionController extends Controller
 
     public function myPasses(string $slug)
     {
-        return redirect()->route('frontend.user.tickets.index');
+        return redirect()->route('frontend.user.passes');
     }
 
     public function savedBooths(string $slug): View

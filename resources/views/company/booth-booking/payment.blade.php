@@ -57,12 +57,10 @@
                     <div class="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-[14px] leading-6 text-amber-800">
                         Razorpay keys are not configured. Add <strong>RAZORPAY_KEY_ID</strong> and <strong>RAZORPAY_KEY_SECRET</strong> in your environment before collecting payments.
                     </div>
-                    <form method="POST" action="{{ route('company.booth-booking.payment.continue') }}" class="mt-4">
-                        @csrf
-                        <button type="submit" class="inline-flex h-[52px] w-full items-center justify-center rounded-md border border-[#B9A7FF] bg-white px-6 text-[16px] font-semibold text-purple transition hover:bg-[#F8F5FF] sm:w-auto sm:min-w-[300px]">
-                            Continue to Confirmation
-                        </button>
-                    </form>
+                    <a href="{{ route('company.booth-booking.payment.continue') }}"
+                        class="mt-4 inline-flex h-[52px] w-full items-center justify-center rounded-md border border-[#B9A7FF] bg-white px-6 text-[16px] font-semibold text-purple transition hover:bg-[#F8F5FF] sm:w-auto sm:min-w-[300px]">
+                        Continue to Confirmation
+                    </a>
                 @endunless
 
                 <div id="payment-status" class="mt-6 hidden rounded-xl border px-5 py-4 text-[15px] font-medium"></div>

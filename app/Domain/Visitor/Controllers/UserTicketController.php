@@ -7,6 +7,9 @@ use App\Domain\Event\Models\Hall;
 use App\Http\Controllers\Controller;
 use App\Domain\Visitor\Models\Visitor;
 use App\Domain\Visitor\Models\VisitorTicket;
+use App\Support\UserVisitorPasses;
+use App\Support\VisitorFloorMap;
+use App\Support\EventTicketMail;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 
@@ -16,6 +19,9 @@ class UserTicketController extends Controller
     {
         $user = auth()->user();
         $userEmail = $user->email;
+        $bookingId = UserVisitorPasses::normalizeBookingId(request()->query('booking_id'));
+
+        UserVisitorPasses::linkPassesToUser($user, $bookingId);
 
         // 1. Fetch Event Tickets
         $eventTickets = VisitorTicket::where('user_id', $user->id)
@@ -24,10 +30,7 @@ class UserTicketController extends Controller
             ->get();
 
         // 2. Fetch Exhibition Passes
-        $exhibitionPasses = Visitor::whereRaw('LOWER(email) = ?', [strtolower($userEmail)])
-            ->with('exhibition')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $exhibitionPasses = UserVisitorPasses::forUser($user, $bookingId);
 
         // 3. Combine them into a unified list
         $passes = collect();
@@ -50,6 +53,9 @@ class UserTicketController extends Controller
         }
 
         foreach ($exhibitionPasses as $pass) {
+            $slug = $pass->exhibition->slug ?? '';
+            $hasPass = $pass->payment_status === 'completed' && filled($slug);
+
             $passes->push([
                 'type' => 'exhibition',
                 'id' => $pass->id,
@@ -62,7 +68,10 @@ class UserTicketController extends Controller
                 'quantity' => 1,
                 'ticket_name' => 'Visitor Pass',
                 'email' => $pass->email,
-                'slug' => $pass->exhibition->slug ?? '',
+                'slug' => $slug,
+                'explore_url' => $hasPass
+                    ? route('frontend.user.exhibitions.halls', $slug)
+                    : ($slug ? route('exhibitions.tickets.visitor-details', $slug) : null),
                 'raw' => $pass
             ]);
         }
@@ -70,14 +79,24 @@ class UserTicketController extends Controller
         $now = Carbon::now();
         $sortedPasses = $this->categorizeItems($passes, $now);
 
-        $exhibitions = $this->buildExhibitionBrowseList($now);
+        $exhibitions = $this->buildExhibitionBrowseList($now, $user);
         $openExhibitionsCount = $exhibitions->whereIn('category', ['upcoming', 'live'])->count();
         $activeEventPassesCount = $sortedPasses->where('type', 'event')->whereIn('category', ['upcoming', 'live'])->count();
+        $ownedExhibitionPasses = $sortedPasses
+            ->where('type', 'exhibition')
+            ->where('status', 'confirmed')
+            ->values();
+        $ownedExhibitionSlugs = $ownedExhibitionPasses->pluck('slug')->filter()->unique()->values();
+        $openExhibitions = $exhibitions
+            ->reject(fn (array $item) => $ownedExhibitionSlugs->contains($item['slug'] ?? ''))
+            ->values();
 
         return view('frontend.user.passes.index', [
             'user' => $user,
             'passes' => $sortedPasses,
             'exhibitions' => $exhibitions,
+            'ownedExhibitionPasses' => $ownedExhibitionPasses,
+            'openExhibitions' => $openExhibitions,
             'totalCount' => $sortedPasses->count(),
             'openExhibitionsCount' => $openExhibitionsCount,
             'activeEventPassesCount' => $activeEventPassesCount,
@@ -86,11 +105,7 @@ class UserTicketController extends Controller
 
     public function show($id)
     {
-        $ticket = \App\Domain\Visitor\Models\VisitorTicket::where('user_id', auth()->id())
-            ->with(['companyEvent', 'ticketType'])
-            ->findOrFail($id);
-            
-        return view('frontend.user.tickets.show', compact('ticket'));
+        return redirect()->route('frontend.user.tickets.e-ticket', $id);
     }
 
     public function download($id)
@@ -98,34 +113,69 @@ class UserTicketController extends Controller
         $ticket = VisitorTicket::where('user_id', auth()->id())
             ->with(['companyEvent', 'ticketType'])
             ->findOrFail($id);
-            
-        return view('frontend.user.tickets.e-ticket', compact('ticket'));
+
+        return view('frontend.user.tickets.e-ticket', [
+            'ticket' => $ticket,
+            'user' => auth()->user(),
+            'emailConfigured' => EventTicketMail::isDeliverable(),
+        ]);
+    }
+
+    public function sendTicketEmail(int $id)
+    {
+        $ticket = VisitorTicket::query()
+            ->with(['companyEvent', 'ticketType', 'user'])
+            ->where('user_id', auth()->id())
+            ->findOrFail($id);
+
+        $result = EventTicketMail::sendTicket($ticket);
+
+        if ($result['sent']) {
+            session(['event_ticket_email_sent_' . $ticket->order_number => true]);
+        }
+
+        return back()->with(
+            $result['sent'] ? 'success' : 'warning',
+            $result['message'] ?? ($result['sent']
+                ? 'Ticket sent to your email.'
+                : 'Could not send ticket email. Please try again later.')
+        );
     }
 
     public function showExhibitionPass(int $id)
     {
-        $pass = Visitor::query()
-            ->whereRaw('LOWER(email) = ?', [strtolower(auth()->user()->email)])
+        $pass = UserVisitorPasses::queryForUser(auth()->user())
             ->with('exhibition')
             ->findOrFail($id);
 
-        return view('frontend.user.tickets.exhibition-pass', compact('pass'));
+        return view('frontend.user.tickets.exhibition-pass', [
+            'pass' => $pass,
+            'user' => auth()->user(),
+        ]);
     }
 
     public function downloadExhibitionPass(int $id)
     {
-        $pass = Visitor::query()
-            ->whereRaw('LOWER(email) = ?', [strtolower(auth()->user()->email)])
+        $pass = UserVisitorPasses::queryForUser(auth()->user())
             ->with('exhibition')
             ->findOrFail($id);
 
-        return view('frontend.user.tickets.exhibition-pass', compact('pass'));
+        return view('frontend.user.tickets.exhibition-pass', [
+            'pass' => $pass,
+            'user' => auth()->user(),
+        ]);
     }
 
     public function exhibitionHalls(string $slug)
     {
         $user = auth()->user();
         $exhibition = Exhibition::query()->where('slug', $slug)->firstOrFail();
+
+        if (! $this->hasExhibitionPass($user, $exhibition)) {
+            return redirect()
+                ->route('frontend.user.passes')
+                ->with('error', 'Purchase an exhibition pass to explore halls and booths.');
+        }
 
         $halls = Hall::query()
             ->whereHas('pavilion', fn ($query) => $query->where('exhibition_id', $exhibition->id))
@@ -154,7 +204,7 @@ class UserTicketController extends Controller
                     'booked_booths' => $booked,
                     'available_booths' => $available,
                     'is_available' => $available > 0,
-                    'enter_url' => route('exhibitions.visitor-halls.show', [$slug, $hallSlug]),
+                    'enter_url' => route('frontend.user.exhibitions.halls.show', [$slug, $hallSlug]),
                 ];
             });
 
@@ -165,7 +215,135 @@ class UserTicketController extends Controller
             'availableCount' => $halls->where('is_available', true)->count(),
             'totalCount' => $halls->count(),
             'slug' => $slug,
+            'visitorNavActive' => 'passes',
         ]);
+    }
+
+    public function exhibitionHallLayout(string $slug, string $hallSlug)
+    {
+        $user = auth()->user();
+        $exhibition = Exhibition::query()->where('slug', $slug)->firstOrFail();
+
+        if (! $this->hasExhibitionPass($user, $exhibition)) {
+            return redirect()
+                ->route('frontend.user.passes')
+                ->with('error', 'Purchase an exhibition pass to view hall layouts.');
+        }
+
+        $hall = Hall::query()
+            ->whereHas('pavilion', fn ($query) => $query->where('exhibition_id', $exhibition->id))
+            ->where('status', 'active')
+            ->where(fn ($query) => $query->where('slug', $hallSlug)->orWhere('id', $hallSlug))
+            ->with(['booths.boothSize', 'pavilion'])
+            ->firstOrFail();
+
+        $floorMap = VisitorFloorMap::prepare($hall);
+        $gridCells = $this->buildHallLayoutGrid($floorMap, $slug, $hallSlug);
+
+        $visitorPass = UserVisitorPasses::queryForUser($user)
+            ->where('exhibition_id', $exhibition->id)
+            ->where('payment_status', 'completed')
+            ->orderByDesc('created_at')
+            ->first();
+
+        $passLabel = $visitorPass?->booking_id
+            ? 'My Pass · ' . $visitorPass->booking_id
+            : 'Visitor Pass';
+
+        return view('frontend.user.halls.show', [
+            'user' => $user,
+            'exhibition' => $exhibition,
+            'hall' => $hall,
+            'floorMap' => $floorMap,
+            'gridCells' => $gridCells,
+            'slug' => $slug,
+            'passLabel' => $passLabel,
+            'backUrl' => route('frontend.user.exhibitions.halls', $slug),
+            'visitorNavActive' => 'passes',
+        ]);
+    }
+
+    /** @return list<array{type:string,wide:bool,span:int,label:?string,initial:?string,number:?string,booth_id:?int,booking_id:?int,hub_url:?string}> */
+    private function buildHallLayoutGrid(array $floorMap, string $slug, string $hallSlug): array
+    {
+        $cells = [];
+
+        foreach ($floorMap['overlayBookedBoothGroups'] ?? [] as $group) {
+            $boothIds = array_values(array_filter(array_map('intval', $group['booth_ids'] ?? [])));
+            $boothCount = count($boothIds);
+            $span = min(max($boothCount, 1), 4);
+            $company = (string) ($group['company_name'] ?? 'Booked');
+            $boothId = (int) ($boothIds[0] ?? 0);
+
+            $cells[] = [
+                'type' => 'booked',
+                'wide' => $span >= 2,
+                'span' => $span,
+                'label' => $company,
+                'initial' => strtoupper(substr($company, 0, 1)),
+                'number' => null,
+                'booth_id' => $boothId ?: null,
+                'booking_id' => $group['booking_id'] ?? null,
+                'hub_url' => $this->boothHubUrl($slug, $hallSlug, $boothId),
+            ];
+        }
+
+        foreach ($floorMap['booths'] as $booth) {
+            if ($booth['is_hidden'] ?? false) {
+                continue;
+            }
+
+            $state = (string) ($booth['state'] ?? 'available');
+            $company = filled($booth['company'] ?? null) ? (string) $booth['company'] : null;
+            $boothId = (int) ($booth['booth_id'] ?? 0);
+
+            if ($state === 'booked' && $boothId > 0) {
+                $cells[] = [
+                    'type' => 'booked',
+                    'wide' => filled($company),
+                    'span' => filled($company) ? 2 : 1,
+                    'label' => $company ?: ('Booth ' . ($booth['label'] ?? $boothId)),
+                    'initial' => strtoupper(substr($company ?: 'B', 0, 1)),
+                    'number' => null,
+                    'booth_id' => $boothId,
+                    'booking_id' => $booth['booking_id'] ?? null,
+                    'hub_url' => $this->boothHubUrl($slug, $hallSlug, $boothId),
+                ];
+
+                continue;
+            }
+
+            $cells[] = [
+                'type' => in_array($state, ['available', 'booked', 'reserved', 'selected'], true) ? $state : 'available',
+                'wide' => false,
+                'span' => 1,
+                'label' => null,
+                'initial' => null,
+                'number' => (string) ($booth['label'] ?? ''),
+                'booth_id' => null,
+                'booking_id' => null,
+                'hub_url' => null,
+            ];
+        }
+
+        return $cells;
+    }
+
+    private function boothHubUrl(string $slug, string $hallSlug, int $boothId): ?string
+    {
+        if ($boothId <= 0) {
+            return null;
+        }
+
+        return route('frontend.user.exhibitions.booths.show', [$slug, $hallSlug, $boothId]);
+    }
+
+    private function hasExhibitionPass($user, Exhibition $exhibition): bool
+    {
+        return UserVisitorPasses::queryForUser($user)
+            ->where('exhibition_id', $exhibition->id)
+            ->where('payment_status', 'completed')
+            ->exists();
     }
 
     private function categorizeItems($items, Carbon $now)
@@ -195,13 +373,14 @@ class UserTicketController extends Controller
         ])->values();
     }
 
-    private function buildExhibitionBrowseList(Carbon $now)
+    private function buildExhibitionBrowseList(Carbon $now, $user = null)
     {
         return Exhibition::query()
+            ->whereIn('status', ['active', 'published', 'live'])
             ->orderBy('start_date')
             ->orderBy('title')
             ->get()
-            ->map(function (Exhibition $exhibition) use ($now) {
+            ->map(function (Exhibition $exhibition) use ($now, $user) {
                 $start = $exhibition->start_date;
                 $end = $exhibition->end_date;
 
@@ -213,14 +392,15 @@ class UserTicketController extends Controller
                     $category = 'live';
                 }
 
+                $slug = $exhibition->slug ?: '';
+
                 return [
                     'name' => $exhibition->title ?: $exhibition->name ?: 'Exhibition',
+                    'slug' => $slug,
                     'category' => $category,
                     'date_label' => $this->formatExhibitionDateRange($start, $end),
                     'location' => $exhibition->venue ?: $exhibition->location ?: 'Location TBD',
-                    'explore_url' => $exhibition->slug
-                        ? route('frontend.user.exhibitions.halls', $exhibition->slug)
-                        : route('exhibitions.index'),
+                    'explore_url' => $this->exhibitionExploreUrl($exhibition, $user),
                 ];
             })
             ->sortBy(fn ($item) => match ($item['category']) {
@@ -229,6 +409,21 @@ class UserTicketController extends Controller
                 default => 3,
             })
             ->values();
+    }
+
+    private function exhibitionExploreUrl(Exhibition $exhibition, $user): string
+    {
+        $slug = $exhibition->slug ?: '';
+
+        if ($slug === '') {
+            return route('exhibitions.index');
+        }
+
+        if ($user && $this->hasExhibitionPass($user, $exhibition)) {
+            return route('frontend.user.exhibitions.halls', $slug);
+        }
+
+        return route('exhibitions.tickets.visitor-details', $slug);
     }
 
     private function formatExhibitionDateRange(?Carbon $start, ?Carbon $end): string

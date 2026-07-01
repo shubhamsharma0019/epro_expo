@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Domain\Event\Models\Exhibition;
 use App\Domain\Event\Models\TicketTier;
 use App\Domain\Visitor\Models\Visitor;
+use App\Support\UserVisitorPasses;
 use Illuminate\Support\Collection;
 
 class ExhibitionTicketFlow
@@ -39,8 +40,9 @@ class ExhibitionTicketFlow
 
         $bookingId = session('selected_visitor_booking_id');
         if ($bookingId) {
+            $normalizedBookingId = UserVisitorPasses::normalizeBookingId($bookingId) ?? $bookingId;
             $hasCompletedPass = Visitor::query()
-                ->where('booking_id', $bookingId)
+                ->where('booking_id', $normalizedBookingId)
                 ->where('exhibition_id', $exhibition->id)
                 ->where('payment_status', 'completed')
                 ->exists();
@@ -90,7 +92,7 @@ class ExhibitionTicketFlow
             return false;
         }
 
-        $bookingId = request()->query('booking_id') ?: session('selected_visitor_booking_id');
+        $bookingId = UserVisitorPasses::normalizeBookingId(request()->query('booking_id') ?: session('selected_visitor_booking_id'));
 
         if ($bookingId) {
             $hasCompletedBooking = Visitor::query()
@@ -110,8 +112,7 @@ class ExhibitionTicketFlow
         }
 
         if (auth()->check()) {
-            $visitor = Visitor::query()
-                ->where('email', auth()->user()->email)
+            $visitor = UserVisitorPasses::queryForUser(auth()->user())
                 ->where('exhibition_id', $exhibition->id)
                 ->where('payment_status', 'completed')
                 ->first();
@@ -127,13 +128,15 @@ class ExhibitionTicketFlow
         }
 
         if (session('visitor_pass_active', false) && session('activeExhibitionSlug') === $slug) {
-            return Visitor::query()
+            return UserVisitorPasses::queryForUser(auth()->user())
                 ->where('exhibition_id', $exhibition->id)
                 ->where('payment_status', 'completed')
-                ->when(auth()->check(), fn ($query) => $query->where('email', auth()->user()->email))
                 ->when(
                     session('selected_visitor_booking_id'),
-                    fn ($query, $selectedBookingId) => $query->where('booking_id', $selectedBookingId)
+                    fn ($query, $selectedBookingId) => $query->where(
+                        'booking_id',
+                        UserVisitorPasses::normalizeBookingId($selectedBookingId) ?? $selectedBookingId
+                    )
                 )
                 ->exists();
         }

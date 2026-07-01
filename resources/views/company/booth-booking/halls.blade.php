@@ -74,8 +74,8 @@
                 $totalBooths = (int) $hall->booths_count;
                 $availableBooths = $hall->available_booths_count ?: max($totalBooths - (int) $hall->booth_bookings_count, 0);
                 $isAvailable = $availableBooths > 0;
-                $imagePath = $hall->image ?: optional($hall->pavilion)->image ?: 'assets/images/pavilions/innovation-pavilion.png';
-                $imageUrl = str_starts_with($imagePath, 'http') ? $imagePath : asset($imagePath);
+                $imagePath = $hall->image ?: optional($hall->pavilion)->image;
+                $imageUrl = \App\Support\HallMedia::imageUrl($imagePath);
                 $bookedBooths = max($totalBooths - $availableBooths, 0);
             @endphp
             <div

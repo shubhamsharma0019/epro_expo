@@ -51,7 +51,7 @@
                     <i class="ph ph-chart-pie-slice text-[16px] text-gray-500"></i>
                     Dashboard
                 </a>
-                <a href="{{ route('frontend.user.tickets.index') }}" class="flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50">
+                <a href="{{ route('frontend.user.passes') }}" class="flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50">
                     <i class="ph ph-ticket text-[16px] text-gray-500"></i>
                     My Passes
                 </a>

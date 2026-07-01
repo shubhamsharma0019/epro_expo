@@ -1,1 +1,1 @@
-@include('components.user.visitor-dashboard-sidebar-nav')
+@include('components.exhibition.exhibition-visitor-sidebar-nav')

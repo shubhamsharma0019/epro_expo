@@ -77,10 +77,7 @@
             @php
                 $hallCount = $pavilion->halls_count;
                 $boothCount = $pavilion->halls->sum('booths_count');
-                $imagePath = $pavilion->image ?: 'assets/images/pavilions/innovation-pavilion.png';
-                $imageUrl = str_starts_with($imagePath, 'http')
-                    ? $imagePath
-                    : asset($imagePath);
+                $imageUrl = \App\Support\HallMedia::imageUrl($pavilion->image);
             @endphp
 
             @if ($viewMode === 'list')

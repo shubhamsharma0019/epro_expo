@@ -248,7 +248,7 @@ Route::prefix('events')->name('events.')->group(function () use ($eventHomeHandl
         })->name('saved-events');
 
         Route::get('/my-tickets', function () {
-            return redirect()->route('frontend.user.tickets.index');
+            return redirect()->route('frontend.user.passes');
         })->name('my-tickets');
         Route::get('/settings', function () {
             return view('frontend.events.profile.settings');

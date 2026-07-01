@@ -14,6 +14,7 @@
   --navy:#161038;
   --radius:16px;
   --shadow:0 10px 26px -14px rgba(40,20,90,.18);
+  --live:#E0353B;
 }
 *{box-sizing:border-box; margin:0; padding:0;}
 body{
@@ -166,10 +167,15 @@ h1,h2,h3,.display{font-family:'Plus Jakarta Sans',sans-serif; letter-spacing:-0.
 .nav .ico{width:17px; height:17px; flex-shrink:0; opacity:.85; display:block;}
 .nav a:hover,
 .nav .logout-btn:hover{background:rgba(255,255,255,.06); color:#fff;}
-.nav a.active{
+.nav a.active:not(.logout-active){
   background:var(--grad);
   color:#fff;
   box-shadow:0 8px 18px -8px rgba(139,47,214,.6);
+}
+.nav a.active.logout-active{
+  background:rgba(224,53,158,.18);
+  color:#F9A8C2;
+  box-shadow:none;
 }
 .sidebar .userid{
   margin-top:16px;
@@ -183,13 +189,18 @@ h1,h2,h3,.display{font-family:'Plus Jakarta Sans',sans-serif; letter-spacing:-0.
   gap:10px;
   position:relative;
   z-index:1;
+  text-decoration:none;
+  transition:background .15s, border-color .15s;
+}
+.sidebar .userid:hover{
+  background:rgba(255,255,255,.1);
+  border-color:rgba(255,255,255,.18);
 }
 .userid .avatar{
   width:30px; height:30px; border-radius:50%; background:var(--grad);
   display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; font-weight:700; flex-shrink:0;
 }
-.userid div p{font-size:12.5px; font-weight:700; color:#fff; line-height:1.3;}
-.userid div span{font-size:11px; color:#9A93BE;}
+.userid div p{font-size:12.5px; font-weight:700; color:#fff; line-height:1.3; margin:0;}
 
 .main{display:flex; flex-direction:column; gap:18px; min-width:0;}
 .welcome-banner{
@@ -256,6 +267,20 @@ h1,h2,h3,.display{font-family:'Plus Jakarta Sans',sans-serif; letter-spacing:-0.
   width:44px; height:44px; border-radius:12px; flex-shrink:0;
   background:var(--grad-soft); color:var(--violet);
   display:flex; align-items:center; justify-content:center;
+  position:relative;
+}
+.browse-row .ic{position:relative;}
+.live-beep{
+  position:absolute; top:-3px; right:-3px;
+  width:13px; height:13px; border-radius:50%;
+  background:var(--live); border:2.5px solid #fff;
+  animation:liveBeepPulse 1.5s infinite;
+  pointer-events:none;
+}
+@keyframes liveBeepPulse{
+  0%{box-shadow:0 0 0 0 rgba(224,53,59,.55);}
+  70%{box-shadow:0 0 0 9px rgba(224,53,59,0);}
+  100%{box-shadow:0 0 0 0 rgba(224,53,59,0);}
 }
 .pass-row .body{flex:1; min-width:0;}
 .pass-row .body .top-line{display:flex; align-items:center; gap:9px; margin-bottom:4px; flex-wrap:wrap;}
@@ -277,6 +302,7 @@ h1,h2,h3,.display{font-family:'Plus Jakarta Sans',sans-serif; letter-spacing:-0.
   box-shadow:0 8px 18px -8px rgba(139,47,214,.5);
   display:inline-flex; align-items:center; gap:6px; text-decoration:none;
 }
+.pass-row .right form{margin:0;}
 .explore-btn:hover{filter:brightness(1.05);}
 .status-confirmed{color:#1D9E75; display:flex; align-items:center; gap:5px;}
 .icon-btn{

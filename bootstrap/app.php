@@ -12,7 +12,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->validateCsrfTokens(except: ['company/logout', 'company/event-company/login']);
+        $middleware->validateCsrfTokens(except: [
+            'company/logout',
+            'company/event-company/login',
+            'company/booth-booking/payment/continue',
+        ]);
 
         $middleware->alias([
             'company' => \App\Http\Middleware\CompanyMiddleware::class,

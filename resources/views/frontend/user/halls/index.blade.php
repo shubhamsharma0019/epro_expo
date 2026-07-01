@@ -132,7 +132,7 @@
                 <div class="hall-main">
                     <div class="hall-img">
                         @if ($hall['image'])
-                            <img src="{{ asset('storage/' . $hall['image']) }}" alt="{{ $hall['title'] }}">
+                            <img src="{{ \App\Support\HallMedia::imageUrl($hall['image']) }}" alt="{{ $hall['title'] }}">
                         @else
                             <svg width="100%" height="100%" viewBox="0 0 96 80" fill="none" aria-hidden="true">
                                 <rect width="96" height="80" fill="url(#g{{ $index }})"/>

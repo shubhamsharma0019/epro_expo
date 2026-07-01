@@ -151,11 +151,11 @@
                     <!-- Action Buttons -->
                     <div class="mb-12 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
                         @foreach ($actionButtons as $button)
-                            @if ($button['type'] === 'button')
+                            @if (($button['type'] ?? 'link') === 'button')
                                 <button id="{{ $button['id'] }}" type="button" class="{{ $button['class'] }}">
                                     <i class="{{ $button['icon'] }}"></i> {{ $button['label'] }}
                                 </button>
-                            @else
+                            @elseif (! empty($button['url']))
                                 <a href="{{ $button['url'] }}" class="{{ $button['class'] }}">
                                     <i class="{{ $button['icon'] }}"></i> {{ $button['label'] }}
                                 </a>

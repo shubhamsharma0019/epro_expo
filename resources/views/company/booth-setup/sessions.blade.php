@@ -328,7 +328,18 @@
                     <div class="lg:col-span-1 flex lg:justify-center">
                         <span class="inline-flex max-w-full whitespace-nowrap rounded-md border px-3 py-1 text-[11px] font-bold {{ $statusStyles[$status] ?? $statusStyles['upcoming'] }}">{{ $statusLabels[$status] ?? ucfirst($status) }}</span>
                     </div>
-                    <div class="lg:col-span-1 flex lg:justify-center gap-2">
+                    <div class="lg:col-span-1 flex lg:justify-center gap-1 flex-wrap">
+                        @php $meetUrl = $item->companyMeeting?->zoom_join_url ?: $item->companyMeeting?->meeting_link; @endphp
+                        @if (in_array($status, ['upcoming', 'live'], true))
+                            <form method="POST" action="{{ route('company.booth-setup.sessions.create-meet', [$booking, $item]) }}">
+                                @csrf
+                                <button type="submit" class="px-2 py-1 text-[10px] font-bold rounded border border-indigo-200 text-indigo-700 hover:bg-indigo-50" title="Create Google Meet link">{{ $meetUrl ? 'Meet ready' : 'Create Meet' }}</button>
+                            </form>
+                            <form method="POST" action="{{ route('company.booth-setup.sessions.start-conference', [$booking, $item]) }}">
+                                @csrf
+                                <button type="submit" class="px-2 py-1 text-[10px] font-bold rounded bg-green-600 text-white hover:bg-green-700" title="Start conference as host">Start</button>
+                            </form>
+                        @endif
                         <a href="{{ route('company.booth-setup.sessions.edit', [$booking, $item]) }}#sessionForm" class="w-8 h-8 flex items-center justify-center border border-gray-200 rounded text-[#4338CA] hover:bg-indigo-50" title="Edit session">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                         </a>

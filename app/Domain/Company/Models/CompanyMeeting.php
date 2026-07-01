@@ -14,6 +14,7 @@ class CompanyMeeting extends Model
 
     protected $fillable = [
         'company_id',
+        'booth_session_id',
         'title',
         'meeting_type',
         'start_time',
@@ -56,5 +57,10 @@ class CompanyMeeting extends Model
     public function visitorMeetingBookings(): HasMany
     {
         return $this->hasMany(VisitorMeetingBooking::class);
+    }
+
+    public function boothSession(): BelongsTo
+    {
+        return $this->belongsTo(\App\Domain\Booth\Models\BoothSession::class);
     }
 }

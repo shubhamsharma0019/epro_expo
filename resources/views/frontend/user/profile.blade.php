@@ -1,56 +1,114 @@
-@extends('layouts.user')
+@extends('layouts.visitor-portal')
 
-@section('title', 'User Profile')
-@section('page-title', 'Profile')
+@section('title', 'eproexpo — Profile')
+@section('shell-class', 'shell--passes')
+@section('visitorNavActive', 'profile')
 
-@section('content')
-<section class="space-y-6 px-4 py-6 sm:px-8">
-    @if (session('success'))
-        <div class="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-[13px] font-semibold text-emerald-700">
-            {{ session('success') }}
+@section('page-styles')
+<style>
+.profile-grid{display:grid; gap:16px; grid-template-columns:minmax(0,1fr);}
+@media(min-width:1000px){.profile-grid{grid-template-columns:300px minmax(0,1fr);}}
+.profile-card{
+  background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+  padding:24px; box-shadow:var(--shadow); text-align:center;
+}
+.profile-card .avatar{
+  width:88px; height:88px; border-radius:22px; margin:0 auto;
+  background:var(--grad); color:#fff; font-size:32px; font-weight:800;
+  display:flex; align-items:center; justify-content:center;
+}
+.profile-card h2{font-size:20px; font-weight:800; margin-top:16px;}
+.profile-card .email{font-size:13px; color:var(--muted); margin-top:6px; word-break:break-all;}
+.stat-pair{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px;}
+.stat-pair .box{
+  background:var(--ivory); border-radius:12px; padding:14px;
+}
+.stat-pair .box span{display:block; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--muted);}
+.stat-pair .box strong{display:block; margin-top:6px; font-size:22px; font-weight:800; color:var(--ink);}
+.form-card{
+  background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+  padding:24px; box-shadow:var(--shadow);
+}
+.form-card .tag{
+  display:inline-flex; padding:6px 12px; border-radius:999px;
+  background:var(--grad-soft); color:var(--violet);
+  font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.06em;
+}
+.form-card h2{font-size:24px; font-weight:800; margin-top:14px;}
+.form-card p{font-size:13px; color:var(--muted); margin-top:8px; line-height:1.6;}
+.field-grid{display:grid; gap:14px; margin-top:22px;}
+@media(min-width:700px){.field-grid{grid-template-columns:1fr 1fr;}}
+.field label{display:block; font-size:13px; font-weight:700; color:var(--ink-soft); margin-bottom:6px;}
+.field input{
+  width:100%; height:46px; border-radius:11px; border:1px solid var(--line);
+  background:var(--ivory); padding:0 14px; font-size:14px; font-weight:500;
+}
+.field input:focus{outline:none; border-color:var(--violet);}
+.field input:disabled{background:#EEF0F6; color:var(--muted);}
+.save-btn{
+  margin-top:22px; height:46px; padding:0 22px; border:none; border-radius:11px;
+  background:var(--grad); color:#fff; font-size:14px; font-weight:700; cursor:pointer;
+  box-shadow:var(--shadow);
+}
+.alert-success{
+  margin-bottom:16px; padding:12px 14px; border-radius:12px;
+  background:#E9FAF1; border:1px solid #B8EFD4; color:#1D9E75;
+  font-size:13px; font-weight:600;
+}
+</style>
+@endsection
+
+@section('portal-content')
+<main class="main">
+    <div class="welcome-banner">
+        <div>
+            <h1>Profile</h1>
+            <p>Manage your visitor information for tickets and passes.</p>
         </div>
+    </div>
+
+    @if (session('success'))
+        <div class="alert-success">{{ session('success') }}</div>
     @endif
 
-    <div class="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
-        <aside class="rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm">
-            <div class="mx-auto flex h-24 w-24 items-center justify-center rounded-[28px] bg-[#3723db] text-[34px] font-semibold text-white">
-                {{ strtoupper(substr($user->name ?? 'J', 0, 1)) }}
-            </div>
-            <h2 class="mt-5 text-[22px] font-bold text-[#0B132C]">{{ $user->name }}</h2>
-            <p class="mt-2 break-all text-[14px] text-gray-500">{{ $user->email }}</p>
-            <div class="mt-6 grid grid-cols-2 gap-3">
-                <div class="rounded-2xl bg-[#F8F9FC] p-4">
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-400">Event Tickets</p>
-                    <p class="mt-2 text-[24px] font-bold text-[#0B132C]">{{ $eventTicketCount }}</p>
+    <div class="profile-grid">
+        <aside class="profile-card">
+            <div class="avatar">{{ strtoupper(substr($user->name ?? 'V', 0, 1)) }}</div>
+            <h2>{{ $user->name }}</h2>
+            <p class="email">{{ $user->email }}</p>
+            <div class="stat-pair">
+                <div class="box">
+                    <span>Event Tickets</span>
+                    <strong>{{ $eventTicketCount }}</strong>
                 </div>
-                <div class="rounded-2xl bg-[#F8F9FC] p-4">
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-400">Exhibition Passes</p>
-                    <p class="mt-2 text-[24px] font-bold text-[#0B132C]">{{ $passCount }}</p>
+                <div class="box">
+                    <span>Exhibition Passes</span>
+                    <strong>{{ $passCount }}</strong>
                 </div>
             </div>
         </aside>
 
-        <form method="POST" action="{{ route('frontend.user.profile.update') }}" class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
+        <form method="POST" action="{{ route('frontend.user.profile.update') }}" class="form-card">
             @csrf
-            <span class="inline-flex rounded-full bg-[#F4F2FF] px-4 py-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#3723db]">Profile Details</span>
-            <h2 class="mt-5 text-[28px] font-bold text-[#0B132C] sm:text-[34px]">Manage visitor information</h2>
-            <p class="mt-3 text-[15px] leading-7 text-gray-500">This information is used for tickets, e-passes, enquiries, and meeting requests.</p>
-            <div class="mt-7 grid grid-cols-1 gap-5 md:grid-cols-2">
-                <label class="block min-w-0">
-                    <span class="text-[13px] font-bold text-[#34405F]">Name</span>
-                    <input name="name" value="{{ old('name', $user->name) }}" required class="mt-2 h-12 w-full min-w-0 rounded-xl border border-gray-200 bg-[#F8F9FC] px-4 text-[14px] font-medium outline-none focus:border-[#3723db]">
-                </label>
-                <label class="block min-w-0">
-                    <span class="text-[13px] font-bold text-[#34405F]">Email</span>
-                    <input value="{{ $user->email }}" disabled class="mt-2 h-12 w-full min-w-0 rounded-xl border border-gray-200 bg-gray-100 px-4 text-[14px] font-medium text-gray-500">
-                </label>
-                <label class="block min-w-0">
-                    <span class="text-[13px] font-bold text-[#34405F]">Phone</span>
-                    <input name="phone" value="{{ old('phone', $user->phone) }}" class="mt-2 h-12 w-full min-w-0 rounded-xl border border-gray-200 bg-[#F8F9FC] px-4 text-[14px] font-medium outline-none focus:border-[#3723db]">
-                </label>
+            <span class="tag">Profile Details</span>
+            <h2>Manage visitor information</h2>
+            <p>This information is used for tickets, e-passes, enquiries, and meeting requests.</p>
+            <div class="field-grid">
+                <div class="field">
+                    <label for="name">Name</label>
+                    <input id="name" name="name" value="{{ old('name', $user->name) }}" required>
+                </div>
+                <div class="field">
+                    <label for="email">Email</label>
+                    <input id="email" value="{{ $user->email }}" disabled>
+                </div>
+                <div class="field">
+                    <label for="phone">Phone</label>
+                    <input id="phone" name="phone" value="{{ old('phone', $user->phone) }}">
+                </div>
             </div>
-            <button type="submit" class="mt-7 h-12 rounded-xl bg-[#3723db] px-7 text-[14px] font-bold text-white transition hover:bg-[#2b1bb8]">Save Profile</button>
+            <button type="submit" class="save-btn">Save Profile</button>
         </form>
     </div>
-</section>
+</main>
 @endsection

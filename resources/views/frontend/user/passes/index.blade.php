@@ -20,8 +20,15 @@
 @php
     $eventPasses = $passes->where('type', 'event')->values();
     $downloadUrl = fn (array $pass) => route('frontend.user.tickets.e-ticket', $pass['id']);
+    $emailUrl = fn (array $pass) => route('frontend.user.tickets.email', $pass['id']);
 @endphp
 <main class="main">
+    @if (session('success'))
+        <div style="background:#E9FAF1;border:1px solid #B8EFD4;color:#1D9E75;padding:12px 14px;border-radius:12px;font-size:13px;font-weight:600;margin-bottom:14px;">{{ session('success') }}</div>
+    @endif
+    @if (session('warning'))
+        <div style="background:#FFF8E6;border:1px solid #F5DFA0;color:#9A6700;padding:12px 14px;border-radius:12px;font-size:13px;font-weight:600;margin-bottom:14px;">{{ session('warning') }}</div>
+    @endif
     <div class="welcome-banner">
         <div>
             <h1>My Passes</h1>
@@ -51,17 +58,29 @@
 
         <div id="list-events" style="display:none;">
             @forelse ($eventPasses as $pass)
-                @include('frontend.user.passes.partials.pass-row', ['pass' => $pass, 'downloadUrl' => $downloadUrl($pass), 'isEvent' => true])
+                @include('frontend.user.passes.partials.pass-row', [
+                    'pass' => $pass,
+                    'downloadUrl' => $downloadUrl($pass),
+                    'emailUrl' => $emailUrl($pass),
+                    'isEvent' => true,
+                ])
             @empty
                 <div class="list-empty">No event tickets yet.</div>
             @endforelse
         </div>
 
         <div id="list-exh">
-            @forelse ($exhibitions as $exhibition)
+            @if (($ownedExhibitionPasses ?? collect())->isNotEmpty())
+                @foreach ($ownedExhibitionPasses as $pass)
+                    @include('frontend.user.passes.partials.exhibition-pass-row', ['pass' => $pass])
+                @endforeach
+            @endif
+            @forelse ($openExhibitions ?? $exhibitions as $exhibition)
                 @include('frontend.user.passes.partials.exhibition-row', ['exhibition' => $exhibition])
             @empty
-                <div class="list-empty">No exhibitions available right now.</div>
+                @if (($ownedExhibitionPasses ?? collect())->isEmpty())
+                    <div class="list-empty">No exhibitions available right now.</div>
+                @endif
             @endforelse
         </div>
 

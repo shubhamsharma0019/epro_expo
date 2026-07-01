@@ -41,6 +41,12 @@ class CsrfMismatchResponse
                 ->withErrors(['csrf' => $message]);
         }
 
+        if ($request->routeIs('company.booth-booking.payment.continue')) {
+            return redirect()
+                ->route('company.booth-booking.payment')
+                ->withErrors(['csrf' => $message]);
+        }
+
         return back()
             ->withInput($request->except('password', '_token'))
             ->withErrors(['csrf' => $message]);

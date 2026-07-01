@@ -1,12 +1,11 @@
-@php
-    $portalUser = $user ?? auth()->user();
-@endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>@yield('title', 'eproexpo — Visitor')</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config = { corePlugins: { preflight: false } };</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 @include('frontend.user.partials.visitor-shell-styles')
@@ -17,17 +16,20 @@
 <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeVisitorSidebar()"></div>
 
 <div class="shell @yield('shell-class', 'shell--passes')">
-    @include('frontend.user.partials.visitor-sidebar', ['user' => $portalUser])
+    @include('frontend.user.partials.visitor-sidebar')
 
     <div class="portal-stack">
         <div class="mobile-topbar">
             <button type="button" class="menu-toggle" onclick="toggleVisitorSidebar()" aria-label="Open menu">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
             </button>
-            <div class="mobile-brand">
-                <div class="mark">e</div>
-                <span>eproexpo</span>
-            </div>
+            <x-shared.brand-logo
+                href="{{ route('frontend.user.dashboard') }}"
+                subtitle=""
+                mark-class="h-9 w-9 rounded-[13px] text-[17px]"
+                title-class="text-[18px] text-[#071044]"
+                subtitle-class="hidden"
+            />
             <span style="width:38px;"></span>
         </div>
 

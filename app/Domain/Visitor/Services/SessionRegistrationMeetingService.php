@@ -3,7 +3,6 @@
 namespace App\Domain\Visitor\Services;
 
 use App\Domain\Booth\Models\BoothSession;
-use App\Domain\Company\Models\CompanyMeeting;
 use App\Domain\Visitor\Models\Visitor;
 use App\Domain\Visitor\Models\VisitorMeetingBooking;
 use App\Domain\Visitor\Models\VisitorSessionRegistration;
@@ -46,6 +45,13 @@ class SessionRegistrationMeetingService
             return $existing;
         }
 
+        $conferenceService = app(\App\Domain\Booth\Services\BoothSessionConferenceService::class);
+        $companyMeeting = $session->companyMeeting ?: $conferenceService->syncConferenceMeeting($session);
+
+        if ($visitorId) {
+            return $conferenceService->ensureVisitorBookingForSession($session, $companyMeeting, (int) $visitorId, $visitor);
+        }
+
         $sessionDate = $session->session_date?->format('Y-m-d') ?? now()->toDateString();
         $startTime = $sessionDate . ' ' . $session->start_time;
         $endTime = $sessionDate . ' ' . $session->end_time;
@@ -54,27 +60,12 @@ class SessionRegistrationMeetingService
         return DB::transaction(function () use (
             $session,
             $companyId,
+            $companyMeeting,
             $visitorId,
             $visitorEmail,
             $visitorName,
-            $sessionDate,
-            $startTime,
-            $endTime
+            $sessionDate
         ) {
-            $companyMeeting = CompanyMeeting::create([
-                'company_id' => $companyId,
-                'title' => $session->title,
-                'meeting_type' => 'one-to-many',
-                'start_time' => $startTime,
-                'end_time' => $endTime,
-                'description' => $session->description,
-                'meeting_agenda' => 'Session registration: ' . $session->title,
-                'meeting_date' => $sessionDate,
-                'meeting_time' => Carbon::parse($session->start_time)->format('H:i:s'),
-                'max_attendees' => $session->attendee_limit ?: 10,
-                'status' => 'pending',
-            ]);
-
             $visitorBooking = VisitorMeetingBooking::create([
                 'company_id' => $companyId,
                 'company_meeting_id' => $companyMeeting->id,
@@ -94,6 +85,7 @@ class SessionRegistrationMeetingService
                 'visitor_id' => $visitorId,
                 'company_id' => $companyId,
                 'visitor_meeting_booking_id' => $visitorBooking->id,
+                'booth_session_id' => $session->id,
                 'type' => 'created',
                 'title' => 'Session Registration',
                 'message' => $visitorName . ' registered for your session "' . $session->title . '".',

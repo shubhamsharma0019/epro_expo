@@ -47,6 +47,7 @@ class ExhibitionTicketConfirmedPageData
 
         $eTicketUrl = route('exhibitions.tickets.e-ticket', $slug);
         $dashboardUrl = route('frontend.user.dashboard', ['slug' => $slug]);
+        $hallsUrl = $slug ? route('frontend.user.exhibitions.halls', $slug) : route('frontend.user.passes');
         $confirmedUrl = route('exhibitions.tickets.confirmed', $slug);
         $exhibitionShowUrl = route('exhibitions.show', $slug);
 
@@ -69,6 +70,7 @@ class ExhibitionTicketConfirmedPageData
             'showVisitorSidebar' => false,
             'eTicketUrl' => $eTicketUrl,
             'dashboardUrl' => $dashboardUrl,
+            'hallsUrl' => $hallsUrl,
             'confirmedUrl' => $confirmedUrl,
             'exhibitionShowUrl' => $exhibitionShowUrl,
             'calendarUrl' => $calendarUrl,
@@ -102,6 +104,15 @@ class ExhibitionTicketConfirmedPageData
                     'target' => '_blank',
                 ],
                 [
+                    'title' => 'Explore Halls & Booths',
+                    'description' => 'Select a hall, view the layout, and open exhibitor booths.',
+                    'description_id' => null,
+                    'icon' => 'ph ph-map-trifold',
+                    'icon_wrap_class' => 'bg-violet-50 text-violet-600 border-violet-100',
+                    'url' => ($visitor && $visitor->payment_status === 'completed') ? $hallsUrl : null,
+                    'target' => null,
+                ],
+                [
                     'title' => 'Plan Your Visit',
                     'description' => 'Explore agenda, speakers and venue details for ' . $location . '.',
                     'description_id' => null,
@@ -113,10 +124,17 @@ class ExhibitionTicketConfirmedPageData
             ],
             'actionButtons' => [
                 [
+                    'label' => 'Explore Halls',
+                    'icon' => 'ph ph-map-trifold',
+                    'url' => ($visitor && $visitor->payment_status === 'completed') ? $hallsUrl : null,
+                    'class' => 'inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-8 py-3 text-[15px] font-bold text-white shadow-[0_4px_14px_rgba(90,50,250,0.25)] transition-all hover:bg-primary-700 sm:w-auto',
+                    'type' => 'link',
+                ],
+                [
                     'label' => 'Go to Dashboard',
                     'icon' => 'ph ph-monitor',
                     'url' => $dashboardUrl,
-                    'class' => 'inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-8 py-3 text-[15px] font-bold text-white shadow-[0_4px_14px_rgba(90,50,250,0.25)] transition-all hover:bg-primary-700 sm:w-auto',
+                    'class' => 'inline-flex w-full items-center justify-center gap-2 rounded-xl border border-primary-200 bg-white px-8 py-3 text-[15px] font-bold text-primary-600 shadow-sm transition-all hover:bg-primary-50 sm:w-auto',
                     'type' => 'link',
                 ],
                 [

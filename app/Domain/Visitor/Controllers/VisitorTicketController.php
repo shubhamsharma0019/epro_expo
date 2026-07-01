@@ -9,6 +9,7 @@ use App\Domain\Shared\Services\ExhibitionTicketVisitorDetailsPageData;
 use App\Domain\Visitor\Models\Visitor;
 use App\Http\Requests\Visitor\ExhibitionVisitorRegistrationRequest;
 use App\Support\ExhibitionTicketFlow;
+use App\Support\UserVisitorPasses;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -129,7 +130,7 @@ class VisitorTicketController extends Controller
             'booking_id' => 'EXP-' . now()->format('ymd') . '-' . random_int(100000, 999999),
             'first_name' => $validated['first_name'],
             'last_name' => $validated['last_name'],
-            'email' => $validated['email'],
+            'email' => Auth::check() ? Auth::user()->email : $validated['email'],
             'mobile' => $validated['mobile'],
             'job_title' => $validated['job_title'] ?? null,
             'company' => $validated['company'] ?? null,
@@ -142,6 +143,7 @@ class VisitorTicketController extends Controller
             'pass_type' => $validated['pass_type'] ?? $request->input('pass_type', 'Free Visitor Pass'),
             'amount' => $amount,
             'payment_status' => $amount > 0 ? 'pending' : 'completed',
+            ...(Auth::check() && UserVisitorPasses::hasUserIdColumn() ? ['user_id' => Auth::id()] : []),
         ]);
 
         session([
@@ -163,10 +165,16 @@ class VisitorTicketController extends Controller
 
         $visitor = Visitor::query()
             ->where('exhibition_id', $exhibition->id)
-            ->where('booking_id', $bookingId)
+            ->where('booking_id', UserVisitorPasses::normalizeBookingId($bookingId) ?? $bookingId)
             ->firstOrFail();
 
-        $visitor->update(['payment_status' => 'completed']);
+        $updates = ['payment_status' => 'completed'];
+
+        if (Auth::check() && UserVisitorPasses::hasUserIdColumn()) {
+            $updates['user_id'] = Auth::id();
+        }
+
+        $visitor->update($updates);
 
         session([
             'selected_visitor_booking_id' => $visitor->booking_id,

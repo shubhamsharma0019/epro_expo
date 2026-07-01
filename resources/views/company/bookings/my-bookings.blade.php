@@ -116,15 +116,10 @@
                     $daysStr = $days . ' ' . ($days === 1 ? 'Day' : 'Days');
                 }
 
-                $imagePath = 'assets/images/pavilions/innovation-pavilion.png';
-                if ($pavilion && $pavilion->image) {
-                    $imagePath = $pavilion->image;
-                } elseif ($exhibition && $exhibition->banner_image) {
-                    $imagePath = $exhibition->banner_image;
-                }
-                $imagePath = str_starts_with($imagePath, 'http')
-                    ? $imagePath
-                    : asset($imagePath);
+                $rawImage = ($pavilion && $pavilion->image)
+                    ? $pavilion->image
+                    : (($exhibition && $exhibition->banner_image) ? $exhibition->banner_image : null);
+                $imagePath = \App\Support\HallMedia::imageUrl($rawImage);
 
                 $setupStarted = $bookingItem->boothProfile
                     || in_array($bookingItem->booth_setup_status, [
