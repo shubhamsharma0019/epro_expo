@@ -36,6 +36,8 @@ class EventTicketConfirmationMail extends Mailable
 
     public function content(): Content
     {
+        EventTicketMail::ensureIssuedTicket($this->ticket);
+
         $issuedTicket = $this->resolveIssuedTicket();
         $verificationUrl = $issuedTicket
             ? EventTicketQr::scannableUrlForTicket($issuedTicket)
@@ -46,9 +48,10 @@ class EventTicketConfirmationMail extends Mailable
             with: [
                 'ticket' => $this->ticket,
                 'issuedTicket' => $issuedTicket,
-                'qrSvg' => EventTicketQr::generateSvg($verificationUrl, 512),
+                'qrEmailHtml' => EventTicketQr::generateEmailHtml($verificationUrl, 6),
+                'verificationUrl' => $verificationUrl,
                 'qrTicketUrl' => $issuedTicket
-                    ? url(route('qr-ticket.show', $issuedTicket, false))
+                    ? EventTicketQr::absoluteUrl('qr-ticket.show', $issuedTicket)
                     : url(route('events.tickets.e-ticket', ['order' => $this->ticket->order_number], false)),
             ],
         );

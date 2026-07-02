@@ -3,8 +3,12 @@
 namespace App\Domain\Visitor\Controllers;
 
 use App\Domain\Booth\Models\Booth;
+use App\Domain\Booth\Models\BoothSession;
+use App\Domain\Booth\Services\BoothSessionConferenceService;
+use App\Domain\Company\Services\MeetingLeadService;
 use App\Domain\Visitor\Models\VisitorMeetingBooking;
 use App\Http\Controllers\Controller;
+use App\Support\MeetingJoinUrls;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -22,6 +26,7 @@ class UserMeetingsController extends Controller
                 'company.boothBookings.booth',
                 'company.boothBookings.exhibition',
                 'companyMeeting',
+                'boothSession',
             ])
             ->where(function ($query) use ($user) {
                 $query->where('visitor_id', $user->id);
@@ -48,12 +53,12 @@ class UserMeetingsController extends Controller
         ]);
     }
 
-    public function requestJoin(int $id): RedirectResponse
+    public function requestJoin(int $id, BoothSessionConferenceService $conference, MeetingLeadService $meetingLeadService): RedirectResponse
     {
         $user = auth()->user();
 
         $meeting = VisitorMeetingBooking::query()
-            ->with(['companyMeeting', 'company'])
+            ->with(['companyMeeting', 'company', 'boothSession'])
             ->where('id', $id)
             ->where(function ($query) use ($user) {
                 $query->where('visitor_id', $user->id);
@@ -63,32 +68,42 @@ class UserMeetingsController extends Controller
             })
             ->firstOrFail();
 
-        $joinUrl = $meeting->companyMeeting?->zoom_join_url ?: $meeting->companyMeeting?->meeting_link;
+        if ($meeting->booth_session_id && $meeting->boothSession) {
+            $updated = $conference->requestSessionJoin($meeting->boothSession, (int) $user->id);
+            if ($updated->companyMeeting) {
+                MeetingJoinUrls::syncModel($updated->companyMeeting);
+                $updated->load('companyMeeting');
+            }
+            $joinUrl = $updated->companyMeeting
+                ? MeetingJoinUrls::resolve($updated->companyMeeting)
+                : null;
+
+            if ($joinUrl && in_array($updated->status, ['confirmed', 'accepted'], true)) {
+                $meetingLeadService->recordVisitorJoinAndCaptureLead($meeting);
+
+                return redirect()->away($joinUrl);
+            }
+
+            return back()->with('success', 'Join request sent to the host. You will be notified when the conference link is ready.');
+        }
+
+        if ($meeting->companyMeeting) {
+            MeetingJoinUrls::syncModel($meeting->companyMeeting);
+            $meeting->load('companyMeeting');
+        }
+
+        $joinUrl = $meeting->companyMeeting
+            ? MeetingJoinUrls::resolve($meeting->companyMeeting)
+            : null;
         $topic = $meeting->meeting_topic ?: $meeting->companyMeeting?->title ?: 'Meeting';
 
         if ($joinUrl && in_array($meeting->status, ['confirmed', 'accepted', 'rescheduled'], true)) {
-            return redirect()->away($joinUrl);
-        }
-
-        if ($joinUrl && in_array($meeting->status, ['pending', 'waitlisted'], true)) {
-            $meeting->update(['status' => 'confirmed']);
-            $meeting->companyMeeting?->update(['status' => 'confirmed']);
-
-            DB::table('meeting_notifications')->insert([
-                'visitor_id' => $user->id,
-                'company_id' => $meeting->company_id,
-                'visitor_meeting_booking_id' => $meeting->id,
-                'booth_session_id' => $meeting->booth_session_id,
-                'type' => 'confirmed',
-                'title' => 'Meeting Accepted',
-                'message' => 'Your meeting "' . $topic . '" is ready. Join here: ' . $joinUrl,
-                'status' => 'unread',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            $meetingLeadService->recordVisitorJoinAndCaptureLead($meeting);
 
             return redirect()->away($joinUrl);
         }
+
+        $meeting->update(['join_requested_at' => now()]);
 
         DB::table('meeting_notifications')->insert([
             'visitor_id' => $user->id,
@@ -114,9 +129,12 @@ class UserMeetingsController extends Controller
         $companyMeeting = $booking->companyMeeting;
         $startsAt = $this->resolveStartTime($booking, $companyMeeting);
         $endsAt = $companyMeeting?->end_time ?: $startsAt?->copy()->addMinutes(30);
-        $isLive = $startsAt && $endsAt
-            && now()->between($startsAt, $endsAt)
-            && in_array($booking->status, ['confirmed', 'accepted'], true);
+        $isConference = (bool) $booking->booth_session_id;
+        $sessionIsLive = $booking->boothSession?->status === 'live';
+        $isLive = ($sessionIsLive && $isConference)
+            || ($startsAt && $endsAt
+                && now()->between($startsAt, $endsAt)
+                && in_array($booking->status, ['confirmed', 'accepted'], true));
         $isCompleted = $booking->status === 'completed';
         $isPending = in_array($booking->status, ['pending', 'waitlisted'], true);
         $isConfirmed = in_array($booking->status, ['confirmed', 'accepted'], true) && ! $isLive && ! $isCompleted;
@@ -130,9 +148,8 @@ class UserMeetingsController extends Controller
             $tabs[] = 'upcoming';
         }
 
-        $joinUrl = $companyMeeting?->zoom_join_url ?: $companyMeeting?->meeting_link;
+        $joinUrl = $companyMeeting ? MeetingJoinUrls::resolve($companyMeeting) : null;
 
-        $isConference = (bool) $booking->booth_session_id;
         $canJoinNow = $joinUrl && ($isLive || ($isConference && in_array($booking->status, ['confirmed', 'accepted'], true)));
 
         return [
@@ -248,11 +265,23 @@ class UserMeetingsController extends Controller
         bool $canJoinNow = false
     ): array {
         if ($canJoinNow && $joinUrl) {
-            return ['type' => 'join', 'label' => 'Join now', 'url' => $joinUrl, 'outline' => false, 'method' => null];
+            return [
+                'type' => 'join',
+                'label' => 'Join now',
+                'url' => route('frontend.user.meetings.join', $booking->id),
+                'outline' => false,
+                'method' => 'POST',
+            ];
         }
 
         if ($isLive && $joinUrl) {
-            return ['type' => 'join', 'label' => 'Join now', 'url' => $joinUrl, 'outline' => false, 'method' => null];
+            return [
+                'type' => 'join',
+                'label' => 'Join now',
+                'url' => route('frontend.user.meetings.join', $booking->id),
+                'outline' => false,
+                'method' => 'POST',
+            ];
         }
 
         if ($isCompleted) {
@@ -270,7 +299,13 @@ class UserMeetingsController extends Controller
         }
 
         if ($joinUrl) {
-            return ['type' => 'join', 'label' => 'Join meeting', 'url' => $joinUrl, 'outline' => false, 'method' => null];
+            return [
+                'type' => 'join',
+                'label' => 'Join meeting',
+                'url' => route('frontend.user.meetings.join', $booking->id),
+                'outline' => false,
+                'method' => 'POST',
+            ];
         }
 
         return ['type' => 'reschedule', 'label' => 'Reschedule', 'url' => null, 'outline' => true, 'method' => null];

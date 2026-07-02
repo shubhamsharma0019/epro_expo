@@ -165,10 +165,6 @@
                                 <input type="checkbox" name="allow_one_to_many" value="1" {{ old('allow_one_to_many', $availability?->allow_one_to_many ?? 0) ? 'checked' : '' }} class="mr-2 rounded border-gray-300 text-[#4C1D95] focus:ring-[#4C1D95]">
                                 One-to-Many
                             </label>
-                            <label class="inline-flex cursor-pointer items-center rounded-lg border border-gray-200 px-3 py-2 text-[13px] font-medium text-[#4B5563]">
-                                <input type="checkbox" name="allow_conference" value="1" {{ old('allow_conference', $availability?->allow_conference ?? 0) ? 'checked' : '' }} class="mr-2 rounded border-gray-300 text-[#4C1D95] focus:ring-[#4C1D95]">
-                                Conference
-                            </label>
                         </div>
                     </div>
                 </section>

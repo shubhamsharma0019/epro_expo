@@ -34,7 +34,8 @@
             </table>
 
             <div style="text-align:center;margin:24px 0;">
-                <img src="{{ $message->embedData($qrSvg, 'ticket-qr.svg', 'image/svg+xml') }}" alt="Ticket QR Code" width="220" height="220" style="display:block;margin:0 auto;border:1px solid #e2e8f0;border-radius:12px;background:#ffffff;">
+                {!! $qrEmailHtml !!}
+                <p style="margin:12px 0 0;font-size:12px;color:#64748b;word-break:break-all;">Scan URL: {{ $verificationUrl }}</p>
             </div>
 
             <p style="margin:0 0 16px;text-align:center;">

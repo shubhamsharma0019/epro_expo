@@ -35,6 +35,10 @@ class BoothProfileRequest extends FormRequest
             'twitter_url' => ['nullable', 'url', 'max:255'],
             'facebook_url' => ['nullable', 'url', 'max:255'],
             'youtube_url' => ['nullable', 'url', 'max:255'],
+            'years_experience' => ['nullable', 'string', 'max:30'],
+            'clients_count' => ['nullable', 'string', 'max:30'],
+            'countries_served' => ['nullable', 'string', 'max:30'],
+            'expert_team_size' => ['nullable', 'string', 'max:30'],
             'next' => ['nullable', 'in:stay,branding'],
         ];
     }

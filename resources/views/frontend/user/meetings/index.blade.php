@@ -177,10 +177,20 @@
                 @endif
 
                 @if ($meeting['action']['type'] === 'join' && $meeting['action']['url'])
-                    <a href="{{ $meeting['action']['url'] }}" target="_blank" rel="noopener" class="btn">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.12.81.34 1.6.66 2.34a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.74-1.23a2 2 0 012.11-.45c.74.32 1.53.54 2.34.66A2 2 0 0122 16.92z"/></svg>
-                        {{ $meeting['action']['label'] }}
-                    </a>
+                    @if (($meeting['action']['method'] ?? null) === 'POST')
+                        <form method="POST" action="{{ $meeting['action']['url'] }}">
+                            @csrf
+                            <button type="submit" class="btn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.12.81.34 1.6.66 2.34a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.74-1.23a2 2 0 012.11-.45c.74.32 1.53.54 2.34.66A2 2 0 0122 16.92z"/></svg>
+                                {{ $meeting['action']['label'] }}
+                            </button>
+                        </form>
+                    @else
+                        <a href="{{ $meeting['action']['url'] }}" target="_blank" rel="noopener" class="btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.12.81.34 1.6.66 2.34a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.74-1.23a2 2 0 012.11-.45c.74.32 1.53.54 2.34.66A2 2 0 0122 16.92z"/></svg>
+                            {{ $meeting['action']['label'] }}
+                        </a>
+                    @endif
                 @elseif ($meeting['action']['type'] === 'request' && $meeting['action']['url'])
                     <form method="POST" action="{{ $meeting['action']['url'] }}">
                         @csrf

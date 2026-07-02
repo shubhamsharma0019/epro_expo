@@ -323,6 +323,7 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
     Route::get('/{slug}/my-meetings', [VisitorExhibitionController::class, 'meetings'])->name('visitor.meetings');
     Route::get('/{slug}/sessions', [VisitorExhibitionController::class, 'sessions'])->name('visitor.sessions');
     Route::post('/{slug}/sessions/{session}/register', [VisitorExhibitionController::class, 'registerSession'])->name('visitor.sessions.register');
+    Route::post('/{slug}/sessions/{session}/request-join', [VisitorExhibitionController::class, 'requestSessionJoin'])->name('visitor.sessions.request-join');
     Route::get('/{slug}/notifications', [VisitorExhibitionController::class, 'notifications'])->name('visitor.notifications');
     Route::get('/{slug}/chat/{companySlug?}', [VisitorExhibitionController::class, 'chat'])->name('visitor.chat');
     Route::post('/{slug}/chat/{companySlug}/message', [VisitorExhibitionController::class, 'sendChatMessage'])->name('visitor.chat.send');

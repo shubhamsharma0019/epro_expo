@@ -5,6 +5,7 @@ namespace App\Domain\Visitor\Controllers;
 use App\Http\Controllers\Controller;
 use App\Domain\Booth\Models\BoothBooking;
 use App\Domain\Booth\Models\BoothSession;
+use App\Domain\Booth\Services\BoothSessionConferenceService;
 use App\Domain\Event\Models\Exhibition;
 use App\Support\LiveContent;
 use App\Domain\Visitor\Models\VisitorMeetingBooking;
@@ -554,6 +555,7 @@ class VisitorExhibitionController extends Controller
         $sessions = BoothSession::query()
             ->with([
                 'teamMember',
+                'companyMeeting',
                 'boothBooking.company',
                 'boothBooking.boothProfile',
                 'boothBooking.hall',
@@ -570,13 +572,63 @@ class VisitorExhibitionController extends Controller
             ->orderBy('start_time')
             ->get();
 
+        $visitorSessionBookings = collect();
+        if (auth()->check()) {
+            $visitorSessionBookings = VisitorMeetingBooking::query()
+                ->whereIn('booth_session_id', $sessions->pluck('id'))
+                ->where(function ($query) {
+                    $query->where('visitor_id', auth()->id());
+                    if (auth()->user()?->email) {
+                        $query->orWhere('visitor_email', auth()->user()->email);
+                    }
+                })
+                ->get()
+                ->keyBy('booth_session_id');
+        }
+
         return view('frontend.visitor-exhibition.sessions.index', [
             'slug' => $slug,
             'isPassActive' => $isPassActive,
             'sessions' => $sessions,
             'exhibition' => $exhibition,
             'registeredSessionIds' => $this->resolveRegisteredSessionIds($exhibition, $visitor),
+            'visitorSessionBookings' => $visitorSessionBookings,
         ]);
+    }
+
+    public function requestSessionJoin(string $slug, int $session, BoothSessionConferenceService $conference): RedirectResponse
+    {
+        $exhibition = $this->resolveExhibition($slug);
+        if (! $exhibition) {
+            return back()->with('error', 'Exhibition not found.');
+        }
+
+        if (! auth()->check()) {
+            return redirect()->route('exhibitions.tickets.visitor-details', $slug)
+                ->with('error', 'Please log in to request joining a conference.');
+        }
+
+        if (! $this->isPassActive($slug)) {
+            return redirect()->route('exhibitions.tickets.select', $slug)
+                ->with('error', 'An active visitor pass is required to join sessions.');
+        }
+
+        $visitor = $this->resolveVisitor($exhibition);
+        $boothSession = BoothSession::query()
+            ->whereKey($session)
+            ->whereHas('boothBooking', fn (Builder $query) => $query
+                ->where('exhibition_id', $exhibition->id)
+                ->publiclyVisible())
+            ->firstOrFail();
+
+        $visitorBooking = $conference->requestSessionJoin($boothSession, (int) auth()->id(), $visitor);
+        $joinUrl = $visitorBooking->companyMeeting?->zoom_join_url ?: $visitorBooking->companyMeeting?->meeting_link;
+
+        if ($joinUrl && in_array($visitorBooking->status, ['confirmed', 'accepted'], true)) {
+            return redirect()->away($joinUrl);
+        }
+
+        return back()->with('success', 'Join request sent to the exhibitor. Check Notifications or My Meetings for the conference link.');
     }
 
     public function registerSession(Request $request, string $slug, int $session): RedirectResponse

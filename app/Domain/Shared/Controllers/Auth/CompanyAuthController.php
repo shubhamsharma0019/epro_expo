@@ -187,8 +187,9 @@ class CompanyAuthController extends Controller
         }
 
         Session::forget('company_flow_context');
+        $request->session()->save();
 
-        return redirect('/company/booth-booking/pavilions');
+        return redirect('/company/dashboard');
     }
 
     public function logout(Request $request): RedirectResponse

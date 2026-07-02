@@ -24,10 +24,21 @@ Route::middleware('auth')->group(function () {
     Route::post('/qr-ticket/{ticket}/send-email', [\App\Domain\Visitor\Controllers\EventTicketController::class, 'sendTicketEmail'])
         ->name('qr-ticket.send-email');
 });
-Route::get('/verify-ticket/{qr_token}', [\App\Domain\Visitor\Controllers\EventTicketController::class, 'verify'])
-    ->name('verify-ticket.show');
-Route::post('/verify-ticket/{qr_token}/check-in', [\App\Domain\Visitor\Controllers\EventTicketController::class, 'checkIn'])
-    ->name('verify-ticket.check-in');
+Route::prefix('ticket-scanner')->name('ticket-scanner.')->group(function () {
+    Route::get('/login', [\App\Domain\Visitor\Controllers\TicketScannerAuthController::class, 'showLogin'])
+        ->name('login');
+    Route::post('/login', [\App\Domain\Visitor\Controllers\TicketScannerAuthController::class, 'login'])
+        ->name('login.submit');
+    Route::post('/logout', [\App\Domain\Visitor\Controllers\TicketScannerAuthController::class, 'logout'])
+        ->name('logout');
+});
+
+Route::middleware('ticket.scanner')->group(function () {
+    Route::get('/verify-ticket/{qr_token}', [\App\Domain\Visitor\Controllers\EventTicketController::class, 'verify'])
+        ->name('verify-ticket.show');
+    Route::post('/verify-ticket/{qr_token}/check-in', [\App\Domain\Visitor\Controllers\EventTicketController::class, 'checkIn'])
+        ->name('verify-ticket.check-in');
+});
 Route::get('/ticket-qr/{qr_token}', [\App\Domain\Visitor\Controllers\EventTicketController::class, 'qrImage'])
     ->name('ticket-qr.image');
 

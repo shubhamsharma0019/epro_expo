@@ -72,6 +72,45 @@ class EventTicketQr
         );
     }
 
+    public static function generateEmailHtml(string $content, int $pixelSize = 6): string
+    {
+        $encoded = Encoder::encode($content, ErrorCorrectionLevel::H());
+        $matrix = $encoded->getMatrix();
+        $width = $matrix->getWidth();
+        $html = '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;border-collapse:collapse;">';
+
+        for ($y = 0; $y < $width; $y++) {
+            $html .= '<tr>';
+
+            for ($x = 0; $x < $width; $x++) {
+                $color = $matrix->get($x, $y) === 1 ? '#000000' : '#ffffff';
+                $html .= sprintf(
+                    '<td style="width:%1$dpx;height:%1$dpx;background-color:%2$s;padding:0;margin:0;line-height:0;font-size:0;"></td>',
+                    $pixelSize,
+                    $color
+                );
+            }
+
+            $html .= '</tr>';
+        }
+
+        $html .= '</table>';
+
+        return $html;
+    }
+
+    public static function appBaseUrl(): string
+    {
+        return self::resolveScannableBaseUrl();
+    }
+
+    public static function absoluteUrl(string $path, array $parameters = []): string
+    {
+        $relative = route($path, $parameters, false);
+
+        return rtrim(self::appBaseUrl(), '/') . $relative;
+    }
+
     public static function imageUrlForToken(string $qrToken, int $size = 512): string
     {
         return url(route('ticket-qr.image', [
@@ -204,30 +243,57 @@ class EventTicketQr
 
     private static function detectLanIp(): ?string
     {
-        if (! function_exists('socket_create')) {
-            return null;
+        $candidates = [];
+
+        if (function_exists('socket_create')) {
+            try {
+                $socket = @socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
+
+                if ($socket !== false) {
+                    @socket_connect($socket, '8.8.8.8', 53);
+                    @socket_getsockname($socket, $address);
+                    @socket_close($socket);
+
+                    if (filled($address ?? null)) {
+                        $candidates[] = $address;
+                    }
+                }
+            } catch (\Throwable) {
+                // ignore
+            }
         }
 
-        try {
-            $socket = @socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
+        if (function_exists('gethostname')) {
+            $hostname = gethostname();
 
-            if ($socket === false) {
-                return null;
+            if ($hostname) {
+                $resolved = gethostbyname($hostname);
+
+                if ($resolved && $resolved !== $hostname) {
+                    $candidates[] = $resolved;
+                }
             }
+        }
 
-            @socket_connect($socket, '8.8.8.8', 53);
-            @socket_getsockname($socket, $address);
-            @socket_close($socket);
+        if (PHP_OS_FAMILY === 'Windows') {
+            $output = @shell_exec('ipconfig');
 
+            if (is_string($output) && preg_match_all('/IPv4 Address[^:]*:\s*(\d+\.\d+\.\d+\.\d+)/i', $output, $matches)) {
+                foreach ($matches[1] as $ip) {
+                    $candidates[] = $ip;
+                }
+            }
+        }
+
+        foreach ($candidates as $ip) {
             if (
-                ! empty($address)
-                && ! self::isLoopbackHost($address)
-                && filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)
+                filled($ip)
+                && ! self::isLoopbackHost($ip)
+                && ! str_starts_with($ip, '169.254.')
+                && filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)
             ) {
-                return $address;
+                return $ip;
             }
-        } catch (\Throwable) {
-            // ignore
         }
 
         return null;
@@ -246,6 +312,33 @@ class EventTicketQr
         }
 
         return $url;
+    }
+
+    public static function usesLoopbackUrl(?string $url): bool
+    {
+        if (! filled($url)) {
+            return true;
+        }
+
+        $host = parse_url($url, PHP_URL_HOST);
+
+        return ! $host || self::isLoopbackHost((string) $host);
+    }
+
+    public static function mobileScanHint(?string $url): ?string
+    {
+        if (! app()->environment('local') || ! self::usesLoopbackUrl($url)) {
+            return null;
+        }
+
+        $lanIp = self::detectLanIp();
+        $port = self::resolveLocalServePort();
+
+        if ($lanIp) {
+            return "Phone se scan karne ke liye server ko `php artisan serve --host=0.0.0.0 --port={$port}` se chalao, phir phone par http://{$lanIp}:{$port} open karke scanner login karo.";
+        }
+
+        return 'Phone se scan karne ke liye .env me TICKET_QR_BASE_URL=http://YOUR-LAN-IP:8000 set karo aur server `php artisan serve --host=0.0.0.0` se chalao.';
     }
 
     private static function isLoopbackHost(string $host): bool

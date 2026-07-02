@@ -139,15 +139,35 @@
                         <p class="mt-1 text-[12px] font-semibold text-[#5A6480]">{{ $booking?->hall?->title ?? 'Hall' }} / Booth {{ $booking?->booth?->booth_number ?? 'N/A' }}</p>
                     </div>
                     @if ($isPassActive)
-                        @php $isRegistered = in_array($session->id, $registeredSessionIds ?? [], true); @endphp
-                        @if ($isRegistered)
-                            <span class="inline-flex h-11 items-center justify-center rounded-md border border-[#A7F3D0] bg-[#ECFDF5] px-5 text-[13px] font-semibold text-[#047857]">Registered</span>
-                        @else
-                            <form method="POST" action="{{ route('exhibitions.visitor.sessions.register', [$slug, $session->id]) }}">
-                                @csrf
-                                <button type="submit" class="inline-flex h-11 items-center justify-center rounded-md bg-[#5b2eff] px-5 text-[13px] font-semibold text-white">Register</button>
-                            </form>
-                        @endif
+                        @php
+                            $visitorBooking = ($visitorSessionBookings ?? collect())[$session->id] ?? null;
+                            $joinUrl = $session->companyMeeting?->zoom_join_url ?: $session->companyMeeting?->meeting_link;
+                            $isRegistered = in_array($session->id, $registeredSessionIds ?? [], true);
+                            $canJoin = $joinUrl && $visitorBooking && in_array($visitorBooking->status, ['confirmed', 'accepted'], true);
+                            $requestSent = $visitorBooking?->join_requested_at;
+                        @endphp
+                        <div class="flex flex-wrap items-center gap-2">
+                            @if ($canJoin)
+                                <a href="{{ $joinUrl }}" target="_blank" class="inline-flex h-11 items-center justify-center rounded-md bg-[#059669] px-5 text-[13px] font-semibold text-white">Join Conference</a>
+                            @elseif ($requestSent)
+                                <span class="inline-flex h-11 items-center justify-center rounded-md border border-[#FDE68A] bg-[#FEF3C7] px-5 text-[13px] font-semibold text-[#B45309]">Request Sent</span>
+                            @else
+                                <form method="POST" action="{{ route('exhibitions.visitor.sessions.request-join', [$slug, $session->id]) }}">
+                                    @csrf
+                                    <button type="submit" class="inline-flex h-11 items-center justify-center rounded-md bg-[#5b2eff] px-5 text-[13px] font-semibold text-white">
+                                        {{ $status === 'live' ? 'Request to Join Live' : 'Request to Join' }}
+                                    </button>
+                                </form>
+                            @endif
+                            @unless ($isRegistered)
+                                <form method="POST" action="{{ route('exhibitions.visitor.sessions.register', [$slug, $session->id]) }}">
+                                    @csrf
+                                    <button type="submit" class="inline-flex h-11 items-center justify-center rounded-md border border-[#EADCFD] bg-[#FBFAFF] px-5 text-[13px] font-semibold text-purple">Register</button>
+                                </form>
+                            @else
+                                <span class="inline-flex h-11 items-center justify-center rounded-md border border-[#A7F3D0] bg-[#ECFDF5] px-5 text-[13px] font-semibold text-[#047857]">Registered</span>
+                            @endif
+                        </div>
                     @else
                         <a href="{{ $joinHref }}" class="inline-flex h-11 items-center justify-center rounded-md border border-[#EADCFD] bg-[#FBFAFF] px-5 text-[13px] font-semibold text-purple">Get Pass</a>
                     @endif

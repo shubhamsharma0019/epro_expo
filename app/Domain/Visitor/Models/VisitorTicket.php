@@ -24,6 +24,7 @@ class VisitorTicket extends Model
         'razorpay_order_id',
         'razorpay_payment_id',
         'qr_code_path',
+        'email_sent_at',
         'attendee_name',
         'attendee_email',
         'attendee_phone',
@@ -50,6 +51,13 @@ class VisitorTicket extends Model
     public function booking()
     {
         return $this->hasOne(Booking::class, 'visitor_ticket_id');
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'email_sent_at' => 'datetime',
+        ];
     }
 
     public function issuedTicket()

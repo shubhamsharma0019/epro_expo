@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'company' => \App\Http\Middleware\CompanyMiddleware::class,
             'company.event' => \App\Http\Middleware\EnsureCompanyEventFlow::class,
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'ticket.scanner' => \App\Http\Middleware\EnsureTicketScanner::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

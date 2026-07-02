@@ -25,6 +25,11 @@ class BoothProfile extends Model
         'tagline',
         'website',
         'about_company',
+        'highlight_stats',
+        'years_experience',
+        'clients_count',
+        'countries_served',
+        'expert_team_size',
         'address',
         'city',
         'state',
@@ -54,6 +59,7 @@ class BoothProfile extends Model
         return [
             'submitted_at' => 'datetime',
             'approved_at' => 'datetime',
+            'highlight_stats' => 'array',
         ];
     }
 

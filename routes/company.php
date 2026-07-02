@@ -271,6 +271,7 @@ Route::prefix('company')->name('company.')->group(function () {
         Route::post('/sessions/meeting-setup', [BoothSessionController::class, 'updateMeetingSetup'])->name('sessions.meeting-setup.update');
         Route::post('/sessions/{session}/create-meet', [BoothSessionController::class, 'createMeet'])->name('sessions.create-meet');
         Route::post('/sessions/{session}/start-conference', [BoothSessionController::class, 'startConference'])->name('sessions.start-conference');
+        Route::post('/sessions/{session}/join-requests/{visitorBooking}/approve', [BoothSessionController::class, 'approveJoinRequest'])->name('sessions.join-requests.approve');
         Route::resource('/sessions', BoothSessionController::class)->names('sessions');
         Route::get('/preview', [BoothPreviewController::class, 'show'])->name('preview');
         Route::post('/preview/mark-ready', [BoothPreviewController::class, 'markReady'])->name('preview.mark-ready');
@@ -297,6 +298,7 @@ Route::prefix('company')->name('company.')->group(function () {
     Route::prefix('meetings')->name('meetings.')->middleware('company')->group(function () {
         Route::get('/', [CompanyMeetingController::class, 'index'])->name('index');
         Route::get('/{id}', [CompanyMeetingController::class, 'show'])->name('show');
+        Route::post('/{id}/join', [CompanyMeetingController::class, 'joinMeeting'])->name('join');
         Route::post('/{id}/zoom', [CompanyMeetingController::class, 'updateZoom'])->name('zoom.update');
         Route::post('/{id}/zoom/create', [CompanyMeetingController::class, 'createZoom'])->name('zoom.create');
         Route::post('/{id}/status', [CompanyMeetingController::class, 'updateStatus'])->name('status.update');

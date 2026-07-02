@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Domain\Shared\Support\EnvFileUpdater;
 use Illuminate\Support\Facades\Mail;
 
 class PlatformMailSettings
@@ -58,7 +59,33 @@ class PlatformMailSettings
             json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
         );
 
+        self::syncEnvFromPayload($payload);
         self::applyToConfig();
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    private static function syncEnvFromPayload(array $payload): void
+    {
+        if (! app()->environment('local')) {
+            return;
+        }
+
+        try {
+            EnvFileUpdater::set([
+                'MAIL_MAILER' => 'smtp',
+                'MAIL_SCHEME' => (string) ($payload['mail_scheme'] ?? 'smtp'),
+                'MAIL_HOST' => (string) ($payload['mail_host'] ?? 'smtp.gmail.com'),
+                'MAIL_PORT' => (string) ($payload['mail_port'] ?? '587'),
+                'MAIL_USERNAME' => (string) ($payload['mail_username'] ?? ''),
+                'MAIL_PASSWORD' => (string) ($payload['mail_password'] ?? ''),
+                'MAIL_FROM_ADDRESS' => (string) ($payload['mail_from_address'] ?? ''),
+                'MAIL_FROM_NAME' => (string) ($payload['mail_from_name'] ?? config('app.name', 'EproExpo')),
+            ]);
+        } catch (\Throwable) {
+            // .env sync is optional; runtime config still uses platform-mail-settings.json
+        }
     }
 
     /**
@@ -194,6 +221,10 @@ class PlatformMailSettings
 
         if (in_array($scheme, ['smtps', 'ssl'], true) || $port === 465) {
             return 'smtps';
+        }
+
+        if (in_array($scheme, ['tls', 'starttls'], true)) {
+            return 'smtp';
         }
 
         return 'smtp';

@@ -111,9 +111,7 @@ class MailSetupController extends Controller
         }
 
         try {
-            PlatformMailSettings::applyToConfig();
-
-            Mail::to($recipient)->send(new EventTicketConfirmationMail($ticket));
+            EventTicketMail::sendMailable($recipient, new EventTicketConfirmationMail($ticket));
 
             return redirect()
                 ->route('setup.mail.index')

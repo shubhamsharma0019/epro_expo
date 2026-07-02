@@ -31,9 +31,21 @@
 
     <div class="mb-6 rounded-xl border border-blue-200 bg-blue-50 px-5 py-4 text-sm text-blue-800">
         <p class="font-semibold">Google Meet meetings</p>
-        <p class="mt-1">When you confirm, a real Google Meet link is created automatically. Both company and visitor can join using the same link.</p>
+        <p class="mt-1">Host and visitor join the <strong>same Google Meet link</strong>. Save the link, then use <strong>Join as Host</strong> before the visitor joins.</p>
         @if (empty($googleMeetConfigured))
             <p class="mt-2 text-[13px] font-medium text-amber-800">Google API is not configured yet — you can paste a <code class="text-[12px]">meet.google.com</code> link manually below.</p>
+        @endif
+        @if (! empty($meetJoinUrl))
+            <div class="mt-3 rounded-lg border border-blue-300 bg-white px-4 py-3 text-[13px] text-[#1E3A5F]">
+                <p class="font-semibold">Same laptop par test karna hai?</p>
+                <ol class="mt-2 list-decimal space-y-1 pl-5">
+                    <li>Pehle <strong>ek hi</strong> Meet link save karo (bar-bar Regenerate mat dabao).</li>
+                    <li>Company → normal Chrome window se <strong>Join as Host</strong>.</li>
+                    <li>Visitor → <strong>Incognito / alag browser</strong> se login karke <strong>Join Meet</strong>.</li>
+                    <li>Dono ko yahi same room milega: <code class="break-all text-[12px]">{{ $meetJoinUrl }}</code></li>
+                    <li>Agar same Google account hai to visitor side par <strong>Join as guest</strong> use karo — tab 2 alag participants dikhenge.</li>
+                </ol>
+            </div>
         @endif
     </div>
 
@@ -51,6 +63,29 @@
         <h1 class="mt-5 text-[32px] font-semibold text-navy">
             {{ $meeting->companyMeeting ? $meeting->companyMeeting->title : 'Meeting Appointment' }}
         </h1>
+
+        @if (in_array($meeting->status, ['confirmed', 'accepted', 'rescheduled'], true))
+            <div class="mt-6 rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] p-5">
+                @if (! empty($meetJoinUrl))
+                    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p class="text-[15px] font-bold text-[#166534]">Ready to join</p>
+                            <p class="mt-1 text-[13px] text-[#15803D]">Host and visitor use the same Google Meet room. Join here first as host.</p>
+                            <p class="mt-2 text-[12px] font-mono text-[#166534] break-all">{{ $meetJoinUrl }}</p>
+                        </div>
+                        <form method="POST" action="{{ route('company.meetings.join', $meeting->id) }}">
+                            @csrf
+                            <button type="submit" class="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-[#0F9D58] px-6 text-[14px] font-bold text-white hover:bg-[#0B8043] whitespace-nowrap">
+                                <i class="fa-solid fa-video"></i> Join as Host
+                            </button>
+                        </form>
+                    </div>
+                @else
+                    <p class="text-[14px] font-semibold text-amber-900">Meeting is confirmed but no Google Meet link is saved yet.</p>
+                    <p class="mt-1 text-[13px] text-amber-800">Paste your <code>meet.google.com</code> link below and click <strong>Save meeting details</strong>.</p>
+                @endif
+            </div>
+        @endif
         
         <div class="mt-7 grid grid-cols-1 gap-4 md:grid-cols-2">
             <div class="rounded-lg border border-borderColor p-5">
@@ -76,42 +111,46 @@
             </div>
         </div>
         
-        @if ($meeting->companyMeeting && ($meeting->companyMeeting->meeting_link || $meeting->companyMeeting->zoom_join_url))
+        @if ($meeting->companyMeeting && ! empty($meetJoinUrl))
             <div class="mt-7 rounded-lg border border-[#D1D5DB] bg-[#F9FAFB] p-6 space-y-3">
                 <h3 class="text-[16px] font-semibold text-navy">
                     <i class="fa-solid fa-video text-[#0F9D58] mr-2"></i> Google Meet
                 </h3>
                 @php
-                    $joinUrl = $meeting->companyMeeting->meeting_link ?: $meeting->companyMeeting->zoom_join_url;
-                    $isGoogleMeet = $joinUrl && str_contains($joinUrl, 'meet.google.com');
+                    $joinUrl = $meetJoinUrl;
+                    $isGoogleMeet = str_contains($joinUrl, 'meet.google.com');
                     $meetCode = null;
                     if ($isGoogleMeet && preg_match('~meet\.google\.com/([a-z0-9-]+)~i', $joinUrl, $meetMatches)) {
                         $meetCode = $meetMatches[1];
                     }
                 @endphp
-                @if ($joinUrl)
-                    <a href="{{ $joinUrl }}" target="_blank" rel="noopener" class="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#0F9D58] px-5 text-[14px] font-semibold text-white hover:bg-[#0B8043]">
+                <form method="POST" action="{{ route('company.meetings.join', $meeting->id) }}">
+                    @csrf
+                    <button type="submit" class="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#0F9D58] px-5 text-[14px] font-semibold text-white hover:bg-[#0B8043]">
                         <i class="fa-solid fa-video"></i> Join as Host
+                    </button>
+                </form>
+                <p class="text-[13px] text-[#5A6480]">Same link is sent to the visitor — both join one meeting room.</p>
+                <div>
+                    <p class="text-[13px] font-semibold text-[#5A6480] mb-1">Meeting link (shared with visitor)</p>
+                    <a href="{{ $joinUrl }}" target="_blank" rel="noopener" class="block text-[15px] font-medium text-[#0F9D58] hover:underline break-all">
+                        {{ $joinUrl }}
                     </a>
-                    <p class="text-[13px] text-[#5A6480]">Host and visitor use the same Google Meet link.</p>
-                @endif
-                @if (! $isGoogleMeet && $meeting->companyMeeting->zoom_start_url && $meeting->companyMeeting->zoom_start_url !== $joinUrl)
-                    <a href="{{ $meeting->companyMeeting->zoom_start_url }}" target="_blank" rel="noopener" class="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[#2D8CFF] px-4 text-[13px] font-semibold text-[#2D8CFF] hover:bg-blue-50">
-                        <i class="fa-solid fa-play"></i> Host Link (Zoom)
-                    </a>
-                @endif
-                @if ($joinUrl)
-                    <div>
-                        <p class="text-[13px] font-semibold text-[#5A6480] mb-1">Share this link with visitor</p>
-                        <a href="{{ $joinUrl }}" target="_blank" rel="noopener" class="block text-[15px] font-medium text-[#0F9D58] hover:underline break-all">
-                            {{ $joinUrl }}
-                        </a>
-                    </div>
-                @endif
+                </div>
                 @if ($meetCode)
                     <p class="text-[14px] text-[#34405F]"><span class="font-semibold">Meet code:</span> {{ $meetCode }}</p>
                 @elseif ($meeting->companyMeeting->zoom_meeting_id && ! $isGoogleMeet)
                     <p class="text-[14px] text-[#34405F]"><span class="font-semibold">Meeting ID:</span> {{ $meeting->companyMeeting->zoom_meeting_id }}</p>
+                @endif
+                @if ($meeting->companyMeeting->host_email || $meeting->companyMeeting->attendee_email)
+                    <div class="rounded-md border border-[#E5E7EB] bg-white px-4 py-3 text-[13px] text-[#34405F]">
+                        @if ($meeting->companyMeeting->host_email)
+                            <p><span class="font-semibold">Host:</span> {{ $meeting->companyMeeting->host_email }}</p>
+                        @endif
+                        @if ($meeting->companyMeeting->attendee_email)
+                            <p class="{{ $meeting->companyMeeting->host_email ? 'mt-1' : '' }}"><span class="font-semibold">Visitor:</span> {{ $meeting->companyMeeting->attendee_email }}</p>
+                        @endif
+                    </div>
                 @endif
                 @if ($meeting->companyMeeting->zoom_passcode)
                     <p class="text-[14px] text-[#34405F]"><span class="font-semibold">Passcode:</span> {{ $meeting->companyMeeting->zoom_passcode }}</p>
@@ -203,6 +242,14 @@
                     @endif
 
                     @if (in_array($meeting->status, ['confirmed', 'accepted', 'rescheduled'], true))
+                        @if (! empty($meetJoinUrl))
+                            <form method="POST" action="{{ route('company.meetings.join', $meeting->id) }}" class="inline-block">
+                                @csrf
+                                <button type="submit" class="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#0F9D58] px-5 text-[14px] font-semibold text-white hover:bg-[#0B8043]">
+                                    <i class="fa-solid fa-video"></i> Join as Host
+                                </button>
+                            </form>
+                        @endif
                         <form method="POST" action="{{ route('company.meetings.status.update', $meeting->id) }}" class="inline-block">
                             @csrf
                             <input type="hidden" name="status" value="completed">

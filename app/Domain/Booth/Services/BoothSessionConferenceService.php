@@ -8,6 +8,7 @@ use App\Domain\Shared\Models\User;
 use App\Domain\Shared\Services\GoogleMeetService;
 use App\Domain\Visitor\Models\Visitor;
 use App\Domain\Visitor\Models\VisitorMeetingBooking;
+use App\Support\MeetingJoinUrls;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -138,7 +139,7 @@ class BoothSessionConferenceService
         $session->loadMissing('companyMeeting');
         $companyMeeting = $session->companyMeeting ?: $this->syncConferenceMeeting($session);
 
-        $existing = $companyMeeting->zoom_join_url ?: $companyMeeting->meeting_link;
+        $existing = MeetingJoinUrls::resolve($companyMeeting);
         if ($existing) {
             return $existing;
         }
@@ -150,8 +151,9 @@ class BoothSessionConferenceService
         try {
             $linkPayload = $googleMeetService->createForCompanyMeeting($companyMeeting);
             $companyMeeting->update($linkPayload);
+            MeetingJoinUrls::syncModel($companyMeeting);
 
-            return $linkPayload['zoom_join_url'] ?? $linkPayload['meeting_link'] ?? null;
+            return MeetingJoinUrls::resolve($companyMeeting->fresh());
         } catch (\Throwable $exception) {
             Log::warning('Conference Google Meet provision failed', [
                 'booth_session_id' => $session->id,
@@ -186,25 +188,203 @@ class BoothSessionConferenceService
                 ? 'Your conference "' . ($session->title ?: 'session') . '" is live. Join here: ' . $joinUrl
                 : 'Your conference "' . ($session->title ?: 'session') . '" is now live. The host will share the meeting link shortly.';
 
+            $this->insertVisitorNotification(
+                (int) $visitorBooking->visitor_id,
+                (int) $session->boothBooking->company_id,
+                (int) $visitorBooking->id,
+                (int) $session->id,
+                $joinUrl ? 'confirmed' : 'updated',
+                'Conference is live',
+                $message
+            );
+        }
+
+        $this->broadcastSessionLive($session, $joinUrl);
+
+        return [
+            'join_url' => $joinUrl,
+            'host_url' => $joinUrl,
+            'notified' => $bookings->count(),
+        ];
+    }
+
+    public function broadcastSessionLive(BoothSession $session, ?string $joinUrl): int
+    {
+        $session->loadMissing('boothBooking');
+        $booking = $session->boothBooking;
+
+        if (! $booking?->exhibition_id || ! $booking->company_id) {
+            return 0;
+        }
+
+        $companyMeeting = $session->companyMeeting ?: $this->syncConferenceMeeting($session);
+        $companyName = $booking->boothProfile?->company_name
+            ?: $booking->company?->company_name
+            ?: $booking->company?->name
+            ?: 'Exhibitor';
+
+        $notified = 0;
+
+        foreach ($this->completedPassesForExhibition((int) $booking->exhibition_id) as $pass) {
+            $userId = $this->resolveUserId($pass);
+
+            if (! $userId) {
+                continue;
+            }
+
+            $alreadyLiveNotice = DB::table('meeting_notifications')
+                ->where('visitor_id', $userId)
+                ->where('booth_session_id', $session->id)
+                ->where('type', 'session_live')
+                ->where('created_at', '>=', now()->subHours(6))
+                ->exists();
+
+            if ($alreadyLiveNotice) {
+                continue;
+            }
+
+            $visitorBooking = $this->ensureVisitorBookingForSession($session, $companyMeeting, $userId, $pass);
+
+            $message = $joinUrl
+                ? $companyName . ' conference "' . ($session->title ?: 'session') . '" is LIVE now. Open My Meetings to join: ' . $joinUrl
+                : $companyName . ' conference "' . ($session->title ?: 'session') . '" is LIVE now. Request to join from My Meetings.';
+
+            $this->insertVisitorNotification(
+                $userId,
+                (int) $booking->company_id,
+                (int) $visitorBooking->id,
+                (int) $session->id,
+                'session_live',
+                'Conference is live',
+                $message
+            );
+
+            $notified++;
+        }
+
+        return $notified;
+    }
+
+    /**
+     * @return array{host_url: string|null, join_url: string|null}
+     */
+    public function approveJoinRequest(VisitorMeetingBooking $visitorBooking, GoogleMeetService $googleMeetService): array
+    {
+        $visitorBooking->loadMissing(['companyMeeting', 'boothSession.boothBooking']);
+
+        if (! $visitorBooking->booth_session_id || ! $visitorBooking->boothSession) {
+            throw new \InvalidArgumentException('This request is not linked to a conference session.');
+        }
+
+        $session = $visitorBooking->boothSession;
+        $companyMeeting = $visitorBooking->companyMeeting ?: $this->syncConferenceMeeting($session);
+
+        $joinUrl = $companyMeeting->zoom_join_url ?: $companyMeeting->meeting_link;
+
+        if (! $joinUrl) {
+            $joinUrl = $this->provisionGoogleMeet($session, $googleMeetService);
+        }
+
+        $companyMeeting->refresh();
+        $joinUrl = MeetingJoinUrls::resolve($companyMeeting) ?: $joinUrl;
+
+        $visitorBooking->update([
+            'status' => 'confirmed',
+            'company_meeting_id' => $companyMeeting->id,
+        ]);
+
+        $companyMeeting->update(['status' => 'confirmed']);
+        $session->update(['status' => 'live']);
+
+        if ($visitorBooking->visitor_id) {
+            $topic = $session->title ?: 'Conference Session';
+            $message = $joinUrl
+                ? 'Your join request for "' . $topic . '" was approved. Join here: ' . $joinUrl
+                : 'Your join request for "' . $topic . '" was approved. The host will share the meeting link shortly.';
+
+            $this->insertVisitorNotification(
+                (int) $visitorBooking->visitor_id,
+                (int) $visitorBooking->company_id,
+                (int) $visitorBooking->id,
+                (int) $session->id,
+                $joinUrl ? 'confirmed' : 'updated',
+                'Join request approved',
+                $message
+            );
+        }
+
+        return [
+            'host_url' => $joinUrl,
+            'join_url' => $joinUrl,
+        ];
+    }
+
+    public function requestSessionJoin(BoothSession $session, int $userId, ?Visitor $pass = null): VisitorMeetingBooking
+    {
+        $session->loadMissing('boothBooking');
+        $companyMeeting = $session->companyMeeting ?: $this->syncConferenceMeeting($session);
+        $visitorBooking = $this->ensureVisitorBookingForSession($session, $companyMeeting, $userId, $pass);
+
+        $joinUrl = $companyMeeting->zoom_join_url ?: $companyMeeting->meeting_link;
+        $topic = $session->title ?: 'Conference Session';
+        $user = User::find($userId);
+
+        if ($joinUrl && in_array($visitorBooking->status, ['confirmed', 'accepted'], true)) {
+            return $visitorBooking;
+        }
+
+        $alreadyRequested = $visitorBooking->join_requested_at
+            && $visitorBooking->join_requested_at->gt(now()->subMinutes(10));
+
+        if (! $alreadyRequested) {
+            $visitorBooking->update(['join_requested_at' => now()]);
+
             DB::table('meeting_notifications')->insert([
-                'visitor_id' => $visitorBooking->visitor_id,
+                'visitor_id' => $userId,
                 'company_id' => $session->boothBooking->company_id,
                 'visitor_meeting_booking_id' => $visitorBooking->id,
                 'booth_session_id' => $session->id,
-                'type' => $joinUrl ? 'confirmed' : 'updated',
-                'title' => 'Conference is live',
-                'message' => $message,
+                'type' => 'join_request',
+                'title' => 'Visitor requested to join conference',
+                'message' => ($user?->name ?: $visitorBooking->visitor_name) . ' requested to join "' . $topic . '".',
                 'status' => 'unread',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
         }
 
-        return [
-            'join_url' => $joinUrl,
-            'host_url' => $companyMeeting->fresh()->zoom_start_url ?: $joinUrl,
-            'notified' => $bookings->count(),
-        ];
+        return $visitorBooking->fresh();
+    }
+
+    private function completedPassesForExhibition(int $exhibitionId)
+    {
+        return Visitor::query()
+            ->where('exhibition_id', $exhibitionId)
+            ->where('payment_status', 'completed')
+            ->get();
+    }
+
+    private function insertVisitorNotification(
+        int $visitorId,
+        int $companyId,
+        int $visitorMeetingBookingId,
+        int $boothSessionId,
+        string $type,
+        string $title,
+        string $message
+    ): void {
+        DB::table('meeting_notifications')->insert([
+            'visitor_id' => $visitorId,
+            'company_id' => $companyId,
+            'visitor_meeting_booking_id' => $visitorMeetingBookingId,
+            'booth_session_id' => $boothSessionId,
+            'type' => $type,
+            'title' => $title,
+            'message' => $message,
+            'status' => 'unread',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 
     public function ensureVisitorBookingForSession(

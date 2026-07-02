@@ -78,6 +78,12 @@
             </a>
         </div>
 
+        @if (session('error'))
+            <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                {{ session('error') }}
+            </div>
+        @endif
+
         @if (session('meeting_setup_status'))
             <div class="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
                 {{ session('meeting_setup_status') }}
@@ -329,12 +335,18 @@
                         <span class="inline-flex max-w-full whitespace-nowrap rounded-md border px-3 py-1 text-[11px] font-bold {{ $statusStyles[$status] ?? $statusStyles['upcoming'] }}">{{ $statusLabels[$status] ?? ucfirst($status) }}</span>
                     </div>
                     <div class="lg:col-span-1 flex lg:justify-center gap-1 flex-wrap">
-                        @php $meetUrl = $item->companyMeeting?->zoom_join_url ?: $item->companyMeeting?->meeting_link; @endphp
+                        @php
+                            $meetUrl = $item->companyMeeting?->zoom_join_url ?: $item->companyMeeting?->meeting_link;
+                            $hostUrl = $item->companyMeeting?->zoom_start_url ?: $meetUrl;
+                        @endphp
                         @if (in_array($status, ['upcoming', 'live'], true))
                             <form method="POST" action="{{ route('company.booth-setup.sessions.create-meet', [$booking, $item]) }}">
                                 @csrf
                                 <button type="submit" class="px-2 py-1 text-[10px] font-bold rounded border border-indigo-200 text-indigo-700 hover:bg-indigo-50" title="Create Google Meet link">{{ $meetUrl ? 'Meet ready' : 'Create Meet' }}</button>
                             </form>
+                            @if ($hostUrl)
+                                <a href="{{ $hostUrl }}" target="_blank" rel="noopener" class="px-2 py-1 text-[10px] font-bold rounded border border-green-200 text-green-700 hover:bg-green-50" title="Join as host">Host</a>
+                            @endif
                             <form method="POST" action="{{ route('company.booth-setup.sessions.start-conference', [$booking, $item]) }}">
                                 @csrf
                                 <button type="submit" class="px-2 py-1 text-[10px] font-bold rounded bg-green-600 text-white hover:bg-green-700" title="Start conference as host">Start</button>
@@ -362,6 +374,45 @@
                 </div>
             @endforelse
         </div>
+
+        @if (($sessionJoinRequests ?? collect())->isNotEmpty())
+            <div class="mb-6 overflow-hidden rounded-xl border border-[#DDD6FE] bg-[#FAF5FF]">
+                <div class="border-b border-[#DDD6FE] px-5 py-4">
+                    <h3 class="text-[16px] font-bold text-[#1E1B4B]">Conference Join Requests</h3>
+                    <p class="mt-1 text-[13px] text-[#6B7280]">Visitors with exhibition passes requested to join your 1-to-many sessions.</p>
+                </div>
+                <div class="divide-y divide-[#EDE9FE]">
+                    @foreach ($sessionJoinRequests as $joinRequest)
+                        @php
+                            $meetUrl = $joinRequest->companyMeeting?->zoom_join_url ?: $joinRequest->companyMeeting?->meeting_link;
+                            $hostUrl = $joinRequest->companyMeeting?->zoom_start_url ?: $meetUrl;
+                        @endphp
+                        <div class="flex flex-col gap-3 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+                            <div class="min-w-0">
+                                <p class="text-[14px] font-bold text-[#1E1B4B]">{{ $joinRequest->visitor_name ?: 'Visitor' }}</p>
+                                <p class="text-[12px] text-[#6B7280]">{{ $joinRequest->visitor_email }}</p>
+                                <p class="mt-1 text-[13px] font-medium text-[#4C1D95]">{{ $joinRequest->boothSession?->title ?: 'Conference Session' }}</p>
+                                @if ($joinRequest->join_requested_at)
+                                    <p class="mt-1 text-[11px] text-[#9CA3AF]">Requested {{ $joinRequest->join_requested_at->diffForHumans() }}</p>
+                                @endif
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                @if ($hostUrl)
+                                    <a href="{{ $hostUrl }}" target="_blank" rel="noopener" class="inline-flex h-9 items-center rounded-lg border border-green-200 px-3 text-[12px] font-bold text-green-700 hover:bg-green-50">Join as Host</a>
+                                @endif
+                                <form method="POST" action="{{ route('company.booth-setup.sessions.join-requests.approve', [$booking, $joinRequest->boothSession, $joinRequest]) }}">
+                                    @csrf
+                                    <button type="submit" class="inline-flex h-9 items-center rounded-lg bg-[#4C1D95] px-4 text-[12px] font-bold text-white hover:bg-[#3b1774]">
+                                        Approve & Join as Host
+                                    </button>
+                                </form>
+                                <a href="{{ route('company.meetings.show', $joinRequest->id) }}" class="inline-flex h-9 items-center rounded-lg border border-gray-200 px-3 text-[12px] font-bold text-[#4B5563] hover:bg-gray-50">Manage</a>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
 
         <div class="flex flex-col gap-4 pb-4 sm:flex-row sm:items-center sm:justify-between">
             <p class="text-[#6B7280] text-[14px]">Showing {{ $sessions->count() }} of {{ $sessionCounts['all'] ?? $sessions->count() }} sessions</p>

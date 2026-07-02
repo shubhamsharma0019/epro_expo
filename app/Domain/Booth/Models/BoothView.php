@@ -15,10 +15,12 @@ class BoothView extends Model
     protected $fillable = [
         'company_id',
         'booth_profile_id',
+        'booth_booking_id',
         'visitor_id',
         'ip_address',
         'user_agent',
         'viewed_at',
+        'time_spent_seconds',
     ];
 
     protected function casts(): array

@@ -2,20 +2,29 @@
 
 namespace App\Support;
 
+use App\Domain\Visitor\Models\Ticket;
 use App\Domain\Visitor\Models\VisitorTicket;
 use App\Mail\EventTicketConfirmationMail;
+use Illuminate\Mail\Mailable;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Throwable;
 
 class EventTicketMail
 {
+    public static function prepareMailer(): void
+    {
+        PlatformMailSettings::applyToConfig();
+    }
+
     /**
      * Platform SMTP sender — set once in .env (MAIL_USERNAME / MAIL_FROM_ADDRESS).
      * Not the visitor email.
      */
     public static function isDeliverable(): bool
     {
+        self::prepareMailer();
+
         $mailer = (string) config('mail.default');
 
         if (in_array($mailer, ['log', 'array'], true)) {
@@ -33,6 +42,8 @@ class EventTicketMail
 
     public static function fromAddress(): string
     {
+        self::prepareMailer();
+
         return trim((string) (config('mail.from.address') ?: config('mail.mailers.smtp.username') ?: ''));
     }
 
@@ -41,6 +52,8 @@ class EventTicketMail
      */
     public static function sendTicket(VisitorTicket $ticket): array
     {
+        self::ensureIssuedTicket($ticket);
+
         $recipient = self::resolveRecipient($ticket);
 
         if ($recipient === null) {
@@ -62,9 +75,9 @@ class EventTicketMail
         }
 
         try {
-            PlatformMailSettings::applyToConfig();
+            self::sendMailable($recipient, new EventTicketConfirmationMail($ticket));
 
-            Mail::to($recipient)->send(new EventTicketConfirmationMail($ticket));
+            $ticket->update(['email_sent_at' => now()]);
 
             return [
                 'sent' => true,
@@ -73,13 +86,58 @@ class EventTicketMail
                 'recipient' => $recipient,
             ];
         } catch (Throwable $exception) {
+            $friendly = PlatformMailSettings::friendlySmtpError($exception->getMessage());
+
             return [
                 'sent' => false,
                 'message' => self::visitorSendFailureMessage($recipient),
-                'admin_message' => 'Email could not be sent. ' . $exception->getMessage(),
+                'admin_message' => $friendly,
                 'recipient' => $recipient,
             ];
         }
+    }
+
+    public static function sendMailable(string $recipient, Mailable $mailable): void
+    {
+        self::prepareMailer();
+
+        $attempts = [
+            [
+                'scheme' => (string) config('mail.mailers.smtp.scheme', 'smtp'),
+                'port' => (int) config('mail.mailers.smtp.port', 587),
+            ],
+            ['scheme' => 'smtp', 'port' => 587],
+            ['scheme' => 'smtps', 'port' => 465],
+        ];
+
+        $seen = [];
+        $lastException = null;
+
+        foreach ($attempts as $attempt) {
+            $key = $attempt['scheme'] . ':' . $attempt['port'];
+
+            if (isset($seen[$key])) {
+                continue;
+            }
+
+            $seen[$key] = true;
+
+            config([
+                'mail.mailers.smtp.scheme' => $attempt['scheme'],
+                'mail.mailers.smtp.port' => $attempt['port'],
+            ]);
+            Mail::purge('smtp');
+
+            try {
+                Mail::to($recipient)->send($mailable);
+
+                return;
+            } catch (Throwable $exception) {
+                $lastException = $exception;
+            }
+        }
+
+        throw $lastException ?? new \RuntimeException('Email could not be sent.');
     }
 
     public static function visitorSendFailureMessage(?string $recipient = null): string
@@ -96,7 +154,11 @@ class EventTicketMail
         $orderNumber = $ticket->order_number;
         $sessionKey = 'event_ticket_email_sent_' . $orderNumber;
 
-        if (session($sessionKey)) {
+        if (session($sessionKey) || $ticket->email_sent_at) {
+            if ($ticket->email_sent_at) {
+                session([$sessionKey => true]);
+            }
+
             return [
                 'sent' => true,
                 'message' => '',
@@ -176,5 +238,29 @@ class EventTicketMail
         }
 
         return 'Email delivery is not configured.';
+    }
+
+    public static function ensureIssuedTicket(VisitorTicket $ticket): void
+    {
+        if (! EventTicketSchema::isReady()) {
+            return;
+        }
+
+        $ticket->loadMissing('user');
+
+        if (! $ticket->user) {
+            return;
+        }
+
+        $alreadyIssued = Ticket::query()
+            ->whereHas('booking', fn ($query) => $query->where('visitor_ticket_id', $ticket->id))
+            ->exists();
+
+        if ($alreadyIssued) {
+            return;
+        }
+
+        app(\App\Domain\Visitor\Services\EventTicketIssuanceService::class)
+            ->issueFromVisitorTicket($ticket, $ticket->user);
     }
 }

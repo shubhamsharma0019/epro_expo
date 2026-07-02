@@ -28,10 +28,25 @@ class BoothMeetingAvailabilityController extends BaseBoothSetupController
     {
         $booking = $this->setupBooking($booking);
         $data = $request->validated() + ['company_id' => $booking->company_id, 'booth_booking_id' => $booking->id];
+        $data['allow_one_to_one'] = $request->boolean('allow_one_to_one', true);
+        $data['allow_one_to_many'] = $request->boolean('allow_one_to_many', false);
+        $data['allow_conference'] = false;
+
         $availability = BoothMeetingAvailability::updateOrCreate(['booth_booking_id' => $booking->id], $data);
         $slots->regenerate($availability);
-        $steps->markStepCompleted($booking, 'meetings');
+        $availableSlots = $booking->boothMeetingSlots()->where('status', 'available')->count();
 
-        return back()->with('status', 'Meeting availability saved and slots generated.');
+        if ($availableSlots > 0) {
+            $steps->markStepCompleted($booking, 'meetings');
+        } else {
+            $steps->markStepInProgress($booking, 'meetings');
+        }
+
+        return back()->with(
+            'status',
+            $availableSlots > 0
+                ? "Meeting availability saved. {$availableSlots} bookable slots are now live for ticket holders."
+                : 'Availability saved, but no slots were generated. Make sure daily end time is after start time and at least one weekday is selected.'
+        );
     }
 }

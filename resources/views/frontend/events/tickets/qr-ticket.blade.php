@@ -21,7 +21,11 @@
     $scanStatusLabel = match ($scanWindowState) {
         'not_started' => 'QR scan opens on event start date',
         'expired' => 'Event ended — QR scan no longer valid',
-        default => $ticket->checked_in ? 'Checked In Today' : 'Valid for check-in during event dates',
+        default => ($remainingCheckIns ?? 0) <= 0
+            ? 'All event day check-ins used'
+            : (($checkinCount ?? 0) > 0
+                ? 'Checked in ' . ($checkinCount ?? 0) . ' of ' . ($eventDayCount ?? 1) . ' event days'
+                : 'Valid for check-in during event dates'),
     };
 @endphp
 <main class="mx-auto w-full max-w-[1440px] flex-1 px-4 pb-12 pt-6 sm:px-6 lg:px-8">
@@ -44,7 +48,34 @@
         <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[14px] font-medium text-emerald-700">{{ session('success') }}</div>
     @endif
     @if (session('warning'))
-        <div class="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[14px] font-medium text-amber-700">{{ session('warning') }}</div>
+        <div class="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[14px] font-medium text-amber-700">
+            {{ session('warning') }}
+            @if (app()->environment('local') && filled($emailDeliveryError ?? null))
+                <p class="mt-2 text-[13px]">
+                    Admin fix: <a href="{{ route('setup.mail.index') }}" class="font-semibold underline">Open Mail Setup</a> and save a fresh Gmail App Password.
+                </p>
+            @endif
+        </div>
+    @endif
+    @if (($emailSent ?? false) && ($ticketRecipientEmail ?? null))
+        <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[14px] font-medium text-emerald-700">
+            Ticket emailed to {{ $ticketRecipientEmail }}.
+        </div>
+    @elseif (! ($emailConfigured ?? true) && ($ticketRecipientEmail ?? null))
+        <div class="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[14px] font-medium text-amber-700">
+            We could not email your ticket right now. Please download it below or tap Resend Email.
+        </div>
+    @endif
+    @if ($mobileScanHint ?? null)
+        <div class="mb-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-[14px] font-medium text-blue-800">
+            {{ $mobileScanHint }}
+        </div>
+    @elseif (filled($scannableUrl ?? null) && ! \App\Support\EventTicketQr::usesLoopbackUrl($scannableUrl))
+        <div class="mb-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-[14px] font-medium text-blue-800">
+            <p><span class="font-bold">Phone scan URL:</span> {{ $scannableUrl }}</p>
+            <p class="mt-2"><span class="font-bold">Scanner login:</span> <a href="{{ rtrim(\App\Support\EventTicketQr::appBaseUrl(), '/') . route('ticket-scanner.login', [], false) }}" class="font-semibold underline">{{ rtrim(\App\Support\EventTicketQr::appBaseUrl(), '/') . route('ticket-scanner.login', [], false) }}</a> (phone par pehle yahan sign in karo)</p>
+            <p class="mt-2 text-[13px]">Agar phone par <span class="font-semibold">"refused to connect"</span> aaye to project folder me <span class="font-semibold">serve-lan.bat</span> double-click karke server chalao. Laptop aur phone same WiFi par hone chahiye.</p>
+        </div>
     @endif
 
     <div id="ticketCard" class="overflow-hidden rounded-[16px] border border-[#3B47C8] bg-white shadow-[0_8px_30px_rgba(31,42,107,0.08)]">
@@ -96,6 +127,11 @@
                 <div class="mt-5 inline-flex rounded-full bg-emerald-50 px-4 py-2 text-[13px] font-semibold text-emerald-700">
                     {{ $scanStatusLabel }}
                 </div>
+                @if (($eventDayCount ?? 1) > 1)
+                    <p class="mt-3 text-[12px] font-medium text-[#5A6480]">
+                        {{ $checkinCount ?? 0 }} of {{ $eventDayCount }} event day check-ins used
+                    </p>
+                @endif
             </div>
         </div>
     </div>

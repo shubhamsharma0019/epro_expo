@@ -140,6 +140,29 @@
                     </div>
                 </div>
 
+                <div class="mt-8 rounded-xl border border-gray-100 bg-[#FAFAFA] p-4 sm:p-6">
+                    <h2 class="mb-1 text-[15px] font-bold text-[#1E1B4B]">Booth Highlights</h2>
+                    <p class="mb-4 text-[12px] text-[#6B7280]">These numbers appear on your booth preview for visitors.</p>
+                    <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+                        <div>
+                            <label class="mb-2 block text-[13px] font-bold text-[#1E1B4B]">Years Experience</label>
+                            <input type="text" name="years_experience" value="{{ old('years_experience', $profile?->years_experience ?: ($profile?->highlight_stats['years_experience'] ?? '')) }}" placeholder="10+" class="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-[14px] text-[#111827] focus:border-[#3D1B9B] focus:outline-none focus:ring-1 focus:ring-[#3D1B9B]">
+                        </div>
+                        <div>
+                            <label class="mb-2 block text-[13px] font-bold text-[#1E1B4B]">Clients</label>
+                            <input type="text" name="clients_count" value="{{ old('clients_count', $profile?->clients_count ?: ($profile?->highlight_stats['clients'] ?? '')) }}" placeholder="250+" class="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-[14px] text-[#111827] focus:border-[#3D1B9B] focus:outline-none focus:ring-1 focus:ring-[#3D1B9B]">
+                        </div>
+                        <div>
+                            <label class="mb-2 block text-[13px] font-bold text-[#1E1B4B]">Countries</label>
+                            <input type="text" name="countries_served" value="{{ old('countries_served', $profile?->countries_served ?: ($profile?->highlight_stats['countries'] ?? '')) }}" placeholder="25+" class="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-[14px] text-[#111827] focus:border-[#3D1B9B] focus:outline-none focus:ring-1 focus:ring-[#3D1B9B]">
+                        </div>
+                        <div>
+                            <label class="mb-2 block text-[13px] font-bold text-[#1E1B4B]">Expert Team</label>
+                            <input type="text" name="expert_team_size" value="{{ old('expert_team_size', $profile?->expert_team_size ?: ($profile?->highlight_stats['team_size'] ?? '')) }}" placeholder="100+" class="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-[14px] text-[#111827] focus:border-[#3D1B9B] focus:outline-none focus:ring-1 focus:ring-[#3D1B9B]">
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Social Links Section -->
                 <div class="mt-8 rounded-xl border border-gray-100 bg-[#FAFAFA] p-4 sm:p-6">
                     <h2 class="text-[#1E1B4B] font-bold text-[15px] mb-4">Social Links</h2>

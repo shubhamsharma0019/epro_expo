@@ -26,12 +26,14 @@ class CompanyEventBranding extends Model
         'cta_label',
         'cta_url',
         'social_links',
+        'theme_sections',
     ];
 
     protected function casts(): array
     {
         return [
             'social_links' => 'array',
+            'theme_sections' => 'array',
         ];
     }
 

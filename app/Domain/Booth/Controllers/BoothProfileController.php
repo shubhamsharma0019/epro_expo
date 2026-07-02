@@ -43,6 +43,19 @@ class BoothProfileController extends BaseBoothSetupController
             'status' => 'draft',
         ];
 
+        foreach (['years_experience', 'clients_count', 'countries_served', 'expert_team_size'] as $field) {
+            if (! filled($data[$field] ?? null)) {
+                $data[$field] = $existing?->{$field};
+            }
+        }
+
+        $data['highlight_stats'] = [
+            'years_experience' => $data['years_experience'] ?? '10+',
+            'clients' => $data['clients_count'] ?? '250+',
+            'countries' => $data['countries_served'] ?? '25+',
+            'team_size' => $data['expert_team_size'] ?? '100+',
+        ];
+
         $profile = BoothProfile::updateOrCreate(['booth_booking_id' => $booking->id], $data);
         $booking->company?->update([
             'company_name' => $data['company_name'],

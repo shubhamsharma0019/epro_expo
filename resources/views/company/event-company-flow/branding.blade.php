@@ -8,7 +8,8 @@
     $secondaryColor = old('secondary_color', $eventBranding?->secondary_color ?? '#00B894');
     $accentColor = old('accent_color', $eventBranding?->accent_color ?? '#FF8A00');
     $textColor = '#0F172A';
-    $savedThemeSections = data_get($eventBranding?->social_links, 'theme_sections', []);
+    $savedThemeSections = $eventBranding?->theme_sections
+        ?? data_get($eventBranding?->social_links, 'theme_sections', []);
     $themeSectionOptions = [
         'header' => 'Header & Banner',
         'event_details' => 'Event Details',
@@ -36,7 +37,6 @@
     $speakerDisplay = $speakerCount > 0 ? number_format($speakerCount) . '+' : '0';
     $eventInitials = collect(preg_split('/\s+/', trim($eventTitle)))->filter()->take(3)->map(fn ($part) => strtoupper(substr($part, 0, 1)))->join('') ?: 'EVT';
     $eventYear = $companyEvent->starts_at?->format('Y') ?? now()->format('Y');
-    $logoUrl = $eventBranding?->logo_path ? asset('storage/' . $eventBranding->logo_path) : null;
     $bannerUrl = $eventBranding?->banner_path ? asset('storage/' . $eventBranding->banner_path) : null;
     $bannerLabelLines = collect(preg_split('/\s+/', strtoupper($eventTitle)))->filter();
 @endphp
@@ -52,26 +52,9 @@
 
         <div class="grid grid-cols-1 xl:grid-cols-[380px_1fr] gap-10">
             <div class="flex flex-col gap-6">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div>
-                        <h3 class="text-[14px] font-bold text-[#1C1364] mb-3">Event Logo</h3>
-                        <div class="border border-gray-200 rounded-[12px] p-4 flex flex-col items-center justify-center mb-3 h-[120px] bg-white">
-                            <div id="logo-preview-box" class="flex h-14 w-14 items-center justify-center overflow-hidden rounded-lg bg-gray-100 text-center text-[15px] font-bold leading-tight text-[#4C10D0]">
-                                @if ($logoUrl)
-                                    <img src="{{ $logoUrl }}" alt="{{ $eventTitle }} logo" class="w-full h-full object-contain">
-                                @else
-                                    <span id="logo-preview-text">{{ $eventInitials }}<br>{{ $eventYear }}</span>
-                                @endif
-                            </div>
-                        </div>
-                        <p class="text-[11px] text-center text-gray-400 font-medium mb-3">PNG, JPG (Max 2MB)</p>
-                        <input type="file" id="logo-file-input" name="logo" class="hidden" accept="image/*">
-                        <button type="button" id="logo-upload-btn" class="w-full rounded-[8px] border border-[#5B32F6] py-2 text-[13px] font-semibold text-[#5B32F6] transition-colors hover:bg-gray-50">Upload Logo</button>
-                    </div>
-
-                    <div>
-                        <h3 class="text-[14px] font-bold text-[#1C1364] mb-3">Brand Colors</h3>
-                        <div class="flex flex-col gap-[14px]">
+                <div>
+                    <h3 class="text-[14px] font-bold text-[#1C1364] mb-3">Brand Colors</h3>
+                    <div class="flex flex-col gap-[14px] rounded-xl border border-gray-100 bg-white p-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
                             @foreach ([
                                 'primary_color' => ['label' => 'Primary Color', 'value' => $primaryColor],
                                 'secondary_color' => ['label' => 'Secondary Color', 'value' => $secondaryColor],
@@ -94,10 +77,9 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-2">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
                         <h3 class="text-[14px] font-bold text-[#1C1364] mb-3">Banner Image</h3>
                         <div id="banner-preview-box" class="border border-gray-200 rounded-[12px] overflow-hidden mb-3 h-[85px] bg-[#1A0A4A] relative flex items-center shadow-sm bg-cover bg-center" @if ($bannerUrl) style="background-image: url('{{ $bannerUrl }}')" @endif>
@@ -155,22 +137,6 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 mt-4">
-                    <div class="border border-gray-100 rounded-xl p-4 flex items-center justify-between bg-white shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-                        <div class="flex flex-col gap-2">
-                            <span class="text-[12px] font-bold text-[#1C1364]">Text</span>
-                            <span class="text-[13px] font-medium" style="color: {{ $textColor }}">Aa</span>
-                        </div>
-                        <span class="text-[14px] font-bold text-[#1C1364] self-end mb-0.5">13</span>
-                    </div>
-                    <div class="border border-gray-100 rounded-xl p-4 flex items-center justify-between bg-white shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-                        <div class="flex flex-col gap-2">
-                            <span class="text-[12px] font-bold text-[#1C1364]">Buttons</span>
-                            <div id="typography-button-sample" class="w-10 h-8 rounded flex items-center justify-center text-white text-[13px] font-medium" style="background-color: {{ $primaryColor }}">Aa</div>
-                        </div>
-                        <span class="text-[14px] font-bold text-[#1C1364] self-end mb-0.5">13</span>
-                    </div>
-                </div>
             </div>
 
             <div class="flex flex-col min-w-0">
@@ -188,13 +154,6 @@
                         </div>
 
                         <div class="relative z-10 text-white flex flex-col h-full">
-                            <div id="live-logo-preview" class="font-bold text-[18px] leading-tight mb-auto">
-                                @if ($logoUrl)
-                                    <img src="{{ $logoUrl }}" alt="{{ $eventTitle }} logo" class="w-12 h-12 object-contain rounded-md bg-white p-1 shadow-sm">
-                                @else
-                                    <span id="live-logo-text">{{ $eventInitials }}<br>{{ $eventYear }}</span>
-                                @endif
-                            </div>
                             <div class="mt-auto">
                                 <h2 id="live-headline-preview" class="text-[20px] min-[400px]:text-[24px] sm:text-[28px] font-bold leading-tight mb-2 tracking-wide">{{ str($eventHeadline)->upper() }}</h2>
                                 <p class="text-[13px] text-gray-200 mb-5 font-medium">{{ $eventDate }} | {{ $companyEvent->city ?: $eventLocation }}</p>
@@ -250,14 +209,8 @@
                         </div>
                     </div>
 
-                    <div id="live-footer-section" data-preview-section="footer" @class(['px-8 py-5 flex items-center justify-between shrink-0', 'hidden' => ! $themeSections['footer']]) style="background-color: {{ $primaryColor }}" data-brand-primary-bg>
+                    <div id="live-footer-section" data-preview-section="footer" @class(['px-8 py-5 shrink-0', 'hidden' => ! $themeSections['footer']]) style="background-color: {{ $primaryColor }}" data-brand-primary-bg>
                         <span class="text-[12px] text-gray-200">&copy; {{ $eventYear }} {{ $eventTitle }}. All rights reserved.</span>
-                        <div class="flex items-center gap-5 text-white">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -299,11 +252,6 @@
                 element.style.backgroundColor = primary;
             });
 
-            const buttonSample = document.getElementById('typography-button-sample');
-            if (buttonSample) {
-                buttonSample.style.backgroundColor = primary;
-            }
-
             const bannerOverlay = document.querySelector('#banner-preview-box .absolute');
             if (bannerOverlay) {
                 bannerOverlay.style.background = `linear-gradient(to right, ${primary}CC, ${secondary}80)`;
@@ -327,29 +275,8 @@
             input.addEventListener('change', refreshThemeSections);
         });
 
-        document.getElementById('logo-upload-btn')?.addEventListener('click', () => {
-            document.getElementById('logo-file-input')?.click();
-        });
-
         document.getElementById('banner-upload-btn')?.addEventListener('click', () => {
             document.getElementById('banner-file-input')?.click();
-        });
-
-        document.getElementById('logo-file-input')?.addEventListener('change', (event) => {
-            const file = event.target.files?.[0];
-            if (! file) return;
-
-            const imageUrl = URL.createObjectURL(file);
-            const logoBox = document.getElementById('logo-preview-box');
-            const liveLogo = document.getElementById('live-logo-preview');
-
-            if (logoBox) {
-                logoBox.innerHTML = `<img src="${imageUrl}" alt="Logo preview" class="w-full h-full object-contain">`;
-            }
-
-            if (liveLogo) {
-                liveLogo.innerHTML = `<img src="${imageUrl}" alt="Logo preview" class="w-12 h-12 object-contain rounded-md bg-white p-1 shadow-sm">`;
-            }
         });
 
         document.getElementById('banner-file-input')?.addEventListener('change', (event) => {

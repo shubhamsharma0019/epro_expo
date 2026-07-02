@@ -4,6 +4,7 @@ namespace App\Domain\Shared\Services;
 
 use App\Domain\Company\Models\CompanyMeeting;
 use Carbon\Carbon;
+use App\Support\MeetingJoinUrls;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -19,13 +20,28 @@ class GoogleMeetService
     }
 
     /**
+     * @param  list<string>  $extraAttendeeEmails
      * @return array{meeting_link: string, zoom_join_url: string, zoom_start_url: string, zoom_meeting_id: string|null, zoom_meeting_status: string}
      */
-    public function createForCompanyMeeting(CompanyMeeting $meeting): array
+    public function createForCompanyMeeting(CompanyMeeting $meeting, array $extraAttendeeEmails = []): array
     {
         if (! $this->isConfigured()) {
             throw new RuntimeException('Google Meet is not configured. Add GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REFRESH_TOKEN to .env.');
         }
+
+        $meeting->loadMissing(['company', 'boothSession.teamMember', 'visitorMeetingBookings']);
+
+        $attendeeEmails = collect([
+            $meeting->company?->email,
+            $meeting->boothSession?->teamMember?->email,
+        ])
+            ->merge($extraAttendeeEmails)
+            ->merge($meeting->visitorMeetingBookings->pluck('visitor_email'))
+            ->filter(fn ($email) => filled($email) && filter_var($email, FILTER_VALIDATE_EMAIL))
+            ->unique()
+            ->values()
+            ->map(fn (string $email) => ['email' => $email])
+            ->all();
 
         $token = $this->accessToken();
         $timezone = config('services.google_meet.timezone', config('app.timezone', 'Asia/Kolkata'));
@@ -34,27 +50,38 @@ class GoogleMeetService
         $end = (clone $start)->addMinutes($duration);
         $calendarId = config('services.google_meet.calendar_id', 'primary');
 
-        $response = Http::withToken($token)
-            ->post("https://www.googleapis.com/calendar/v3/calendars/{$calendarId}/events?conferenceDataVersion=1", [
-                'summary' => $meeting->title ?: 'Exhibition Meeting',
-                'description' => $meeting->meeting_agenda ?: $meeting->description,
-                'start' => [
-                    'dateTime' => $start->format('Y-m-d\TH:i:s'),
-                    'timeZone' => $timezone,
-                ],
-                'end' => [
-                    'dateTime' => $end->format('Y-m-d\TH:i:s'),
-                    'timeZone' => $timezone,
-                ],
-                'conferenceData' => [
-                    'createRequest' => [
-                        'requestId' => 'erpoexpo-' . $meeting->id . '-' . Str::lower(Str::random(8)),
-                        'conferenceSolutionKey' => [
-                            'type' => 'hangoutsMeet',
-                        ],
+        $eventPayload = [
+            'summary' => $meeting->title ?: 'Exhibition Meeting',
+            'description' => $meeting->meeting_agenda ?: $meeting->description,
+            'start' => [
+                'dateTime' => $start->format('Y-m-d\TH:i:s'),
+                'timeZone' => $timezone,
+            ],
+            'end' => [
+                'dateTime' => $end->format('Y-m-d\TH:i:s'),
+                'timeZone' => $timezone,
+            ],
+            'conferenceData' => [
+                'createRequest' => [
+                    'requestId' => 'erpoexpo-' . $meeting->id . '-' . Str::lower(Str::random(8)),
+                    'conferenceSolutionKey' => [
+                        'type' => 'hangoutsMeet',
                     ],
                 ],
-            ]);
+            ],
+        ];
+
+        if ($attendeeEmails !== []) {
+            $eventPayload['attendees'] = $attendeeEmails;
+            $eventPayload['guestsCanModify'] = false;
+            $eventPayload['guestsCanInviteOthers'] = false;
+            $eventPayload['guestsCanSeeOtherGuests'] = true;
+        }
+
+        $query = 'conferenceDataVersion=1' . ($attendeeEmails !== [] ? '&sendUpdates=all' : '');
+
+        $response = Http::withToken($token)
+            ->post("https://www.googleapis.com/calendar/v3/calendars/{$calendarId}/events?{$query}", $eventPayload);
 
         if (! $response->successful()) {
             Log::warning('Google Meet creation failed', [
@@ -87,14 +114,15 @@ class GoogleMeetService
 
         preg_match('#meet\.google\.com/([a-z]{3}-[a-z]{4}-[a-z]{3})#i', $joinUrl, $matches);
         $meetCode = $matches[1] ?? null;
+        $calendarLink = $payload['htmlLink'] ?? null;
 
-        return [
-            'meeting_link' => $joinUrl,
-            'zoom_join_url' => $joinUrl,
-            'zoom_start_url' => $joinUrl,
-            'zoom_meeting_id' => $meetCode,
-            'zoom_meeting_status' => 'scheduled',
-        ];
+        return array_merge(
+            MeetingJoinUrls::syncPayload($joinUrl, $calendarLink),
+            [
+                'zoom_meeting_id' => $meetCode,
+                'zoom_meeting_status' => 'scheduled',
+            ]
+        );
     }
 
     protected function extractMeetUrl(array $payload): ?string

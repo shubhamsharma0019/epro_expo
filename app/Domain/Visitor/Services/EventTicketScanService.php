@@ -8,6 +8,7 @@ use App\Domain\Visitor\Models\TicketScanLog;
 use App\Domain\Visitor\Models\VisitorCheckin;
 use App\Support\TicketScanDevice;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class EventTicketScanService
 {
@@ -43,7 +44,71 @@ class EventTicketScanService
             return 'used_today';
         }
 
+        if ($this->hasExceededEventDayLimit($ticket)) {
+            return 'limit_reached';
+        }
+
         return 'valid';
+    }
+
+    public function eventDayCount(?CompanyEvent $event): int
+    {
+        if (! $event?->starts_at) {
+            return 1;
+        }
+
+        $timezone = $event->timezone ?: (string) config('app.timezone');
+        $start = $event->starts_at->copy()->timezone($timezone)->startOfDay();
+        $end = ($event->ends_at ?? $event->starts_at)->copy()->timezone($timezone)->startOfDay();
+
+        return max(1, $start->diffInDays($end) + 1);
+    }
+
+    public function hasExceededEventDayLimit(Ticket $ticket): bool
+    {
+        return $this->totalCheckIns($ticket) >= $this->eventDayCount($ticket->event);
+    }
+
+    public function remainingCheckIns(Ticket $ticket): int
+    {
+        return max(0, $this->eventDayCount($ticket->event) - $this->totalCheckIns($ticket));
+    }
+
+    public function scannerUsername(): ?string
+    {
+        $username = session('ticket_scanner_username');
+
+        return filled($username) ? (string) $username : null;
+    }
+
+    public function scanLocation(?Request $request = null): ?string
+    {
+        $request ??= request();
+        $fromRequest = trim((string) ($request?->input('entry_gate') ?? $request?->input('scan_location') ?? ''));
+
+        if ($fromRequest !== '') {
+            return $fromRequest;
+        }
+
+        $fromSession = trim((string) session('ticket_scanner_location', ''));
+
+        return $fromSession !== '' ? $fromSession : null;
+    }
+
+    public function visitorSnapshot(Ticket $ticket): array
+    {
+        $visitorTicket = $ticket->booking?->visitorTicket;
+
+        return [
+            'visitor_name' => $this->visitorDisplayName($ticket),
+            'visitor_email' => $this->visitorDisplayEmail($ticket),
+            'visitor_phone' => trim((string) (
+                $ticket->meta['attendee_phone']
+                ?? $visitorTicket?->attendee_phone
+                ?? $ticket->visitor?->phone
+                ?? ''
+            )) ?: null,
+        ];
     }
 
     public function eventWindowState(?CompanyEvent $event): string
@@ -144,10 +209,18 @@ class EventTicketScanService
 
     public function totalCheckIns(Ticket $ticket): int
     {
-        return VisitorCheckin::query()
+        $query = VisitorCheckin::query()
             ->where('ticket_id', $ticket->id)
-            ->where('status', 'checked_in')
-            ->count();
+            ->where('status', 'checked_in');
+
+        if (Schema::hasColumn('visitor_checkins', 'checkin_date')) {
+            return (int) $query
+                ->whereNotNull('checkin_date')
+                ->distinct()
+                ->count('checkin_date');
+        }
+
+        return $query->count();
     }
 
     public function totalScans(Ticket $ticket): int
@@ -198,13 +271,20 @@ class EventTicketScanService
     {
         $device = TicketScanDevice::fromRequest($request);
         $scannedAt = now();
+        $visitor = $this->visitorSnapshot($ticket);
+        $scanLocation = $this->scanLocation($request);
 
         $log = TicketScanLog::query()->create([
             'ticket_id' => $ticket->id,
             'visitor_id' => $ticket->visitor_id,
             'company_event_id' => $ticket->event_id,
+            'visitor_name' => $visitor['visitor_name'],
+            'visitor_email' => $visitor['visitor_email'],
+            'visitor_phone' => $visitor['visitor_phone'],
             'qr_token' => $ticket->qr_token,
             'action' => $action,
+            'scanner_username' => $this->scannerUsername(),
+            'scan_location' => $scanLocation,
             'device_type' => $device['device_type'],
             'device_name' => $device['device_name'],
             'user_agent' => $device['user_agent'],
@@ -224,6 +304,8 @@ class EventTicketScanService
         $checkedInAt = now();
         $visitorTicket = $ticket->booking?->visitorTicket;
         $device = TicketScanDevice::fromRequest($request);
+        $visitor = $this->visitorSnapshot($ticket);
+        $scanLocation = $this->scanLocation($request);
 
         if ($request) {
             $this->logQrScan($ticket, $request, 'check_in');
@@ -234,14 +316,20 @@ class EventTicketScanService
             'visitor_ticket_id' => $visitorTicket?->id,
             'ticket_id' => $ticket->id,
             'company_event_id' => $ticket->event_id,
-            'entry_gate' => $entryGate,
+            'visitor_name' => $visitor['visitor_name'],
+            'visitor_email' => $visitor['visitor_email'],
+            'visitor_phone' => $visitor['visitor_phone'],
+            'entry_gate' => $entryGate ?: $scanLocation,
             'checkin_type' => 'qr',
             'device_type' => $device['device_type'],
             'device_name' => $device['device_name'],
             'user_agent' => $device['user_agent'],
             'ip_address' => $device['ip_address'],
+            'scanner_username' => $this->scannerUsername(),
+            'scan_location' => $scanLocation,
             'status' => 'checked_in',
             'checked_in_at' => $checkedInAt,
+            'checkin_date' => $this->eventCheckinDate($ticket, $checkedInAt),
         ];
 
         $checkin = VisitorCheckin::query()->create($payload);
@@ -268,19 +356,27 @@ class EventTicketScanService
     {
         $visitorTicket = $ticket->booking?->visitorTicket;
         $existing = $this->todayCheckin($ticket, 'scanned');
+        $visitor = $this->visitorSnapshot($ticket);
+        $scanLocation = $this->scanLocation();
 
         $payload = [
             'user_id' => $ticket->visitor_id,
             'visitor_ticket_id' => $visitorTicket?->id,
             'ticket_id' => $ticket->id,
             'company_event_id' => $ticket->event_id,
+            'visitor_name' => $visitor['visitor_name'],
+            'visitor_email' => $visitor['visitor_email'],
+            'visitor_phone' => $visitor['visitor_phone'],
             'checkin_type' => 'qr',
             'device_type' => $device['device_type'],
             'device_name' => $device['device_name'],
             'user_agent' => $device['user_agent'],
             'ip_address' => $device['ip_address'],
+            'scanner_username' => $this->scannerUsername(),
+            'scan_location' => $scanLocation,
             'status' => 'scanned',
             'checked_in_at' => $scannedAt,
+            'checkin_date' => $this->eventCheckinDate($ticket, $scannedAt),
         ];
 
         if ($existing) {
@@ -295,5 +391,12 @@ class EventTicketScanService
     public function canCheckIn(Ticket $ticket): bool
     {
         return $this->resolveVerifyState($ticket) === 'valid';
+    }
+
+    private function eventCheckinDate(Ticket $ticket, $moment): string
+    {
+        $timezone = $ticket->event?->timezone ?: (string) config('app.timezone');
+
+        return $moment->copy()->timezone($timezone)->toDateString();
     }
 }

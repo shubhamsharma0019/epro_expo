@@ -2,6 +2,7 @@
 
 namespace App\Domain\Visitor\Models;
 
+use App\Domain\Booth\Models\BoothSession;
 use App\Domain\Company\Models\Company;
 use App\Domain\Shared\Models\User;
 use App\Domain\Company\Models\CompanyMeeting;
@@ -15,6 +16,7 @@ class VisitorMeetingBooking extends Model
 
     protected $fillable = [
         'company_meeting_id',
+        'booth_meeting_slot_id',
         'booth_session_id',
         'company_id',
         'visitor_id',
@@ -27,6 +29,9 @@ class VisitorMeetingBooking extends Model
         'message',
         'notes',
         'status',
+        'join_requested_at',
+        'host_joined_at',
+        'visitor_joined_at',
         'created_by',
         'updated_by',
         'completed_at',
@@ -37,7 +42,15 @@ class VisitorMeetingBooking extends Model
         return [
             'preferred_date' => 'date',
             'completed_at' => 'datetime',
+            'join_requested_at' => 'datetime',
+            'host_joined_at' => 'datetime',
+            'visitor_joined_at' => 'datetime',
         ];
+    }
+
+    public function boothSession(): BelongsTo
+    {
+        return $this->belongsTo(BoothSession::class, 'booth_session_id');
     }
 
     public static function displayStatus(string $status): string

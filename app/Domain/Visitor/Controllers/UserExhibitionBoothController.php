@@ -237,6 +237,7 @@ class UserExhibitionBoothController extends Controller
         $visitorBooking = VisitorMeetingBooking::create([
             'company_id' => $booking->company_id,
             'company_meeting_id' => $companyMeeting->id,
+            'booth_meeting_slot_id' => $slot?->id,
             'visitor_id' => $user->id,
             'visitor_name' => $validated['visitor_name'],
             'visitor_email' => $validated['visitor_email'],

@@ -27,14 +27,22 @@ class EventTicketController extends Controller
 
         $ticket->load(['booking.visitorTicket', 'visitor', 'event.branding']);
 
+        EventTicketMail::prepareMailer();
+
         $visitorTicket = $ticket->booking?->visitorTicket;
+        $emailDeliveryError = null;
         $ticketRecipientEmail = $visitorTicket
             ? EventTicketMail::resolveRecipient($visitorTicket)
             : null;
         $emailConfigured = EventTicketMail::isDeliverable();
         $emailSent = $visitorTicket
-            ? (bool) session('event_ticket_email_sent_' . $visitorTicket->order_number, false)
+            ? (bool) ($visitorTicket->email_sent_at || session('event_ticket_email_sent_' . $visitorTicket->order_number, false))
             : false;
+        $checkinCount = $this->scanService->totalCheckIns($ticket);
+        $eventDayCount = $this->scanService->eventDayCount($ticket->event);
+        $remainingCheckIns = $this->scanService->remainingCheckIns($ticket);
+        $scannableUrl = EventTicketQr::refreshStoredUrl($ticket);
+        $mobileScanHint = EventTicketQr::mobileScanHint($scannableUrl);
 
         if ($visitorTicket) {
             session(['event_ticket_order' => $visitorTicket->order_number]);
@@ -46,6 +54,7 @@ class EventTicketController extends Controller
                 if (($autoSend['sent'] ?? false) && ! ($autoSend['skipped'] ?? false) && filled($autoSend['message'] ?? null)) {
                     session()->flash('success', $autoSend['message']);
                 } elseif (! ($autoSend['sent'] ?? false) && ! ($autoSend['skipped'] ?? false)) {
+                    $emailDeliveryError = $autoSend['admin_message'] ?? null;
                     session()->flash('warning', $autoSend['message'] ?? EventTicketMail::visitorSendFailureMessage($ticketRecipientEmail));
                 }
             }
@@ -57,6 +66,12 @@ class EventTicketController extends Controller
             'emailSent',
             'emailConfigured',
             'ticketRecipientEmail',
+            'checkinCount',
+            'eventDayCount',
+            'remainingCheckIns',
+            'scannableUrl',
+            'mobileScanHint',
+            'emailDeliveryError',
         ));
     }
 
@@ -64,11 +79,10 @@ class EventTicketController extends Controller
     {
         $ticket = Ticket::query()->where('qr_token', $qr_token)->first();
 
-        abort_unless($ticket && $this->scanService->canAcceptScannerAction($ticket), 404);
+        abort_unless($ticket, 404);
 
-        $content = EventTicketQr::resolveContentForToken($qr_token);
-
-        abort_unless(filled($content), 404);
+        $content = EventTicketQr::resolveContentForToken($qr_token)
+            ?: EventTicketQr::scannableUrlForToken($qr_token);
 
         $size = min(max((int) request()->query('size', 512), 200), 1024);
         $svg = EventTicketQr::generateSvg($content, $size);
@@ -91,9 +105,26 @@ class EventTicketController extends Controller
         $todayCheckin = $ticket ? $this->scanService->todayCheckin($ticket, 'checked_in') : null;
         $checkinCount = $ticket ? $this->scanService->totalCheckIns($ticket) : 0;
         $scanCount = $ticket ? $this->scanService->totalScans($ticket) : 0;
+        $eventDayCount = $ticket ? $this->scanService->eventDayCount($ticket->event) : 0;
+        $remainingCheckIns = $ticket ? $this->scanService->remainingCheckIns($ticket) : 0;
+        $scannerUsername = $this->scanService->scannerUsername();
+        $visitorSnapshot = $ticket ? $this->scanService->visitorSnapshot($ticket) : [
+            'visitor_name' => null,
+            'visitor_email' => null,
+            'visitor_phone' => null,
+        ];
+        $scanLocation = session('ticket_scanner_location');
 
-        if ($ticket && $this->scanService->canAcceptScannerAction($ticket)) {
-            $this->scanService->logQrScan($ticket, $request, 'verify');
+        if ($ticket && $scannerUsername) {
+            try {
+                $this->scanService->logQrScan($ticket, $request, 'verify');
+            } catch (\Throwable $exception) {
+                \Illuminate\Support\Facades\Log::warning('Ticket scan log failed.', [
+                    'ticket_id' => $ticket->id,
+                    'qr_token' => $qr_token,
+                    'error' => $exception->getMessage(),
+                ]);
+            }
         }
 
         return view('frontend.events.tickets.verify-ticket', compact(
@@ -103,6 +134,11 @@ class EventTicketController extends Controller
             'todayCheckin',
             'checkinCount',
             'scanCount',
+            'eventDayCount',
+            'remainingCheckIns',
+            'scannerUsername',
+            'visitorSnapshot',
+            'scanLocation',
         ));
     }
 
@@ -125,6 +161,12 @@ class EventTicketController extends Controller
             return redirect()
                 ->route('verify-ticket.show', $qr_token)
                 ->with('warning', 'Visitor already checked in today.');
+        }
+
+        if ($state === 'limit_reached') {
+            return redirect()
+                ->route('verify-ticket.show', $qr_token)
+                ->with('warning', 'This ticket has used all allowed check-ins for this event.');
         }
 
         if ($state !== 'valid') {
@@ -171,12 +213,11 @@ class EventTicketController extends Controller
 
         $wasSent = (bool) session('event_ticket_email_sent_' . $visitorTicket->order_number, false);
 
-        PlatformMailSettings::applyToConfig();
-
         $result = EventTicketMail::sendTicket($visitorTicket);
 
         if ($result['sent']) {
             session(['event_ticket_email_sent_' . $visitorTicket->order_number => true]);
+            $visitorTicket->refresh();
 
             return back()->with('success', $wasSent
                 ? 'Ticket resent to ' . ($result['recipient'] ?? 'your email') . '.'
@@ -191,7 +232,13 @@ class EventTicketController extends Controller
             ]);
         }
 
-        return back()->with('warning', $result['message']);
+        $warning = $result['message'];
+
+        if (filled($result['admin_message'] ?? null) && app()->environment('local')) {
+            $warning .= ' ' . $result['admin_message'];
+        }
+
+        return back()->with('warning', $warning);
     }
 
     private function authorizeTicketOwner(Ticket $ticket): void

@@ -16,6 +16,8 @@ use Illuminate\Http\RedirectResponse;
 use App\Domain\Visitor\Models\VisitorMeetingBooking;
 use App\Domain\Company\Models\Enquiry;
 use App\Domain\Company\Models\CompanyMeeting;
+use App\Domain\Company\Services\MeetingLeadService;
+use App\Support\MeetingJoinUrls;
 
 class ExhibitionBoothController extends Controller
 {
@@ -345,6 +347,7 @@ class ExhibitionBoothController extends Controller
         $visitorBooking = VisitorMeetingBooking::create([
             'company_id' => $booking->company_id,
             'company_meeting_id' => $companyMeeting->id,
+            'booth_meeting_slot_id' => $slot?->id,
             'visitor_id' => auth()->id(),
             'visitor_name' => $validated['visitor_name'],
             'visitor_email' => $validated['visitor_email'],
@@ -406,7 +409,7 @@ class ExhibitionBoothController extends Controller
         return back()->with('success', $successMsg);
     }
 
-    public function requestMeetingJoin(Request $request, string $slug, string $companySlug, int $id): RedirectResponse
+    public function requestMeetingJoin(Request $request, string $slug, string $companySlug, int $id, MeetingLeadService $meetingLeadService): RedirectResponse
     {
         if (! $this->isPassActive($slug)) {
             return back()->with('error', 'You must be a verified ticket holder to join meetings.');
@@ -439,29 +442,19 @@ class ExhibitionBoothController extends Controller
             })
             ->firstOrFail();
 
-        $joinUrl = $meeting->companyMeeting?->meeting_link ?: $meeting->companyMeeting?->zoom_join_url;
+        if ($meeting->companyMeeting) {
+            MeetingJoinUrls::syncModel($meeting->companyMeeting);
+            $meeting->load('companyMeeting');
+        }
+
+        $joinUrl = $meeting->companyMeeting
+            ? MeetingJoinUrls::resolve($meeting->companyMeeting)
+            : null;
         $topic = $meeting->meeting_topic ?: $meeting->companyMeeting?->title ?: 'Meeting';
         $visitorName = auth()->user()->name ?: $meeting->visitor_name;
 
         if ($joinUrl && in_array($meeting->status, ['confirmed', 'accepted', 'rescheduled'], true)) {
-            return redirect()->away($joinUrl);
-        }
-
-        if ($joinUrl && $meeting->status === 'pending') {
-            $meeting->update(['status' => 'confirmed']);
-            $meeting->companyMeeting?->update(['status' => 'confirmed']);
-
-            \Illuminate\Support\Facades\DB::table('meeting_notifications')->insert([
-                'visitor_id' => auth()->id(),
-                'company_id' => $booking->company_id,
-                'visitor_meeting_booking_id' => $meeting->id,
-                'type' => 'confirmed',
-                'title' => 'Meeting Accepted',
-                'message' => 'Your meeting "' . $topic . '" is ready. Join here: ' . $joinUrl,
-                'status' => 'unread',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            $meetingLeadService->recordVisitorJoinAndCaptureLead($meeting);
 
             return redirect()->away($joinUrl);
         }

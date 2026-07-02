@@ -14,6 +14,7 @@ class Enquiry extends Model
     protected $fillable = [
         'company_id',
         'visitor_id',
+        'visitor_meeting_booking_id',
         'name',
         'email',
         'phone',

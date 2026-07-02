@@ -11,9 +11,8 @@ class BoothMeetingAvailabilityRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'allow_one_to_one' => $this->boolean('allow_one_to_one'),
+            'allow_one_to_one' => $this->has('allow_one_to_one') ? $this->boolean('allow_one_to_one') : true,
             'allow_one_to_many' => $this->boolean('allow_one_to_many'),
-            'allow_conference' => $this->boolean('allow_conference'),
         ]);
     }
 
@@ -25,7 +24,7 @@ class BoothMeetingAvailabilityRequest extends FormRequest
             'available_weekdays' => ['required', 'array', 'min:1'],
             'available_weekdays.*' => ['string'],
             'daily_start_time' => ['required', 'date_format:H:i'],
-            'daily_end_time' => ['required', 'date_format:H:i'],
+            'daily_end_time' => ['required', 'date_format:H:i', 'after:daily_start_time'],
             'meeting_types' => ['required', 'array', 'min:1'],
             'meeting_types.*' => ['in:video,audio,chat'],
             'slot_duration' => ['required', 'integer', 'min:5', 'max:240'],
@@ -35,7 +34,6 @@ class BoothMeetingAvailabilityRequest extends FormRequest
             'max_capacity' => ['nullable', 'integer', 'min:1'],
             'allow_one_to_one' => ['boolean'],
             'allow_one_to_many' => ['boolean'],
-            'allow_conference' => ['boolean'],
         ];
     }
 }

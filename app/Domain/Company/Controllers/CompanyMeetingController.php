@@ -3,9 +3,12 @@
 namespace App\Domain\Company\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Domain\Company\Models\CompanyMeeting;
 use App\Domain\Visitor\Models\VisitorMeetingBooking;
+use App\Domain\Company\Services\MeetingLeadService;
 use App\Domain\Shared\Services\GoogleMeetService;
 use App\Domain\Shared\Services\ZoomMeetingService;
+use App\Support\MeetingJoinUrls;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -48,12 +51,45 @@ class CompanyMeetingController extends Controller
 
         $this->healStaleGoogleMeetLinks($meeting);
 
-        $googleMeetConfigured = $googleMeetService->isConfigured();
+        if ($meeting->companyMeeting) {
+            MeetingJoinUrls::syncModel($meeting->companyMeeting);
+            $meeting->load('companyMeeting');
+        }
 
-        return view('company.meetings.meeting-details', compact('meeting', 'googleMeetConfigured'));
+        $googleMeetConfigured = $googleMeetService->isConfigured();
+        $meetJoinUrl = $meeting->companyMeeting ? MeetingJoinUrls::resolve($meeting->companyMeeting) : null;
+
+        return view('company.meetings.meeting-details', compact('meeting', 'googleMeetConfigured', 'meetJoinUrl'));
     }
 
-    public function createZoom($id, GoogleMeetService $googleMeetService): RedirectResponse
+    public function joinMeeting($id, MeetingLeadService $meetingLeadService): RedirectResponse
+    {
+        $companyId = (int) session('company_id');
+        if (! $companyId) {
+            return redirect('/company/login');
+        }
+
+        $meeting = VisitorMeetingBooking::with('companyMeeting')
+            ->where('company_id', $companyId)
+            ->findOrFail($id);
+
+        if (! $meeting->companyMeeting) {
+            return back()->with('error', 'Meeting details not found.');
+        }
+
+        MeetingJoinUrls::syncModel($meeting->companyMeeting);
+        $meetUrl = MeetingJoinUrls::resolve($meeting->companyMeeting->fresh());
+
+        if (! $meetUrl) {
+            return back()->with('error', 'No Google Meet link saved yet. Paste your meet.google.com link and click Save meeting details.');
+        }
+
+        $meetingLeadService->recordHostJoin($meeting);
+
+        return redirect()->away($meetUrl);
+    }
+
+    public function createZoom($id, GoogleMeetService $googleMeetService, MeetingLeadService $meetingLeadService): RedirectResponse
     {
         $companyId = session('company_id');
         if (! $companyId) {
@@ -69,8 +105,14 @@ class CompanyMeetingController extends Controller
         }
 
         try {
-            $linkPayload = $googleMeetService->createForCompanyMeeting($meeting->companyMeeting);
-            $meeting->companyMeeting->update($linkPayload);
+            $linkPayload = $googleMeetService->createForCompanyMeeting(
+                $meeting->companyMeeting,
+                array_filter([$meeting->visitor_email])
+            );
+            $meeting->companyMeeting->update(array_merge(
+                $linkPayload,
+                $this->meetingParticipantEmails($meeting, (int) $companyId)
+            ));
         } catch (\Throwable $exception) {
             Log::warning('Google Meet provision failed', [
                 'visitor_meeting_booking_id' => $meeting->id,
@@ -80,9 +122,15 @@ class CompanyMeetingController extends Controller
             return back()->with('error', $exception->getMessage());
         }
 
-        $joinUrl = $meeting->companyMeeting->fresh()->zoom_join_url ?: $meeting->companyMeeting->meeting_link;
+        $joinUrl = MeetingJoinUrls::resolve($meeting->companyMeeting->fresh());
         $autoConfirmed = $this->confirmMeetingIfPending($meeting);
         $this->notifyVisitor($meeting, $autoConfirmed ? 'confirmed' : 'updated', $joinUrl);
+
+        if ($joinUrl) {
+            $meetingLeadService->recordHostJoin($meeting);
+
+            return redirect()->away($joinUrl);
+        }
 
         $message = $autoConfirmed
             ? 'Google Meet link created and meeting confirmed. The visitor can join from My Meetings.'
@@ -91,7 +139,7 @@ class CompanyMeetingController extends Controller
         return back()->with('status', $message);
     }
 
-    public function updateZoom(Request $request, $id): RedirectResponse
+    public function updateZoom(Request $request, $id, MeetingLeadService $meetingLeadService): RedirectResponse
     {
         $companyId = session('company_id');
         if (! $companyId) {
@@ -128,11 +176,20 @@ class CompanyMeetingController extends Controller
             $payload['meeting_time'] = $start->format('H:i:s');
         }
 
-        $meeting->companyMeeting->update($payload);
+        $payload = array_merge($payload, $this->meetingParticipantEmails($meeting, (int) $companyId));
 
-        $joinUrl = $payload['zoom_join_url'] ?? $payload['meeting_link'] ?? null;
+        $meeting->companyMeeting->update($payload);
+        MeetingJoinUrls::syncModel($meeting->companyMeeting);
+
+        $joinUrl = MeetingJoinUrls::resolve($meeting->companyMeeting->fresh());
         $autoConfirmed = ! empty($joinUrl) && $this->confirmMeetingIfPending($meeting);
         $this->notifyVisitor($meeting, $autoConfirmed ? 'confirmed' : 'updated', $joinUrl);
+
+        if ($joinUrl) {
+            $meetingLeadService->recordHostJoin($meeting);
+
+            return redirect()->away($joinUrl);
+        }
 
         $message = $autoConfirmed
             ? 'Meeting confirmed. Google Meet link sent to the visitor — they can join from My Meetings.'
@@ -141,7 +198,7 @@ class CompanyMeetingController extends Controller
         return back()->with('status', $message);
     }
 
-    public function updateStatus(Request $request, $id, GoogleMeetService $googleMeetService, ZoomMeetingService $zoomMeetingService): RedirectResponse
+    public function updateStatus(Request $request, $id, GoogleMeetService $googleMeetService, ZoomMeetingService $zoomMeetingService, MeetingLeadService $meetingLeadService): RedirectResponse
     {
         $companyId = session('company_id');
         if (! $companyId) {
@@ -211,10 +268,16 @@ class CompanyMeetingController extends Controller
 
         if (in_array($status, ['confirmed', 'rescheduled'], true) && $meeting->companyMeeting) {
             if ($request->filled('meeting_link')) {
-                $manualPayload['zoom_join_url'] = $request->input('meeting_link');
-            } elseif (! filled($meeting->companyMeeting->zoom_join_url) && ! filled($meeting->companyMeeting->meeting_link)) {
+                $manualPayload = array_merge(
+                    $manualPayload,
+                    $this->syncGoogleMeetLinkFields(['meeting_link' => $request->input('meeting_link')])
+                );
+            } elseif (! MeetingJoinUrls::resolve($meeting->companyMeeting)) {
                 try {
-                    $meetPayload = $googleMeetService->createForCompanyMeeting($meeting->companyMeeting);
+                    $meetPayload = $googleMeetService->createForCompanyMeeting(
+                        $meeting->companyMeeting,
+                        array_filter([$meeting->visitor_email])
+                    );
                 } catch (\Throwable $exception) {
                     Log::warning('Google Meet auto-provision failed', [
                         'visitor_meeting_booking_id' => $meeting->id,
@@ -267,10 +330,16 @@ class CompanyMeetingController extends Controller
             $companyPayload = ['status' => $status];
 
             if (in_array($status, ['confirmed', 'completed', 'rescheduled'], true)) {
-                $companyPayload = array_merge($companyPayload, $manualPayload, array_filter($meetPayload));
+                $companyPayload = array_merge(
+                    $companyPayload,
+                    $manualPayload,
+                    array_filter($meetPayload),
+                    $this->meetingParticipantEmails($meeting, (int) $companyId)
+                );
             }
 
             $meeting->companyMeeting->update($companyPayload);
+            MeetingJoinUrls::syncModel($meeting->companyMeeting);
         }
 
         \Illuminate\Support\Facades\DB::table('meeting_notifications')->insert([
@@ -285,6 +354,14 @@ class CompanyMeetingController extends Controller
             'updated_at' => now(),
         ]);
 
+        if (in_array($status, ['confirmed', 'rescheduled'], true)) {
+            $meeting->load('companyMeeting');
+            $joinUrl = MeetingJoinUrls::resolve($meeting->companyMeeting);
+            if ($joinUrl) {
+                $this->notifyVisitor($meeting, $status === 'confirmed' ? 'confirmed' : 'updated', $joinUrl);
+            }
+        }
+
         $message = match ($status) {
             'confirmed' => 'Meeting accepted. Google Meet link is ready for the visitor.',
             'completed' => 'Meeting marked as completed.',
@@ -292,6 +369,16 @@ class CompanyMeetingController extends Controller
             'rescheduled' => 'Meeting successfully rescheduled.' . (filled($meetPayload) ? ' Google Meet link updated.' : ''),
             default => 'Meeting status updated.',
         };
+
+        if ($status === 'confirmed') {
+            $meetUrl = MeetingJoinUrls::resolve($meeting->companyMeeting);
+
+            if ($meetUrl) {
+                $meetingLeadService->recordHostJoin($meeting);
+
+                return redirect()->away($meetUrl);
+            }
+        }
 
         return redirect()->route('company.meetings.show', $meeting->id)
             ->with('status', $message);
@@ -317,41 +404,27 @@ class CompanyMeetingController extends Controller
             return $payload;
         }
 
-        $payload['meeting_link'] = $link;
-        $payload['zoom_join_url'] = $link;
-        $payload['zoom_start_url'] = $link;
+        return array_merge($payload, MeetingJoinUrls::syncPayload($link));
+    }
 
-        if (preg_match('~meet\.google\.com/([a-z0-9-]+)~i', $link, $matches)) {
-            $payload['zoom_meeting_id'] = $matches[1];
-        }
+    /** @return array{host_email: ?string, attendee_email: ?string} */
+    private function meetingParticipantEmails(VisitorMeetingBooking $meeting, int $companyId): array
+    {
+        $companyEmail = DB::table('companies')->where('id', $companyId)->value('email');
 
-        return $payload;
+        return array_filter([
+            'host_email' => filled($companyEmail) ? $companyEmail : null,
+            'attendee_email' => filled($meeting->visitor_email) ? $meeting->visitor_email : null,
+        ], fn ($value) => filled($value));
     }
 
     private function healStaleGoogleMeetLinks(VisitorMeetingBooking $meeting): void
     {
-        $companyMeeting = $meeting->companyMeeting;
-
-        if (! $companyMeeting) {
+        if (! $meeting->companyMeeting) {
             return;
         }
 
-        $canonicalLink = $companyMeeting->meeting_link ?: $companyMeeting->zoom_join_url;
-
-        if (! $canonicalLink || ! str_contains($canonicalLink, 'meet.google.com')) {
-            return;
-        }
-
-        $needsHeal = $companyMeeting->zoom_join_url !== $canonicalLink
-            || $companyMeeting->zoom_start_url !== $canonicalLink;
-
-        if (! $needsHeal) {
-            return;
-        }
-
-        $companyMeeting->update($this->syncGoogleMeetLinkFields([
-            'meeting_link' => $canonicalLink,
-        ]));
+        MeetingJoinUrls::syncModel($meeting->companyMeeting);
         $meeting->load('companyMeeting');
     }
 

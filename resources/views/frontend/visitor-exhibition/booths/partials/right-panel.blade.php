@@ -84,7 +84,10 @@
                         <span class="mt-2 inline-flex rounded-md px-2 py-0.5 text-[11px] font-semibold {{ $vmReady ? 'bg-[#EEFDF3] text-[#16A34A]' : 'bg-yellow-50 text-yellow-700' }}">{{ $vmStatusLabel }}</span>
                         <div class="mt-3">
                             @if ($vmReady)
-                                <a href="{{ $vmJoinUrl }}" target="_blank" rel="noopener" class="inline-flex h-9 items-center justify-center rounded-lg bg-[#0F9D58] px-3 text-[12px] font-bold text-white">Join Meet</a>
+                                <form method="POST" action="{{ route('exhibitions.visitor.meetings.join', [$slug, $companySlug, $visitorMeeting->id]) }}">
+                                    @csrf
+                                    <button type="submit" class="inline-flex h-9 items-center justify-center rounded-lg bg-[#0F9D58] px-3 text-[12px] font-bold text-white">Join Meet</button>
+                                </form>
                             @else
                                 <form method="POST" action="{{ route('exhibitions.visitor.meetings.join', [$slug, $companySlug, $visitorMeeting->id]) }}">
                                     @csrf
@@ -177,7 +180,8 @@
             @endif
         </select>
         @if ($meetingSlots->isNotEmpty())
-            <select name="booth_meeting_slot_id" class="mt-3 h-11 w-full rounded-lg border border-[#E7EAF3] bg-white px-4 text-[14px] outline-none focus:border-[#5b2eff]" {{ $isPassActive ? '' : 'disabled' }}>
+            <label class="mt-3 block text-[12px] font-semibold text-[#5A6480]">Pick an available slot (recommended)</label>
+            <select name="booth_meeting_slot_id" class="mt-1 h-11 w-full rounded-lg border border-[#E7EAF3] bg-white px-4 text-[14px] outline-none focus:border-[#5b2eff]" {{ $isPassActive ? '' : 'disabled' }}>
                 <option value="">Use preferred date/time below</option>
                 @foreach ($meetingSlots as $slot)
                     <option value="{{ $slot->id }}">

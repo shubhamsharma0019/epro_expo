@@ -14,7 +14,6 @@ class CompanyEventBrandingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'logo' => ['nullable', 'image', 'max:8192'],
             'banner' => ['nullable', 'image', 'max:8192'],
             'brochure' => ['nullable', 'file', 'mimes:pdf,doc,docx', 'max:12288'],
             'primary_color' => ['nullable', 'string', 'max:20'],
@@ -25,8 +24,6 @@ class CompanyEventBrandingRequest extends FormRequest
             'tagline' => ['nullable', 'string', 'max:500'],
             'cta_label' => ['nullable', 'string', 'max:100'],
             'cta_url' => ['nullable', 'url', 'max:255'],
-            'social_links' => ['nullable', 'array'],
-            'social_links.*' => ['nullable', 'url', 'max:255'],
             'theme_sections' => ['nullable', 'array'],
             'theme_sections.header' => ['nullable', 'boolean'],
             'theme_sections.event_details' => ['nullable', 'boolean'],

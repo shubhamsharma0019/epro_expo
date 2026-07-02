@@ -17,6 +17,9 @@ class VisitorCheckin extends Model
         'visitor_ticket_id',
         'ticket_id',
         'company_event_id',
+        'visitor_name',
+        'visitor_email',
+        'visitor_phone',
         'exhibition_id',
         'entry_gate',
         'checkin_type',
@@ -26,13 +29,17 @@ class VisitorCheckin extends Model
         'ip_address',
         'status',
         'verified_by',
+        'scanner_username',
+        'scan_location',
         'checked_in_at',
+        'checkin_date',
     ];
 
     protected function casts(): array
     {
         return [
             'checked_in_at' => 'datetime',
+            'checkin_date' => 'date',
         ];
     }
 

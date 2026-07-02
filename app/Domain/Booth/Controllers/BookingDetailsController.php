@@ -3,6 +3,7 @@
 namespace App\Domain\Booth\Controllers;
 
 use App\Domain\Booth\Models\BoothBooking;
+use App\Support\BoothInvoiceData;
 use Illuminate\View\View;
 
 class BookingDetailsController extends BaseBoothSetupController
@@ -23,10 +24,21 @@ class BookingDetailsController extends BaseBoothSetupController
         $booking = $this->ownedBooking($booking);
         abort_unless($booking->payment_status === 'paid', 404);
 
-        return view('company.bookings.invoice', [
-            'booking' => $booking,
-            'bookingServices' => $booking->services()->get(),
-            'bookingDays' => $booking->days()->orderBy('booking_date')->get(),
+        $booking->load([
+            'company',
+            'exhibition',
+            'pavilion',
+            'hall',
+            'booth',
+            'boothSize',
+            'boothProfile',
         ]);
+
+        $bookingDays = $booking->days()->orderBy('booking_date')->get();
+        $bookingServices = $booking->services()->get();
+
+        $invoice = BoothInvoiceData::fromBooking($booking, $bookingDays, $bookingServices);
+
+        return view('company.bookings.invoice', compact('booking', 'bookingServices', 'bookingDays', 'invoice'));
     }
 }
