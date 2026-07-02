@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Domain\Admin\Services\TopbarData;
 use App\Support\PlatformMailSettings;
+use App\Support\TicketScanSettings;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -89,6 +90,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         PlatformMailSettings::applyToConfig();
+        TicketScanSettings::ensureScannerCredentials();
+        TicketScanSettings::ensureLocalBaseUrl();
+        TicketScanSettings::applyToConfig();
 
         View::composer('components.admin.admin-topbar', function ($view) {
             $view->with('adminTopbar', app(TopbarData::class)->data());

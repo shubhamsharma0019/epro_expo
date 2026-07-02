@@ -33,12 +33,10 @@ Route::prefix('ticket-scanner')->name('ticket-scanner.')->group(function () {
         ->name('logout');
 });
 
-Route::middleware('ticket.scanner')->group(function () {
-    Route::get('/verify-ticket/{qr_token}', [\App\Domain\Visitor\Controllers\EventTicketController::class, 'verify'])
-        ->name('verify-ticket.show');
-    Route::post('/verify-ticket/{qr_token}/check-in', [\App\Domain\Visitor\Controllers\EventTicketController::class, 'checkIn'])
-        ->name('verify-ticket.check-in');
-});
+Route::get('/verify-ticket/{qr_token}', [\App\Domain\Visitor\Controllers\EventTicketController::class, 'verify'])
+    ->name('verify-ticket.show');
+Route::post('/verify-ticket/{qr_token}/check-in', [\App\Domain\Visitor\Controllers\EventTicketController::class, 'checkIn'])
+    ->name('verify-ticket.check-in');
 Route::get('/ticket-qr/{qr_token}', [\App\Domain\Visitor\Controllers\EventTicketController::class, 'qrImage'])
     ->name('ticket-qr.image');
 

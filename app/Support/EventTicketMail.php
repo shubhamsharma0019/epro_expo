@@ -230,7 +230,9 @@ class EventTicketMail
 
         if ($mailer === 'smtp') {
             $hint = 'Platform sender SMTP not configured (MAIL_USERNAME, MAIL_PASSWORD in .env). Visitor emails are sent automatically to the email they enter at checkout.';
-            if (app()->environment('local')) {
+            if (\Illuminate\Support\Facades\Route::has('admin.mail-setup.index')) {
+                $hint .= ' Setup: ' . route('admin.mail-setup.index');
+            } elseif (app()->environment('local')) {
                 $hint .= ' Setup: ' . url('/setup/mail');
             }
 

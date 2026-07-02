@@ -66,17 +66,6 @@
             We could not email your ticket right now. Please download it below or tap Resend Email.
         </div>
     @endif
-    @if ($mobileScanHint ?? null)
-        <div class="mb-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-[14px] font-medium text-blue-800">
-            {{ $mobileScanHint }}
-        </div>
-    @elseif (filled($scannableUrl ?? null) && ! \App\Support\EventTicketQr::usesLoopbackUrl($scannableUrl))
-        <div class="mb-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-[14px] font-medium text-blue-800">
-            <p><span class="font-bold">Phone scan URL:</span> {{ $scannableUrl }}</p>
-            <p class="mt-2"><span class="font-bold">Scanner login:</span> <a href="{{ rtrim(\App\Support\EventTicketQr::appBaseUrl(), '/') . route('ticket-scanner.login', [], false) }}" class="font-semibold underline">{{ rtrim(\App\Support\EventTicketQr::appBaseUrl(), '/') . route('ticket-scanner.login', [], false) }}</a> (phone par pehle yahan sign in karo)</p>
-            <p class="mt-2 text-[13px]">Agar phone par <span class="font-semibold">"refused to connect"</span> aaye to project folder me <span class="font-semibold">serve-lan.bat</span> double-click karke server chalao. Laptop aur phone same WiFi par hone chahiye.</p>
-        </div>
-    @endif
 
     <div id="ticketCard" class="overflow-hidden rounded-[16px] border border-[#3B47C8] bg-white shadow-[0_8px_30px_rgba(31,42,107,0.08)]">
         <div class="grid min-h-[292px] grid-cols-1 md:grid-cols-[1fr_330px]">

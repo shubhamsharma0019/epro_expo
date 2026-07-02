@@ -78,7 +78,11 @@ class EventTicketScanService
     {
         $username = session('ticket_scanner_username');
 
-        return filled($username) ? (string) $username : null;
+        if (filled($username)) {
+            return (string) $username;
+        }
+
+        return 'QR Gate';
     }
 
     public function scanLocation(?Request $request = null): ?string

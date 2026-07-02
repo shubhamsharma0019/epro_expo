@@ -3,6 +3,7 @@
 namespace App\Domain\Visitor\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Support\TicketScanSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -14,7 +15,7 @@ class TicketScannerAuthController extends Controller
         return view('frontend.events.tickets.scanner-login', [
             'redirect' => $request->query('redirect'),
             'scannerUsername' => session('ticket_scanner_username'),
-            'scannerLoginUrl' => rtrim(\App\Support\EventTicketQr::appBaseUrl(), '/') . route('ticket-scanner.login.submit', [], false),
+            'scannerCredentialsHint' => TicketScanSettings::scannerUsername(),
         ]);
     }
 

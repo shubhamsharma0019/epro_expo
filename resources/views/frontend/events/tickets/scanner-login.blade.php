@@ -31,7 +31,7 @@
                 </button>
             </form>
         @else
-            <form method="POST" action="{{ $scannerLoginUrl ?? route('ticket-scanner.login.submit') }}" class="mt-6 space-y-4">
+            <form method="POST" action="{{ route('ticket-scanner.login.submit') }}" class="mt-6 space-y-4">
                 @csrf
                 <input type="hidden" name="redirect" value="{{ $redirect ?? request('redirect') }}">
 

@@ -142,6 +142,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/system-settings', [AdminSupportController::class, 'systemSettings'])->name('system-settings.index');
     Route::post('/system-settings', [AdminSupportController::class, 'saveSystemSettings'])->name('system-settings.save');
 
+    Route::prefix('mail-setup')->name('mail-setup.')->group(function () {
+        Route::get('/', [\App\Domain\Shared\Controllers\MailSetupController::class, 'index'])->name('index');
+        Route::post('/save', [\App\Domain\Shared\Controllers\MailSetupController::class, 'save'])->name('save');
+        Route::post('/test', [\App\Domain\Shared\Controllers\MailSetupController::class, 'test'])->name('test');
+    });
+
     Route::prefix('support')->name('support.')->group(function () {
         Route::get('/', [AdminSupportController::class, 'support'])->name('index');
         Route::get('/create', [AdminSupportController::class, 'createSupport'])->name('create');

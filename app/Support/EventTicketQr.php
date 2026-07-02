@@ -216,6 +216,11 @@ class EventTicketQr
 
     private static function resolveLocalNetworkBaseUrl(): ?string
     {
+        return self::detectLocalNetworkBaseUrl();
+    }
+
+    public static function detectLocalNetworkBaseUrl(): ?string
+    {
         $port = self::resolveLocalServePort();
         $lanIp = self::detectLanIp();
 
@@ -243,7 +248,49 @@ class EventTicketQr
 
     private static function detectLanIp(): ?string
     {
+        $preferred = [];
+
+        foreach (self::collectLanIpCandidates() as $ip) {
+            if (
+                filled($ip)
+                && ! self::isLoopbackHost($ip)
+                && ! str_starts_with($ip, '169.254.')
+                && filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)
+            ) {
+                $preferred[] = $ip;
+            }
+        }
+
+        $preferred = array_values(array_unique($preferred));
+
+        foreach ($preferred as $ip) {
+            if (str_starts_with($ip, '192.168.')) {
+                return $ip;
+            }
+        }
+
+        foreach ($preferred as $ip) {
+            if (str_starts_with($ip, '10.')) {
+                return $ip;
+            }
+        }
+
+        return $preferred[0] ?? null;
+    }
+
+    private static function collectLanIpCandidates(): array
+    {
         $candidates = [];
+
+        if (PHP_OS_FAMILY === 'Windows') {
+            $output = @shell_exec('ipconfig');
+
+            if (is_string($output) && preg_match_all('/IPv4 Address[^:]*:\s*(\d+\.\d+\.\d+\.\d+)/i', $output, $matches)) {
+                foreach ($matches[1] as $ip) {
+                    $candidates[] = $ip;
+                }
+            }
+        }
 
         if (function_exists('socket_create')) {
             try {
@@ -275,28 +322,7 @@ class EventTicketQr
             }
         }
 
-        if (PHP_OS_FAMILY === 'Windows') {
-            $output = @shell_exec('ipconfig');
-
-            if (is_string($output) && preg_match_all('/IPv4 Address[^:]*:\s*(\d+\.\d+\.\d+\.\d+)/i', $output, $matches)) {
-                foreach ($matches[1] as $ip) {
-                    $candidates[] = $ip;
-                }
-            }
-        }
-
-        foreach ($candidates as $ip) {
-            if (
-                filled($ip)
-                && ! self::isLoopbackHost($ip)
-                && ! str_starts_with($ip, '169.254.')
-                && filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)
-            ) {
-                return $ip;
-            }
-        }
-
-        return null;
+        return $candidates;
     }
 
     public static function refreshStoredUrl(Ticket $ticket): string
@@ -335,10 +361,10 @@ class EventTicketQr
         $port = self::resolveLocalServePort();
 
         if ($lanIp) {
-            return "Phone se scan karne ke liye server ko `php artisan serve --host=0.0.0.0 --port={$port}` se chalao, phir phone par http://{$lanIp}:{$port} open karke scanner login karo.";
+            return "To scan from your phone, start the server with `php artisan serve --host=0.0.0.0 --port={$port}`, then open http://{$lanIp}:{$port} on your phone and sign in to the scanner.";
         }
 
-        return 'Phone se scan karne ke liye .env me TICKET_QR_BASE_URL=http://YOUR-LAN-IP:8000 set karo aur server `php artisan serve --host=0.0.0.0` se chalao.';
+        return 'To scan from your phone, set TICKET_QR_BASE_URL=http://YOUR-LAN-IP:8000 in .env and start the server with `php artisan serve --host=0.0.0.0`.';
     }
 
     private static function isLoopbackHost(string $host): bool

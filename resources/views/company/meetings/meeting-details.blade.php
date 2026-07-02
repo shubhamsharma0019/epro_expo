@@ -37,13 +37,13 @@
         @endif
         @if (! empty($meetJoinUrl))
             <div class="mt-3 rounded-lg border border-blue-300 bg-white px-4 py-3 text-[13px] text-[#1E3A5F]">
-                <p class="font-semibold">Same laptop par test karna hai?</p>
+                <p class="font-semibold">Testing on the same laptop?</p>
                 <ol class="mt-2 list-decimal space-y-1 pl-5">
-                    <li>Pehle <strong>ek hi</strong> Meet link save karo (bar-bar Regenerate mat dabao).</li>
-                    <li>Company → normal Chrome window se <strong>Join as Host</strong>.</li>
-                    <li>Visitor → <strong>Incognito / alag browser</strong> se login karke <strong>Join Meet</strong>.</li>
-                    <li>Dono ko yahi same room milega: <code class="break-all text-[12px]">{{ $meetJoinUrl }}</code></li>
-                    <li>Agar same Google account hai to visitor side par <strong>Join as guest</strong> use karo — tab 2 alag participants dikhenge.</li>
+                    <li>Save <strong>one</strong> Meet link first (do not click Regenerate repeatedly).</li>
+                    <li>Company → <strong>Join as Host</strong> in a normal Chrome window.</li>
+                    <li>Visitor → log in with <strong>Incognito / a separate browser</strong> and click <strong>Join Meet</strong>.</li>
+                    <li>Both users will join the same room: <code class="break-all text-[12px]">{{ $meetJoinUrl }}</code></li>
+                    <li>If both sides use the same Google account, choose <strong>Join as guest</strong> on the visitor side so two separate participants appear.</li>
                 </ol>
             </div>
         @endif

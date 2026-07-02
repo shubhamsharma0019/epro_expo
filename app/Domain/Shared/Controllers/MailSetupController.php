@@ -17,22 +17,16 @@ class MailSetupController extends Controller
 {
     public function index(): View
     {
-        abort_unless(app()->environment('local'), 404);
+        $this->authorizeMailSetup();
 
         $latestTicket = VisitorTicket::query()->latest('id')->first();
 
-        return view('setup.mail', [
-            'mailUsername' => PlatformMailSettings::username(),
-            'mailFrom' => PlatformMailSettings::fromAddress(),
-            'hasPassword' => PlatformMailSettings::hasPassword(),
-            'isDeliverable' => EventTicketMail::isDeliverable(),
-            'exampleVisitorEmail' => $latestTicket ? EventTicketMail::resolveRecipient($latestTicket) : null,
-        ]);
+        return view($this->mailSetupView(), $this->mailSetupViewData($latestTicket));
     }
 
     public function save(Request $request): RedirectResponse
     {
-        abort_unless(app()->environment('local'), 404);
+        $this->authorizeMailSetup();
 
         $validated = $request->validate([
             'mail_username' => ['required', 'email', 'max:255'],
@@ -45,9 +39,9 @@ class MailSetupController extends Controller
 
             if (strlen($cleanPassword) !== 16) {
                 return redirect()
-                    ->route('setup.mail.index')
+                    ->route($this->mailSetupRoute('index'))
                     ->withInput()
-                    ->with('error', 'Gmail App Password 16 characters ka hona chahiye. Spaces hata kar paste karo.');
+                    ->with('error', 'Gmail App Password must be 16 characters. Remove spaces before pasting.');
             }
 
             $validated['mail_password'] = $cleanPassword;
@@ -55,7 +49,7 @@ class MailSetupController extends Controller
 
         if (! filled($validated['mail_password']) && ! PlatformMailSettings::hasPassword()) {
             return redirect()
-                ->route('setup.mail.index')
+                ->route($this->mailSetupRoute('index'))
                 ->withInput()
                 ->with('error', 'Gmail App Password is required for the first setup.');
         }
@@ -68,7 +62,7 @@ class MailSetupController extends Controller
             ]);
         } catch (Throwable $e) {
             return redirect()
-                ->route('setup.mail.index')
+                ->route($this->mailSetupRoute('index'))
                 ->withInput()
                 ->with('error', PlatformMailSettings::friendlySmtpError($e->getMessage()));
         }
@@ -80,17 +74,17 @@ class MailSetupController extends Controller
         ]);
 
         return redirect()
-            ->route('setup.mail.index')
-            ->with('status', 'Platform sender SMTP saved and verified. Ticket emails will go to each visitor email entered at checkout.');
+            ->route($this->mailSetupRoute('index'))
+            ->with('status', 'Gmail SMTP saved successfully. You can now send scanner/ticket emails as often as needed without pasting the App Password again.');
     }
 
     public function test(Request $request): RedirectResponse
     {
-        abort_unless(app()->environment('local'), 404);
+        $this->authorizeMailSetup();
 
         if (! EventTicketMail::isDeliverable()) {
             return redirect()
-                ->route('setup.mail.index')
+                ->route($this->mailSetupRoute('index'))
                 ->with('error', 'Save platform Gmail SMTP credentials first.');
         }
 
@@ -98,7 +92,7 @@ class MailSetupController extends Controller
 
         if ($recipient === '' || ! EventTicketMail::isValidEmail($recipient)) {
             return redirect()
-                ->route('setup.mail.index')
+                ->route($this->mailSetupRoute('index'))
                 ->with('error', 'Enter a valid test visitor email address.');
         }
 
@@ -106,7 +100,7 @@ class MailSetupController extends Controller
 
         if (! $ticket) {
             return redirect()
-                ->route('setup.mail.index')
+                ->route($this->mailSetupRoute('index'))
                 ->with('error', 'No visitor ticket found to use as email template.');
         }
 
@@ -114,12 +108,53 @@ class MailSetupController extends Controller
             EventTicketMail::sendMailable($recipient, new EventTicketConfirmationMail($ticket));
 
             return redirect()
-                ->route('setup.mail.index')
+                ->route($this->mailSetupRoute('index'))
                 ->with('status', 'Test ticket email sent to visitor address: ' . $recipient);
         } catch (Throwable $e) {
             return redirect()
-                ->route('setup.mail.index')
+                ->route($this->mailSetupRoute('index'))
                 ->with('error', PlatformMailSettings::friendlySmtpError($e->getMessage()));
         }
+    }
+
+    private function authorizeMailSetup(): void
+    {
+        if (app()->environment('local')) {
+            return;
+        }
+
+        abort_unless(session()->has('admin_id'), 403);
+    }
+
+    private function mailSetupRoute(string $action): string
+    {
+        if (request()->routeIs('admin.mail-setup.*')) {
+            return 'admin.mail-setup.' . $action;
+        }
+
+        return 'setup.mail.' . $action;
+    }
+
+    private function mailSetupView(): string
+    {
+        return request()->routeIs('admin.mail-setup.*')
+            ? 'admin.mail-setup.index'
+            : 'setup.mail';
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function mailSetupViewData(?VisitorTicket $latestTicket): array
+    {
+        return [
+            'mailUsername' => PlatformMailSettings::username(),
+            'mailFrom' => PlatformMailSettings::fromAddress(),
+            'hasPassword' => PlatformMailSettings::hasPassword(),
+            'isDeliverable' => EventTicketMail::isDeliverable(),
+            'exampleVisitorEmail' => $latestTicket ? EventTicketMail::resolveRecipient($latestTicket) : null,
+            'saveRoute' => route($this->mailSetupRoute('save')),
+            'testRoute' => route($this->mailSetupRoute('test')),
+        ];
     }
 }

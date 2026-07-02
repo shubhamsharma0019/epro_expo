@@ -362,6 +362,12 @@
                     System Settings
                 </a>
             </li>
+            <li>
+                <a href="{{ route('admin.mail-setup.index') }}" class="relative flex items-center pl-[44px] pr-4 py-2 text-[14px] text-[#a0aabf] hover:text-white hover:bg-white/5 rounded-lg transition-colors group">
+                    <div class="absolute left-[24.5px] w-[4px] h-[4px] rounded-full bg-white/30 group-hover:bg-white/50 indicator-dot"></div>
+                    Ticket Email Setup
+                </a>
+            </li>
           </ul>
         </div>
       </li>

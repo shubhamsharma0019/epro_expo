@@ -27,6 +27,7 @@ class EventTicketController extends Controller
 
         $ticket->load(['booking.visitorTicket', 'visitor', 'event.branding']);
 
+        \App\Support\TicketScanSettings::ensureLocalBaseUrl();
         EventTicketMail::prepareMailer();
 
         $visitorTicket = $ticket->booking?->visitorTicket;
@@ -95,29 +96,30 @@ class EventTicketController extends Controller
 
     public function verify(Request $request, string $qr_token): View
     {
+        \App\Support\TicketScanSettings::applyToConfig();
+
         $ticket = Ticket::query()
             ->with(['visitor', 'event', 'booking.visitorTicket'])
             ->where('qr_token', $qr_token)
             ->first();
 
         $state = $this->scanService->resolveVerifyState($ticket);
-        $eventWindow = $this->scanService->formatEventWindow($ticket?->event);
-        $todayCheckin = $ticket ? $this->scanService->todayCheckin($ticket, 'checked_in') : null;
-        $checkinCount = $ticket ? $this->scanService->totalCheckIns($ticket) : 0;
-        $scanCount = $ticket ? $this->scanService->totalScans($ticket) : 0;
-        $eventDayCount = $ticket ? $this->scanService->eventDayCount($ticket->event) : 0;
-        $remainingCheckIns = $ticket ? $this->scanService->remainingCheckIns($ticket) : 0;
-        $scannerUsername = $this->scanService->scannerUsername();
-        $visitorSnapshot = $ticket ? $this->scanService->visitorSnapshot($ticket) : [
-            'visitor_name' => null,
-            'visitor_email' => null,
-            'visitor_phone' => null,
-        ];
-        $scanLocation = session('ticket_scanner_location');
+        $autoCheckedIn = false;
 
-        if ($ticket && $scannerUsername) {
+        if ($ticket) {
             try {
-                $this->scanService->logQrScan($ticket, $request, 'verify');
+                if ($state === 'valid' && \App\Support\TicketScanSettings::autoCheckinOnScan()) {
+                    $this->scanService->recordCheckIn(
+                        $ticket,
+                        $request,
+                        trim((string) $request->input('entry_gate', 'QR Scan')) ?: 'QR Scan'
+                    );
+                    $ticket->refresh();
+                    $state = 'checked_in_now';
+                    $autoCheckedIn = true;
+                } else {
+                    $this->scanService->logQrScan($ticket, $request, 'verify');
+                }
             } catch (\Throwable $exception) {
                 \Illuminate\Support\Facades\Log::warning('Ticket scan log failed.', [
                     'ticket_id' => $ticket->id,
@@ -126,6 +128,18 @@ class EventTicketController extends Controller
                 ]);
             }
         }
+
+        $eventWindow = $this->scanService->formatEventWindow($ticket?->event);
+        $todayCheckin = $ticket ? $this->scanService->todayCheckin($ticket, 'checked_in') : null;
+        $checkinCount = $ticket ? $this->scanService->totalCheckIns($ticket) : 0;
+        $scanCount = $ticket ? $this->scanService->totalScans($ticket) : 0;
+        $eventDayCount = $ticket ? $this->scanService->eventDayCount($ticket->event) : 0;
+        $remainingCheckIns = $ticket ? $this->scanService->remainingCheckIns($ticket) : 0;
+        $visitorSnapshot = $ticket ? $this->scanService->visitorSnapshot($ticket) : [
+            'visitor_name' => null,
+            'visitor_email' => null,
+            'visitor_phone' => null,
+        ];
 
         return view('frontend.events.tickets.verify-ticket', compact(
             'ticket',
@@ -136,9 +150,8 @@ class EventTicketController extends Controller
             'scanCount',
             'eventDayCount',
             'remainingCheckIns',
-            'scannerUsername',
             'visitorSnapshot',
-            'scanLocation',
+            'autoCheckedIn',
         ));
     }
 

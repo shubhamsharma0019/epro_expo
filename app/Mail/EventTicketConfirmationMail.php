@@ -51,7 +51,7 @@ class EventTicketConfirmationMail extends Mailable
                 'qrEmailHtml' => EventTicketQr::generateEmailHtml($verificationUrl, 6),
                 'verificationUrl' => $verificationUrl,
                 'qrTicketUrl' => $issuedTicket
-                    ? EventTicketQr::absoluteUrl('qr-ticket.show', $issuedTicket)
+                    ? EventTicketQr::absoluteUrl('qr-ticket.show', ['ticket' => $issuedTicket])
                     : url(route('events.tickets.e-ticket', ['order' => $this->ticket->order_number], false)),
             ],
         );

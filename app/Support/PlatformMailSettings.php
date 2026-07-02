@@ -3,7 +3,10 @@
 namespace App\Support;
 
 use App\Domain\Shared\Support\EnvFileUpdater;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 
 class PlatformMailSettings
 {
@@ -16,13 +19,21 @@ class PlatformMailSettings
 
     public static function get(): array
     {
-        if (! is_file(self::path())) {
-            return [];
+        if (self::usesDatabase()) {
+            $row = self::databaseRow();
+
+            if ($row !== null) {
+                return self::rowToArray($row);
+            }
         }
 
-        $data = json_decode((string) file_get_contents(self::path()), true);
+        $legacy = self::legacyFileGet();
 
-        return is_array($data) ? $data : [];
+        if ($legacy !== [] && self::usesDatabase()) {
+            self::persistToDatabase($legacy);
+        }
+
+        return $legacy;
     }
 
     /**
@@ -54,10 +65,14 @@ class PlatformMailSettings
             'updated_at' => now()->toIso8601String(),
         ];
 
-        file_put_contents(
-            self::path(),
-            json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
-        );
+        if (self::usesDatabase()) {
+            self::persistToDatabase($payload);
+        } else {
+            file_put_contents(
+                self::path(),
+                json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+            );
+        }
 
         self::syncEnvFromPayload($payload);
         self::applyToConfig();
@@ -84,7 +99,7 @@ class PlatformMailSettings
                 'MAIL_FROM_NAME' => (string) ($payload['mail_from_name'] ?? config('app.name', 'EproExpo')),
             ]);
         } catch (\Throwable) {
-            // .env sync is optional; runtime config still uses platform-mail-settings.json
+            // .env sync is optional; runtime config still uses database settings
         }
     }
 
@@ -127,12 +142,12 @@ class PlatformMailSettings
             filled($stored['mail_password'] ?? null)
             && self::sanitizeAppPassword($stored['mail_password']) !== ($stored['mail_password'] ?? '')
         ) {
-            $stored['mail_password'] = self::sanitizeAppPassword($stored['mail_password']);
-            $stored['mail_scheme'] = self::normalizeScheme($stored['mail_scheme'] ?? null, (int) ($stored['mail_port'] ?? 587));
-            file_put_contents(
-                self::path(),
-                json_encode($stored, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
-            );
+            self::save([
+                'mail_username' => $credentials['mail_username'],
+                'mail_password' => $stored['mail_password'],
+                'mail_from_address' => $credentials['mail_from_address'],
+            ]);
+            $stored = self::get();
         }
 
         config([
@@ -215,6 +230,106 @@ class PlatformMailSettings
         return filled(self::get()['mail_password'] ?? null) || filled(env('MAIL_PASSWORD'));
     }
 
+    private static function usesDatabase(): bool
+    {
+        try {
+            return Schema::hasTable('platform_mail_settings');
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    private static function databaseRow(): ?object
+    {
+        return DB::table('platform_mail_settings')->orderByDesc('id')->first();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function legacyFileGet(): array
+    {
+        if (! is_file(self::path())) {
+            return [];
+        }
+
+        $data = json_decode((string) file_get_contents(self::path()), true);
+
+        return is_array($data) ? $data : [];
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    private static function rowToArray(object $row): array
+    {
+        return [
+            'mail_mailer' => (string) ($row->mail_mailer ?? 'smtp'),
+            'mail_scheme' => (string) ($row->mail_scheme ?? 'smtp'),
+            'mail_host' => (string) ($row->mail_host ?? 'smtp.gmail.com'),
+            'mail_port' => (string) ($row->mail_port ?? '587'),
+            'mail_username' => (string) ($row->mail_username ?? ''),
+            'mail_password' => self::decryptPassword((string) ($row->mail_password ?? '')),
+            'mail_from_address' => (string) ($row->mail_from_address ?? ''),
+            'mail_from_name' => (string) ($row->mail_from_name ?? config('app.name', 'EproExpo')),
+            'updated_at' => optional($row->updated_at)->toIso8601String() ?? now()->toIso8601String(),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    private static function persistToDatabase(array $payload): void
+    {
+        $existing = self::databaseRow();
+        $now = now();
+
+        $record = [
+            'mail_mailer' => (string) ($payload['mail_mailer'] ?? 'smtp'),
+            'mail_scheme' => self::normalizeScheme($payload['mail_scheme'] ?? null, (int) ($payload['mail_port'] ?? 587)),
+            'mail_host' => (string) ($payload['mail_host'] ?? 'smtp.gmail.com'),
+            'mail_port' => (int) ($payload['mail_port'] ?? 587),
+            'mail_username' => trim((string) ($payload['mail_username'] ?? '')),
+            'mail_password' => self::encryptPassword(self::sanitizeAppPassword((string) ($payload['mail_password'] ?? ''))),
+            'mail_from_address' => trim((string) ($payload['mail_from_address'] ?? '')),
+            'mail_from_name' => (string) ($payload['mail_from_name'] ?? config('app.name', 'EproExpo')),
+            'updated_at' => $now,
+        ];
+
+        if ($existing) {
+            DB::table('platform_mail_settings')->where('id', $existing->id)->update($record);
+        } else {
+            DB::table('platform_mail_settings')->insert($record + ['created_at' => $now]);
+        }
+    }
+
+    private static function encryptPassword(string $password): ?string
+    {
+        if ($password === '') {
+            return null;
+        }
+
+        try {
+            return Crypt::encryptString($password);
+        } catch (\Throwable) {
+            return $password;
+        }
+    }
+
+    private static function decryptPassword(string $value): string
+    {
+        if ($value === '') {
+            return '';
+        }
+
+        try {
+            return Crypt::decryptString($value);
+        } catch (\Throwable) {
+            return self::sanitizeAppPassword($value);
+        }
+    }
+
     private static function normalizeScheme(?string $scheme, int $port): string
     {
         $scheme = strtolower(trim((string) $scheme));
@@ -246,13 +361,13 @@ class PlatformMailSettings
             || str_contains($rawMessage, 'BadCredentials')
             || str_contains($rawMessage, 'Username and Password not accepted')
         ) {
-            return 'Gmail ne App Password reject kar diya. Google Account me 2-Step Verification ON karo, naya App Password banao (Mail), 16 characters bina spaces ke paste karo, phir Save karke dubara test karo.';
+            return 'Gmail rejected the App Password. Turn on 2-Step Verification in your Google Account, create a new App Password (Mail), paste all 16 characters without spaces, then save and test again.';
         }
 
         if (str_contains($rawMessage, 'Connection could not be established')) {
-            return 'SMTP server se connect nahi ho paya. Internet check karo aur dubara try karo.';
+            return 'Could not connect to the SMTP server. Check your internet connection and try again.';
         }
 
-        return 'Email send nahi ho payi. Gmail App Password check karke dubara try karo.';
+        return 'Email could not be sent. Check your Gmail App Password and try again.';
     }
 }

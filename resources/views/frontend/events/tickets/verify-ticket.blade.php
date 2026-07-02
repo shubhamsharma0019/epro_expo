@@ -4,21 +4,6 @@
 
 @section('content')
 <main class="mx-auto w-full max-w-[720px] flex-1 px-4 pb-12 pt-10 md:px-[32px]">
-    @if ($scannerUsername ?? null)
-        <div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E8E3F0] bg-white px-4 py-3 text-[14px] text-[#1F2A6A]">
-            <span>
-                <span class="font-bold">Scanner:</span> {{ $scannerUsername }}
-                @if ($scanLocation ?? null)
-                    <span class="text-[#4E567A]"> | <span class="font-bold">Location:</span> {{ $scanLocation }}</span>
-                @endif
-            </span>
-            <form method="POST" action="{{ route('ticket-scanner.logout') }}">
-                @csrf
-                <button type="submit" class="font-semibold text-[#4320D6] hover:underline">Sign out</button>
-            </form>
-        </div>
-    @endif
-
     @if (session('success'))
         <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[14px] font-medium text-emerald-700">{{ session('success') }}</div>
     @endif
@@ -62,10 +47,23 @@
             <h1 class="text-[28px] font-extrabold text-red-700">Visitor Not Verified</h1>
             <p class="mt-3 text-[15px] text-red-600">Visitor details could not be verified for this ticket.</p>
         </div>
+    @elseif ($state === 'checked_in_now')
+        <div class="rounded-[20px] border border-emerald-200 bg-emerald-50 p-8">
+            <h1 class="text-[28px] font-extrabold text-emerald-800">Check-In Successful</h1>
+            <p class="mt-3 text-[15px] text-emerald-700">Entry recorded. No login required — scan saved to the database.</p>
+            <div class="mt-6 space-y-3 rounded-xl bg-white p-5 text-left text-[15px] text-[#1F2A6A]">
+                <p><span class="font-bold">Visitor Name:</span> {{ $visitorSnapshot['visitor_name'] ?? ($ticket->meta['attendee_name'] ?? $ticket->visitor?->name) }}</p>
+                <p><span class="font-bold">Checked-in Time:</span> {{ $todayCheckin?->checked_in_at?->format('M d, Y h:i A') ?? now()->format('M d, Y h:i A') }}</p>
+                <p><span class="font-bold">Check-ins Used:</span> {{ $checkinCount ?? 0 }} of {{ $eventDayCount ?? 1 }} event days</p>
+                <p><span class="font-bold">Remaining Check-ins:</span> {{ $remainingCheckIns ?? 0 }}</p>
+                <p><span class="font-bold">Ticket Number:</span> {{ $ticket->ticket_no }}</p>
+                <p><span class="font-bold">Event:</span> {{ $ticket->event?->title }}</p>
+            </div>
+        </div>
     @elseif ($state === 'used_today')
         <div class="rounded-[20px] border border-emerald-200 bg-emerald-50 p-8">
             <h1 class="text-[28px] font-extrabold text-emerald-800">Already Checked In Today</h1>
-            <p class="mt-3 text-[15px] text-emerald-700">This visitor has already been checked in for today.</p>
+            <p class="mt-3 text-[15px] text-emerald-700">This ticket was already scanned for today. One check-in per event day is allowed.</p>
             <div class="mt-6 space-y-3 rounded-xl bg-white p-5 text-left text-[15px] text-[#1F2A6A]">
                 <p><span class="font-bold">Visitor Name:</span> {{ $ticket->meta['attendee_name'] ?? $ticket->visitor?->name }}</p>
                 <p><span class="font-bold">Checked-in Time:</span> {{ $todayCheckin?->checked_in_at?->format('M d, Y h:i A') ?? $ticket->checked_in_at?->format('M d, Y h:i A') ?? 'N/A' }}</p>
@@ -103,19 +101,15 @@
                 <p><span class="font-bold">Email:</span> {{ $visitorSnapshot['visitor_email'] ?? ($ticket->meta['attendee_email'] ?? $ticket->visitor?->email ?? 'N/A') }}</p>
                 <p><span class="font-bold">Event Name:</span> {{ $ticket->event?->title }}</p>
                 <p><span class="font-bold">Ticket Number:</span> {{ $ticket->ticket_no }}</p>
-                <p><span class="font-bold">Ticket Type:</span> {{ $ticket->ticket_type }} × {{ $ticket->quantity }}</p>
-                <p><span class="font-bold">Payment Status:</span> {{ ucfirst($ticket->payment_status) }}</p>
-                <p><span class="font-bold">Status:</span> {{ ucfirst($ticket->status) }}</p>
                 <p><span class="font-bold">Previous Check-ins:</span> {{ $checkinCount ?? 0 }} of {{ $eventDayCount ?? 1 }} event days</p>
                 <p><span class="font-bold">Remaining Check-ins:</span> {{ $remainingCheckIns ?? 0 }}</p>
-                <p><span class="font-bold">QR Scans:</span> {{ $scanCount ?? 0 }}</p>
             </div>
 
             <form method="POST" action="{{ route('verify-ticket.check-in', $ticket->qr_token) }}" class="mt-6 space-y-4">
                 @csrf
                 <div>
                     <label for="entry_gate" class="mb-2 block text-[14px] font-semibold text-[#1F2A6A]">Entry Gate / Scan Location</label>
-                    <input id="entry_gate" name="entry_gate" type="text" value="{{ old('entry_gate', $scanLocation ?? '') }}" placeholder="e.g. Main Gate"
+                    <input id="entry_gate" name="entry_gate" type="text" value="{{ old('entry_gate', 'QR Scan') }}" placeholder="e.g. Main Gate"
                         class="h-[48px] w-full rounded-xl border border-[#D8DCEB] px-4 text-[15px] text-[#071044] outline-none transition focus:border-[#4318FF] focus:ring-2 focus:ring-[#4318FF]/15">
                 </div>
                 <button type="submit"
