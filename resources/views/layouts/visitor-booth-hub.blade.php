@@ -38,9 +38,11 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
+    @include('frontend.user.partials.visitor-portal-responsive')
+    @include('frontend.shared.partials.responsive-fixes')
     @yield('page-styles')
 </head>
-<body class="font-sans text-textMain bg-bgMain antialiased min-h-screen">
+<body class="font-sans text-textMain bg-bgMain antialiased min-h-screen overflow-x-hidden">
 
     <nav class="h-[72px] bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-8 shadow-nav z-50 sticky top-0">
         <div class="flex items-center gap-4">

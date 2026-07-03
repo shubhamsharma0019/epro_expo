@@ -88,10 +88,16 @@
   text-align:center; padding:40px 20px; color:var(--muted); font-size:13px;
 }
 @media(max-width:768px){
-  .hall-grid{grid-template-columns:repeat(5, minmax(48px, 1fr));}
+  .hall-grid{grid-template-columns:repeat(4, minmax(44px, 1fr));}
   .legend-row{gap:14px;}
   .hall-frame{padding:16px;}
   .layout-card{padding:16px;}
+  .welcome-banner{flex-direction:column; align-items:flex-start;}
+  .welcome-banner .pill{align-self:stretch; justify-content:center; white-space:normal;}
+}
+@media(max-width:480px){
+  .hall-grid{grid-template-columns:repeat(3, minmax(40px, 1fr)); gap:6px;}
+  .booth.wide{grid-column:span 1;}
 }
 </style>
 @endsection

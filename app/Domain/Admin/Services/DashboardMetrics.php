@@ -9,17 +9,22 @@ use App\Domain\Company\Models\Company;
 use App\Domain\Company\Models\Enquiry;
 use App\Domain\Event\Models\CompanyEvent\CompanyEventPublishRequest;
 use App\Domain\Shared\Models\User;
+use App\Domain\Visitor\Models\Ticket;
 use App\Domain\Visitor\Models\Visitor;
 use App\Domain\Visitor\Models\VisitorMeetingBooking;
 use App\Domain\Visitor\Models\VisitorTicket;
+use App\Support\EventTicketSchema;
 use App\Support\LiveContent;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class DashboardMetrics
 {
-    public function data(): array
+    public function data(?string $search = null): array
     {
+        $search = filled($search) ? trim($search) : null;
         $rangeEnd = now();
         $rangeStart = now()->subDays(6);
         $weekStart = $rangeStart->copy()->startOfDay();
@@ -33,20 +38,32 @@ class DashboardMetrics
             ->whereIn('status', ['confirmed', 'paid', 'completed'])
             ->sum('total_amount');
 
+        if (EventTicketSchema::isReady()) {
+            $ticketRevenue += (float) Ticket::query()
+                ->whereIn('payment_status', ['paid', 'confirmed', 'completed'])
+                ->sum('amount');
+        }
+
         $exhibitionPassRevenue = (float) Visitor::query()
             ->where('payment_status', 'completed')
             ->sum('amount');
 
         $totalRevenue = $boothRevenue + $ticketRevenue + $exhibitionPassRevenue;
 
-        $totalVisitors = User::query()->count();
+        $totalVisitors = User::query()->count() + Visitor::query()->count();
         $thisWeekVisitors = User::query()
-            ->whereBetween('created_at', [$weekStart, $weekEnd])
-            ->count();
+            ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
+            ->count()
+            + Visitor::query()
+                ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
+                ->count();
 
         $thisMonthVisitors = User::query()
             ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
-            ->count();
+            ->count()
+            + Visitor::query()
+                ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
+                ->count();
 
         $pendingBookingsCount = BoothBooking::query()
             ->where('payment_status', 'paid')
@@ -58,9 +75,7 @@ class DashboardMetrics
 
         $stats = [
             'total_companies' => $this->formatNumber(Company::query()->count()),
-            'total_tickets' => $this->formatNumber(
-                VisitorTicket::query()->count() + Visitor::query()->count()
-            ),
+            'total_tickets' => $this->formatNumber($this->totalTicketCount()),
             'published_events' => $this->formatNumber(
                 LiveContent::companyEventQuery()->count()
             ),
@@ -74,8 +89,10 @@ class DashboardMetrics
         ];
 
         $admin = $this->currentAdmin();
+        $signups = $this->visitorSignups($rangeStart, $rangeEnd);
 
         return [
+            'search' => $search,
             'header' => [
                 'title' => 'Welcome back, ' . $this->adminFirstName($admin),
                 'subtitle' => $this->headerSubtitle(
@@ -102,12 +119,13 @@ class DashboardMetrics
                 'notifications' => $pendingBookingsCount + $pendingApprovalsCount + $pendingEventApprovalsCount,
                 'messages' => Enquiry::query()->whereIn('status', ['new', 'pending', 'open'])->count(),
             ],
-            'recent_companies' => $this->recentCompanies(),
+            'recent_companies' => $this->recentCompanies($search),
             'recent_companies_count' => Company::query()->count(),
-            'recent_enquiries' => $this->recentEnquiries(),
+            'recent_enquiries' => $this->recentEnquiries($search),
             'recent_payments' => $this->recentPayments(),
             'visitor_overview' => [
                 'total' => $this->formatNumber($totalVisitors),
+                'period_total' => $this->formatNumber($signups->sum('value')),
                 'this_week' => '+' . $this->formatNumber($thisWeekVisitors),
                 'this_month' => '+' . $this->formatNumber($thisMonthVisitors),
                 'tooltip_value' => $this->formatNumber($totalVisitors),
@@ -115,7 +133,11 @@ class DashboardMetrics
                 'labels' => collect(CarbonPeriod::create($rangeStart, $rangeEnd))
                     ->map(fn ($date) => $date->format('M d'))
                     ->values(),
-                'signups' => $this->visitorSignups($rangeStart, $rangeEnd),
+                'signups' => $signups,
+            ],
+            'dashboard_copy' => [
+                'visitor_signups_label' => $this->dashboardCopy('visitor_signups_label', 'Last 7 days'),
+                'revenue_mix_label' => $this->dashboardCopy('revenue_mix_label', 'Live split across platform revenue streams'),
             ],
             'revenue_breakdown' => [
                 ['label' => 'Booth Bookings', 'value' => $this->formatMoney($boothRevenue)],
@@ -134,9 +156,9 @@ class DashboardMetrics
         ];
     }
 
-    public function forDashboard(): array
+    public function forDashboard(?string $search = null): array
     {
-        $data = $this->data();
+        $data = $this->data($search);
         $pendingTotal = $data['pendingBookingsCount']
             + $data['pendingApprovalsCount']
             + $data['pendingEventApprovalsCount'];
@@ -154,6 +176,8 @@ class DashboardMetrics
         ];
 
         $data['recent_companies'] = $data['recent_companies']->take(4);
+        $data['recent_enquiries'] = collect($data['recent_enquiries'])->take(4);
+        $data['recent_payments'] = collect($data['recent_payments'])->take(4);
         $data['quick_actions'] = array_slice($data['quick_actions'], 0, 4);
 
         return $data;
@@ -179,7 +203,10 @@ class DashboardMetrics
         $pendingTotal = $pendingBookings + $pendingBoothReviews + $pendingEventReviews;
 
         if ($pendingTotal === 0) {
-            return 'All queues are clear. Here is your live platform snapshot.';
+            return $this->dashboardCopy(
+                'welcome_clear',
+                'All queues are clear. Here is your live platform snapshot.'
+            );
         }
 
         return "You have {$pendingTotal} pending review" . ($pendingTotal === 1 ? '' : 's') . ' across bookings, booths, and events.';
@@ -197,9 +224,7 @@ class DashboardMetrics
             ],
             [
                 'label' => 'Tickets Sold',
-                'value' => $this->formatNumber(
-                    VisitorTicket::query()->whereBetween('created_at', [$weekStart, $weekEnd])->count()
-                ),
+                'value' => $this->formatNumber($this->totalTicketCountForPeriod($weekStart, $weekEnd)),
                 'hint' => 'This week',
             ],
             [
@@ -219,9 +244,17 @@ class DashboardMetrics
         ];
     }
 
-    private function recentCompanies(): Collection
+    private function recentCompanies(?string $search = null): Collection
     {
         return Company::query()
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($inner) use ($search) {
+                    $inner->where('company_name', 'like', "%{$search}%")
+                        ->orWhere('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('contact_person_name', 'like', "%{$search}%");
+                });
+            })
             ->latest()
             ->take(5)
             ->get()
@@ -240,10 +273,17 @@ class DashboardMetrics
             });
     }
 
-    private function recentEnquiries(): Collection
+    private function recentEnquiries(?string $search = null): Collection
     {
         return Enquiry::query()
             ->with('company')
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($inner) use ($search) {
+                    $inner->where('name', 'like', "%{$search}%")
+                        ->orWhere('subject', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                });
+            })
             ->latest()
             ->take(5)
             ->get()
@@ -327,9 +367,25 @@ class DashboardMetrics
 
     private function visitorSignups($rangeStart, $rangeEnd): Collection
     {
+        $start = $rangeStart->copy()->startOfDay();
+        $end = $rangeEnd->copy()->endOfDay();
+
+        $userCounts = User::query()
+            ->whereBetween('created_at', [$start, $end])
+            ->selectRaw('DATE(created_at) as signup_date, COUNT(*) as total')
+            ->groupBy('signup_date')
+            ->pluck('total', 'signup_date');
+
+        $visitorCounts = Visitor::query()
+            ->whereBetween('created_at', [$start, $end])
+            ->selectRaw('DATE(created_at) as signup_date, COUNT(*) as total')
+            ->groupBy('signup_date')
+            ->pluck('total', 'signup_date');
+
         return collect(CarbonPeriod::create($rangeStart, $rangeEnd))
-            ->map(function ($date): array {
-                $count = User::query()->whereDate('created_at', $date)->count();
+            ->map(function ($date) use ($userCounts, $visitorCounts): array {
+                $key = $date->format('Y-m-d');
+                $count = (int) ($userCounts[$key] ?? 0) + (int) ($visitorCounts[$key] ?? 0);
 
                 return [
                     'label' => $date->format('M d'),
@@ -446,5 +502,49 @@ class DashboardMetrics
     private function formatMoney(float $value): string
     {
         return 'Rs. ' . number_format($value, 0);
+    }
+
+    private function totalTicketCount(): int
+    {
+        if (EventTicketSchema::isReady()) {
+            return (int) Ticket::query()->count();
+        }
+
+        return (int) VisitorTicket::query()->count();
+    }
+
+    private function totalTicketCountForPeriod($weekStart, $weekEnd): int
+    {
+        if (EventTicketSchema::isReady()) {
+            return (int) Ticket::query()
+                ->whereBetween('created_at', [$weekStart, $weekEnd])
+                ->count();
+        }
+
+        return (int) VisitorTicket::query()
+            ->whereBetween('created_at', [$weekStart, $weekEnd])
+            ->count();
+    }
+
+    private function dashboardCopy(string $key, string $default): string
+    {
+        static $cache = null;
+
+        if ($cache === null) {
+            $cache = [];
+
+            if (Schema::hasTable('website_content_items')) {
+                $cache = DB::table('website_content_items')
+                    ->where('page', 'admin_dashboard')
+                    ->where('status', 'published')
+                    ->pluck('body', 'section_key')
+                    ->map(fn ($value) => trim((string) $value))
+                    ->all();
+            }
+        }
+
+        $value = $cache[$key] ?? '';
+
+        return filled($value) ? $value : $default;
     }
 }

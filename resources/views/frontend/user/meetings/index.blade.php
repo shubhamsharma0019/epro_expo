@@ -98,9 +98,11 @@
 .list-empty h4{font-size:14px;font-weight:700;color:var(--ink-soft);margin-bottom:4px;}
 @media(max-width:768px){
   .filter-wrap{width:100%;margin-left:0;}
-  .filter-btn{width:100%;justify-content:center;}
+  .filter-btn{width:100%;justify-content:center; min-height:44px;}
   .mrow{flex-wrap:wrap;}
-  .btn,.pill{margin-left:auto;}
+  .mrow .btn,.mrow .pill{margin-left:0;}
+  .tabbar{overflow-x:auto; -webkit-overflow-scrolling:touch; flex-wrap:nowrap;}
+  .tab{flex:0 0 auto;}
 }
 </style>
 @endsection

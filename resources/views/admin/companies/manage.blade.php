@@ -4,7 +4,7 @@
 @section('page-title', 'Manage Company')
 
 @section('content')
-    <section class="space-y-6 px-5 py-6 sm:px-8">
+    <section class="admin-page-section space-y-6 px-5 py-6 sm:px-8">
         @if (session('status'))
             <div class="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-[14px] font-medium text-green-700">
                 {{ session('status') }}
@@ -12,9 +12,9 @@
         @endif
 
         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-                <h2 class="text-[28px] font-bold text-[#0B132C]">{{ $company->company_name }}</h2>
-                <p class="mt-2 text-[14px] text-gray-500">{{ $company->email }} · {{ ucfirst($company->status ?? 'pending') }}</p>
+            <div class="min-w-0">
+                <h2 class="admin-page-title font-bold text-[#0B132C]">{{ $company->company_name }}</h2>
+                <p class="admin-page-description mt-2 text-gray-500">{{ $company->email }} · {{ ucfirst($company->status ?? 'pending') }}</p>
             </div>
             <div class="flex flex-wrap gap-3">
                 <a href="{{ route('admin.companies.index') }}" class="inline-flex h-11 items-center justify-center rounded-xl border border-gray-200 px-5 text-[14px] font-semibold text-[#0B132C]">
@@ -41,11 +41,11 @@
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
                 <p class="text-[12px] font-semibold uppercase tracking-[0.14em] text-gray-400">Exhibition Bookings</p>
-                <p class="mt-3 text-[28px] font-bold text-[#0B132C]">{{ $bookings->count() }}</p>
+                <p class="admin-stat-value mt-3 font-bold text-[#0B132C]">{{ $bookings->count() }}</p>
             </div>
             <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
                 <p class="text-[12px] font-semibold uppercase tracking-[0.14em] text-gray-400">Company Events</p>
-                <p class="mt-3 text-[28px] font-bold text-[#0B132C]">{{ $events->count() }}</p>
+                <p class="admin-stat-value mt-3 font-bold text-[#0B132C]">{{ $events->count() }}</p>
             </div>
         </div>
 

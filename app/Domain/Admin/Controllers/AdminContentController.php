@@ -17,11 +17,16 @@ use App\Domain\Shared\Models\User;
 use App\Domain\Visitor\Models\VisitorTicket;
 use App\Domain\Admin\Services\DashboardMetrics;
 use App\Support\AdminAudit;
-use App\Support\HallBoothLayoutSync;
+use App\Support\BoothNumbering;
+use App\Support\SequentialBoothSizes;
+use App\Support\VisitorFloorMap;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -269,7 +274,7 @@ class AdminContentController extends Controller
                 'live' => 'Live',
                 'draft' => 'Draft',
             ],
-            'columns' => ['Title', 'Location', 'Dates', 'Pavilions', 'Status'],
+            'columns' => ['Title', 'Location', 'Schedule', 'Duration', 'Pavilions', 'Status'],
             'rows' => $query->paginate(12)->through(function (Exhibition $exhibition) {
                 $actions = [];
                 if ($exhibition->approval_status !== 'approved') {
@@ -302,6 +307,7 @@ class AdminContentController extends Controller
                         $exhibition->title ?: $exhibition->name,
                         $exhibition->location ?: ($exhibition->venue ?: 'N/A'),
                         trim(($exhibition->start_date?->format('M d, Y') ?? 'TBD') . ' - ' . ($exhibition->end_date?->format('M d, Y') ?? 'TBD')),
+                        $exhibition->durationDays() . ' day' . ($exhibition->durationDays() === 1 ? '' : 's'),
                         (string) $exhibition->pavilions_count,
                         $this->badge($exhibition->status) . ' ' . $this->badge($exhibition->publish_status ?: 'draft'),
                     ],
@@ -320,10 +326,10 @@ class AdminContentController extends Controller
             'submitLabel' => 'Create Exhibition',
             'fields' => [
                 ['name' => 'title', 'label' => 'Title', 'type' => 'text', 'required' => true],
+                ['name' => 'banner_image', 'label' => 'Banner Image', 'type' => 'file', 'required' => true, 'accept' => 'image/jpeg,image/png,image/webp', 'help' => $this->exhibitionFormCopy('banner_image_help', 'Recommended size 1920x600px. PNG, JPG or WebP. Max 2MB.')],
                 ['name' => 'location', 'label' => 'Location', 'type' => 'text'],
-                ['name' => 'start_date', 'label' => 'Start Date', 'type' => 'date'],
-                ['name' => 'end_date', 'label' => 'End Date', 'type' => 'date'],
-                ['name' => 'booth_booking_days', 'label' => 'Booth Booking Days', 'type' => 'number', 'required' => true, 'value' => 3, 'placeholder' => 'Number of exhibition days for booth booking'],
+                ['name' => 'start_date', 'label' => 'Start Date', 'type' => 'date', 'required' => true],
+                ['name' => 'duration_days', 'label' => 'Exhibition Duration (Days)', 'type' => 'number', 'required' => true, 'value' => 3, 'min' => 1, 'max' => 60, 'placeholder' => $this->exhibitionFormCopy('duration_days_placeholder', 'e.g. 3'), 'help' => $this->exhibitionFormCopy('duration_days_help', 'Set how many days this exhibition will run. The end date is calculated automatically.')],
                 ['name' => 'status', 'label' => 'Status', 'type' => 'select', 'options' => ['active' => 'Active', 'draft' => 'Draft', 'published' => 'Published'], 'value' => 'active'],
                 ['name' => 'description', 'label' => 'Description', 'type' => 'textarea'],
             ],
@@ -334,13 +340,22 @@ class AdminContentController extends Controller
     {
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
+            'banner_image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'location' => ['nullable', 'string', 'max:255'],
-            'start_date' => ['nullable', 'date'],
-            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
-            'booth_booking_days' => ['required', 'integer', 'min:1', 'max:60'],
+            'start_date' => ['required', 'date'],
+            'duration_days' => ['required', 'integer', 'min:1', 'max:60'],
             'status' => ['required', 'string', 'max:50'],
             'description' => ['nullable', 'string'],
         ]);
+
+        $bannerPath = 'storage/' . $request->file('banner_image')->store('exhibitions/banners', 'public');
+        unset($data['banner_image']);
+
+        $durationDays = (int) $data['duration_days'];
+        $startDate = Carbon::parse($data['start_date'])->startOfDay();
+        $endDate = $startDate->copy()->addDays($durationDays - 1);
+        $data['end_date'] = $endDate->toDateString();
+        $data['booth_booking_days'] = $durationDays;
 
         $baseSlug = Str::slug($data['title']);
         $slug = $baseSlug;
@@ -359,6 +374,8 @@ class AdminContentController extends Controller
             'slug' => $slug,
             'name' => $data['title'],
             'venue' => $data['location'] ?? null,
+            'banner_image' => $bannerPath,
+            'banner_url' => $bannerPath,
             'status' => $status,
             'approval_status' => 'approved',
             'publish_status' => 'published',
@@ -470,6 +487,7 @@ class AdminContentController extends Controller
             'fields' => [
                 ['name' => 'exhibition_id', 'label' => 'Exhibition', 'type' => 'select', 'required' => true, 'options' => Exhibition::orderBy('title')->pluck('title', 'id')->all()],
                 ['name' => 'title', 'label' => 'Pavilion Title', 'type' => 'text', 'required' => true],
+                ['name' => 'banner_image', 'label' => 'Banner Image', 'type' => 'file', 'required' => true, 'accept' => 'image/jpeg,image/png,image/webp', 'help' => $this->pavilionFormCopy('banner_image_help', 'Recommended size 1600x600px. PNG, JPG or WebP. Max 2MB.')],
                 ['name' => 'status', 'label' => 'Status', 'type' => 'select', 'options' => ['active' => 'Active', 'inactive' => 'Inactive'], 'value' => 'active'],
                 ['name' => 'description', 'label' => 'Description', 'type' => 'textarea'],
             ],
@@ -481,12 +499,21 @@ class AdminContentController extends Controller
         $data = $request->validate([
             'exhibition_id' => ['required', 'exists:exhibitions,id'],
             'title' => ['required', 'string', 'max:255'],
+            'banner_image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'status' => ['required', 'string', 'max:50'],
             'description' => ['nullable', 'string'],
         ]);
 
+        $imagePath = 'storage/' . $request->file('banner_image')->store('pavilions/banners', 'public');
+        unset($data['banner_image']);
+
         $slug = Str::slug($data['title']);
-        $pavilion = Pavilion::create($data + ['slug' => $slug, 'total_halls' => 0, 'total_booths' => 0]);
+        $pavilion = Pavilion::create($data + [
+            'slug' => $slug,
+            'image' => $imagePath,
+            'total_halls' => 0,
+            'total_booths' => 0,
+        ]);
 
         AdminAudit::log('pavilion_created', 'pavilions', 'pavilion', $pavilion->id, [
             'title' => $data['title'],
@@ -507,6 +534,7 @@ class AdminContentController extends Controller
             'fields' => [
                 ['name' => 'exhibition_id', 'label' => 'Exhibition', 'type' => 'select', 'required' => true, 'options' => Exhibition::orderBy('title')->pluck('title', 'id')->all(), 'value' => $pavilion->exhibition_id],
                 ['name' => 'title', 'label' => 'Pavilion Title', 'type' => 'text', 'required' => true, 'value' => $pavilion->title],
+                ['name' => 'banner_image', 'label' => 'Banner Image', 'type' => 'file', 'accept' => 'image/jpeg,image/png,image/webp', 'help' => $this->pavilionFormCopy('banner_image_help', 'Recommended size 1600x600px. PNG, JPG or WebP. Max 2MB.'), 'value' => $pavilion->image],
                 ['name' => 'status', 'label' => 'Status', 'type' => 'select', 'options' => ['active' => 'Active', 'inactive' => 'Inactive'], 'value' => $pavilion->status],
                 ['name' => 'description', 'label' => 'Description', 'type' => 'textarea', 'value' => $pavilion->description],
             ],
@@ -518,9 +546,16 @@ class AdminContentController extends Controller
         $data = $request->validate([
             'exhibition_id' => ['required', 'exists:exhibitions,id'],
             'title' => ['required', 'string', 'max:255'],
+            'banner_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'status' => ['required', 'string', 'max:50'],
             'description' => ['nullable', 'string'],
         ]);
+
+        if ($request->hasFile('banner_image')) {
+            $data['image'] = 'storage/' . $request->file('banner_image')->store('pavilions/banners', 'public');
+        }
+
+        unset($data['banner_image']);
 
         $slug = Str::slug($data['title']);
         $pavilion->update($data + ['slug' => $slug]);
@@ -603,11 +638,6 @@ class AdminContentController extends Controller
         ]);
 
         $hall = Hall::create($data + ['slug' => Str::slug($data['title']), 'total_booths' => 0]);
-
-        $boothSizes = HallBoothLayoutSync::resolveBoothSizes();
-        if ($boothSizes->isNotEmpty()) {
-            HallBoothLayoutSync::sync($hall, $boothSizes);
-        }
 
         AdminAudit::log('hall_created', 'halls', 'hall', $hall->id, [
             'title' => $data['title'],
@@ -720,16 +750,34 @@ class AdminContentController extends Controller
             })
             ->all();
 
+        $hallNextBoothNumbers = Hall::query()
+            ->orderBy('title')
+            ->get()
+            ->mapWithKeys(fn (Hall $hall) => [(string) $hall->id => BoothNumbering::nextForHall($hall)])
+            ->all();
+
+        $selectedHallId = (int) old('hall_id');
+        $suggestedBoothNumber = $selectedHallId > 0
+            ? ($hallNextBoothNumbers[(string) $selectedHallId] ?? BoothNumbering::nextForHall($selectedHallId))
+            : 'B01';
+
         return view('admin.resources.form', [
             'pageTitle' => 'Add Booth',
-            'pageDescription' => 'Create a booth slot inside a hall.',
+            'pageDescription' => 'Create one standard 9 sq.m booth slot. Companies choose how many units they need when booking.',
             'submitUrl' => route('admin.booths.store'),
             'submitLabel' => 'Create Booth',
+            'hallNextBoothNumbers' => $hallNextBoothNumbers,
             'fields' => [
                 ['name' => 'hall_id', 'label' => 'Hall', 'type' => 'select', 'required' => true, 'options' => $hallOptions],
-                ['name' => 'booth_size_id', 'label' => 'Booth Size', 'type' => 'select', 'options' => ['' => 'Select size'] + BoothSize::orderBy('title')->pluck('title', 'id')->all()],
-                ['name' => 'booth_number', 'label' => 'Booth Number', 'type' => 'text', 'required' => true],
-                ['name' => 'price', 'label' => 'Price', 'type' => 'number', 'step' => '0.01', 'value' => '0'],
+                [
+                    'name' => 'booth_size_info',
+                    'label' => 'Booth Size',
+                    'type' => 'info',
+                    'value' => SequentialBoothSizes::baseUnitLabel(),
+                    'help' => 'Admin always creates one 9 sq.m booth (3m × 3m). If a company needs a bigger space, they book 2, 3 or more units (18, 27, 36 sq.m).',
+                ],
+                ['name' => 'booth_number', 'label' => 'Booth Number', 'type' => 'text', 'required' => true, 'placeholder' => 'e.g. B01', 'value' => old('booth_number', $suggestedBoothNumber), 'help' => 'Use sequential codes like B01, B02. The next free number is suggested automatically.'],
+                ['name' => 'price', 'label' => 'Price (per 9 sq.m unit)', 'type' => 'number', 'step' => '0.01', 'min' => '0', 'value' => (string) (SequentialBoothSizes::baseUnit()?->price ?? 0), 'help' => 'Default price for one 9 sq.m booth unit.'],
                 ['name' => 'status', 'label' => 'Status', 'type' => 'select', 'options' => ['available' => 'Available', 'booked' => 'Booked', 'reserved' => 'Reserved'], 'value' => 'available'],
             ],
         ]);
@@ -739,20 +787,65 @@ class AdminContentController extends Controller
     {
         $data = $request->validate([
             'hall_id' => ['required', 'exists:halls,id'],
-            'booth_size_id' => ['nullable', 'exists:booth_sizes,id'],
             'booth_number' => ['required', 'string', 'max:255'],
-            'price' => ['nullable', 'numeric'],
+            'price' => ['nullable', 'numeric', 'min:0'],
             'status' => ['required', 'string', 'max:50'],
         ]);
 
-        $booth = Booth::create($data);
+        $boothSize = SequentialBoothSizes::baseUnit();
 
-        AdminAudit::log('booth_created', 'booths', 'booth', $booth->id, [
-            'booth_number' => $data['booth_number'],
+        if (! $boothSize) {
+            return back()
+                ->withErrors(['hall_id' => 'Base 9 sq.m booth size is missing in the database. Run migrations or add booth sizes first.'])
+                ->withInput();
+        }
+
+        $hall = Hall::query()->findOrFail($data['hall_id']);
+        $hallId = (int) $hall->id;
+        $boothNumber = trim($data['booth_number']);
+        $requestedNumber = $boothNumber;
+        $numberAdjusted = false;
+
+        if (BoothNumbering::existsInHall($hall, $boothNumber)) {
+            $requestedNumber = $boothNumber;
+            $boothNumber = BoothNumbering::nextForHall($hall);
+            $numberAdjusted = $requestedNumber !== $boothNumber;
+        }
+
+        $price = isset($data['price']) && (float) $data['price'] > 0
+            ? (float) $data['price']
+            : (float) $boothSize->price;
+
+        $booth = Booth::create([
+            'hall_id' => $hallId,
+            'booth_size_id' => $boothSize->id,
+            'booth_number' => $boothNumber,
+            'price' => $price,
             'status' => $data['status'],
         ]);
 
-        return redirect()->route('admin.booths.index')->with('status', 'Booth created successfully.');
+        VisitorFloorMap::syncBoothLayout($booth);
+
+        if ($booth->isDirty()) {
+            $booth->save();
+        }
+
+        $hall->update([
+            'total_booths' => $hall->booths()->count(),
+        ]);
+
+        AdminAudit::log('booth_created', 'booths', 'booth', $booth->id, [
+            'booth_number' => $boothNumber,
+            'booth_size_area' => (int) round((float) $boothSize->area),
+            'status' => $data['status'],
+        ]);
+
+        return redirect()->route('admin.booths.index')->with(
+            'status',
+            $numberAdjusted
+                ? "Booth created as {$boothNumber}. {$requestedNumber} was already used in this hall."
+                : 'Booth created successfully.'
+        );
     }
 
     public function editBooth(Booth $booth): View
@@ -777,7 +870,13 @@ class AdminContentController extends Controller
             'method' => 'PUT',
             'fields' => [
                 ['name' => 'hall_id', 'label' => 'Hall', 'type' => 'select', 'required' => true, 'options' => $hallOptions, 'value' => $booth->hall_id],
-                ['name' => 'booth_size_id', 'label' => 'Booth Size', 'type' => 'select', 'options' => ['' => 'Select size'] + BoothSize::orderBy('title')->pluck('title', 'id')->all(), 'value' => $booth->booth_size_id],
+                [
+                    'name' => 'booth_size_info',
+                    'label' => 'Booth Size',
+                    'type' => 'info',
+                    'value' => SequentialBoothSizes::baseUnitLabel(),
+                    'help' => 'Each booth slot is one 9 sq.m unit. Booking size for companies is handled separately.',
+                ],
                 ['name' => 'booth_number', 'label' => 'Booth Number', 'type' => 'text', 'required' => true, 'value' => $booth->booth_number],
                 ['name' => 'price', 'label' => 'Price', 'type' => 'number', 'step' => '0.01', 'value' => $booth->price],
                 ['name' => 'status', 'label' => 'Status', 'type' => 'select', 'options' => ['available' => 'Available', 'booked' => 'Booked', 'reserved' => 'Reserved'], 'value' => $booth->status],
@@ -789,11 +888,24 @@ class AdminContentController extends Controller
     {
         $data = $request->validate([
             'hall_id' => ['required', 'exists:halls,id'],
-            'booth_size_id' => ['nullable', 'exists:booth_sizes,id'],
             'booth_number' => ['required', 'string', 'max:255'],
-            'price' => ['nullable', 'numeric'],
+            'price' => ['nullable', 'numeric', 'min:0'],
             'status' => ['required', 'string', 'max:50'],
         ]);
+
+        $boothSize = SequentialBoothSizes::baseUnit();
+
+        if (! $boothSize) {
+            return back()
+                ->withErrors(['hall_id' => 'Base 9 sq.m booth size is missing in the database.'])
+                ->withInput();
+        }
+
+        if (isset($data['price']) && (float) $data['price'] <= 0) {
+            $data['price'] = $boothSize->price;
+        }
+
+        $data['booth_size_id'] = $boothSize->id;
 
         $booth->update($data);
 
@@ -1237,5 +1349,49 @@ class AdminContentController extends Controller
     private function money(float|int|string|null $value): string
     {
         return 'Rs. ' . number_format((float) $value, 2);
+    }
+
+    private function exhibitionFormCopy(string $key, string $default): string
+    {
+        static $cache = null;
+
+        if ($cache === null) {
+            $cache = [];
+
+            if (Schema::hasTable('website_content_items')) {
+                $cache = DB::table('website_content_items')
+                    ->where('page', 'admin_exhibition_form')
+                    ->where('status', 'published')
+                    ->pluck('body', 'section_key')
+                    ->map(fn ($value) => trim((string) $value))
+                    ->all();
+            }
+        }
+
+        $value = $cache[$key] ?? '';
+
+        return filled($value) ? $value : $default;
+    }
+
+    private function pavilionFormCopy(string $key, string $default): string
+    {
+        static $cache = null;
+
+        if ($cache === null) {
+            $cache = [];
+
+            if (Schema::hasTable('website_content_items')) {
+                $cache = DB::table('website_content_items')
+                    ->where('page', 'admin_pavilion_form')
+                    ->where('status', 'published')
+                    ->pluck('body', 'section_key')
+                    ->map(fn ($value) => trim((string) $value))
+                    ->all();
+            }
+        }
+
+        $value = $cache[$key] ?? '';
+
+        return filled($value) ? $value : $default;
     }
 }

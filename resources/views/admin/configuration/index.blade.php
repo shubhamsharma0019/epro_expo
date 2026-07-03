@@ -4,7 +4,7 @@
 @section('page-title', $pageTitle)
 
 @section('content')
-    <section class="space-y-6 px-5 py-6 sm:px-8">
+    <section class="admin-page-section space-y-6 px-5 py-6 sm:px-8">
         @if (session('status'))
             <div class="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-[14px] font-medium text-green-700">
                 {{ session('status') }}
@@ -12,8 +12,8 @@
         @endif
 
         <div>
-            <h2 class="text-[28px] font-bold text-[#0B132C]">{{ $pageTitle }}</h2>
-            <p class="mt-2 text-[14px] text-gray-500">{{ $pageDescription }}</p>
+            <h2 class="admin-page-title font-bold text-[#0B132C]">{{ $pageTitle }}</h2>
+            <p class="admin-page-description mt-2 text-gray-500">{{ $pageDescription }}</p>
         </div>
 
         <form method="POST" action="{{ $submitUrl }}" class="space-y-6">

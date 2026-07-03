@@ -50,6 +50,32 @@ class SequentialBoothSizes
         return sprintf('%dm x %dm', $width, $height);
     }
 
+    public static function baseUnit(): ?BoothSize
+    {
+        return self::activeOrdered()
+            ->first(fn (BoothSize $size) => (int) round((float) $size->area) === self::UNIT_AREA)
+            ?? BoothSize::query()
+                ->where('status', 'active')
+                ->where('area', self::UNIT_AREA)
+                ->orderBy('id')
+                ->first();
+    }
+
+    public static function baseUnitLabel(): string
+    {
+        $size = self::baseUnit();
+
+        if (! $size) {
+            return sprintf('%d sq.m (3m × 3m)', self::UNIT_AREA);
+        }
+
+        return sprintf(
+            '%d sq.m — %s',
+            (int) round((float) $size->area),
+            $size->title
+        );
+    }
+
     public static function isSequentialArea(float $area): bool
     {
         if ($area <= 0) {

@@ -21,6 +21,7 @@ class Exhibition extends Model
         'venue',
         'start_date',
         'end_date',
+        'duration_days',
         'booth_booking_days',
         'banner_image',
         'banner_url',
@@ -42,11 +43,25 @@ class Exhibition extends Model
             'published_at' => 'datetime',
             'is_home_featured' => 'boolean',
             'booth_booking_days' => 'integer',
+            'duration_days' => 'integer',
         ];
+    }
+
+    public function durationDays(): int
+    {
+        if ((int) ($this->duration_days ?? 0) > 0) {
+            return min((int) $this->duration_days, 60);
+        }
+
+        return $this->boothBookingDays();
     }
 
     public function boothBookingDays(): int
     {
+        if ((int) ($this->duration_days ?? 0) > 0) {
+            return min((int) $this->duration_days, 60);
+        }
+
         if ((int) ($this->booth_booking_days ?? 0) > 0) {
             return min((int) $this->booth_booking_days, 60);
         }

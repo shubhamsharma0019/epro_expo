@@ -26,6 +26,8 @@ body{
     var(--ivory);
   min-height:100vh;
   padding:14px 16px;
+  max-width:100%;
+  overflow-x:hidden;
 }
 body.sidebar-open{overflow:hidden;}
 h1,h2,h3,.display{font-family:'Plus Jakarta Sans',sans-serif; letter-spacing:-0.01em;}

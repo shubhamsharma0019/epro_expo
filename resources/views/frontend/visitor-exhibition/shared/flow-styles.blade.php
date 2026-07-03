@@ -176,6 +176,20 @@
             margin-left: -0.25rem;
             margin-right: -0.25rem;
         }
+
+        .booth-quick-links-grid {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .booth-home-nav {
+            display: flex;
+        }
+    }
+
+    @media (max-width: 639px) {
+        .booth-quick-links-grid {
+            grid-template-columns: minmax(0, 1fr);
+        }
     }
 
     .visitor-flow-page .floor-map-scroll {

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Event Company Login - EproExpo</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700" rel="stylesheet" />
@@ -70,7 +71,11 @@
                     <label class="field"><span>Company Email</span><input name="email" type="email" value="{{ old('email') }}" required></label>
                     <label class="field"><span>Password</span><input name="password" type="password" required></label>
                     <div class="row"><label><input type="checkbox" name="remember"> Remember me</label><a href="#">Forgot password?</a></div>
-                    @if ($errors->any())<p class="error">{{ $errors->first() }}</p>@endif
+                    @if ($errors->has('csrf'))
+                        <p class="error">{{ $errors->first('csrf') }}</p>
+                    @elseif ($errors->any())
+                        <p class="error">{{ $errors->first() }}</p>
+                    @endif
                     <button type="submit" class="btn">Open Event Dashboard</button>
                 </form>
                 <p class="signup">Need a company account? <a href="{{ route('company.event-company.register') }}">Register company</a></p>

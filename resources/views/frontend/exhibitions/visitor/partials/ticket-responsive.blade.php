@@ -35,5 +35,11 @@
         .ticket-flow-hero-img { width: 72px !important; height: 72px !important; }
         .ticket-flow-stepper .w-24 { width: 4.25rem !important; min-width: 4.25rem !important; }
         .ticket-flow-stepper .min-w-\[60px\] { min-width: 2rem !important; }
+        .ticket-flow-main button,
+        .ticket-flow-main a.inline-flex,
+        .ticket-flow-main .ticket-flow-sidebar button {
+            min-height: 44px;
+        }
+        .ticket-flow-two-col > * { min-width: 0; width: 100%; }
     }
 </style>

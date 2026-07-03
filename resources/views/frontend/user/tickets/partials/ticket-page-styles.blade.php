@@ -66,6 +66,12 @@
   .portal-stack{display:block !important;}
 }
 @media(max-width:768px){
+  .ticket-meta{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .ticket-hero{padding:22px 18px;}
+  .ticket-hero h1{font-size:22px;}
+}
+@media(max-width:480px){
   .ticket-meta{grid-template-columns:1fr;}
+  .ticket-hero h1{font-size:20px;}
 }
 </style>

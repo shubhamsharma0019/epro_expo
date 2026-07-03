@@ -106,6 +106,7 @@
 @media(max-width:640px){
   .stat-row{grid-template-columns:1fr;}
   .agenda-row{grid-template-columns:1fr;}
+  .welcome-banner .pill{align-self:stretch; justify-content:center;}
 }
 </style>
 @endsection

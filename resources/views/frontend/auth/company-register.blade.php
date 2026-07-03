@@ -62,7 +62,7 @@
                 <h2>{{ $isEventCompanyFlow ? 'Register Event Company' : 'Register Company' }}</h2>
                 <p class="intro">{{ $isEventCompanyFlow ? 'Create company credentials to open your own event organizer dashboard and manage your company events.' : 'Create exhibitor credentials for booth booking and company profile management.' }}</p>
 
-                <form method="POST" action="{{ $isEventCompanyFlow ? route('company.event-company.register.store') : url('/company/register') }}" class="form-grid">
+                <form method="POST" action="{{ $isEventCompanyFlow ? route('company.event-company.register.store') : route('company.register.store') }}" class="form-grid">
                     @csrf
                     <input type="hidden" name="flow_context" value="{{ $flowContext }}">
                     <label class="field"><span>Company Name</span><input name="company_name" value="{{ old('company_name') }}" required></label>
@@ -79,7 +79,7 @@
                     <button type="submit" class="btn">{{ $isEventCompanyFlow ? 'Register Event Company' : 'Register Company' }}</button>
                 </form>
 
-                <p class="signup">Already have company credentials? <a href="{{ $isEventCompanyFlow ? route('company.event-company.login') : url('/company/login') }}">Login</a></p>
+                <p class="signup">Already have company credentials? <a href="{{ $isEventCompanyFlow ? route('company.event-company.login') : route('company.login') }}">Login</a></p>
             </div>
         </section>
     </main>

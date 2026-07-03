@@ -47,6 +47,27 @@ class CsrfMismatchResponse
                 ->withErrors(['csrf' => $message]);
         }
 
+        if ($request->routeIs('company.login.store', 'company.register.store')) {
+            return redirect()
+                ->route('company.login')
+                ->withInput($request->except('password', '_token'))
+                ->withErrors(['csrf' => $message]);
+        }
+
+        if ($request->routeIs('company.event-company.login.store', 'company.event-company.register.store')) {
+            return redirect()
+                ->route('company.event-company.login')
+                ->withInput($request->except('password', '_token'))
+                ->withErrors(['csrf' => $message]);
+        }
+
+        if ($request->is('company/login', 'company/register', 'company/event-company/login', 'company/event-company/register')) {
+            return redirect()
+                ->to($request->url())
+                ->withInput($request->except('password', '_token'))
+                ->withErrors(['csrf' => $message]);
+        }
+
         return back()
             ->withInput($request->except('password', '_token'))
             ->withErrors(['csrf' => $message]);

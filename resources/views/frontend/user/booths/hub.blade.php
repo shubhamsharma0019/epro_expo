@@ -27,6 +27,24 @@
     .hub-accordion-trigger.is-active .hub-chevron {
         transform: rotate(180deg);
     }
+    @media (max-width: 768px) {
+        .hub-hero-panel {
+            min-height: 280px;
+            height: auto;
+            padding-top: 1.75rem;
+            padding-bottom: 1.75rem;
+        }
+        .hub-hero-panel .hub-hero-overlay { width: 100%; }
+        .hub-stat-strip {
+            width: 100%;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+        }
+        .hub-stat-item::after { display: none !important; }
+        .hub-stat-item { padding-left: 0 !important; }
+    }
 </style>
 @endsection
 
@@ -53,6 +71,16 @@
     @endif
 </div>
 @endif
+
+<div class="max-w-[1536px] mx-auto px-4 sm:px-6 pt-4">
+    <nav class="hub-mobile-nav" aria-label="Booth hub shortcuts">
+        <a href="{{ route('frontend.user.profile') }}"><i class="fa-regular fa-user"></i> Profile</a>
+        <a href="{{ route('frontend.user.passes') }}"><i class="fa-solid fa-ticket-simple"></i> Passes</a>
+        <a href="{{ route('frontend.user.meetings') }}"><i class="fa-solid fa-users"></i> Meetings</a>
+        <a href="{{ route('frontend.user.dashboard') }}"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+        <button type="button" data-hub-accordion="brochures"><i class="fa-solid fa-download"></i> Downloads</button>
+    </nav>
+</div>
 
 <div class="max-w-[1536px] mx-auto px-4 sm:px-6 py-6 flex flex-col xl:flex-row gap-6">
 
@@ -110,26 +138,26 @@
     <main class="flex-1 flex flex-col min-w-0 gap-6">
 
         {{-- Hero Banner --}}
-        <div class="bg-gradient-to-r from-[#170f49] to-[#2e1d7a] rounded-2xl h-[340px] relative overflow-hidden shadow-card flex items-center px-10 md:px-12 border border-indigo-900/50">
+        <div class="hub-hero-panel bg-gradient-to-r from-[#170f49] to-[#2e1d7a] rounded-2xl sm:h-[340px] relative overflow-hidden shadow-card flex items-center px-6 sm:px-10 md:px-12 border border-indigo-900/50">
             <div class="absolute inset-0 right-0 hub-hero-bg"></div>
-            <div class="absolute inset-0 bg-gradient-to-r from-[#0c0529] via-[#0c0529]/80 to-transparent w-[70%]"></div>
+            <div class="hub-hero-overlay absolute inset-0 bg-gradient-to-r from-[#0c0529] via-[#0c0529]/80 to-transparent w-full sm:w-[70%]"></div>
 
             <div class="relative z-10 w-full md:max-w-[80%] lg:max-w-[60%] pt-4">
-                <h1 class="text-[30px] md:text-[34px] font-bold text-white mb-3">Welcome Back, {{ $firstName }}! <span class="text-[28px]">👋</span></h1>
-                <p class="text-[14px] md:text-[15px] font-medium text-indigo-100/90 mb-10 leading-relaxed max-w-[100%] md:max-w-[85%]">
+                <h1 class="text-[24px] sm:text-[30px] md:text-[34px] font-bold text-white mb-3">Welcome Back, {{ $firstName }}! <span class="text-[24px] sm:text-[28px]">👋</span></h1>
+                <p class="text-[13px] sm:text-[14px] md:text-[15px] font-medium text-indigo-100/90 mb-6 sm:mb-10 leading-relaxed max-w-[100%] md:max-w-[85%]">
                     Discover events, connect with exhibitors <br class="hidden sm:inline"> and make the most of your experience.
                 </p>
 
-                <div class="flex items-center gap-8 md:gap-14 bg-[#1b1049]/60 backdrop-blur-md border border-white/10 rounded-2xl px-6 md:px-10 py-5 md:py-6 inline-flex flex-wrap shadow-lg">
-                    <div class="flex flex-col items-start relative after:content-[''] after:absolute after:right-[-1rem] md:after:right-[-1.75rem] after:top-1/2 after:-translate-y-1/2 after:h-[70%] after:w-px after:bg-white/10">
+                <div class="hub-stat-strip flex items-center gap-6 sm:gap-8 md:gap-14 bg-[#1b1049]/60 backdrop-blur-md border border-white/10 rounded-2xl px-6 md:px-10 py-5 md:py-6 inline-flex flex-wrap shadow-lg">
+                    <div class="hub-stat-item flex flex-col items-start relative after:content-[''] after:absolute after:right-[-1rem] md:after:right-[-1.75rem] after:top-1/2 after:-translate-y-1/2 after:h-[70%] after:w-px after:bg-white/10">
                         <span class="text-[26px] md:text-[32px] font-bold text-white leading-tight mb-0.5">{{ str_pad((string) $stats['upcoming_events'], 2, '0', STR_PAD_LEFT) }}</span>
                         <span class="text-[12px] font-medium text-indigo-200/90 tracking-wide">Upcoming Events</span>
                     </div>
-                    <div class="flex flex-col items-start relative after:content-[''] after:absolute after:right-[-1rem] md:after:right-[-1.75rem] after:top-1/2 after:-translate-y-1/2 after:h-[70%] after:w-px after:bg-white/10">
+                    <div class="hub-stat-item flex flex-col items-start relative after:content-[''] after:absolute after:right-[-1rem] md:after:right-[-1.75rem] after:top-1/2 after:-translate-y-1/2 after:h-[70%] after:w-px after:bg-white/10">
                         <span class="text-[26px] md:text-[32px] font-bold text-white leading-tight mb-0.5">{{ str_pad((string) $stats['meetings'], 2, '0', STR_PAD_LEFT) }}</span>
                         <span class="text-[12px] font-medium text-indigo-200/90 tracking-wide">My Meetings</span>
                     </div>
-                    <div class="flex flex-col items-start pl-2">
+                    <div class="hub-stat-item flex flex-col items-start pl-0 sm:pl-2">
                         <span class="text-[26px] md:text-[32px] font-bold text-white leading-tight mb-0.5">{{ str_pad((string) $stats['saved_items'], 2, '0', STR_PAD_LEFT) }}</span>
                         <span class="text-[12px] font-medium text-indigo-200/90 tracking-wide">Saved Items</span>
                     </div>

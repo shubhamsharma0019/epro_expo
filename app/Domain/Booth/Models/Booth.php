@@ -18,6 +18,8 @@ class Booth extends Model
         'booth_number',
         'position_x',
         'position_y',
+        'grid_row',
+        'grid_col',
         'price',
         'status',
     ];

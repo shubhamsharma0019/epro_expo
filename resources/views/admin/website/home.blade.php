@@ -4,11 +4,11 @@
 @section('page-title', 'Website Home')
 
 @section('content')
-    <section class="px-5 py-6 sm:px-8">
-        <div class="mx-auto max-w-5xl space-y-6">
-            <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-                <h2 class="text-[28px] font-bold text-[#0B132C]">Website Home Page</h2>
-                <p class="mt-2 text-[14px] text-gray-500">Manage hero, CTA, footer, and featured live content. Published changes appear on the public home page immediately.</p>
+    <section class="admin-page-section px-5 py-6 sm:px-8">
+        <div class="mx-auto w-full max-w-5xl space-y-6">
+            <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
+                <h2 class="admin-page-title font-bold text-[#0B132C]">Website Home Page</h2>
+                <p class="admin-page-description mt-2 text-gray-500">Manage hero, CTA, footer, and featured live content. Published changes appear on the public home page immediately.</p>
             </div>
 
             @if (session('status'))

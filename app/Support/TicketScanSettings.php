@@ -81,6 +81,8 @@ class TicketScanSettings
             return;
         }
 
+        $urlChanged = $existing !== '' && $existing !== $detected;
+
         self::persist([
             'ticket_qr_base_url' => $detected,
             'ticket_scanner_username' => (string) config('ticket_scanner.username'),
@@ -90,6 +92,21 @@ class TicketScanSettings
         ], $row);
 
         config(['app.ticket_qr_base_url' => $detected]);
+
+        if ($urlChanged) {
+            self::refreshStoredTicketUrls();
+        }
+    }
+
+    private static function refreshStoredTicketUrls(): void
+    {
+        if (! Schema::hasTable('tickets') || ! class_exists(\App\Domain\Visitor\Models\Ticket::class)) {
+            return;
+        }
+
+        foreach (\App\Domain\Visitor\Models\Ticket::query()->cursor() as $ticket) {
+            EventTicketQr::refreshStoredUrl($ticket);
+        }
     }
 
     private static function detectPreferredBaseUrl(): ?string

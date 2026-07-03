@@ -4,11 +4,11 @@
 @section('page-title', 'Reports')
 
 @section('content')
-    <section class="space-y-6 px-5 py-6 sm:px-8">
+    <section class="admin-page-section space-y-6 px-5 py-6 sm:px-8">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-                <h2 class="text-[28px] font-bold text-[#0B132C]">Reports & Insights</h2>
-                <p class="mt-2 text-[14px] text-gray-500">Detailed platform analytics, revenue, enquiries, and activity logs.</p>
+            <div class="min-w-0">
+                <h2 class="admin-page-title font-bold text-[#0B132C]">Reports & Insights</h2>
+                <p class="admin-page-description mt-2 text-gray-500">Detailed platform analytics, revenue, enquiries, and activity logs.</p>
             </div>
             <a href="{{ route('admin.dashboard') }}" class="inline-flex h-11 items-center justify-center rounded-xl border border-gray-200 px-5 text-[14px] font-semibold text-[#0B132C] transition hover:bg-gray-50">
                 Back to Dashboard
@@ -20,7 +20,7 @@
                 @foreach ($platform_highlights as $highlight)
                     <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
                         <p class="text-[12px] font-semibold uppercase tracking-[0.14em] text-gray-400">{{ $highlight['label'] }}</p>
-                        <p class="mt-3 text-[28px] font-bold text-[#0B132C]">{{ $highlight['value'] }}</p>
+                        <p class="admin-stat-value mt-3 font-bold text-[#0B132C]">{{ $highlight['value'] }}</p>
                         <p class="mt-1 text-[12px] font-medium text-gray-500">{{ $highlight['hint'] }}</p>
                     </div>
                 @endforeach
@@ -31,7 +31,7 @@
             @foreach ($stat_cards as $card)
                 <a href="{{ $card['href'] ?? '#' }}" class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:border-[#3723db]/20 hover:shadow-md">
                     <p class="text-[12px] font-semibold uppercase tracking-[0.14em] text-gray-400">{{ $card['label'] }}</p>
-                    <p class="mt-3 text-[28px] font-bold text-[#0B132C]">{{ $card['value'] }}</p>
+                    <p class="admin-stat-value mt-3 font-bold text-[#0B132C]">{{ $card['value'] }}</p>
                 </a>
             @endforeach
         </div>
@@ -39,18 +39,11 @@
         <div class="grid gap-6 lg:grid-cols-2">
             <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
                 <h3 class="text-[18px] font-bold text-[#0B132C]">Visitor Signups (7 days)</h3>
-                @php
-                    $maxSignup = max(1, collect($visitor_overview['signups'] ?? [])->max('value') ?? 1);
-                @endphp
-                <div class="mt-6 flex h-48 items-end gap-3 border-b border-gray-100 pb-2">
-                    @foreach (($visitor_overview['signups'] ?? []) as $signup)
-                        <div class="flex min-w-0 flex-1 flex-col items-center gap-2">
-                            <span class="text-[11px] font-semibold text-[#3723db]">{{ $signup['value'] }}</span>
-                            <div class="w-full max-w-[48px] rounded-t-xl bg-gradient-to-t from-[#3723db] to-[#6366f1]" style="height: {{ max(12, ($signup['value'] / $maxSignup) * 100) }}%;"></div>
-                            <span class="text-[10px] font-medium text-gray-500">{{ $signup['label'] }}</span>
-                        </div>
-                    @endforeach
-                </div>
+                @include('admin.partials.visitor-signups-chart', [
+                    'visitor_overview' => $visitor_overview,
+                    'chartId' => 'admin-reports-visitor-signups-chart',
+                ])
+
                 <div class="mt-4 flex flex-wrap gap-4 text-[12px] text-gray-500">
                     <span>Total visitors: <strong class="text-[#0B132C]">{{ $visitor_overview['total'] }}</strong></span>
                     <span>This week: <strong class="text-[#0B132C]">{{ $visitor_overview['this_week'] }}</strong></span>

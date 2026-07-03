@@ -4,7 +4,7 @@
 @section('page-title', 'Review Booth Booking')
 
 @section('content')
-    <section class="space-y-6 px-5 py-6 sm:px-8">
+    <section class="admin-page-section space-y-6 px-5 py-6 sm:px-8">
         <a href="{{ route('admin.booth-bookings.index') }}" class="inline-flex items-center gap-2 text-sm font-bold text-[#3D1B9B] hover:underline">
             <i class="fa-solid fa-arrow-left"></i> Back to Bookings List
         </a>
@@ -22,7 +22,7 @@
                         <span class="rounded bg-[#F4F0FF] px-2.5 py-1 text-xs font-bold text-[#3D1B9B] uppercase tracking-wider">
                             {{ $booking->booking_status }}
                         </span>
-                        <h1 class="mt-3 text-2xl font-bold text-[#0B132C]">Review Booking Details</h1>
+                        <h1 class="admin-page-title font-bold text-[#0B132C]">Review Booking Details</h1>
                         <p class="text-sm text-gray-500 font-medium">Booking ID: #BOOK-{{ str_pad((string) $booking->id, 5, '0', STR_PAD_LEFT) }}</p>
                     </div>
                     <div>
@@ -101,7 +101,7 @@
                 <hr class="border-gray-100">
 
                 @if ($booking->admin_status === 'pending')
-                    <div class="flex flex-col sm:flex-row gap-4 pt-2">
+                    <div class="admin-form-actions flex flex-col gap-4 pt-2 sm:flex-row">
                         <form method="POST" action="{{ route('admin.booth-bookings.approve', $booking->id) }}">
                             @csrf
                             <button class="w-full sm:w-auto rounded-xl bg-[#3D1B9B] hover:bg-[#2F1480] px-8 py-3 text-sm font-bold text-white shadow-sm transition">

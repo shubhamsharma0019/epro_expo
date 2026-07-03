@@ -25,6 +25,10 @@
 }
 .stat-pair .box span{display:block; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--muted);}
 .stat-pair .box strong{display:block; margin-top:6px; font-size:22px; font-weight:800; color:var(--ink);}
+@media(max-width:480px){
+  .stat-pair{grid-template-columns:1fr;}
+  .profile-card{padding:20px 18px;}
+}
 .form-card{
   background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
   padding:24px; box-shadow:var(--shadow);
