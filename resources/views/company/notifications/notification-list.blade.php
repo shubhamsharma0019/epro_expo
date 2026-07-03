@@ -6,7 +6,7 @@
 @section('content')
 <section class="mx-auto w-full max-w-[1100px] px-4 py-8 sm:px-6 lg:px-8">
     <div class="mb-6">
-        <h1 class="text-[28px] font-bold leading-tight text-gray-900 sm:text-[34px]">Notifications</h1>
+        <h1 class="company-page-title font-bold leading-tight text-gray-900 sm:text-[34px]">Notifications</h1>
         <p class="mt-2 text-[15px] font-medium leading-7 text-gray-500">Recent booth bookings, enquiries and meeting requests for your company.</p>
     </div>
 

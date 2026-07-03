@@ -13,6 +13,7 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @include('frontend.shared.partials.responsive-fixes')
+    @include('components.company.company-layout-styles')
     <style>
         @media (min-width: 1024px) {
             #company-event-sidebar {

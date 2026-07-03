@@ -79,7 +79,7 @@
         </form>
 
         <div class="mb-6 overflow-x-auto rounded-xl border border-gray-100 bg-white">
-            <div class="lg:min-w-[900px]">
+            <div class="min-w-0">
                 <div class="hidden grid-cols-12 items-center gap-4 border-b border-gray-100 bg-white p-5 lg:grid">
                     <div class="col-span-4"><span class="text-[14px] font-bold text-[#1E1B4B]">Uploaded Documents</span></div>
                     <div class="col-span-2"><span class="text-[14px] font-bold text-[#1E1B4B]">Type</span></div>

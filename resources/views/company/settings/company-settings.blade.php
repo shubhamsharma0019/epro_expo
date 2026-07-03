@@ -6,7 +6,7 @@
 @section('content')
 <section class="max-w-[1100px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
     <div class="mb-8">
-        <h1 class="text-[34px] font-semibold leading-[42px] tracking-[-0.8px] text-navy">Settings</h1>
+        <h1 class="company-page-title font-semibold text-navy">Settings</h1>
         <p class="mt-3 text-[16px] font-medium leading-7 text-[#34405F]">Manage notification preferences and account access.</p>
     </div>
 

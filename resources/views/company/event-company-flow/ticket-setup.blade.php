@@ -42,10 +42,61 @@
                 </button>
             </div>
 
-            <!-- Table -->
-            <div class="border border-gray-200 rounded-[16px] bg-white overflow-hidden mb-8 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse min-w-[700px]">
+            <div class="mb-8 overflow-hidden rounded-[16px] border border-gray-200 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+            <!-- Mobile cards -->
+            <div class="space-y-3 p-4 lg:hidden">
+                @forelse ($ticketTypes as $ticketType)
+                    <article class="company-mobile-card rounded-xl border border-gray-100 p-4 shadow-sm">
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-400">Ticket Type</p>
+                        <p class="mt-1 text-[15px] font-bold text-[#1C1364]">{{ $ticketType->name }}</p>
+                        <div class="mt-3 grid grid-cols-2 gap-3 text-[13px]">
+                            <div>
+                                <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-400">Price</p>
+                                <p class="mt-1 font-medium text-[#5B6B8A]">{{ ($ticketType->currency ?: 'INR') === 'INR' ? 'Rs.' : ($ticketType->currency ?: 'INR') }} {{ number_format((float) $ticketType->price, 2) }}</p>
+                            </div>
+                            <div>
+                                <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-400">Quantity</p>
+                                <p class="mt-1 font-medium text-[#5B6B8A]">{{ $ticketType->quantity_total ?: 'Unlimited' }}</p>
+                            </div>
+                            <div>
+                                <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-400">Sales Start</p>
+                                <p class="mt-1 font-medium text-[#5B6B8A]">{{ optional($ticketType->sales_start_at)->format('M d, Y') ?: 'TBD' }}</p>
+                            </div>
+                            <div>
+                                <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-400">Sales End</p>
+                                <p class="mt-1 font-medium text-[#5B6B8A]">{{ optional($ticketType->sales_end_at)->format('M d, Y') ?: 'TBD' }}</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex flex-wrap gap-2 border-t border-gray-100 pt-4">
+                            <button type="button" class="ticket-edit-btn inline-flex flex-1 items-center justify-center rounded-lg border border-[#E8E3FF] bg-[#F9F8FF] px-3 py-2 text-[12px] font-semibold text-[#4C10D0]"
+                                data-action="{{ route('company.event-company-flow.tickets.update', [$companyEvent, $ticketType]) }}"
+                                data-name="{{ $ticketType->name }}"
+                                data-price="{{ $ticketType->price }}"
+                                data-quantity="{{ $ticketType->quantity_total }}"
+                                data-sales-start="{{ optional($ticketType->sales_start_at)->format('Y-m-d\TH:i') }}"
+                                data-sales-end="{{ optional($ticketType->sales_end_at)->format('Y-m-d\TH:i') }}">
+                                Edit
+                            </button>
+                            <form method="POST" action="{{ route('company.event-company-flow.tickets.destroy', [$companyEvent, $ticketType]) }}" onsubmit="return confirm('Delete this ticket type?');" class="flex-1">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="inline-flex w-full items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[12px] font-semibold text-red-600">
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
+                    </article>
+                @empty
+                    <div class="rounded-xl border border-gray-100 bg-white px-4 py-8 text-center text-[#5B6B8A]">
+                        No ticket types added yet.
+                    </div>
+                @endforelse
+            </div>
+
+            <!-- Desktop table -->
+            <div class="hidden overflow-hidden lg:block">
+                <div class="company-table-scroll">
+                    <table class="w-full border-collapse text-left">
                         <thead>
                             <tr class="border-b border-gray-200 bg-white">
                                 <th class="py-5 px-6 text-[13px] font-bold text-[#1C1364] w-[25%]">Ticket Type</th>

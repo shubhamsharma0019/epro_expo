@@ -7,7 +7,7 @@
 <section class="max-w-[1500px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
     <div class="mb-8 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div>
-            <h1 class="text-[34px] font-semibold leading-[42px] tracking-[-0.8px] text-navy">Manage Media Gallery</h1>
+            <h1 class="company-page-title font-semibold text-navy">Manage Media Gallery</h1>
             <p class="mt-3 text-[16px] font-medium leading-7 text-[#34405F]">Add images and videos for your booth profile.</p>
         </div>
         <a href="{{ url('/company/media/create') }}" class="inline-flex h-[52px] items-center justify-center rounded-md bg-gradient-to-r from-[#5b2eff] to-[#4310d8] px-6 text-[15px] font-semibold text-white">Add Media</a>

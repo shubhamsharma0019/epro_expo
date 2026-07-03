@@ -86,7 +86,7 @@
         </form>
 
         <div class="mb-6 overflow-x-auto rounded-xl border border-gray-100 bg-white">
-            <div class="lg:min-w-[900px]">
+            <div class="min-w-0">
                 <div class="border-b border-gray-100 p-4 sm:p-6">
                     <h3 class="text-[16px] font-bold text-[#1E1B4B] lg:mb-6">Uploaded Catalogues</h3>
                     <div class="hidden grid-cols-12 items-center gap-4 lg:grid">

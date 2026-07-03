@@ -23,7 +23,9 @@
 
         window.addEventListener('resize', () => {
             if (window.innerWidth >= 1024) {
-                closeSidebar();
+                sidebar?.classList.remove('-translate-x-full');
+                overlay?.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
             }
         });
     })();

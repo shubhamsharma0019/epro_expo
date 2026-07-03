@@ -41,7 +41,7 @@
         <button type="button" data-company-sidebar-open class="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900 lg:hidden">
             <i class="ph ph-list text-2xl"></i>
         </button>
-        <h1 class="truncate text-xl font-bold text-gray-900 sm:text-2xl">{{ $topbarTitle ?: 'Dashboard' }}</h1>
+        <h1 class="company-page-title truncate text-xl font-bold text-gray-900 sm:text-2xl">{{ $topbarTitle ?: 'Dashboard' }}</h1>
     </div>
 
     <div class="flex shrink-0 items-center gap-3 sm:gap-6">
@@ -62,7 +62,7 @@
                     {{ $topbarInitial }}
                 @endif
             </span>
-            <span class="ml-3 hidden min-w-0 md:inline">
+            <span class="company-topbar-profile-text ml-3 hidden min-w-0 md:inline">
                 <span class="block max-w-[150px] truncate text-sm font-semibold">{{ $topbarContactName }}</span>
             </span>
             <i class="ph ph-caret-down ml-2 hidden text-gray-500 sm:block"></i>

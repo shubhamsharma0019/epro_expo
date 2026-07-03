@@ -6,8 +6,8 @@
 @section('content')
 <section class="max-w-[1200px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
     <div class="mb-8">
-        <h1 class="text-[34px] font-semibold leading-[42px] tracking-[-0.8px] text-navy">Manage Enquiries</h1>
-        <p class="mt-3 text-[16px] font-medium leading-7 text-[#34405F]">Review visitor and buyer enquiries from your exhibition booth.</p>
+        <h1 class="company-page-title font-semibold text-navy">Manage Enquiries</h1>
+        <p class="company-page-subtitle mt-3 font-medium text-[#34405F]">Review visitor and buyer enquiries from your exhibition booth.</p>
     </div>
 
     <div class="space-y-4">

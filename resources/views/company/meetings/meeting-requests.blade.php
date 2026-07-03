@@ -6,12 +6,12 @@
 @section('content')
 <section class="max-w-[1200px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
     <div class="mb-8">
-        <h1 class="text-[34px] font-semibold leading-[42px] tracking-[-0.8px] text-navy">Manage Meetings</h1>
+        <h1 class="company-page-title font-semibold text-navy">Manage Meetings</h1>
     </div>
 
     <div class="mb-6 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div class="overflow-hidden rounded-lg border border-borderColor bg-white shadow-sm">
-            <div class="flex items-center flex-wrap">
+            <div class="company-filter-tabs">
                 <button type="button" data-filter="all" class="meeting-tab-btn h-[52px] border-b-2 border-purple text-purple px-5 text-[14px] font-semibold focus:outline-none cursor-pointer transition-all">
                     All ({{ $meetings->count() }})
                 </button>
