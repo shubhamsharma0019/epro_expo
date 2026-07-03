@@ -115,6 +115,10 @@ class ExhibitionShowPageData
 
         $ticketUrl = \App\Support\ExhibitionTicketFlow::visitorPassEntryUrl($slug);
 
+        $halls = $halls->loadMissing('pavilion');
+        $heroStats = $this->buildHeroStats($exhibition, $displayCompanies, $displayCountries, $sponsors, $speakerCards);
+        $promoPanel = $this->buildPromoPanel($exhibition, $halls, $dateStr);
+
         return array_merge($context, [
             'slug' => $slug,
             'title' => $title,
@@ -133,8 +137,48 @@ class ExhibitionShowPageData
             'displaySpeakers' => $displaySpeakers,
             'displaySessions' => $displaySessions,
             'expectations' => $expectations,
+            'heroStats' => $heroStats,
+            'promoPanel' => $promoPanel,
             'visibleTabs' => $this->buildVisibleTabs($agenda, $speakerCards, $sponsors, $halls, $faqs),
         ]);
+    }
+
+    private function buildHeroStats($exhibition, int $displayCompanies, int $displayCountries, $sponsors, $speakerCards): array
+    {
+        $visitorCount = \App\Domain\Visitor\Models\Visitor::query()
+            ->where('exhibition_id', $exhibition->id)
+            ->count();
+
+        $industryPartners = $sponsors->filter(fn ($sponsor) => in_array($sponsor->level, ['Platinum', 'Gold'], true))->count();
+        $fundingPartners = $sponsors->reject(fn ($sponsor) => in_array($sponsor->level, ['Platinum', 'Gold'], true))->count();
+
+        if ($industryPartners === 0 && $sponsors->isNotEmpty()) {
+            $industryPartners = $sponsors->count();
+            $fundingPartners = 0;
+        }
+
+        return [
+            ['icon' => 'fas fa-building', 'value' => (string) $displayCompanies, 'label' => 'Registered exhibitors'],
+            ['icon' => 'fas fa-user', 'value' => (string) $visitorCount, 'label' => 'Registered visitors'],
+            ['icon' => 'fas fa-handshake', 'value' => (string) ($industryPartners ?: $displayCountries), 'label' => 'Industry partners'],
+            ['icon' => 'fas fa-briefcase', 'value' => (string) ($fundingPartners ?: $speakerCards->count()), 'label' => 'Funding partners'],
+        ];
+    }
+
+    private function buildPromoPanel($exhibition, $halls, string $dateStr): array
+    {
+        $firstHall = $halls->first();
+        $minTicket = \App\Domain\Event\Models\TicketTier::query()
+            ->where('exhibition_id', $exhibition->id)
+            ->min('price');
+
+        return [
+            'pavilion' => $firstHall?->pavilion?->title ?: ($halls->count() > 0 ? $halls->count() . ' Pavilions' : 'Innovation Pavilion'),
+            'hall' => $firstHall?->title ?: ($halls->count() > 0 ? $halls->count() . ' Halls' : 'Main Hall'),
+            'booth' => $halls->count() > 0 ? $halls->count() . ' halls available' : 'Various booth sizes',
+            'duration' => $dateStr,
+            'amount' => $minTicket !== null ? 'Rs. ' . number_format((float) $minTicket, 2) : 'View pricing',
+        ];
     }
 
     private function buildTags($exhibition, $halls): array
@@ -170,6 +214,7 @@ class ExhibitionShowPageData
             ['id' => 'overview', 'label' => 'Overview', 'icon' => 'ph-layout', 'show' => true],
             ['id' => 'agenda', 'label' => 'Agenda', 'icon' => 'ph-calendar-blank', 'show' => $agenda->isNotEmpty()],
             ['id' => 'speakers', 'label' => 'Speakers', 'icon' => 'ph-users', 'show' => $speakerCards->isNotEmpty()],
+            ['id' => 'companies', 'label' => 'Participating Companies', 'icon' => 'ph-buildings', 'show' => true],
             ['id' => 'sponsors', 'label' => 'Sponsors', 'icon' => 'ph-shield-star', 'show' => $sponsors->isNotEmpty()],
             ['id' => 'floorplan', 'label' => 'Floor Plan', 'icon' => 'ph-map-trifold', 'show' => $halls->isNotEmpty()],
             ['id' => 'faqs', 'label' => 'FAQs', 'icon' => 'ph-question', 'show' => $faqs->isNotEmpty()],

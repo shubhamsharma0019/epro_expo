@@ -114,6 +114,405 @@ class WebsiteContent
         ]);
     }
 
+    public static function featuresHero(): array
+    {
+        $row = self::publishedItems('features', 'hero')->first();
+
+        if (! $row) {
+            return self::defaultFeaturesHero();
+        }
+
+        $meta = json_decode((string) ($row->meta ?? '{}'), true) ?: [];
+
+        return array_merge(self::defaultFeaturesHero(), [
+            'eyebrow' => $row->subtitle ?: self::defaultFeaturesHero()['eyebrow'],
+            'title' => $row->title ?: self::defaultFeaturesHero()['title'],
+            'subtitle' => $row->body ?: self::defaultFeaturesHero()['subtitle'],
+            'button_1_label' => $meta['button_1_label'] ?? self::defaultFeaturesHero()['button_1_label'],
+            'button_1_url' => $meta['button_1_url'] ?? self::defaultFeaturesHero()['button_1_url'],
+            'button_2_label' => $meta['button_2_label'] ?? self::defaultFeaturesHero()['button_2_label'],
+            'button_2_url' => $meta['button_2_url'] ?? self::defaultFeaturesHero()['button_2_url'],
+            'cta_title' => $meta['cta_title'] ?? self::defaultFeaturesHero()['cta_title'],
+            'cta_subtitle' => $meta['cta_subtitle'] ?? self::defaultFeaturesHero()['cta_subtitle'],
+        ]);
+    }
+
+    public static function featuresSectionHeadings(): array
+    {
+        $row = self::publishedItems('features', 'section_headings')->first();
+
+        if (! $row) {
+            return self::defaultFeaturesSectionHeadings();
+        }
+
+        $meta = json_decode((string) ($row->meta ?? '{}'), true) ?: [];
+
+        return array_merge(self::defaultFeaturesSectionHeadings(), array_filter($meta, fn ($value) => $value !== null && $value !== ''));
+    }
+
+    public static function defaultFeaturesHero(): array
+    {
+        return [
+            'eyebrow' => 'Platform features',
+            'title' => 'Everything you need to run events & exhibitions',
+            'subtitle' => 'From self-serve event creation to large-scale virtual expos, eproexpo gives organisers, exhibitors, and visitors one connected platform for building, publishing, and growing live experiences.',
+            'button_1_label' => 'Explore Events',
+            'button_1_url' => null,
+            'button_2_label' => 'Browse Exhibitions',
+            'button_2_url' => null,
+            'cta_title' => 'Ready to explore the platform?',
+            'cta_subtitle' => 'Start with events, exhibitions, or a program that grows with your ambition.',
+        ];
+    }
+
+    public static function defaultFeaturesSectionHeadings(): array
+    {
+        return [
+            'audience_eyebrow' => 'Built for every audience',
+            'audience_title' => 'Tools tuned to real event experiences',
+            'audience_subtitle' => 'Powerful tools for event organisers, exhibition companies, and visitors — all in one seamless experience.',
+            'steps_eyebrow' => 'How it works',
+            'steps_title' => 'From setup to a live event, in four steps',
+            'flows_eyebrow' => 'User flows',
+            'flows_title' => 'Built for every role in the room',
+            'cta_eyebrow' => 'Get started',
+        ];
+    }
+
+    public static function pricingHero(): array
+    {
+        $row = self::publishedItems('pricing', 'hero')->first();
+
+        if (! $row) {
+            return self::defaultPricingHero();
+        }
+
+        $meta = json_decode((string) ($row->meta ?? '{}'), true) ?: [];
+
+        return array_merge(self::defaultPricingHero(), [
+            'eyebrow' => $row->subtitle ?: self::defaultPricingHero()['eyebrow'],
+            'title' => $row->title ?: self::defaultPricingHero()['title'],
+            'subtitle' => $row->body ?: self::defaultPricingHero()['subtitle'],
+            'toggle_1_label' => $meta['toggle_1_label'] ?? self::defaultPricingHero()['toggle_1_label'],
+            'toggle_2_label' => $meta['toggle_2_label'] ?? self::defaultPricingHero()['toggle_2_label'],
+            'cta_title' => $meta['cta_title'] ?? self::defaultPricingHero()['cta_title'],
+            'cta_subtitle' => $meta['cta_subtitle'] ?? self::defaultPricingHero()['cta_subtitle'],
+            'button_1_label' => $meta['button_1_label'] ?? self::defaultPricingHero()['button_1_label'],
+            'button_1_url' => $meta['button_1_url'] ?? self::defaultPricingHero()['button_1_url'],
+            'button_2_label' => $meta['button_2_label'] ?? self::defaultPricingHero()['button_2_label'],
+            'button_2_url' => $meta['button_2_url'] ?? self::defaultPricingHero()['button_2_url'],
+            'contact_email' => $meta['contact_email'] ?? self::defaultPricingHero()['contact_email'],
+        ]);
+    }
+
+    public static function pricingSectionHeadings(): array
+    {
+        $row = self::publishedItems('pricing', 'section_headings')->first();
+
+        if (! $row) {
+            return self::defaultPricingSectionHeadings();
+        }
+
+        $meta = json_decode((string) ($row->meta ?? '{}'), true) ?: [];
+
+        return array_merge(self::defaultPricingSectionHeadings(), array_filter($meta, fn ($value) => $value !== null && $value !== ''));
+    }
+
+    public static function pricingPlans(): array
+    {
+        $items = self::sectionOrDefaults('pricing', 'pricing_plan', self::defaultPricingPlans());
+
+        return array_map(fn (array $plan) => self::normalizePricingPlan($plan), $items);
+    }
+
+    public static function pricingFaqs(): array
+    {
+        $items = self::sectionOrDefaults('pricing', 'pricing_faq', self::defaultPricingFaqs());
+
+        return array_map(fn (array $faq) => [
+            'q' => $faq['title'] ?? '',
+            'a' => $faq['body'] ?? '',
+        ], $items);
+    }
+
+    public static function pricingBenefits(): array
+    {
+        return self::sectionOrDefaults('pricing', 'pricing_benefit', self::defaultPricingBenefits());
+    }
+
+    public static function defaultPricingHero(): array
+    {
+        return [
+            'eyebrow' => 'Simple pricing',
+            'title' => 'Flexible Pricing Plans',
+            'subtitle' => 'Start for events, then expand as you grow. Flexible packages for exhibitions, teams, and enterprise reach.',
+            'toggle_1_label' => 'Per Event',
+            'toggle_2_label' => 'Annual',
+            'cta_title' => 'Any event. Every audience. Everywhere.',
+            'cta_subtitle' => 'Join thousands of organisers and exhibitors already reaching new audiences on eproexpo.',
+            'button_1_label' => 'Create Event',
+            'button_1_url' => null,
+            'button_2_label' => 'Book a Demo',
+            'button_2_url' => null,
+            'contact_email' => null,
+        ];
+    }
+
+    public static function defaultPricingSectionHeadings(): array
+    {
+        return [
+            'why_eyebrow' => 'Why eproexpo',
+            'why_title' => 'Why teams choose eproexpo',
+            'faq_eyebrow' => 'Integrated functionality',
+            'faq_title' => 'Frequently asked questions',
+            'faq_card_title' => 'Still have a question?',
+            'faq_card_body' => "Can't find the answer you're looking for? Send us an email and we'll get back to you as soon as possible.",
+            'cta_eyebrow' => 'Start today',
+        ];
+    }
+
+    public static function defaultPricingPlans(): array
+    {
+        return [
+            [
+                'title' => 'Starter Plan',
+                'subtitle' => 'Perfect for small teams and startups',
+                'icon' => 'far fa-ticket-alt',
+                'link_label' => 'Get Started Free',
+                'link_url' => null,
+                'meta' => [
+                    'price' => '$0',
+                    'period' => '/event',
+                    'highlight' => false,
+                    'route' => 'company.event-company.login',
+                    'features' => [
+                        'Create and publish events',
+                        'Basic ticketing & RSVP tools',
+                        'Event page and one booth',
+                        'Email support',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Professional Plan',
+                'subtitle' => 'Perfect for growing organisers',
+                'icon' => 'fas fa-bolt',
+                'link_label' => 'Talk to Sales',
+                'link_url' => null,
+                'meta' => [
+                    'price' => 'Custom',
+                    'period' => '/event',
+                    'highlight' => true,
+                    'route' => 'events.home',
+                    'features' => [
+                        'Full suite of analytics tools',
+                        'Multi-hall virtual exhibitions',
+                        'Live chat, booths & appointments',
+                        'Priority email support',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Enterprise Plan',
+                'subtitle' => 'Solution for Large Organisations',
+                'icon' => 'far fa-building',
+                'link_label' => 'Contact Us',
+                'link_url' => '/about#contact',
+                'meta' => [
+                    'price' => 'Custom',
+                    'period' => '/event',
+                    'highlight' => false,
+                    'route' => null,
+                    'features' => [
+                        'Dedicated account manager',
+                        'Custom integrations & SSO',
+                        '24/7 dedicated support',
+                        'Custom data storage options',
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    public static function defaultPricingFaqs(): array
+    {
+        return [
+            ['title' => 'Can I start for free?', 'body' => 'Yes. You can create and publish standard events at no charge for as long as you like, no card required.'],
+            ['title' => 'Do I need to upgrade to run an exhibition?', 'body' => 'Standard exhibitions support one hall and basic booths — upgrade to Professional to unlock multi-hall exhibitions.'],
+            ['title' => 'Is ticketing secure?', 'body' => 'All payments are processed through PCI-compliant checkout, and every transaction is encrypted end-to-end.'],
+            ['title' => 'Can exhibitors book booths online?', 'body' => 'Yes — exhibitors can browse available booth types, compare packages, and book instantly online.'],
+        ];
+    }
+
+    public static function defaultPricingBenefits(): array
+    {
+        return [
+            ['icon' => 'fas fa-lock', 'title' => 'Secure Ticketing', 'body' => 'PCI-compliant checkout, every time.'],
+            ['icon' => 'fas fa-shield-alt', 'title' => 'Reliable Platform', 'body' => '99.9% uptime across every event.'],
+            ['icon' => 'fas fa-bolt', 'title' => 'Instant Reach', 'body' => 'Publish and go live in minutes.'],
+            ['icon' => 'fas fa-headset', 'title' => '24/7 Support', 'body' => 'Real humans, whenever you need.'],
+        ];
+    }
+
+    private static function normalizePricingPlan(array $plan): array
+    {
+        $meta = $plan['meta'] ?? [];
+        $url = $plan['link_url'] ?? null;
+
+        if (! $url && ! empty($meta['route'])) {
+            try {
+                $url = route($meta['route']);
+            } catch (\Throwable) {
+                $url = url('/');
+            }
+        }
+
+        return [
+            'name' => $plan['title'] ?? '',
+            'description' => $plan['subtitle'] ?? '',
+            'price' => $meta['price'] ?? 'Custom',
+            'period' => $meta['period'] ?? '/event',
+            'highlight' => (bool) ($meta['highlight'] ?? false),
+            'features' => $meta['features'] ?? [],
+            'button' => $plan['link_label'] ?? 'Get Started',
+            'url' => $url ?: route('company.event-company.login'),
+            'icon' => $plan['icon'] ?? 'far fa-circle',
+        ];
+    }
+
+    public static function aboutHero(): array
+    {
+        $row = self::publishedItems('about', 'hero')->first();
+
+        if (! $row) {
+            return self::defaultAboutHero();
+        }
+
+        $meta = json_decode((string) ($row->meta ?? '{}'), true) ?: [];
+
+        return array_merge(self::defaultAboutHero(), [
+            'eyebrow' => $row->subtitle ?: self::defaultAboutHero()['eyebrow'],
+            'title' => $row->title ?: self::defaultAboutHero()['title'],
+            'subtitle' => $row->body ?: self::defaultAboutHero()['subtitle'],
+            'button_1_label' => $meta['button_1_label'] ?? self::defaultAboutHero()['button_1_label'],
+            'button_1_url' => $meta['button_1_url'] ?? self::defaultAboutHero()['button_1_url'],
+            'button_2_label' => $meta['button_2_label'] ?? self::defaultAboutHero()['button_2_label'],
+            'button_2_url' => $meta['button_2_url'] ?? self::defaultAboutHero()['button_2_url'],
+            'cta_title' => $meta['cta_title'] ?? self::defaultAboutHero()['cta_title'],
+            'cta_subtitle' => $meta['cta_subtitle'] ?? self::defaultAboutHero()['cta_subtitle'],
+        ]);
+    }
+
+    public static function aboutSectionHeadings(): array
+    {
+        $row = self::publishedItems('about', 'section_headings')->first();
+
+        if (! $row) {
+            return self::defaultAboutSectionHeadings();
+        }
+
+        $meta = json_decode((string) ($row->meta ?? '{}'), true) ?: [];
+
+        return array_merge(self::defaultAboutSectionHeadings(), array_filter($meta, fn ($value) => $value !== null && $value !== ''));
+    }
+
+    public static function aboutValues(): array
+    {
+        return self::sectionOrDefaults('about', 'about_value', self::defaultAboutValues());
+    }
+
+    public static function aboutStats(): array
+    {
+        return self::sectionOrDefaults('about', 'about_stat', self::defaultAboutStats());
+    }
+
+    public static function aboutMilestones(): array
+    {
+        $items = self::sectionOrDefaults('about', 'about_milestone', self::defaultAboutMilestones());
+
+        return array_map(fn (array $item) => [
+            'year' => $item['subtitle'] ?? ($item['meta']['year'] ?? ''),
+            'title' => $item['title'] ?? '',
+            'body' => $item['body'] ?? '',
+        ], $items);
+    }
+
+    public static function aboutPartners(): array
+    {
+        return self::sectionOrDefaults('about', 'about_partner', self::defaultAboutPartners());
+    }
+
+    public static function defaultAboutHero(): array
+    {
+        return [
+            'eyebrow' => 'About eproexpo',
+            'title' => 'Connecting the world through events & exhibitions',
+            'subtitle' => 'eproexpo is an all-in-one platform for virtual events and exhibitions. We help organisers publish events, sell tickets, and engage audiences — while enabling companies to showcase products in immersive booth experiences.',
+            'button_1_label' => 'Explore Events',
+            'button_1_url' => null,
+            'button_2_label' => 'View Features',
+            'button_2_url' => null,
+            'cta_title' => 'Connect. Explore. Engage.',
+            'cta_subtitle' => 'Ready to learn more or partner with us? Start exploring events and exhibitions today.',
+        ];
+    }
+
+    public static function defaultAboutSectionHeadings(): array
+    {
+        return [
+            'stats_eyebrow' => 'By the Numbers',
+            'stats_title' => 'Platform at a glance',
+            'journey_eyebrow' => 'Our Journey',
+            'journey_title' => 'Building the future of connected events',
+            'partners_title' => 'Trusted by organisations worldwide',
+            'cta_eyebrow' => 'Get connected',
+        ];
+    }
+
+    public static function defaultAboutValues(): array
+    {
+        return [
+            ['icon' => 'fas fa-bullseye', 'color' => '#6D28D9', 'title' => 'Our Mission', 'body' => 'To connect people, companies, and communities through seamless virtual events and exhibitions that bring real value to every interaction.'],
+            ['icon' => 'fas fa-rocket', 'color' => '#6D28D9', 'title' => 'Our Vision', 'body' => 'A world where every event — big or small — can host its most impactful audience, without the barriers of distance or infrastructure.'],
+            ['icon' => 'fas fa-gem', 'color' => '#6D28D9', 'title' => 'Our Values', 'body' => 'Innovation, accountability, trust, and authentic connection — everything we build is engineered around forming lasting engagement.'],
+        ];
+    }
+
+    public static function defaultAboutStats(): array
+    {
+        return [
+            ['title' => '3.2M+', 'subtitle' => 'Events Hosted'],
+            ['title' => '18K+', 'subtitle' => 'Organisers'],
+            ['title' => '7.4M+', 'subtitle' => 'Tickets Sold'],
+            ['title' => '120+', 'subtitle' => 'Countries'],
+        ];
+    }
+
+    public static function defaultAboutMilestones(): array
+    {
+        return [
+            ['subtitle' => '2021', 'title' => 'Platform Launch', 'body' => 'Standard events with a lean toolkit meant for scaling organisers of every size.'],
+            ['subtitle' => '2022', 'title' => 'Virtual Exhibitions', 'body' => 'Immersive pavilions, halls, and interactive booths for global exhibitors.'],
+            ['subtitle' => '2023', 'title' => 'Global Growth', 'body' => 'Expansion to enterprise organisers, exhibitors, and visitors across 120+ countries.'],
+            ['subtitle' => '2024', 'title' => 'All-in-One Platform', 'body' => 'Unified events, exhibitions, ticketing, networking, and analytics under one roof.'],
+        ];
+    }
+
+    public static function defaultAboutPartners(): array
+    {
+        return [
+            ['title' => 'Google'],
+            ['title' => 'Microsoft'],
+            ['title' => 'Deloitte'],
+            ['title' => 'P&G'],
+            ['title' => 'UBS'],
+            ['title' => 'IBM'],
+            ['title' => 'Infosys'],
+            ['title' => 'SIEMENS'],
+            ['title' => 'accenture'],
+        ];
+    }
+
     public static function defaultHero(): array
     {
         return [
@@ -190,10 +589,10 @@ class WebsiteContent
     public static function defaultFlowCards(): array
     {
         return [
-            ['icon' => 'far fa-calendar-alt', 'color' => '#6D28D9', 'bg' => '#F4F0FF', 'title' => 'Event User Flow', 'body' => 'Explore events, view details, book tickets, and access event features.', 'link_label' => 'Open Events', 'link_url' => null, 'route' => 'events.home', 'border' => '#6D28D9'],
-            ['icon' => 'far fa-building', 'color' => '#0F9F8F', 'bg' => '#E9FFF8', 'title' => 'Exhibition Visitor Flow', 'body' => 'Browse exhibitions, visit companies, get visitor pass, and open dashboard.', 'link_label' => 'Open Exhibitions', 'link_url' => '/exhibitions', 'route' => null, 'border' => '#0F9F8F'],
-            ['icon' => 'fas fa-store', 'color' => '#FF8A1D', 'bg' => '#FFF4E8', 'title' => 'Exhibition Company Flow', 'body' => 'Choose an exhibition, book booth space, and manage exhibitor tools.', 'link_label' => 'Book Booth', 'link_url' => null, 'route' => 'company.dashboard', 'border' => '#FF9B41'],
-            ['icon' => 'fas fa-calendar-plus', 'color' => '#5B32F6', 'bg' => '#F4F0FF', 'title' => 'Event Company Flow', 'body' => 'Login as a company, create your own event, set tickets, preview, and submit for review.', 'link_label' => 'Create Event', 'link_url' => null, 'route' => 'company.event-company.login', 'border' => '#5B32F6'],
+            ['icon' => 'far fa-calendar-alt', 'color' => '#6D28D9', 'bg' => '#F4F0FF', 'title' => 'Event User Flow', 'body' => 'Browse events, secure a ticket, and join live sessions — all from one visitor dashboard.', 'link_label' => 'Open Guide', 'link_url' => null, 'route' => 'events.home', 'border' => '#6D28D9', 'meta' => ['headline' => 'Discover, register, and attend']],
+            ['icon' => 'far fa-building', 'color' => '#0F9F8F', 'bg' => '#E9FFF8', 'title' => 'Exhibition Visitor Flow', 'body' => 'Walk virtual halls, chat with exhibitors, and collect brochures in one visit.', 'link_label' => 'Open Guide', 'link_url' => '/exhibitions', 'route' => null, 'border' => '#0F9F8F', 'meta' => ['headline' => 'Explore halls and connect with booths']],
+            ['icon' => 'fas fa-store', 'color' => '#FF8A1D', 'bg' => '#FFF4E8', 'title' => 'Exhibition Company Flow', 'body' => 'Set up your booth, upload assets, and manage incoming visitor leads live.', 'link_label' => 'Book Booth', 'link_url' => null, 'route' => 'company.dashboard', 'border' => '#FF9B41', 'meta' => ['headline' => 'Design your booth and manage leads']],
+            ['icon' => 'fas fa-calendar-plus', 'color' => '#5B32F6', 'bg' => '#F4F0FF', 'title' => 'Event Company Flow', 'body' => 'Create your event, sell tickets, and support attendees end-to-end.', 'link_label' => 'Get Started', 'link_url' => null, 'route' => 'company.event-company.login', 'border' => '#5B32F6', 'meta' => ['headline' => 'Publish, sell, and support attendees']],
         ];
     }
 

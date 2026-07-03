@@ -128,6 +128,7 @@ class EventListingShowPageData
             'dbEvent' => $dbEvent,
             'eventSlug' => $dbEvent->slug,
             'event' => $event,
+            'heroStats' => $this->buildHeroStats($dbEvent, $eventDays, $eventCapacity, $seatsLeft),
             'sessions' => $sessions,
             'speakers' => $speakers,
             'eventTabs' => $this->buildTabs($event, $sessions, $speakers),
@@ -152,6 +153,7 @@ class EventListingShowPageData
             'dbEvent' => null,
             'eventSlug' => $slug,
             'event' => $event,
+            'heroStats' => $this->buildHeroStats(null, 1, null, null, $event),
             'sessions' => collect(),
             'speakers' => collect(),
             'eventTabs' => collect([
@@ -164,9 +166,40 @@ class EventListingShowPageData
     {
         return collect([
             ['label' => 'About', 'href' => '#event-about', 'show' => filled($event['description']) || count($event['highlights']) > 0],
-            ['label' => 'Agenda', 'href' => '#event-agenda', 'show' => $sessions->isNotEmpty()],
+            ['label' => 'Schedule', 'href' => '#event-agenda', 'show' => $sessions->isNotEmpty()],
             ['label' => 'Speakers', 'href' => '#event-speakers', 'show' => $speakers->isNotEmpty()],
+            ['label' => 'Location', 'href' => '#event-venue', 'show' => filled($event['venue'])],
         ])->filter(fn ($tab) => $tab['show'])->values();
+    }
+
+    private function buildHeroStats(?CompanyEvent $dbEvent, int $eventDays = 1, ?int $eventCapacity = null, ?int $seatsLeft = null, ?array $staticEvent = null): array
+    {
+        $mode = $dbEvent?->event_mode
+            ? ucfirst(str_replace('_', ' ', $dbEvent->event_mode))
+            : ($staticEvent['tags'][0] ?? 'In person');
+
+        return [
+            [
+                'icon' => 'far fa-calendar-alt',
+                'value' => ($eventDays > 1 ? $eventDays . ' days' : '1 day'),
+                'label' => 'Event length',
+            ],
+            [
+                'icon' => 'fas fa-users',
+                'value' => $eventCapacity ? number_format($eventCapacity) . ' attendees' : 'Open capacity',
+                'label' => 'Capacity',
+            ],
+            [
+                'icon' => 'far fa-ticket-alt',
+                'value' => $seatsLeft !== null ? number_format($seatsLeft) . ' seats' : 'Available',
+                'label' => 'Still available',
+            ],
+            [
+                'icon' => 'fas fa-building',
+                'value' => $mode,
+                'label' => 'Experience',
+            ],
+        ];
     }
 
     private function eventImageUrl($branding): ?string

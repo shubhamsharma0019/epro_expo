@@ -37,6 +37,12 @@ class DatabaseOutageResponse
         return match (true) {
             in_array($routeName, ['home', 'frontend.home'], true) => response()->view('frontend.home', [
                 'home' => (new HomePageData)->build(),
+                'events' => [],
+                'categories' => [],
+                'countries' => [],
+                'heroSlides' => [],
+                'heroMeta' => ['event_count' => 0, 'category_count' => 0, 'country_count' => 0],
+                'slots' => [],
             ]),
 
             in_array($routeName, ['exhibitions.index', 'exhibitions.browse'], true) => response()->view('frontend.exhibitions.index', [

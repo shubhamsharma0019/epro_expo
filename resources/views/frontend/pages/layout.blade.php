@@ -13,6 +13,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @include('frontend.shared.partials.responsive-fixes')
+    @stack('head')
 </head>
 <body class="event-home bg-[#fbfbff] font-['Inter',sans-serif] text-[#071044] antialiased">
     @include('frontend.events.partials.home.header', ['activeNav' => $activeNav])
@@ -22,5 +23,6 @@
     </main>
 
     @include('frontend.events.partials.home.footer')
+    @stack('scripts')
 </body>
 </html>
