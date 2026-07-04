@@ -45,7 +45,7 @@
     <main class="page">
         <section class="shell">
             <div class="story">
-                <x-shared.brand-logo href="{{ route('home') }}" class="story-brand" mark-class="h-11 w-11 rounded-[16px] text-[20px]" title-class="text-[24px] text-[#071044]" subtitle-class="text-[11px] text-[#8A94AD]" />
+                <x-shared.frontend-brand-logo class="story-brand" />
                 <div>
                     <h1>Manage booth bookings like a modern exhibitor.</h1>
                     <p>Access pavilions, halls, booth slots, products, catalogues, enquiries, and meetings from your company workspace.</p>

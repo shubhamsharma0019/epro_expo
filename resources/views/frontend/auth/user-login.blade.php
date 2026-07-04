@@ -27,18 +27,7 @@
 @endphp
 <main class="grid min-h-screen w-full overflow-hidden lg:grid-cols-[0.92fr_1.08fr]">
     <section class="relative hidden overflow-hidden bg-[#EFF6FF]/80 p-8 backdrop-blur-[1px] lg:flex lg:flex-col lg:justify-between">
-        <a href="{{ route('home') }}" class="flex items-center gap-2">
-            <span class="grid grid-cols-2 gap-[3px]">
-                <i class="h-[10px] w-[10px] rounded-[2px] bg-[#2563EB]"></i>
-                <i class="h-[10px] w-[10px] rounded-[2px] bg-sky-400"></i>
-                <i class="h-[10px] w-[10px] rounded-[2px] bg-sky-400"></i>
-                <i class="h-[10px] w-[10px] rounded-[2px] bg-[#2563EB]"></i>
-            </span>
-            <span>
-                <span class="block text-[22px] font-bold leading-none text-[#020617]">EproExpo</span>
-                <span class="mt-1 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#64748B]">Event Visitor</span>
-            </span>
-        </a>
+        <x-shared.frontend-brand-logo />
 
         <div>
             <p class="mb-3 text-[12px] font-bold uppercase tracking-[0.18em] text-[#2563EB]">{{ $isEventTicketFlow ? 'Event Ticket Login' : ($isExhibitionTicketFlow ? 'Visitor Pass Login' : 'Visitor Login') }}</p>
@@ -72,18 +61,7 @@
     <section class="flex items-center justify-center bg-white/90 px-5 py-10 backdrop-blur-sm sm:px-10">
         <div class="w-full max-w-[430px]">
             <div class="mb-9 lg:hidden">
-                <a href="{{ route('home') }}" class="flex items-center gap-2">
-                    <span class="grid grid-cols-2 gap-[3px]">
-                        <i class="h-[10px] w-[10px] rounded-[2px] bg-[#2563EB]"></i>
-                        <i class="h-[10px] w-[10px] rounded-[2px] bg-sky-400"></i>
-                        <i class="h-[10px] w-[10px] rounded-[2px] bg-sky-400"></i>
-                        <i class="h-[10px] w-[10px] rounded-[2px] bg-[#2563EB]"></i>
-                    </span>
-                    <span>
-                        <span class="block text-[22px] font-bold text-[#020617]">EproExpo</span>
-                        <span class="mt-1 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#64748B]">Event Visitor</span>
-                    </span>
-                </a>
+                <x-shared.frontend-brand-logo size="compact" />
             </div>
 
             @if ($isEventTicketFlow || $isExhibitionTicketFlow)

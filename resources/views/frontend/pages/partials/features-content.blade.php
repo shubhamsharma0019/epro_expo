@@ -2,7 +2,7 @@
     $featuresHero = $featuresHero ?? \App\Support\WebsiteContent::featuresHero();
     $sectionHeadings = $sectionHeadings ?? \App\Support\WebsiteContent::featuresSectionHeadings();
     $features = $features ?? \App\Support\WebsiteContent::sectionOrDefaults('home', 'feature', \App\Support\WebsiteContent::defaultFeatures());
-    $featurePills = $featurePills ?? \App\Support\WebsiteContent::sectionOrDefaults('home', 'feature_pill', \App\Support\WebsiteContent::defaultFeaturePills());
+    $featurePills = $featurePills ?? (new \App\Domain\Shared\Services\HomePageData)->featurePills();
     $steps = $steps ?? \App\Support\WebsiteContent::sectionOrDefaults('home', 'step', \App\Support\WebsiteContent::defaultSteps());
     $flowCards = $flowCards ?? \App\Support\WebsiteContent::sectionOrDefaults('home', 'flow_card', \App\Support\WebsiteContent::defaultFlowCards());
     $primaryFeatures = array_slice($features, 0, 3);
@@ -38,7 +38,7 @@
     </div>
     <div class="hf-hero-stats">
       @foreach ($featurePills as $pill)
-        <a href="{{ $pill['link_url'] ?? route('exhibitions.index') }}" class="hf-hero-stat">
+        <a href="{{ $pill['link_url'] ?? route('frontend.user.login') }}" class="hf-hero-stat">
           <strong><i class="{{ $pill['icon'] ?? 'far fa-circle' }}"></i></strong>
           <span>{{ $pill['title'] ?? '' }}</span>
         </a>

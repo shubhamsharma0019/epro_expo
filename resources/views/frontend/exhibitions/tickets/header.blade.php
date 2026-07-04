@@ -34,7 +34,7 @@
     $passFlowLocked = session('exhibition_booking_path') && ! session('visitor_pass_active');
 
     $drawerPrimaryLinks = [
-        ['Visitor Dashboard', $passFlowLocked ? $passFlowHref : route('exhibitions.visitor.dashboard', $activeSlug), request()->routeIs('exhibitions.dashboard') || request()->routeIs('exhibitions.visitor.dashboard'), 'ph ph-house'],
+        ['Visitor Dashboard', $passFlowLocked ? $passFlowHref : route('frontend.user.dashboard'), request()->routeIs('frontend.user.dashboard'), 'ph ph-house'],
         ['Exhibition Lobby', route('exhibitions.visit', $activeSlug), request()->routeIs('exhibitions.visit'), 'ph ph-monitor-play'],
         ['Browse Exhibitions', route('exhibitions.index'), request()->routeIs('exhibitions.index') || request()->routeIs('exhibitions.browse') || request()->routeIs('exhibitions.show'), 'ph ph-magnifying-glass'],
         ['Companies', route('exhibitions.visitor.companies', $activeSlug), request()->routeIs('exhibitions.visitor.companies*'), 'ph ph-storefront'],
@@ -43,11 +43,11 @@
     ];
 
     $drawerVisitorLinks = [
-        ['My Passes', $passFlowLocked ? $passFlowHref : route('exhibitions.visitor.my-passes', $activeSlug), request()->routeIs('exhibitions.visitor.my-passes'), 'ph ph-bookmark'],
-        ['My Meetings', route('exhibitions.visitor.meetings', $activeSlug), request()->routeIs('exhibitions.visitor.meetings'), 'ph ph-calendar-check'],
+        ['My Passes', $passFlowLocked ? $passFlowHref : route('frontend.user.passes'), request()->routeIs('frontend.user.passes'), 'ph ph-bookmark'],
+        ['My Meetings', route('frontend.user.meetings'), request()->routeIs('frontend.user.meetings'), 'ph ph-calendar-check'],
         ['Sessions', route('exhibitions.visitor.sessions', $activeSlug), request()->routeIs('exhibitions.visitor.sessions'), 'ph ph-play-circle'],
-        ['Notifications', route('exhibitions.visitor.notifications', $activeSlug), request()->routeIs('exhibitions.visitor.notifications'), 'ph ph-bell'],
-        ['QR Pass', $passFlowLocked ? $passFlowHref : route('exhibitions.visitor.qr-pass', $activeSlug), request()->routeIs('exhibitions.visitor.qr-pass') || request()->routeIs('exhibitions.tickets.e-ticket'), 'ph ph-qr-code'],
+        ['Notifications', route('frontend.user.dashboard'), request()->routeIs('frontend.user.dashboard'), 'ph ph-bell'],
+        ['QR Pass', $passFlowLocked ? $passFlowHref : route('frontend.user.passes'), request()->routeIs('frontend.user.passes') || request()->routeIs('frontend.user.tickets.*'), 'ph ph-qr-code'],
     ];
 @endphp
         @auth

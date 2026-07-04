@@ -23,6 +23,8 @@
 
             .company-event-flow-main {
                 margin-left: 280px;
+                width: calc(100% - 280px);
+                max-width: calc(100% - 280px);
             }
         }
 
@@ -42,7 +44,7 @@
         .text-success { color: #10B981; }
         .text-warning { color: #F59E0B; }
         .bg-primary { background-color: #5B32F6; }
-        .bg-primary-light { background-color: #F3F4F6; }
+        .bg-primary-light { background-color: #F3EEFF; }
         .bg-success-light { background-color: #ECFDF5; }
         .bg-warning-light { background-color: #FFFBEB; }
         .border-primary { border-color: #5B32F6; }

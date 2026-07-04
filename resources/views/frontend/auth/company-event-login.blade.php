@@ -51,7 +51,7 @@
     <main class="page">
         <section class="shell">
             <div class="story">
-                <x-shared.brand-logo href="{{ route('home') }}" mark-class="h-11 w-11 rounded-[16px] text-[20px]" title-class="text-[24px] text-[#071044]" subtitle-class="text-[11px] text-[#8A94AD]" />
+                <x-shared.frontend-brand-logo subtitle="ORGANIZER SUITE" />
                 <div>
                     <h1>Create and manage company-hosted events.</h1>
                     <p>Use your company credentials to open the event company workspace for event details, branding, ticket setup, preview and review submission.</p>

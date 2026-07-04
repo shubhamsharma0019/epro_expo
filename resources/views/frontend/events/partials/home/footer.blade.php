@@ -2,7 +2,7 @@
     <div class="mx-auto flex max-w-[1540px] flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
         <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
             <span class="rounded-2xl bg-white px-3 py-2 self-start">
-                <x-shared.brand-logo href="{{ route('home') }}" mark-class="h-10 w-10 rounded-[14px] text-[19px]" title-class="text-[23px] text-[#071044]" subtitle-class="text-[10px] text-[#8A94AD]" />
+                <x-shared.home-brand-logo size="footer" />
             </span>
             <span class="text-[13px] font-medium text-white/85 sm:ml-1">Connect. Explore. Engage.</span>
         </div>

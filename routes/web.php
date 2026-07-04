@@ -12,8 +12,12 @@ Route::get('/', HomePageController::class)->name('home');
 Route::get('/home', HomePageController::class)->name('frontend.home');
 
 Route::view('/features', 'frontend.pages.features')->name('frontend.features');
-Route::view('/pricing', 'frontend.pages.pricing')->name('frontend.pricing');
-Route::view('/about-us', 'frontend.pages.about')->name('frontend.about');
+Route::get('/pricing', function (\App\Domain\Shared\Services\PricingPageData $pageData) {
+    return view('frontend.pages.pricing', $pageData->build());
+})->name('frontend.pricing');
+Route::get('/about-us', function (\App\Domain\Shared\Services\AboutPageData $pageData) {
+    return view('frontend.pages.about', $pageData->build());
+})->name('frontend.about');
 Route::get('/login', function () {
     return redirect()->route('frontend.user.login');
 })->name('login');

@@ -8,7 +8,9 @@ use App\Domain\Event\Models\Exhibition;
 use App\Support\DbGuard;
 use App\Support\LiveContent;
 use App\Domain\Visitor\Models\Visitor;
+use App\Domain\Visitor\Models\VisitorMeetingBooking;
 use App\Support\WebsiteContent;
+use Illuminate\Support\Facades\DB;
 
 class HomePageData
 {
@@ -57,32 +59,78 @@ class HomePageData
         return $this->mergeStatsWithLiveCounts($cmsStats, $counts, $defaults);
     }
 
+    public function featurePills(): array
+    {
+        return $this->resolveFeaturePills();
+    }
+
     private function resolveFeaturePills(): array
     {
         $pills = WebsiteContent::sectionOrDefaults('home', 'feature_pill', WebsiteContent::defaultFeaturePills());
-        $slug = $this->primaryExhibitionSlug();
+        $routes = $this->featurePillRoutes();
+        $counts = $this->featurePillCounts();
 
-        $routes = [
-            'live chat' => $slug ? route('exhibitions.visitor.chat', ['slug' => $slug]) : route('exhibitions.index'),
-            'video call' => $slug ? route('exhibitions.visitor.meetings', ['slug' => $slug]) : route('exhibitions.index'),
-            'brochures' => $slug ? route('exhibitions.visitor.companies', ['slug' => $slug]) : route('exhibitions.index'),
-            'enquiries' => $slug ? route('exhibitions.visitor.companies', ['slug' => $slug]) : route('exhibitions.index'),
-            'appointments' => $slug ? route('exhibitions.visitor.meetings', ['slug' => $slug]) : route('exhibitions.index'),
-            'leaderboard' => $slug ? route('exhibitions.visitor.dashboard', ['slug' => $slug]) : route('exhibitions.index'),
-        ];
-
-        return array_map(function (array $pill) use ($routes) {
-            if (! empty($pill['link_url'])) {
-                return $pill;
-            }
-
+        return array_map(function (array $pill) use ($routes, $counts) {
             $key = strtolower(trim((string) ($pill['title'] ?? '')));
+
             if (isset($routes[$key])) {
                 $pill['link_url'] = $routes[$key];
+            } elseif (empty($pill['link_url'])) {
+                $pill['link_url'] = route('frontend.user.login');
+            }
+
+            if (isset($counts[$key]) && $counts[$key] > 0) {
+                $pill['meta'] = array_merge($pill['meta'] ?? [], ['live_count' => $counts[$key]]);
             }
 
             return $pill;
         }, $pills);
+    }
+
+    /** @return array<string, string> */
+    private function featurePillRoutes(): array
+    {
+        return [
+            'live chat' => route('frontend.user.browse'),
+            'video call' => route('frontend.user.meetings'),
+            'brochures' => route('frontend.user.browse'),
+            'enquiries' => route('frontend.user.browse'),
+            'appointments' => route('frontend.user.meetings'),
+            'leaderboard' => route('frontend.user.dashboard'),
+        ];
+    }
+
+    /** @return array<string, int> */
+    private function featurePillCounts(): array
+    {
+        return DbGuard::whenAvailable(function () {
+            $meetings = VisitorMeetingBooking::query()
+                ->whereIn('status', ['pending', 'confirmed', 'accepted'])
+                ->count();
+
+            $brochures = DbGuard::hasTable('booth_catalogues')
+                ? \App\Domain\Booth\Models\BoothCatalogue::query()->count()
+                : 0;
+
+            $enquiries = DbGuard::hasTable('enquiries')
+                ? DB::table('enquiries')->count()
+                : 0;
+
+            $liveSessions = DbGuard::hasTable('booth_sessions')
+                ? \App\Domain\Booth\Models\BoothSession::query()->where('status', 'live')->count()
+                : 0;
+
+            return [
+                'live chat' => $liveSessions,
+                'video call' => $meetings,
+                'brochures' => $brochures,
+                'enquiries' => $enquiries,
+                'appointments' => $meetings,
+                'leaderboard' => DbGuard::hasTable('visitors')
+                    ? Visitor::query()->where('payment_status', 'completed')->count()
+                    : 0,
+            ];
+        }, []);
     }
 
     private function resolveFlowCards(): array
@@ -117,49 +165,87 @@ class HomePageData
         $booking = $this->boothHighlights()->first();
 
         if ($booking) {
-            $name = $booking->boothProfile?->company_name
-                ?: $booking->company?->company_name
-                ?: $booking->company?->name
-                ?: 'Exhibitor';
-
-            return [
-                'initials' => $this->initials($name),
-                'company_name' => $name,
-                'tagline' => $booking->boothProfile?->tagline ?: 'Innovating the Future Together',
-                'description' => $booking->boothProfile?->about
-                    ?: $booking->boothProfile?->description
-                    ?: 'We deliver smart solutions that empower businesses to grow faster and smarter.',
-                'image_url' => $booking->boothProfile?->banner_image
-                    ? asset('storage/' . ltrim($booking->boothProfile->banner_image, '/'))
-                    : asset('images/home/booth-preview-new.png'),
-                'status' => 'ONLINE',
-                'link_url' => $booking->exhibition?->slug && $booking->company?->slug
-                    ? route('exhibitions.visitor.companies.show', ['slug' => $booking->exhibition->slug, 'companySlug' => $booking->company->slug])
-                    : ($booking->exhibition?->slug ? url('/exhibitions/' . $booking->exhibition->slug) : url('/exhibitions')),
-            ];
+            return $this->withBoothPreviewSettings($this->formatBoothHighlight($booking));
         }
 
         $cms = WebsiteContent::publishedItems('home', 'booth_highlight')->first();
         if ($cms) {
-            return [
-                'initials' => $cms->subtitle ?: 'T/C',
-                'company_name' => $cms->title ?: 'TechNova Solutions',
-                'tagline' => $cms->link_label ?: 'Innovating the Future Together',
+            return $this->withBoothPreviewSettings([
+                'initials' => $cms->subtitle ?: 'EX',
+                'company_name' => $cms->title ?: 'Featured Exhibitor',
+                'industry' => $cms->link_label ?: '',
+                'tagline' => $cms->link_label ?: '',
                 'description' => $cms->body ?: '',
                 'image_url' => $cms->image_url ?: asset('images/home/booth-preview-new.png'),
                 'status' => 'ONLINE',
-                'link_url' => $cms->link_url ?: url('/exhibitions'),
-            ];
+                'has_brochure' => false,
+            ]);
         }
 
-        return [
-            'initials' => 'T/C',
-            'company_name' => 'TechNova Solutions',
-            'tagline' => 'Innovating the Future Together',
-            'description' => 'We deliver smart solutions that empower businesses to grow faster and smarter.',
+        return $this->withBoothPreviewSettings([
+            'initials' => 'EX',
+            'company_name' => 'Featured Exhibitor',
+            'industry' => '',
+            'tagline' => '',
+            'description' => 'Explore live exhibitor booths, brochures and meetings from the home page preview.',
             'image_url' => asset('images/home/booth-preview-new.png'),
             'status' => 'ONLINE',
-            'link_url' => url('/exhibitions'),
+            'has_brochure' => false,
+        ]);
+    }
+
+    /** @param array<string, mixed> $data */
+    private function withBoothPreviewSettings(array $data): array
+    {
+        $settings = WebsiteContent::homeBoothPreviewSettings();
+
+        $data['demo_only'] = (bool) ($settings['demo_only'] ?? true);
+        $data['demo_label'] = (string) ($settings['label'] ?? 'Demo preview');
+
+        return $data;
+    }
+
+    /** @return array<string, mixed> */
+    private function formatBoothHighlight(BoothBooking $booking): array
+    {
+        $profile = $booking->boothProfile;
+        $branding = $booking->boothBranding;
+        $company = $booking->company;
+
+        $name = $profile?->company_name
+            ?: $company?->company_name
+            ?: $company?->name
+            ?: 'Exhibitor';
+
+        $industry = $profile?->industry ?: $company?->industry ?: '';
+        $description = filled($profile?->about_company)
+            ? trim(strip_tags((string) $profile->about_company))
+            : trim((string) ($profile?->welcome_text ?: ''));
+
+        if ($description === '') {
+            $description = 'Discover products, brochures and live sessions from this exhibitor booth.';
+        }
+
+        $bannerPath = $branding?->booth_banner ?: $profile?->booth_banner;
+        $imageUrl = $bannerPath
+            ? asset('storage/' . ltrim($bannerPath, '/'))
+            : asset('images/home/booth-preview-new.png');
+
+        $brochure = $booking->boothCatalogues
+            ->first(fn ($item) => ($item->visibility ?? 'public') === 'public' && ($item->status ?? 'active') === 'active');
+
+        $hasLiveSession = $booking->boothSessions->contains(fn ($session) => $session->status === 'live');
+        $isLiveBooth = in_array($booking->booth_setup_status, ['live'], true);
+
+        return [
+            'initials' => $this->initials($name),
+            'company_name' => $name,
+            'industry' => $industry,
+            'tagline' => $profile?->tagline ?: $industry,
+            'description' => $description,
+            'image_url' => $imageUrl,
+            'status' => ($hasLiveSession || $isLiveBooth) ? 'LIVE' : 'ONLINE',
+            'has_brochure' => (bool) $brochure?->file_path,
         ];
     }
 
@@ -247,19 +333,36 @@ class HomePageData
 
     private function boothHighlights()
     {
-        return DbGuard::whenAvailable(fn () => BoothBooking::query()
-            ->with(['company', 'exhibition', 'hall', 'booth', 'boothProfile'])
-            ->where('payment_status', 'paid')
-            ->whereIn('booking_status', ['confirmed', 'active'])
-            ->where('admin_status', 'approved')
-            ->whereIn('booth_setup_status', ['published', 'approved', 'live'])
-            ->latest()
-            ->take(6)
-            ->get()
-            ->filter(fn ($booking) => filled(
-                $booking->boothProfile?->company_name ?: $booking->company?->company_name ?: $booking->company?->name
-            ))
-            ->values(), collect());
+        return DbGuard::whenAvailable(function () {
+            $query = BoothBooking::query()
+                ->with([
+                    'company',
+                    'exhibition',
+                    'hall',
+                    'booth',
+                    'boothProfile',
+                    'boothBranding',
+                    'boothCatalogues',
+                    'boothSessions',
+                ])
+                ->where('payment_status', 'paid')
+                ->whereIn('booking_status', ['confirmed', 'active'])
+                ->where('admin_status', 'approved')
+                ->whereIn('booth_setup_status', ['published', 'approved', 'live']);
+
+            if (DbGuard::hasColumn('booth_bookings', 'is_home_featured')) {
+                $query->orderByDesc('is_home_featured');
+            }
+
+            return $query
+                ->latest()
+                ->take(6)
+                ->get()
+                ->filter(fn ($booking) => filled(
+                    $booking->boothProfile?->company_name ?: $booking->company?->company_name ?: $booking->company?->name
+                ))
+                ->values();
+        }, collect());
     }
 
     public function platformCounts(): array

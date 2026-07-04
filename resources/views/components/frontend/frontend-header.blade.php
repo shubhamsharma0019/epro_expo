@@ -1,6 +1,6 @@
 <header class="sticky top-0 z-50 border-b border-[#EEF0F7] bg-white/90 backdrop-blur-xl">
     <div class="mx-auto flex max-w-[1440px] items-center justify-between px-4 py-4 sm:px-6 lg:px-8 lg:py-5">
-        <x-shared.brand-logo href="{{ route('home') }}" mark-class="h-11 w-11 rounded-[16px] text-[20px] sm:h-[54px] sm:w-[54px] sm:rounded-[18px] sm:text-[24px]" title-class="text-[24px] text-[#071044] sm:text-[30px]" subtitle-class="text-[10px] text-[#8A94AD] sm:text-[12px]" />
+        <x-shared.frontend-brand-logo />
 
         <nav class="hidden items-center gap-10 text-[14px] font-semibold text-[#071044] lg:flex">
             <a class="hover:text-[#5726E8]" href="{{ route('events.home') }}">Explore Events</a>

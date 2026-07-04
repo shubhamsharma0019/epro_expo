@@ -25,12 +25,10 @@
             <button type="button" class="menu-toggle" onclick="toggleVisitorSidebar()" aria-label="Open menu">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
             </button>
-            <x-shared.brand-logo
+            <x-shared.frontend-brand-logo
                 href="{{ route('frontend.user.dashboard') }}"
                 subtitle=""
-                mark-class="h-9 w-9 rounded-[13px] text-[17px]"
-                title-class="text-[18px] text-[#071044]"
-                subtitle-class="hidden"
+                size="compact"
             />
             <span style="width:38px;"></span>
         </div>

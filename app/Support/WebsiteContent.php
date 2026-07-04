@@ -25,13 +25,31 @@ class WebsiteContent
 
     public static function hero(string $page = 'home'): array
     {
+        $defaults = $page === 'events'
+            ? self::defaultEventsHero()
+            : self::defaultHero();
+
         $row = self::publishedItems($page, 'hero')->first();
 
         if (! $row) {
-            return self::defaultHero();
+            return $defaults;
         }
 
         $meta = json_decode((string) ($row->meta ?? '{}'), true) ?: [];
+
+        if ($page === 'events') {
+            return array_merge($defaults, [
+                'eyebrow' => $row->subtitle ?: $defaults['eyebrow'],
+                'page_title' => $row->title ?: ($defaults['page_title'] ?? 'eproexpo — Discover Events. Book Tickets. Join Live.'),
+                'title_line_1' => $meta['title_line_1'] ?? $defaults['title_line_1'],
+                'title_accent_1' => $meta['title_accent_1'] ?? $defaults['title_accent_1'],
+                'title_line_2' => $meta['title_line_2'] ?? $defaults['title_line_2'],
+                'title_accent_2' => $meta['title_accent_2'] ?? $defaults['title_accent_2'],
+                'title_line_3' => $meta['title_line_3'] ?? $defaults['title_line_3'],
+                'subtitle' => $row->body ?: $defaults['subtitle'],
+                'subtitle_template' => $meta['subtitle_template'] ?? $defaults['subtitle_template'],
+            ]);
+        }
 
         return array_merge(self::defaultHero(), [
             'title_line_1' => $row->title ?: self::defaultHero()['title_line_1'],
@@ -283,6 +301,8 @@ class WebsiteContent
                 'meta' => [
                     'price' => '$0',
                     'period' => '/event',
+                    'annual_price' => '$0',
+                    'annual_period' => '/year',
                     'highlight' => false,
                     'route' => 'company.event-company.login',
                     'features' => [
@@ -302,6 +322,8 @@ class WebsiteContent
                 'meta' => [
                     'price' => 'Custom',
                     'period' => '/event',
+                    'annual_price' => 'Custom',
+                    'annual_period' => '/year',
                     'highlight' => true,
                     'route' => 'events.home',
                     'features' => [
@@ -321,6 +343,8 @@ class WebsiteContent
                 'meta' => [
                     'price' => 'Custom',
                     'period' => '/event',
+                    'annual_price' => 'Custom',
+                    'annual_period' => '/year',
                     'highlight' => false,
                     'route' => null,
                     'features' => [
@@ -357,13 +381,28 @@ class WebsiteContent
     private static function normalizePricingPlan(array $plan): array
     {
         $meta = $plan['meta'] ?? [];
-        $url = $plan['link_url'] ?? null;
+        $url = null;
 
-        if (! $url && ! empty($meta['route'])) {
+        if (! empty($meta['route'])) {
             try {
                 $url = route($meta['route']);
             } catch (\Throwable) {
-                $url = url('/');
+                $url = null;
+            }
+        }
+
+        if (! $url && filled($plan['link_url'] ?? null)) {
+            $linkUrl = (string) $plan['link_url'];
+            if (str_starts_with($linkUrl, 'http://') || str_starts_with($linkUrl, 'https://')) {
+                $url = $linkUrl;
+            } elseif (str_starts_with($linkUrl, '/')) {
+                $url = url($linkUrl);
+            } else {
+                try {
+                    $url = route($linkUrl);
+                } catch (\Throwable) {
+                    $url = url($linkUrl);
+                }
             }
         }
 
@@ -372,6 +411,8 @@ class WebsiteContent
             'description' => $plan['subtitle'] ?? '',
             'price' => $meta['price'] ?? 'Custom',
             'period' => $meta['period'] ?? '/event',
+            'annual_price' => $meta['annual_price'] ?? ($meta['price'] ?? 'Custom'),
+            'annual_period' => $meta['annual_period'] ?? '/year',
             'highlight' => (bool) ($meta['highlight'] ?? false),
             'features' => $meta['features'] ?? [],
             'button' => $plan['link_label'] ?? 'Get Started',
@@ -400,6 +441,11 @@ class WebsiteContent
             'button_2_url' => $meta['button_2_url'] ?? self::defaultAboutHero()['button_2_url'],
             'cta_title' => $meta['cta_title'] ?? self::defaultAboutHero()['cta_title'],
             'cta_subtitle' => $meta['cta_subtitle'] ?? self::defaultAboutHero()['cta_subtitle'],
+            'cta_button_1_label' => $meta['cta_button_1_label'] ?? self::defaultAboutHero()['cta_button_1_label'],
+            'cta_button_1_url' => $meta['cta_button_1_url'] ?? self::defaultAboutHero()['cta_button_1_url'],
+            'cta_button_2_label' => $meta['cta_button_2_label'] ?? self::defaultAboutHero()['cta_button_2_label'],
+            'cta_button_2_url' => $meta['cta_button_2_url'] ?? self::defaultAboutHero()['cta_button_2_url'],
+            'contact_email' => $meta['contact_email'] ?? null,
         ]);
     }
 
@@ -454,6 +500,10 @@ class WebsiteContent
             'button_2_url' => null,
             'cta_title' => 'Connect. Explore. Engage.',
             'cta_subtitle' => 'Ready to learn more or partner with us? Start exploring events and exhibitions today.',
+            'cta_button_1_label' => 'Explore Events',
+            'cta_button_1_url' => null,
+            'cta_button_2_label' => 'View Features',
+            'cta_button_2_url' => null,
         ];
     }
 
@@ -529,6 +579,78 @@ class WebsiteContent
             'button_3_url' => null,
             'button_4_label' => 'Create Company Event',
             'button_4_url' => null,
+        ];
+    }
+
+    public static function defaultEventsHero(): array
+    {
+        return [
+            'page_title' => 'eproexpo — Discover Events. Book Tickets. Join Live.',
+            'eyebrow' => 'Live events, near you',
+            'title_line_1' => 'Discover',
+            'title_accent_1' => 'Events.',
+            'title_line_2' => 'Book',
+            'title_accent_2' => 'Tickets.',
+            'title_line_3' => 'Join Live.',
+            'subtitle' => 'Explore events across categories and countries. Book tickets and get access to live sessions in one seamless platform.',
+            'subtitle_template' => 'Explore {event_count} live events across {category_count} categories and {country_count} countries. Book tickets and get access to live sessions in one seamless platform.',
+        ];
+    }
+
+    public static function defaultEventsSteps(): array
+    {
+        return [
+            ['title' => 'Find Your Event', 'body' => 'Browse events by category, location, or specific topics.'],
+            ['title' => 'Choose Your Slot', 'body' => 'Select your preferred time slot for available dates.'],
+            ['title' => 'Book & Pay', 'body' => 'Secure your spot with a quick and safe checkout.'],
+            ['title' => 'Get Your Ticket', 'body' => 'Receive your e-ticket instantly and enjoy the show.'],
+        ];
+    }
+
+    public static function eventsSections(): array
+    {
+        $defaults = self::defaultEventsSections();
+        $row = self::publishedItems('events', 'sections')->first();
+
+        if (! $row) {
+            return $defaults;
+        }
+
+        $meta = json_decode((string) ($row->meta ?? '{}'), true) ?: [];
+
+        return array_merge($defaults, $meta);
+    }
+
+    public static function defaultEventsSections(): array
+    {
+        return [
+            'page_title' => 'eproexpo — Discover Events. Book Tickets. Join Live.',
+            'search_tab_events' => 'Events',
+            'search_tab_exhibitions' => 'Exhibitions',
+            'search_label' => 'Search Events',
+            'search_placeholder' => 'Search events, organisers...',
+            'category_label' => 'Category',
+            'category_all' => 'All Categories',
+            'country_label' => 'Country',
+            'country_all' => 'All Countries',
+            'date_label' => 'Date',
+            'date_placeholder' => 'mm/dd/yyyy',
+            'search_button' => 'Search Events',
+            'categories_title' => 'Browse Events by Category',
+            'categories_link' => 'View All Categories →',
+            'categories_link_url' => '/events/listings/categories',
+            'trending_title' => 'Trending Events',
+            'trending_link' => 'View All Events →',
+            'how_it_works_title' => 'How It Works',
+            'slots_title' => 'Ticket Booking & Slots',
+            'slots_fallback_event' => 'Upcoming Events',
+            'slots_cta' => 'View More Slots',
+            'empty_categories_title' => 'No categories yet',
+            'empty_categories_body' => 'Published events will populate categories automatically.',
+            'empty_events_title' => 'No published events yet',
+            'empty_events_body' => 'Published company events will appear here automatically.',
+            'empty_slots_title' => 'No ticket slots available yet',
+            'empty_slots_body' => 'Published events with dates will appear here.',
         ];
     }
 
@@ -670,6 +792,23 @@ class WebsiteContent
             ['icon' => 'fas fa-globe', 'title' => 'Global Reach', 'subtitle' => 'Connect worldwide'],
             ['icon' => 'fas fa-headset', 'title' => '24/7 Support', 'subtitle' => "We're here to help"],
         ];
+    }
+
+    public static function homeBoothPreviewSettings(): array
+    {
+        $defaults = [
+            'demo_only' => true,
+            'label' => 'Demo preview',
+        ];
+
+        $row = self::publishedItems('home', 'booth_preview')->first();
+        if (! $row) {
+            return $defaults;
+        }
+
+        $meta = json_decode((string) ($row->meta ?? '{}'), true) ?: [];
+
+        return array_merge($defaults, $meta);
     }
 
     private static function tableExists(): bool

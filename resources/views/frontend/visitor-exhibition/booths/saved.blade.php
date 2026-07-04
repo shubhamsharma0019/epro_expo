@@ -46,7 +46,7 @@
                     <p class="mt-5 min-h-[54px] text-[14px] font-medium leading-6 text-[#5A6480]">{{ $booth['note'] }}</p>
                     <div class="mt-5 flex gap-3">
                         <a href="{{ route('exhibitions.visitor.companies.show', [$slug, $booth['slug']]) }}" class="inline-flex h-11 flex-1 items-center justify-center rounded-md bg-gradient-to-r from-[#5b2eff] to-[#4310d8] px-4 text-[13px] font-semibold text-white">Open Booth</a>
-                        <a href="{{ route('exhibitions.visitor.meetings', $slug) }}" class="inline-flex h-11 items-center justify-center rounded-md border border-borderColor px-4 text-[13px] font-semibold text-purple">Meeting</a>
+                        <a href="{{ route('frontend.user.meetings') }}" class="inline-flex h-11 items-center justify-center rounded-md border border-borderColor px-4 text-[13px] font-semibold text-purple">Meeting</a>
                     </div>
                 </article>
             @endforeach

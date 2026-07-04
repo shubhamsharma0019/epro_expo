@@ -5,25 +5,50 @@
     'bookBoothUrl' => null,
     'createEventLabel' => 'Create Company Event',
     'createEventUrl' => null,
+    'visitorLoginLabel' => 'Log In',
+    'visitorLoginUrl' => null,
+    'visitorRegisterLabel' => 'Sign Up',
+    'visitorRegisterUrl' => null,
     'menuId' => 'getStartedMenu',
 ])
 
 @php
     $bookBoothUrl = $bookBoothUrl ?: route('company.home');
     $createEventUrl = $createEventUrl ?: route('company.event-company.login');
-    $linkClass = 'group inline-flex items-center justify-center gap-3 rounded-xl border border-[#D8DCEB] bg-white px-5 py-3.5 text-[14px] font-bold text-navy shadow-sm transition-all duration-200 hover:border-transparent hover:bg-gradient-to-r hover:from-[#6D28D9] hover:to-[#4B16D8] hover:text-white hover:shadow-[0_14px_30px_rgba(91,46,255,0.28)]';
+    $visitorLoginUrl = $visitorLoginUrl ?: route('frontend.user.login');
+    $visitorRegisterUrl = $visitorRegisterUrl ?: route('frontend.user.register');
+    $mobileLinkClass = 'group inline-flex items-center justify-center gap-3 rounded-xl border border-[#D8DCEB] bg-white px-5 py-3.5 text-[14px] font-bold text-navy shadow-sm transition-all duration-200 hover:border-transparent hover:bg-gradient-to-r hover:from-[#6D28D9] hover:to-[#4B16D8] hover:text-white hover:shadow-[0_14px_30px_rgba(91,46,255,0.28)]';
 @endphp
+
+@once
+    @include('components.frontend.partials.get-started-menu-styles')
+@endonce
 
 @if ($variant === 'mobile')
     <div class="grid grid-cols-1 gap-3 pt-2 min-[420px]:grid-cols-2">
-        <a href="{{ $bookBoothUrl }}" class="{{ $linkClass }}">
+        <a href="{{ $bookBoothUrl }}" class="{{ $mobileLinkClass }}">
             <i class="fas fa-store text-lg text-[#FF9B41] transition-colors group-hover:text-white"></i>
             {{ $bookBoothLabel }}
         </a>
-        <a href="{{ $createEventUrl }}" class="{{ $linkClass }}">
+        <a href="{{ $createEventUrl }}" class="{{ $mobileLinkClass }}">
             <i class="fas fa-calendar-plus text-lg text-[#6D28D9] transition-colors group-hover:text-white"></i>
             {{ $createEventLabel }}
         </a>
+        @guest
+            <a href="{{ $visitorLoginUrl }}" class="{{ $mobileLinkClass }}">
+                <i class="fas fa-right-to-bracket text-lg text-[#2563EB] transition-colors group-hover:text-white"></i>
+                {{ $visitorLoginLabel }}
+            </a>
+            <a href="{{ $visitorRegisterUrl }}" class="{{ $mobileLinkClass }}">
+                <i class="fas fa-user-plus text-lg text-[#6D28D9] transition-colors group-hover:text-white"></i>
+                {{ $visitorRegisterLabel }}
+            </a>
+        @else
+            <a href="{{ route('frontend.user.dashboard') }}" class="{{ $mobileLinkClass }} min-[420px]:col-span-2">
+                <i class="fas fa-gauge text-lg text-[#2563EB] transition-colors group-hover:text-white"></i>
+                My Dashboard
+            </a>
+        @endguest
     </div>
 @else
     <div class="relative" data-get-started-root="{{ $menuId }}">
@@ -40,17 +65,32 @@
 
         <div
             data-get-started-panel="{{ $menuId }}"
-            class="absolute right-0 z-50 mt-2.5 hidden min-w-[420px] rounded-2xl border border-[#E7EAF3] bg-white p-3 shadow-[0_16px_40px_rgba(7,16,68,0.12)]"
+            class="hidden"
         >
-            <div class="grid grid-cols-2 gap-3">
-                <a href="{{ $bookBoothUrl }}" class="{{ $linkClass }} px-4 py-4 text-[13px] sm:text-[14px]">
-                    <i class="fas fa-store text-lg text-[#FF9B41] transition-colors group-hover:text-white"></i>
+            <div class="gs-menu-grid">
+                <a href="{{ $bookBoothUrl }}" class="gs-menu-link">
+                    <i class="fas fa-store text-[#FF9B41]"></i>
                     {{ $bookBoothLabel }}
                 </a>
-                <a href="{{ $createEventUrl }}" class="{{ $linkClass }} px-4 py-4 text-[13px] sm:text-[14px]">
-                    <i class="fas fa-calendar-plus text-lg text-[#6D28D9] transition-colors group-hover:text-white"></i>
+                <a href="{{ $createEventUrl }}" class="gs-menu-link">
+                    <i class="fas fa-calendar-plus text-[#6D28D9]"></i>
                     {{ $createEventLabel }}
                 </a>
+                @guest
+                    <a href="{{ $visitorLoginUrl }}" class="gs-menu-link">
+                        <i class="fas fa-right-to-bracket text-[#2563EB]"></i>
+                        {{ $visitorLoginLabel }}
+                    </a>
+                    <a href="{{ $visitorRegisterUrl }}" class="gs-menu-link">
+                        <i class="fas fa-user-plus text-[#6D28D9]"></i>
+                        {{ $visitorRegisterLabel }}
+                    </a>
+                @else
+                    <a href="{{ route('frontend.user.dashboard') }}" class="gs-menu-link gs-menu-link--wide">
+                        <i class="fas fa-gauge text-[#2563EB]"></i>
+                        My Dashboard
+                    </a>
+                @endguest
             </div>
         </div>
     </div>

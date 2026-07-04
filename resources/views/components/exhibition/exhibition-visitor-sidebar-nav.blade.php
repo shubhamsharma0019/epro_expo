@@ -29,7 +29,6 @@
 
     $dashboardHref = $passFlowLocked ? $passFlowHref : route('frontend.user.dashboard');
     $passesHref = $passFlowLocked ? $passFlowHref : route('frontend.user.passes');
-    $qrPassHref = $passFlowLocked ? $passFlowHref : route('exhibitions.visitor.qr-pass', $activeSlug);
 
     $navLinks = [
         [
@@ -68,21 +67,21 @@
             ],
             [
                 'label' => 'My Meetings',
-                'href' => route('exhibitions.visitor.meetings', $activeSlug),
+                'href' => route('frontend.user.meetings'),
                 'icon' => 'ph-calendar-check',
-                'active' => request()->routeIs('exhibitions.visitor.meetings'),
+                'active' => request()->routeIs('frontend.user.meetings'),
             ],
             [
                 'label' => 'Notifications',
-                'href' => route('exhibitions.visitor.notifications', $activeSlug),
+                'href' => route('frontend.user.dashboard'),
                 'icon' => 'ph-bell',
-                'active' => request()->routeIs('exhibitions.visitor.notifications'),
+                'active' => request()->routeIs('frontend.user.dashboard'),
             ],
             [
                 'label' => 'QR Pass',
-                'href' => $qrPassHref,
+                'href' => $passFlowLocked ? $passFlowHref : route('frontend.user.passes'),
                 'icon' => 'ph-qr-code',
-                'active' => request()->routeIs('exhibitions.visitor.qr-pass'),
+                'active' => request()->routeIs('frontend.user.passes', 'frontend.user.tickets.*'),
             ],
         ]);
     }

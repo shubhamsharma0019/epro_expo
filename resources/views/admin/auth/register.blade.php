@@ -11,7 +11,7 @@
 <body class="min-h-screen bg-[#F8F9FD] font-sans text-navy antialiased">
     <main class="flex min-h-screen items-center justify-center px-5 py-10">
         <section class="w-full max-w-[560px] rounded-xl border border-borderColor bg-white p-6 shadow-sm sm:p-8">
-            <x-shared.brand-logo href="{{ route('home') }}" mark-class="h-11 w-11 rounded-[16px] text-[20px]" title-class="text-[24px] text-[#071044]" subtitle-class="text-[11px] text-[#8A94AD]" />
+            <x-shared.frontend-brand-logo subtitle="ADMIN SUITE" />
             <h1 class="mt-8 text-[30px] font-semibold text-navy">Create Admin Account</h1>
             <p class="mt-3 text-[15px] font-medium leading-7 text-[#5A6480]">Create separate admin credentials for platform management.</p>
 

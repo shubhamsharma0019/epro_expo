@@ -2,6 +2,10 @@
 
 @section('title', 'Company Event Dashboard | eproexpo')
 
+@push('styles')
+    @include('company.event-company-flow.partials.event-dashboard-styles')
+@endpush
+
 @section('content')
 @php
     $companyName = $currentCompany->company_name ?? $currentCompany->name ?? 'Company';
@@ -79,24 +83,24 @@
     $sixMonthRevenueTotal = (float) ($charts['monthly']['total_revenue'] ?? 0);
 @endphp
 
-<div class="mx-auto w-full max-w-[1200px] min-w-0 px-4 py-5 sm:px-8 sm:py-6 lg:px-10 lg:py-8">
-    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div class="min-w-0">
+<div id="company-event-dashboard" class="w-full max-w-[1200px] min-w-0 px-4 py-5 sm:px-8 sm:py-6 lg:px-8 lg:py-8">
+    <div class="ced-page-header mb-6">
+        <div class="ced-page-header__copy">
             <h1 class="mb-2 text-xl font-bold sm:text-2xl">Company Dashboard</h1>
             <p class="text-sm text-gray-500">Welcome back, {{ $contactName }}! Here's what's happening with your events.</p>
         </div>
-        <a href="{{ route('company.event-company-flow.create') }}" style="background-color: #5B32F6; color: #FFFFFF;" class="inline-flex h-11 w-full shrink-0 items-center justify-center rounded-lg px-5 text-sm font-semibold shadow-sm hover:bg-primary sm:w-auto">
+        <a href="{{ route('company.event-company-flow.create') }}" style="background-color: #5B32F6; color: #FFFFFF;" class="ced-create-btn inline-flex h-11 items-center justify-center rounded-lg px-5 text-sm font-semibold shadow-sm hover:bg-primary">
             Create Event
         </a>
     </div>
 
-        <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
-            <div class="flex min-w-0 gap-4 rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
-                <div class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-primary-light text-primary">
+        <div class="ced-stat-grid mb-6">
+            <div class="ced-stat-card rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
+                <div class="ced-stat-card__icon w-12 h-12 rounded-xl flex items-center justify-center bg-primary-light text-primary">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                 </div>
-                <div class="flex-1">
-                    <div class="text-[13px] text-gray-500 font-medium mb-2">Total Events</div>
+                <div class="ced-stat-card__body flex-1">
+                    <div class="ced-stat-label text-[13px] text-gray-500 font-medium mb-2">Total Events</div>
                     <div id="stat-total-events" class="text-2xl font-bold mb-2">{{ number_format($stats['total_events'] ?? 0) }}</div>
                     <div class="text-xs font-medium flex items-center gap-1 {{ $eventTrend['class'] }}">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{!! $eventTrend['icon'] !!}</svg>
@@ -105,12 +109,12 @@
                 </div>
             </div>
             
-            <div class="flex min-w-0 gap-4 rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
-                <div class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-success-light text-success">
+            <div class="ced-stat-card rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
+                <div class="ced-stat-card__icon w-12 h-12 rounded-xl flex items-center justify-center bg-success-light text-success">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                 </div>
-                <div class="flex-1">
-                    <div class="text-[13px] text-gray-500 font-medium mb-2">Registrations</div>
+                <div class="ced-stat-card__body flex-1">
+                    <div class="ced-stat-label text-[13px] text-gray-500 font-medium mb-2">Registrations</div>
                     <div id="stat-registrations" class="text-2xl font-bold mb-2">{{ number_format($stats['registrations'] ?? 0) }}</div>
                     <div class="text-xs font-medium flex items-center gap-1 {{ $registrationTrend['class'] }}">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{!! $registrationTrend['icon'] !!}</svg>
@@ -119,12 +123,12 @@
                 </div>
             </div>
 
-            <div class="flex min-w-0 gap-4 rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
-                <div class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-warning-light text-warning">
+            <div class="ced-stat-card rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
+                <div class="ced-stat-card__icon w-12 h-12 rounded-xl flex items-center justify-center bg-warning-light text-warning">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"></path><path d="M7 7h8a2 2 0 0 1 0 4H9a2 2 0 0 0 0 4h8"></path></svg>
                 </div>
-                <div class="flex-1">
-                    <div class="text-[13px] text-gray-500 font-medium mb-2">Revenue</div>
+                <div class="ced-stat-card__body flex-1">
+                    <div class="ced-stat-label text-[13px] text-gray-500 font-medium mb-2">Revenue</div>
                     <div id="stat-revenue" class="mb-2 break-words text-xl font-bold sm:text-2xl">{{ $money }}</div>
                     <div class="text-xs font-medium flex items-center gap-1 {{ $revenueTrend['class'] }}">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{!! $revenueTrend['icon'] !!}</svg>
@@ -133,12 +137,12 @@
                 </div>
             </div>
 
-            <div class="flex min-w-0 gap-4 rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
-                <div class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-primary-light text-primary">
+            <div class="ced-stat-card rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
+                <div class="ced-stat-card__icon w-12 h-12 rounded-xl flex items-center justify-center bg-primary-light text-primary">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                 </div>
-                <div class="min-w-0 flex-1">
-                    <div class="text-[13px] text-gray-500 font-medium mb-2">Pending Approvals</div>
+                <div class="ced-stat-card__body min-w-0 flex-1">
+                    <div class="ced-stat-label text-[13px] text-gray-500 font-medium mb-2">Pending Approvals</div>
                     <div id="stat-pending-approvals" class="text-2xl font-bold mb-2">{{ number_format($stats['pending_requests'] ?? 0) }}</div>
                     <a href="{{ $latestEvent ? route('company.event-company-flow.submit', $latestEvent) : route('company.event-company-flow.create') }}" class="text-[13px] text-primary font-medium hover:underline inline-block mt-1">Review status</a>
                 </div>
@@ -150,31 +154,31 @@
             <p class="mt-1 text-sm text-gray-500">Track ticket sales momentum and event lifecycle at a glance.</p>
         </div>
 
-        <div class="mb-6 grid grid-cols-1 items-stretch gap-4 lg:grid-cols-3 lg:gap-5">
-            <div class="flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm lg:col-span-2">
+        <div class="ced-performance-grid mb-6">
+            <div class="flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
                 <div class="border-b border-gray-100 bg-gradient-to-r from-[#FBFAFF] via-white to-[#F0FDF9] px-5 py-4 sm:px-6">
-                    <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div class="ced-chart-head">
                         <div class="min-w-0">
                             <h3 class="text-base font-semibold text-[#1C1364]">Registrations & Revenue</h3>
                             <p class="mt-0.5 text-xs text-gray-500">Last 6 months ticket performance</p>
                         </div>
-                        <div class="flex flex-wrap items-center gap-2.5">
-                            <div class="flex min-w-[128px] flex-1 items-center gap-2.5 rounded-xl border border-[#E8E3FF] bg-white px-3 py-2 shadow-sm sm:flex-none">
-                                <span class="grid h-9 w-9 place-items-center rounded-lg bg-[#F3EEFF] text-[#5B32F6]">
+                        <div class="ced-chart-legend">
+                            <div class="ced-chart-legend__item rounded-xl border border-[#E8E3FF] bg-white px-3 py-2 shadow-sm">
+                                <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#F3EEFF] text-[#5B32F6]">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
                                 </span>
-                                <div>
+                                <div class="min-w-0">
                                     <p class="text-[10px] font-bold uppercase tracking-wide text-gray-400">Registrations</p>
-                                    <p class="text-lg font-bold leading-none text-[#5B32F6]">{{ number_format($sixMonthRegistrationTotal) }}</p>
+                                    <p class="truncate text-lg font-bold leading-none text-[#5B32F6]">{{ number_format($sixMonthRegistrationTotal) }}</p>
                                 </div>
                             </div>
-                            <div class="flex min-w-[128px] flex-1 items-center gap-2.5 rounded-xl border border-emerald-100 bg-white px-3 py-2 shadow-sm sm:flex-none">
-                                <span class="grid h-9 w-9 place-items-center rounded-lg bg-emerald-50 text-emerald-600">
+                            <div class="ced-chart-legend__item rounded-xl border border-emerald-100 bg-white px-3 py-2 shadow-sm">
+                                <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-emerald-50 text-emerald-600">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18"></path><path d="M7 7h8a2 2 0 0 1 0 4H9a2 2 0 0 0 0 4h8"></path></svg>
                                 </span>
-                                <div>
+                                <div class="min-w-0">
                                     <p class="text-[10px] font-bold uppercase tracking-wide text-gray-400">Revenue</p>
-                                    <p class="text-lg font-bold leading-none text-emerald-600">{{ $formatMoney($sixMonthRevenueTotal) }}</p>
+                                    <p class="truncate text-lg font-bold leading-none text-emerald-600">{{ $formatMoney($sixMonthRevenueTotal) }}</p>
                                 </div>
                             </div>
                         </div>

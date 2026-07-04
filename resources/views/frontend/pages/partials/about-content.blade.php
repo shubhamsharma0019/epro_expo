@@ -98,7 +98,7 @@
   <h2>{{ $aboutHero['cta_title'] ?? 'Connect. Explore. Engage.' }}</h2>
   <p>{{ $aboutHero['cta_subtitle'] ?? '' }}</p>
   <div class="ap-hero-cta">
-    <a href="{{ route('events.home') }}" class="ap-btn-white">Explore Events</a>
-    <a href="{{ route('frontend.features') }}" class="ap-btn-outline">View Features</a>
+    <a href="{{ $aboutHero['cta_button_1_url'] ?? $aboutHero['button_1_url'] ?? route('events.home') }}" class="ap-btn-white">{{ $aboutHero['cta_button_1_label'] ?? $aboutHero['button_1_label'] ?? 'Explore Events' }}</a>
+    <a href="{{ $aboutHero['cta_button_2_url'] ?? $aboutHero['button_2_url'] ?? route('frontend.features') }}" class="ap-btn-outline">{{ $aboutHero['cta_button_2_label'] ?? $aboutHero['button_2_label'] ?? 'View Features' }}</a>
   </div>
 </div>

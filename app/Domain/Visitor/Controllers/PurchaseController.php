@@ -76,8 +76,22 @@ class PurchaseController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
+        EventTicketFlow::storeVisitorRegistration(
+            $user->id,
+            $slug,
+            $data['dbEvent']->id,
+            [
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'gender' => $user->gender,
+                'city' => $user->city,
+            ]
+        );
+
         session([
             EventTicketFlow::sessionRegistrationKey($slug) => true,
+            EventTicketFlow::refreshAttendeePrefillKey($slug) => true,
             'event_booking_path' => EventTicketFlow::ticketSelectionUrl($slug),
             'user_flow_context' => 'event_ticket',
         ]);
@@ -107,9 +121,14 @@ class PurchaseController extends Controller
 
         abort_if(! $dbEvent, 404);
 
+        $visitorPrefill = EventTicketFlow::resolveAttendeePrefill($slug, $dbEvent);
+        $refreshAttendeePrefill = (bool) session()->pull(EventTicketFlow::refreshAttendeePrefillKey($slug), false);
+
         return view('frontend.events.tickets.attendee-details', [
             'dbEvent' => $dbEvent,
             'slug' => $slug,
+            'visitorPrefill' => $visitorPrefill,
+            'refreshAttendeePrefill' => $refreshAttendeePrefill,
         ]);
     }
 

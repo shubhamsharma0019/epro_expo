@@ -6,6 +6,8 @@
 @php
     $eventSlugForOrder = isset($dbEvent) ? $dbEvent->slug : ($slug ?? 'global-tech-summit-2024');
     $eventTicketDuration = 'Event Duration';
+    $visitorPrefill = $visitorPrefill ?? null;
+    $refreshAttendeePrefill = $refreshAttendeePrefill ?? false;
 
     if (isset($dbEvent) && $dbEvent->starts_at) {
         $eventDays = $dbEvent->ends_at
@@ -148,7 +150,68 @@
         gender: @json(auth()->user()->gender ?? ''),
         city: @json(auth()->user()->city ?? '')
     };
+    const visitorPrefill = @json($visitorPrefill);
+    const refreshAttendeePrefill = @json($refreshAttendeePrefill);
     const eventSlugForOrder = @json($eventSlugForOrder);
+
+    function primaryAttendeeSource() {
+        return visitorPrefill || loggedInUser;
+    }
+
+    function normalizeAttendeeSeed(attendees = []) {
+        const source = primaryAttendeeSource();
+        const savedOrder = JSON.parse(localStorage.getItem('eventOrder') || 'null');
+        const firstSaved = attendees[0] || savedOrder?.attendees?.[0] || {};
+        const emailMismatch = source.email
+            && firstSaved.email
+            && firstSaved.email.toLowerCase() !== source.email.toLowerCase();
+
+        if (refreshAttendeePrefill || emailMismatch || ! firstSaved.email) {
+            return [{
+                name: source.name || '',
+                email: source.email || '',
+                phone: source.phone || '',
+                company: firstSaved.company || '',
+                jobTitle: firstSaved.jobTitle || '',
+            }];
+        }
+
+        return attendees.length ? attendees : [{
+            name: source.name || '',
+            email: source.email || '',
+            phone: source.phone || '',
+            company: '',
+            jobTitle: '',
+        }];
+    }
+
+    function syncStoredAttendees(attendees) {
+        const savedOrder = JSON.parse(localStorage.getItem('eventOrder') || 'null');
+        const source = primaryAttendeeSource();
+        const orderData = savedOrder && savedOrder.eventSlug === eventSlugForOrder
+            ? savedOrder
+            : {
+                eventSlug: eventSlugForOrder,
+                passType: '',
+                passName: '',
+                quantity: 1,
+                price: 0,
+                priceCurrency: currencyLabel,
+                totalAmount: 0,
+            };
+
+        orderData.attendees = attendees;
+        if (attendees[0]) {
+            orderData.attendee_name = attendees[0].name || '';
+            orderData.attendee_email = attendees[0].email || '';
+            orderData.attendee_phone = attendees[0].phone || '';
+            orderData.attendee_gender = source.gender || '';
+            orderData.attendee_city = source.city || '';
+        }
+
+        localStorage.setItem('eventOrder', JSON.stringify(orderData));
+        return orderData;
+    }
 
 @if (isset($dbEvent) && $dbEvent->ticketTypes->isNotEmpty())
     const prices = {
@@ -387,15 +450,16 @@
         const container = document.getElementById('attendees-container');
         if (!container) return;
 
-        const savedAttendees = existingAttendees ?? (JSON.parse(localStorage.getItem("eventOrder"))?.attendees || []);
+        const savedAttendees = normalizeAttendeeSeed(existingAttendees ?? (JSON.parse(localStorage.getItem("eventOrder") || '{}')?.attendees || []));
         
         let html = '';
         for (let i = 1; i <= qty; i++) {
             const isFirst = (i === 1);
             const saved = savedAttendees[i - 1] || {};
-            const nameVal = saved.name ?? (isFirst ? loggedInUser.name : '');
-            const emailVal = saved.email ?? (isFirst ? loggedInUser.email : '');
-            const phoneVal = saved.phone ?? (isFirst ? loggedInUser.phone : '');
+            const source = isFirst ? primaryAttendeeSource() : {};
+            const nameVal = saved.name || (isFirst ? source.name : '');
+            const emailVal = saved.email || (isFirst ? source.email : '');
+            const phoneVal = saved.phone || (isFirst ? source.phone : '');
             const companyVal = saved.company ?? '';
             const jobTitleVal = saved.jobTitle ?? '';
             
@@ -512,9 +576,9 @@
             const emailInput = document.getElementById(`attendee-email-${i}`);
             const phoneInput = document.getElementById(`attendee-phone-${i}`);
             
-            const nameVal = nameInput ? nameInput.value.trim() : (i === 1 ? loggedInUser.name : '');
-            const emailVal = emailInput ? emailInput.value.trim() : (i === 1 ? loggedInUser.email : '');
-            const phoneVal = phoneInput ? phoneInput.value.trim() : (i === 1 ? loggedInUser.phone : '');
+            const nameVal = nameInput ? nameInput.value.trim() : (i === 1 ? primaryAttendeeSource().name : '');
+            const emailVal = emailInput ? emailInput.value.trim() : (i === 1 ? primaryAttendeeSource().email : '');
+            const phoneVal = phoneInput ? phoneInput.value.trim() : (i === 1 ? primaryAttendeeSource().phone : '');
             
             html += `
             <div class="${i < qty ? 'mb-5' : ''} space-y-0.5">
@@ -568,8 +632,8 @@
         orderData.attendee_name = attendees[0].name;
         orderData.attendee_email = attendees[0].email;
         orderData.attendee_phone = attendees[0].phone;
-        orderData.attendee_gender = loggedInUser.gender || '';
-        orderData.attendee_city = loggedInUser.city || '';
+        orderData.attendee_gender = primaryAttendeeSource().gender || '';
+        orderData.attendee_city = primaryAttendeeSource().city || '';
         orderData.attendee_company = attendees[0].company;
         orderData.attendee_job_title = attendees[0].jobTitle;
         orderData.attendees = attendees;
@@ -584,22 +648,27 @@
     // Initialize UI on page load
     document.addEventListener('DOMContentLoaded', () => {
         const savedOrder = JSON.parse(localStorage.getItem('eventOrder') || 'null');
+        const seededAttendees = normalizeAttendeeSeed(savedOrder?.eventSlug === eventSlugForOrder ? (savedOrder?.attendees || []) : []);
+        const seededOrder = syncStoredAttendees(seededAttendees);
+
         const orderData = savedOrder && savedOrder.eventSlug === eventSlugForOrder
-            ? restoreTicketSelectionFromOrder(savedOrder)
+            ? restoreTicketSelectionFromOrder({ ...savedOrder, attendees: seededAttendees })
             : syncEventOrderFromSelection();
 
-        if (orderData) {
-            renderAttendeeCards(orderData.quantity || 1, orderData.attendees || []);
-            updateOrderSummary(orderData);
+        const activeOrder = orderData || seededOrder;
+
+        if (activeOrder) {
+            renderAttendeeCards(activeOrder.quantity || 1, normalizeAttendeeSeed(activeOrder.attendees || []));
+            updateOrderSummary(activeOrder);
         } else {
             const firstKey = Object.keys(quantities)[0];
             if (firstKey) {
                 quantities[firstKey] = 1;
                 updateTicketUI(firstKey);
                 const initialized = syncEventOrderFromSelection();
-                renderAttendeeCards(initialized?.quantity || 1, initialized?.attendees || []);
+                renderAttendeeCards(initialized?.quantity || 1, normalizeAttendeeSeed(initialized?.attendees || []));
             } else {
-                renderAttendeeCards(1);
+                renderAttendeeCards(1, normalizeAttendeeSeed([]));
             }
         }
     });

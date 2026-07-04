@@ -3,12 +3,6 @@
     'activeNav' => 'pricing',
 ])
 
-@php
-    $contactEmail = \App\Support\WebsiteContent::pricingHero()['contact_email']
-        ?? \App\Support\WebsiteContent::footer()['contact_email']
-        ?? 'hello@eproexpo.com';
-@endphp
-
 @push('head')
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,7 +12,14 @@
 
 @section('content')
   <div id="pricing-page" class="-mx-4 -mt-5 bg-white sm:-mx-6 sm:-mt-7 lg:-mx-8">
-    @include('frontend.pages.partials.pricing-content')
+    @include('frontend.pages.partials.pricing-content', [
+        'pricingHero' => $pricingHero ?? [],
+        'sectionHeadings' => $sectionHeadings ?? [],
+        'plans' => $plans ?? [],
+        'benefits' => $benefits ?? [],
+        'faqs' => $faqs ?? [],
+        'contactEmail' => $contactEmail ?? 'hello@eproexpo.com',
+    ])
   </div>
 @endsection
 
@@ -50,12 +51,30 @@
     const perEvent = document.getElementById('pp-tgl-event');
     const annual = document.getElementById('pp-tgl-annual');
 
+    function setPricingBillingMode(mode) {
+      document.querySelectorAll('#pricing-page .pp-price').forEach((priceBlock) => {
+        const value = priceBlock.querySelector('.pp-price-value');
+        const period = priceBlock.querySelector('.pp-price-period');
+        if (! value || ! period) return;
+
+        if (mode === 'annual') {
+          value.textContent = priceBlock.dataset.annualPrice || value.textContent;
+          period.textContent = ' ' + (priceBlock.dataset.annualPeriod || '/year');
+          return;
+        }
+
+        value.textContent = priceBlock.dataset.eventPrice || value.textContent;
+        period.textContent = ' ' + (priceBlock.dataset.eventPeriod || '/event');
+      });
+    }
+
     if (perEvent && annual) {
       perEvent.addEventListener('click', () => {
         perEvent.classList.add('active');
         annual.classList.remove('active');
         perEvent.setAttribute('aria-selected', 'true');
         annual.setAttribute('aria-selected', 'false');
+        setPricingBillingMode('event');
       });
 
       annual.addEventListener('click', () => {
@@ -63,11 +82,12 @@
         perEvent.classList.remove('active');
         annual.setAttribute('aria-selected', 'true');
         perEvent.setAttribute('aria-selected', 'false');
+        setPricingBillingMode('annual');
       });
     }
 
     const contactForm = document.getElementById('pp-contact-form');
-    const contactEmail = @json($contactEmail);
+    const contactEmail = @json($contactEmail ?? 'hello@eproexpo.com');
 
     if (contactForm && contactEmail) {
       contactForm.addEventListener('submit', (event) => {

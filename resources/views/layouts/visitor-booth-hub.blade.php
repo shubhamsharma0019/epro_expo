@@ -46,13 +46,7 @@
 
     <nav class="h-[72px] bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-8 shadow-nav z-50 sticky top-0">
         <div class="flex items-center gap-4">
-            <x-shared.brand-logo
-                href="{{ route('home') }}"
-                subtitle=""
-                mark-class="h-11 w-11 rounded-[16px] text-[20px] sm:h-[54px] sm:w-[54px] sm:rounded-[18px] sm:text-[24px]"
-                title-class="text-[24px] text-[#071044] sm:text-[30px]"
-                subtitle-class="hidden"
-            />
+            <x-shared.frontend-brand-logo subtitle="" />
         </div>
 
         <div class="relative" id="boothHubUserMenu">

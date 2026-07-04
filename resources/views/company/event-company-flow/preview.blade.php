@@ -63,7 +63,7 @@
     ])->filter(fn ($tab) => $tab['show'])->values();
 @endphp
 
-<div class="px-4 sm:px-6 md:px-10 py-8 max-w-[1250px] w-full flex flex-col mx-auto flex-1 pb-20">
+<div class="px-4 sm:px-6 md:px-8 py-8 max-w-[1250px] w-full flex flex-col flex-1 pb-20">
     <div class="flex justify-between items-center mb-6">
         <div></div>
         <div class="flex items-center gap-8">

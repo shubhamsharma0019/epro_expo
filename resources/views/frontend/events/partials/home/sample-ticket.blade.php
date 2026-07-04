@@ -11,7 +11,7 @@
             <div class="grid min-h-[286px] lg:grid-cols-[1fr_27%]">
                 <div class="px-7 pb-[72px] pt-6 sm:px-9">
                     <div class="flex items-center gap-3">
-                        <x-shared.brand-logo href="{{ route('home') }}" mark-class="h-9 w-9 rounded-[13px] text-[17px]" title-class="text-[21px] text-[#071044]" subtitle-class="text-[9px] text-[#8A94AD]" />
+                        <x-shared.frontend-brand-logo size="compact" />
                     </div>
 
                     <h3 class="mt-6 text-[22px] font-extrabold leading-tight tracking-[-0.01em] text-[#171B47]">{{ $sampleTicket['title'] }}</h3>

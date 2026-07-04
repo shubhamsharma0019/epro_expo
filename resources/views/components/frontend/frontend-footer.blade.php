@@ -2,7 +2,7 @@
     <div class="mx-auto max-w-[1500px] px-5 py-8 sm:px-8 lg:px-10">
         <div class="grid gap-10 lg:grid-cols-[1.35fr_.8fr_.8fr_1fr] xl:gap-14">
             <div class="min-w-0">
-                <x-shared.brand-logo href="{{ route('home') }}" mark-class="h-11 w-11 rounded-[16px] text-[20px]" title-class="text-[24px] text-[#071044]" subtitle-class="text-[11px] text-[#8A94AD]" />
+                <x-shared.frontend-brand-logo size="footer" />
 
                 <p class="mt-5 max-w-[410px] text-[15px] font-medium leading-7 text-[#5A6480]">
                     A modern exhibition and event management platform for discovering pavilions, booking booths, adding services, and managing exhibitor profiles.

@@ -35,7 +35,7 @@
         </button>
     </div>
 
-    <nav class="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <nav class="flex flex-col gap-1.5 overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         @foreach ($eventFlowItems as [$label, $href, $patterns, $icon])
             @php
                 $isActive = collect($patterns)->contains(fn ($pattern) => request()->routeIs($pattern)) || url()->current() === $href;
@@ -45,17 +45,17 @@
                 <span class="truncate">{{ $label }}</span>
             </a>
         @endforeach
-        <form method="POST" action="{{ route('company.logout') }}" class="mt-1">
+    </nav>
+
+    <div class="mt-4 shrink-0 border-t border-gray-100 pt-4">
+        <form method="POST" action="{{ route('company.logout') }}">
             @csrf
             <button type="submit" class="flex w-full min-w-0 items-center gap-4 rounded-xl px-4 py-3.5 text-left text-[15px] font-medium text-[#1C1364] transition-colors hover:bg-[#F8F9FA]">
                 <i class="ph ph-sign-out shrink-0 text-[21px] text-[#1C1364]"></i>
                 <span class="truncate">Logout</span>
             </button>
         </form>
-    </nav>
-
-    <div class="mt-5 shrink-0 border-t border-gray-100 pt-5">
-        <a href="{{ route('company.profile', ['flow' => 'event']) }}" class="flex min-w-0 items-center gap-3 rounded-xl px-2 py-2 text-[#1C1364] no-underline transition-colors hover:bg-[#F8F9FA]">
+        <a href="{{ route('company.profile', ['flow' => 'event']) }}" class="mt-1 flex min-w-0 items-center gap-3 rounded-xl px-2 py-2 text-[#1C1364] no-underline transition-colors hover:bg-[#F8F9FA]">
             <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gray-100 text-sm font-bold text-[#5B32F6]">{{ $eventFlowInitials }}</span>
             <span class="min-w-0 flex-1">
                 <span class="block truncate text-sm font-semibold">{{ $eventFlowContactName }}</span>

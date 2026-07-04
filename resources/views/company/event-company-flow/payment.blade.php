@@ -29,7 +29,7 @@
         </div>
     </header>
 
-    <div class="px-5 py-10 sm:px-8 lg:px-10 max-w-[1200px] w-full flex flex-col mx-auto flex-1 gap-8 lg:flex-row lg:gap-12">
+    <div class="px-5 py-10 sm:px-8 lg:px-8 max-w-[1200px] w-full flex flex-col flex-1 gap-8 lg:flex-row lg:gap-12">
         
         <!-- Left Column: Checkout details & Payment Methods -->
         <div class="min-w-0 flex-1 flex flex-col gap-8">

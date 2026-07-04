@@ -221,10 +221,7 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
     })->name('exhibitors.media-gallery');
 
     Route::get('/exhibitors/meetings', function () {
-        $exhibition = \App\Support\LiveContent::firstLiveExhibition();
-        abort_unless($exhibition, 404);
-
-        return redirect()->route('exhibitions.visitor.meetings', $exhibition->slug);
+        return redirect()->route('frontend.user.meetings');
     })->name('exhibitors.meetings');
 
     Route::get('/exhibitors/enquiries', [ExhibitionBoothController::class, 'exhibitorEnquiryForm'])->name('exhibitors.enquiries');
@@ -320,7 +317,9 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
 
     Route::get('/{slug}/my-passes', [VisitorExhibitionController::class, 'myPasses'])->name('visitor.my-passes');
     Route::get('/{slug}/saved-booths', [VisitorExhibitionController::class, 'savedBooths'])->name('visitor.saved');
-    Route::get('/{slug}/my-meetings', [VisitorExhibitionController::class, 'meetings'])->name('visitor.meetings');
+    Route::get('/{slug}/my-meetings', function (string $slug) {
+        return redirect()->route('frontend.user.meetings');
+    })->name('visitor.meetings');
     Route::get('/{slug}/sessions', [VisitorExhibitionController::class, 'sessions'])->name('visitor.sessions');
     Route::post('/{slug}/sessions/{session}/register', [VisitorExhibitionController::class, 'registerSession'])->name('visitor.sessions.register');
     Route::post('/{slug}/sessions/{session}/request-join', [VisitorExhibitionController::class, 'requestSessionJoin'])->name('visitor.sessions.request-join');

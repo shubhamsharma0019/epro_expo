@@ -116,12 +116,9 @@
                     
                     <!-- Logo -->
                     <div class="flex items-center gap-4 mb-12">
-                        <x-shared.brand-logo 
-                            href="{{ route('admin.dashboard') }}" 
-                            subtitle="ADMIN PORTAL" 
-                            mark-class="h-12 w-12 rounded-[16px] text-[22px] sm:h-14 sm:w-14 sm:rounded-[18px] sm:text-[24px]" 
-                            title-class="text-[32px] font-extrabold tracking-tight text-[#071044]" 
-                            subtitle-class="text-[12px] text-[#8A94AD]" 
+                        <x-shared.frontend-brand-logo
+                            href="{{ route('admin.dashboard') }}"
+                            subtitle="ADMIN PORTAL"
                         />
                     </div>
 

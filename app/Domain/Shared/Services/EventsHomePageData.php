@@ -13,7 +13,8 @@ class EventsHomePageData
     {
         return DbGuard::whenAvailable(function () {
             $publishedEvents = LiveContent::companyEventQuery()
-                ->with(['branding', 'ticketTypes'])
+                ->with(['branding', 'ticketTypes', 'sessions'])
+                ->orderByDesc('is_home_featured')
                 ->latest('updated_at')
                 ->get();
 
@@ -21,6 +22,10 @@ class EventsHomePageData
                 ->filter(fn ($event) => $event->starts_at && $event->starts_at->greaterThanOrEqualTo(now()->startOfDay()))
                 ->sortBy('starts_at')
                 ->values();
+
+            $trendingEvents = $this->buildTrendingEvents($publishedEvents);
+            $featuredEvent = $trendingEvents[0] ?? null;
+            $featuredModel = $this->resolveFeaturedEventModel($publishedEvents, $featuredEvent);
 
             $carouselEvents = $upcomingEvents->isNotEmpty()
                 ? $upcomingEvents
@@ -30,18 +35,19 @@ class EventsHomePageData
             $countries = $this->buildCountries($publishedEvents);
 
             return [
-                'events' => $publishedEvents->take(6)->map(fn ($event) => $this->mapTrendingEvent($event))->values()->all(),
+                'events' => $trendingEvents,
                 'categories' => $categories,
                 'countries' => $countries,
                 'hero_slides' => $this->buildHeroSlides($carouselEvents),
                 'hero_meta' => [
                     'event_count' => LiveContent::companyEventQuery()->count(),
                     'category_count' => count($categories),
-                    'country_count' => count($countries),
+                    'country_count' => max(1, count($countries)),
                 ],
                 'tickets' => $this->buildTickets(),
-                'slots' => $this->buildSlots($upcomingEvents->isNotEmpty() ? $upcomingEvents : $publishedEvents),
+                'slots' => $this->buildSlots($featuredModel, $publishedEvents),
                 'sample_ticket' => $this->buildSampleTicket($publishedEvents->first()),
+                'featured_event' => $featuredEvent,
             ];
         }, fn () => $this->emptyPayload());
     }
@@ -61,7 +67,48 @@ class EventsHomePageData
             'tickets' => [],
             'slots' => [],
             'sample_ticket' => null,
+            'featured_event' => null,
         ];
+    }
+
+    private function buildTrendingEvents($publishedEvents): array
+    {
+        return $publishedEvents
+            ->sortBy([
+                fn ($event) => $event->is_home_featured ? 0 : 1,
+                fn ($event) => $this->eventPriority($event),
+                fn ($event) => $event->starts_at?->timestamp ?? PHP_INT_MAX,
+            ])
+            ->take(6)
+            ->map(fn ($event) => $this->mapTrendingEvent($event))
+            ->values()
+            ->all();
+    }
+
+    private function eventPriority($event): int
+    {
+        $startsAt = $event->starts_at;
+        $endsAt = $event->ends_at;
+        $isLive = $startsAt && $startsAt->isPast() && (! $endsAt || $endsAt->isFuture());
+
+        if ($isLive) {
+            return 0;
+        }
+
+        if ($startsAt && $startsAt->isFuture()) {
+            return 1;
+        }
+
+        return 2;
+    }
+
+    private function resolveFeaturedEventModel($publishedEvents, ?array $featuredEvent)
+    {
+        if (! $featuredEvent) {
+            return $publishedEvents->first();
+        }
+
+        return $publishedEvents->firstWhere('slug', $featuredEvent['slug'] ?? null) ?? $publishedEvents->first();
     }
 
     private function buildCategories(): array
@@ -126,11 +173,7 @@ class EventsHomePageData
     {
         $slides = $events
             ->map(function ($event) {
-                $imageUrl = $this->eventImageUrl($event->branding);
-
-                if (! $imageUrl) {
-                    return null;
-                }
+                $imageUrl = $this->eventImageUrl($event->branding) ?: $this->categoryHeroImage($event->category);
 
                 return [
                     'image' => $imageUrl,
@@ -139,11 +182,26 @@ class EventsHomePageData
                     'title' => $event->title,
                 ];
             })
-            ->filter()
+            ->filter(fn ($slide) => filled($slide['image'] ?? null))
             ->values()
             ->all();
 
         return ! empty($slides) ? $slides : $this->defaultHeroSlides();
+    }
+
+    private function categoryHeroImage(?string $category): string
+    {
+        $map = [
+            'technology' => 'event-hero-tech.png',
+            'business' => 'event-hero-tech.png',
+            'education' => 'event-hero-education.png',
+            'healthcare' => 'event-hero-ai.png',
+            'design' => 'event-hero-education.png',
+        ];
+
+        $key = Str::slug((string) $category);
+
+        return asset('images/events-home/hero-slider/' . ($map[$key] ?? 'event-hero-tech.png'));
     }
 
     private function defaultHeroSlides(): array
@@ -192,12 +250,12 @@ class EventsHomePageData
             'slug' => $event->slug,
             'badge' => $badge,
             'badgeClass' => $badgeClass,
-            'imageUrl' => $this->eventImageUrl($event->branding),
+            'imageUrl' => $this->eventImageUrl($event->branding) ?: $this->categoryHeroImage($event->category),
             'title' => $event->title,
             'date' => $startsAt
                 ? $startsAt->format('M d') . ($endsAt ? ' - ' . $endsAt->format('d, Y') : ', ' . $startsAt->format('Y'))
                 : 'Date TBD',
-            'country' => LiveContent::resolveEventCardLocation($event, 'India'),
+            'country' => LiveContent::formatEventLocation($event),
             'type' => ucfirst(str_replace('_', ' ', $event->event_mode ?: $event->event_type ?: 'Event')),
             'price' => $minTicket
                 ? (($minTicket->currency ?: 'INR') . ' ' . number_format((float) $minTicket->price, 0))
@@ -235,9 +293,40 @@ class EventsHomePageData
             ->all();
     }
 
-    private function buildSlots($events): array
+    private function buildSlots($featuredEvent, $publishedEvents): array
     {
-        return $events
+        $targetEvent = $featuredEvent ?? $publishedEvents->first();
+
+        if (! $targetEvent) {
+            return [];
+        }
+
+        $targetEvent->loadMissing(['ticketTypes', 'sessions']);
+
+        if ($targetEvent->sessions->isNotEmpty()) {
+            return $targetEvent->sessions
+                ->sortBy('starts_at')
+                ->take(5)
+                ->map(function ($session) use ($targetEvent) {
+                    $minTicket = $targetEvent->ticketTypes->sortBy('price')->first();
+                    $capacity = (int) ($session->capacity ?: 0);
+                    $seatsLeft = $capacity > 0 ? max(0, $capacity) : null;
+
+                    return [
+                        'time' => $session->starts_at
+                            ? $session->starts_at->format('h:i A') . ($session->ends_at ? ' – ' . $session->ends_at->format('h:i A') : '')
+                            : ($session->title ?: 'Session'),
+                        'seats' => $seatsLeft !== null ? $seatsLeft . ' left' : 'Available',
+                        'price' => $minTicket ? (($minTicket->currency ?: 'INR') . ' ' . number_format((float) $minTicket->price, 0)) : 'Free',
+                        'href' => url('/events/tickets/select?event=' . $targetEvent->slug),
+                    ];
+                })
+                ->values()
+                ->all();
+        }
+
+        return collect([$targetEvent])
+            ->merge($publishedEvents->reject(fn ($event) => $event->id === $targetEvent->id))
             ->filter(fn ($event) => filled($event->starts_at))
             ->take(5)
             ->map(function ($event) {
@@ -247,8 +336,8 @@ class EventsHomePageData
                 $seatsLeft = $capacity ? max(0, $capacity - $sold) : null;
 
                 return [
-                    'time' => $event->starts_at->format('M d, h:i A') . ($event->ends_at ? ' - ' . $event->ends_at->format('h:i A') : ''),
-                    'seats' => $seatsLeft !== null ? $seatsLeft . ' Seats Left' : 'Seats Available',
+                    'time' => $event->starts_at->format('M d, h:i A') . ($event->ends_at ? ' – ' . $event->ends_at->format('h:i A') : ''),
+                    'seats' => $seatsLeft !== null ? $seatsLeft . ' left' : 'Available',
                     'price' => $minTicket ? (($minTicket->currency ?: 'INR') . ' ' . number_format((float) $minTicket->price, 0)) : 'Free',
                     'href' => url('/events/tickets/select?event=' . $event->slug),
                 ];

@@ -19,15 +19,7 @@
 @endphp
 <main class="grid min-h-screen w-full overflow-hidden bg-white lg:grid-cols-[0.88fr_1.12fr]">
     <section class="relative hidden overflow-hidden bg-[#EFF6FF] p-8 lg:flex lg:flex-col lg:justify-between">
-        <a href="{{ route('home') }}" class="flex items-center gap-2">
-            <span class="grid grid-cols-2 gap-[3px]">
-                <i class="h-[10px] w-[10px] rounded-[2px] bg-[#2563EB]"></i>
-                <i class="h-[10px] w-[10px] rounded-[2px] bg-sky-400"></i>
-                <i class="h-[10px] w-[10px] rounded-[2px] bg-sky-400"></i>
-                <i class="h-[10px] w-[10px] rounded-[2px] bg-[#2563EB]"></i>
-            </span>
-            <span class="text-[22px] font-bold text-[#020617]">EproExpo</span>
-        </a>
+        <x-shared.frontend-brand-logo />
 
         <div>
             <p class="mb-3 text-[12px] font-bold uppercase tracking-[0.18em] text-[#2563EB]">{{ $isEventTicketFlow ? 'Event Ticket Register' : ($isExhibitionTicketFlow ? 'Visitor Pass Register' : 'Visitor Account') }}</p>
@@ -48,15 +40,7 @@
     <section class="flex items-center justify-center px-5 py-10 sm:px-10">
         <div class="w-full max-w-[560px]">
             <div class="mb-8 lg:hidden">
-                <a href="{{ route('home') }}" class="flex items-center gap-2">
-                    <span class="grid grid-cols-2 gap-[3px]">
-                        <i class="h-[10px] w-[10px] rounded-[2px] bg-[#2563EB]"></i>
-                        <i class="h-[10px] w-[10px] rounded-[2px] bg-sky-400"></i>
-                        <i class="h-[10px] w-[10px] rounded-[2px] bg-sky-400"></i>
-                        <i class="h-[10px] w-[10px] rounded-[2px] bg-[#2563EB]"></i>
-                    </span>
-                    <span class="text-[22px] font-bold text-[#020617]">EproExpo</span>
-                </a>
+                <x-shared.frontend-brand-logo size="compact" />
             </div>
 
             <p class="text-[12px] font-bold uppercase tracking-[0.18em] text-[#2563EB]">Join As Visitor</p>

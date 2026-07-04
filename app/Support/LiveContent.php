@@ -347,6 +347,31 @@ class LiveContent
         return $formatted !== '' ? $formatted : $fallback;
     }
 
+    public static function formatEventLocation(object|array|null $event, string $fallback = 'India'): string
+    {
+        if ($event === null) {
+            return $fallback;
+        }
+
+        $value = fn (string $key): string => trim((string) (is_array($event) ? ($event[$key] ?? '') : ($event->{$key} ?? '')));
+        $city = static::normalizeLocationPart($value('city'));
+        $country = static::normalizeCountryLabel($value('country'));
+
+        if ($city !== '' && $country !== '') {
+            return $city . ', ' . $country;
+        }
+
+        if ($city !== '') {
+            return $city;
+        }
+
+        if ($country !== '') {
+            return $country;
+        }
+
+        return static::resolveEventCardLocation($event, $fallback);
+    }
+
     public static function resolveEventCardLocation(object|array|null $event, string $fallback = 'India'): string
     {
         if ($event === null) {
@@ -445,12 +470,18 @@ class LiveContent
     public static function homeFeaturedBooths(int $limit = 6): Collection
     {
         return DbGuard::whenAvailable(function () use ($limit) {
-            return static::boothBookingQuery()
-                ->with(['company', 'exhibition', 'hall', 'booth', 'boothProfile'])
+            $query = static::boothBookingQuery()
+                ->with(['company', 'exhibition', 'hall', 'booth', 'boothProfile', 'boothBranding', 'boothCatalogues', 'boothSessions'])
                 ->withCount([
                     'boothProducts as published_products_count' => fn ($query) => $query->where('status', 'published'),
                     'boothCatalogues as public_catalogues_count' => fn ($query) => $query->where('visibility', 'public')->where('status', 'active'),
-                ])
+                ]);
+
+            if (DbGuard::hasColumn('booth_bookings', 'is_home_featured')) {
+                $query->orderByDesc('is_home_featured');
+            }
+
+            return $query
                 ->latest()
                 ->take($limit)
                 ->get()

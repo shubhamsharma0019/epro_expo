@@ -31,7 +31,7 @@
 
 <form method="POST" action="{{ route('company.event-company-flow.submit.store', $companyEvent) }}">
     @csrf
-<div class="px-4 md:px-10 py-10 max-w-[1250px] w-full flex flex-col mx-auto flex-1 gap-10">
+<div class="px-4 md:px-8 py-10 max-w-[1250px] w-full flex flex-col flex-1 gap-10">
         <div class="flex flex-col xl:flex-row gap-10 md:gap-14">
             
             <!-- Left Column -->

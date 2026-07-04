@@ -443,69 +443,6 @@ class VisitorExhibitionController extends Controller
         ]);
     }
 
-    public function meetings(string $slug): View
-    {
-        $isPassActive = $this->isPassActive($slug);
-        $exhibition = LiveContent::exhibitionQuery()->where('slug', $slug)->first()
-            ?: Exhibition::where('slug', $slug)->first();
-        $bookingId = request()->query('booking_id') ?: session('selected_visitor_booking_id');
-        $visitor = null;
-
-        if ($bookingId) {
-            $visitor = Visitor::query()
-                ->when($exhibition, fn ($query) => $query->where('exhibition_id', $exhibition->id))
-                ->where('booking_id', $bookingId)
-                ->first();
-        }
-
-        if (! $visitor && auth()->check()) {
-            $visitor = Visitor::query()
-                ->when($exhibition, fn ($query) => $query->where('exhibition_id', $exhibition->id))
-                ->where('email', auth()->user()->email)
-                ->latest()
-                ->first();
-        }
-
-        $meetings = collect();
-
-        if (auth()->check() || $visitor?->email) {
-            $meetings = VisitorMeetingBooking::query()
-                ->with(['company.boothBookings.boothProfile', 'company.boothBookings.exhibition', 'companyMeeting'])
-                ->when($exhibition, function ($query) use ($exhibition) {
-                    $query->whereHas('company.boothBookings', fn ($bookingQuery) => $bookingQuery->where('exhibition_id', $exhibition->id));
-                })
-                ->where(function ($query) use ($visitor) {
-                    if (auth()->check()) {
-                        $query->where('visitor_id', auth()->id());
-                    }
-
-                    if ($visitor?->email) {
-                        auth()->check()
-                            ? $query->orWhere('visitor_email', $visitor->email)
-                            : $query->where('visitor_email', $visitor->email);
-                    }
-                })
-                ->latest()
-                ->get();
-        }
-
-        $upcoming = $meetings->filter(fn ($m) => in_array($m->status, ['pending', 'confirmed', 'accepted'], true));
-        $completed = $meetings->filter(fn ($m) => $m->status === 'completed');
-        $cancelled = $meetings->filter(fn ($m) => in_array($m->status, ['cancelled', 'rejected'], true));
-        $rescheduled = $meetings->filter(fn ($m) => $m->status === 'rescheduled');
-
-        return view('frontend.visitor-exhibition.meetings.index', [
-            'slug' => $slug,
-            'isPassActive' => $isPassActive,
-            'meetings' => $meetings,
-            'upcoming' => $upcoming,
-            'completed' => $completed,
-            'cancelled' => $cancelled,
-            'rescheduled' => $rescheduled,
-            'exhibition' => $exhibition,
-        ]);
-    }
-
     private function resolveRegisteredSessionsCount(?Exhibition $exhibition, ?Visitor $visitor): int
     {
         if (! $exhibition) {

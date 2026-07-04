@@ -1,350 +1,303 @@
 @php
     $home = $home ?? [];
     $hero = $home['hero'] ?? \App\Support\WebsiteContent::defaultHero();
+    $stats = $home['stats'] ?? [];
+    $experienceTabs = $home['experience_tabs'] ?? [];
+    $featurePills = $home['feature_pills'] ?? \App\Support\WebsiteContent::defaultFeaturePills();
+    $features = $home['features'] ?? \App\Support\WebsiteContent::defaultFeatures();
+    $steps = $home['steps'] ?? \App\Support\WebsiteContent::defaultSteps();
+    $boothHighlight = $home['booth_highlight'] ?? [];
+    $partners = $home['partners'] ?? \App\Support\WebsiteContent::defaultPartners();
+    $cta = $home['cta'] ?? \App\Support\WebsiteContent::defaultCta();
+    $ctaBenefits = $home['cta_benefits'] ?? \App\Support\WebsiteContent::defaultCtaBenefits();
     $footer = $home['footer'] ?? \App\Support\WebsiteContent::defaultFooter();
-    $events = $events ?? [];
-    $categories = $categories ?? [];
-    $countries = $countries ?? [];
-    $heroSlides = $heroSlides ?? [];
-    $heroMeta = $heroMeta ?? ['event_count' => 0, 'category_count' => 0, 'country_count' => 0];
-    $slots = $slots ?? [];
-    $featuredEvent = $events[0] ?? null;
-    $carouselId = 'home-hero-carousel';
-
-    $visitorSteps = [
-        ['Find Your Event', 'Browse events by category, location, or specific topics.'],
-        ['Choose Your Slot', 'Select your preferred time slot for available dates.'],
-        ['Book & Pay', 'Secure your spot with a quick and safe checkout.'],
-        ['Get Your Ticket', 'Receive your e-ticket instantly and enjoy the show.'],
-    ];
-
-    if (empty($heroSlides)) {
-        $heroSlides = [
-            ['image' => asset('images/events-home/hero-slider/event-hero-tech.png'), 'alt' => 'Technology event hero', 'href' => route('events.listings.index')],
-            ['image' => asset('images/events-home/hero-slider/event-hero-ai.png'), 'alt' => 'AI conference hero', 'href' => route('events.listings.index')],
-            ['image' => asset('images/events-home/hero-slider/event-hero-education.png'), 'alt' => 'Education summit hero', 'href' => route('events.listings.index')],
-        ];
-    }
 @endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>eproexpo — Discover Events. Book Tickets. Join Live.</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  @include('frontend.home.partials.home-styles')
-  @include('frontend.home.partials.mobile-styles')
-  @include('frontend.shared.partials.responsive-fixes')
-</head>
-<body id="home-page">
-
-<div class="topbar">
-  <div class="container nav-pill">
-    <x-shared.brand-logo href="{{ route('home') }}" mark-class="h-8 w-8 rounded-full text-[14px]" title-class="text-[19px] text-[#171522]" subtitle-class="text-[9px] text-[#6B6884]" />
-
-    <div class="nav-links">
-      <a href="{{ route('events.home') }}">Explore Events</a>
-      <a href="{{ route('exhibitions.index') }}">Exhibitions</a>
-      <a href="{{ route('frontend.features') }}">Features</a>
-      <a href="{{ route('frontend.pricing') }}">Pricing</a>
-      <a href="{{ route('frontend.about') }}">About Us</a>
-    </div>
-
-    <div class="nav-actions">
-      <div class="get-started-desktop">
-        <x-frontend.get-started-menu
-          menu-id="homeGetStarted"
-          :book-booth-label="$hero['button_3_label'] ?? 'Book a Booth'"
-          :book-booth-url="$hero['button_3_url'] ?? null"
-          :create-event-label="$hero['button_4_label'] ?? 'Create Company Event'"
-          :create-event-url="$hero['button_4_url'] ?? null"
-        />
-      </div>
-      <button type="button" class="menu-btn" id="menuBtn" aria-label="Open menu">&#9776;</button>
-    </div>
-  </div>
-
-  <div class="container mobile-menu" id="mobileMenu">
-    <a href="{{ route('events.home') }}">Explore Events</a>
-    <a href="{{ route('exhibitions.index') }}">Exhibitions</a>
-    <a href="{{ route('frontend.features') }}">Features</a>
-    <a href="{{ route('frontend.pricing') }}">Pricing</a>
-    <a href="{{ route('frontend.about') }}">About Us</a>
-    <div class="get-started-mobile">
-      <x-frontend.get-started-menu
-        variant="mobile"
-        :book-booth-label="$hero['button_3_label'] ?? 'Book a Booth'"
-        :book-booth-url="$hero['button_3_url'] ?? null"
-        :create-event-label="$hero['button_4_label'] ?? 'Create Company Event'"
-        :create-event-url="$hero['button_4_url'] ?? null"
-      />
-    </div>
-  </div>
-</div>
-
-<div class="hero">
-  <div class="hero-inner">
-    <div class="hero-grid">
-      <div class="hero-copy">
-        <span class="hero-eyebrow"><span class="dot"></span>Live events, near you</span>
-        <h1>Discover <span class="accent">Events.</span><br>Book <span class="accent">Tickets.</span><br>Join Live.</h1>
-        <p>
-          @if (($heroMeta['event_count'] ?? 0) > 0)
-            Explore {{ number_format($heroMeta['event_count']) }} live events across {{ max(1, $heroMeta['category_count'] ?? 0) }} categories and {{ max(1, $heroMeta['country_count'] ?? 0) }} countries. Book your tickets and get access to live sessions as per available slots.
-          @else
-            Explore events across categories and countries. Book your tickets and get access to live sessions as per available slots.
-          @endif
-        </p>
-      </div>
-
-      <div class="hero-visual">
-        <div class="visual-card" id="{{ $carouselId }}">
-          @foreach ($heroSlides as $index => $slide)
-            <a href="{{ $slide['href'] ?? route('events.listings.index') }}" class="visual-slide {{ $index === 0 ? 'active' : '' }}" data-slide="{{ $index }}">
-              <img src="{{ $slide['image'] }}" alt="{{ $slide['alt'] ?? 'Featured event' }}">
-            </a>
-          @endforeach
-          @if (count($heroSlides) === 0)
-            <div class="visual-slide-fallback"></div>
-          @endif
-          <div class="visual-glow"></div>
-        </div>
-        @if (count($heroSlides) > 1)
-          <button type="button" class="visual-arrow left" data-carousel-prev="{{ $carouselId }}" aria-label="Previous slide">&#8249;</button>
-          <button type="button" class="visual-arrow right" data-carousel-next="{{ $carouselId }}" aria-label="Next slide">&#8250;</button>
-        @endif
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="container lift">
-  <div class="search-card">
-    <div class="search-tabs">
-      <span class="active">Events</span>
-      <a href="{{ route('exhibitions.index') }}">Virtual Exhibitions</a>
-    </div>
-    <form action="{{ route('events.listings.index') }}" method="GET" class="search-fields">
-      <div class="field">
-        <label for="home-search">Search Events</label>
-        <input id="home-search" type="text" name="search" placeholder="Event name, speaker, topic...">
-      </div>
-      <div class="field">
-        <label for="home-category">Category</label>
-        <select id="home-category" name="category">
-          <option value="">All Categories</option>
-          @foreach ($categories as $category)
-            @php
-              $categoryName = is_array($category) ? ($category['name'] ?? '') : $category;
-              $categoryValue = is_array($category) ? ($category['value'] ?? $categoryName) : $category;
-            @endphp
-            @if ($categoryName)
-              <option value="{{ $categoryValue }}">{{ $categoryName }}</option>
-            @endif
-          @endforeach
-        </select>
-      </div>
-      <div class="field">
-        <label for="home-country">Country</label>
-        <select id="home-country" name="country">
-          <option value="">All Countries</option>
-          @foreach ($countries as $country)
-            @php $countryName = is_array($country) ? ($country['name'] ?? '') : $country; @endphp
-            @if ($countryName)
-              <option value="{{ $countryName }}">{{ $countryName }}</option>
-            @endif
-          @endforeach
-        </select>
-      </div>
-      <div class="field">
-        <label for="home-date">Date</label>
-        <input id="home-date" type="date" name="date">
-      </div>
-      <button type="submit" class="search-btn">Search Events</button>
-    </form>
-  </div>
-
-  <div class="section">
-    <div class="sec-headrow">
-      <h2>Browse Events by Category</h2>
-      <a href="{{ url('/events/listings/categories') }}">View All Categories &rarr;</a>
-    </div>
-    @if (count($categories) > 0)
-      <div class="cat-grid">
-        @foreach ($categories as $category)
-          <a href="{{ route('events.listings.index', ['category' => $category['value'] ?? $category['name']]) }}" class="cat-tile">
-            <div class="icn">
-              <img src="{{ asset('images/events-home/categories/' . ($category['icon'] ?? 'business.svg')) }}" alt="{{ $category['name'] }}">
-            </div>
-            <span>{{ $category['name'] }}</span>
-          </a>
-        @endforeach
-      </div>
-    @else
-      <div class="empty-state">
-        <p>No categories yet</p>
-        <span>Published events will populate categories automatically.</span>
-      </div>
-    @endif
-  </div>
-
-  <div class="section" style="padding-top:0;">
-    <div class="sec-headrow">
-      <h2>Trending Events</h2>
-      <a href="{{ route('events.listings.index') }}">View All Events &rarr;</a>
-    </div>
-    @if (count($events) > 0)
-      <div class="trend-grid">
-        @foreach ($events as $event)
-          @php
-            $eventSlug = $event['slug'] ?? \Illuminate\Support\Str::slug($event['title'] ?? 'event');
-            $isLive = in_array($event['badge'] ?? '', ['Live Now', 'LIVE', 'Live'], true);
-            $eventImage = $event['imageUrl'] ?? null;
-            $eventUrl = url('/events/listings/' . $eventSlug);
-          @endphp
-          <article class="event-card">
-            <a href="{{ $eventUrl }}" class="event-img">
-              @if ($eventImage)
-                <img src="{{ $eventImage }}" alt="{{ $event['title'] }}">
-              @else
-                <div class="event-img-fallback"></div>
-              @endif
-              @if ($isLive)
-                <span class="live-badge"><span class="dot"></span>LIVE</span>
-              @endif
-            </a>
-            <div class="event-body">
-              <h3>{{ $event['title'] }}</h3>
-              <div class="meta">
-                <span>&#128197; {{ $event['date'] }}</span>
-                <span>&#128205; {{ $event['country'] }}</span>
-              </div>
-              <div class="price-row">
-                <div class="price">{{ $event['price'] }}<small> / ticket</small></div>
-                <a href="{{ $eventUrl }}" class="view-btn">View Event &rarr;</a>
-              </div>
-            </div>
-          </article>
-        @endforeach
-      </div>
-    @else
-      <div class="empty-state">
-        <p>No published events yet</p>
-        <span>Published company events will appear here automatically.</span>
-      </div>
-    @endif
-  </div>
-
-  <div class="section" style="padding-top:0; padding-bottom:80px;">
-    <div class="split-grid">
-      <div>
-        <div class="sec-headrow" style="margin-bottom:22px;"><h2>How It Works</h2></div>
-        <div class="steps">
-          @foreach ($visitorSteps as $index => $step)
-            <div class="step-row">
-              <div class="num">{{ $index + 1 }}</div>
-              <div>
-                <h5>{{ $step[0] }}</h5>
-                <p>{{ $step[1] }}</p>
-              </div>
-            </div>
-          @endforeach
-        </div>
-      </div>
-
-      <div class="icard">
-        <h3>Ticket Booking &amp; Slots</h3>
-        <div class="ticket-event">{{ $featuredEvent['title'] ?? 'Upcoming Events' }}</div>
-        <div class="slot-list">
-          @forelse ($slots as $slot)
-            <a href="{{ $slot['href'] ?? route('events.listings.index') }}" class="slot-row">
-              <div>
-                <div class="l">{{ $slot['time'] }}</div>
-                <div class="p">{{ $slot['price'] }}</div>
-              </div>
-              <span class="tag">{{ $slot['seats'] }}</span>
-            </a>
-          @empty
-            <div class="empty-state" style="padding:20px 16px;">
-              <p>No ticket slots available yet</p>
-              <span>Published events with dates will appear here.</span>
-            </div>
-          @endforelse
-        </div>
-        <a href="{{ route('events.listings.index') }}" class="book-btn">View More Slots</a>
-      </div>
-    </div>
-  </div>
-</div>
-
-<footer>
-  <div class="container footer-inner">
-    <div class="footer-brand">
-      <x-shared.brand-logo href="{{ route('home') }}" mark-class="h-8 w-8 rounded-full text-[14px]" title-class="text-[19px] brand-title" subtitle-class="text-[9px] brand-subtitle" />
-    </div>
-    <div class="foot-links">
-      <a href="{{ route('events.home') }}">Explore Events</a>
-      <a href="{{ route('exhibitions.index') }}">Exhibitions</a>
-      <a href="{{ route('frontend.features') }}">Features</a>
-      <a href="{{ route('frontend.pricing') }}">Pricing</a>
-      <a href="{{ route('frontend.about') }}">About Us</a>
-      @foreach (($footer['links'] ?? []) as $link)
-        <a href="{{ $link['link_url'] ?? '#' }}">{{ $link['title'] ?? '' }}</a>
-      @endforeach
-    </div>
-    <span style="font-size:12px;">{{ $footer['copyright'] ?? '© ' . date('Y') . ' eproexpo. All rights reserved.' }}</span>
-  </div>
-</footer>
-
-<script>
-  (() => {
-    const menuBtn = document.getElementById('menuBtn');
-    const mobileMenu = document.getElementById('mobileMenu');
-
-    menuBtn?.addEventListener('click', () => {
-      mobileMenu?.classList.toggle('open');
-    });
-
-    mobileMenu?.querySelectorAll('a').forEach((link) => {
-      link.addEventListener('click', () => mobileMenu.classList.remove('open'));
-    });
-
-    const carouselId = @json($carouselId);
-    const carousel = document.getElementById(carouselId);
-    if (!carousel) return;
-
-    const slides = Array.from(carousel.querySelectorAll('.visual-slide'));
-    if (slides.length <= 1) return;
-
-    let current = 0;
-
-    const showSlide = (index) => {
-      current = (index + slides.length) % slides.length;
-      slides.forEach((slide, i) => slide.classList.toggle('active', i === current));
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ $hero['title_line_1'] }} {{ $hero['title_line_2'] }} - eproexpo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { inter: ['Inter', 'sans-serif'] },
+          colors: {
+            navy: '#071044',
+            purple: '#6D28D9',
+            violet: '#5726E8',
+            coral: '#FF4D3D',
+            soft: '#F6F7FC'
+          },
+          boxShadow: {
+            soft: '0 16px 40px rgba(7,16,68,0.08)',
+            card: '0 10px 28px rgba(7,16,68,0.07)'
+          }
+        }
+      }
     };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    html { scroll-behavior: smooth; }
+    body { font-family: Inter, sans-serif; }
+  </style>
+  @include('frontend.shared.partials.responsive-fixes')
+  @include('frontend.shared.partials.home-brand-styles')
+  @include('frontend.shared.partials.site-navbar-styles')
+  @include('frontend.home.partials.mobile-styles')
+</head>
+<body id="home-page" class="bg-white text-navy antialiased">
+  @include('frontend.shared.partials.site-navbar', [
+      'menuId' => 'homeNav',
+      'bookBoothLabel' => $hero['button_3_label'] ?? 'Book a Booth',
+      'bookBoothUrl' => $hero['button_3_url'] ?? null,
+      'createEventLabel' => $hero['button_4_label'] ?? 'Create Company Event',
+      'createEventUrl' => $hero['button_4_url'] ?? null,
+  ])
 
-    document.querySelectorAll(`[data-carousel-prev="${carouselId}"]`).forEach((button) => {
-      button.addEventListener('click', (event) => {
-        event.preventDefault();
-        showSlide(current - 1);
+  <!-- Hero -->
+  <main>
+    <section class="home-hero relative overflow-hidden bg-white pb-4 lg:min-h-[620px] lg:pb-0">
+      <img src="{{ $hero['image_url'] }}" alt="eproexpo virtual event building" class="absolute inset-y-0 right-0 hidden h-full w-[72%] object-cover object-right-top lg:block" />
+      <img src="{{ $hero['image_url'] }}" alt="eproexpo virtual event building" class="home-hero-image-mobile absolute inset-x-0 top-0 h-[260px] w-full object-cover object-center opacity-20 sm:h-[340px] lg:hidden" />
+      <div class="home-hero-overlay-desktop absolute inset-0 hidden lg:block" style="background: linear-gradient(90deg, #fff 0%, #fff 27%, rgba(255,255,255,0.98) 34%, rgba(255,255,255,0.82) 39%, rgba(255,255,255,0.46) 44%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0) 58%);"></div>
+      <div class="home-hero-overlay-mobile absolute inset-0 lg:hidden"></div>
+      <div class="absolute inset-0 bg-gradient-to-b from-white/0 via-white/0 via-[76%] to-white/78 lg:block"></div>
+      <div class="relative z-10 mx-auto grid max-w-[1440px] items-start gap-10 px-4 pb-12 pt-7 sm:px-6 sm:pb-20 lg:min-h-[384px] lg:grid-cols-[0.76fr_1.24fr] lg:px-8 lg:pb-0 lg:pt-7">
+        <div class="relative z-10 min-w-0">
+          <h1 class="home-hero-title max-w-[555px] text-[38px] font-black leading-[1.02] tracking-[-0.045em] text-navy min-[420px]:text-[44px] sm:text-[62px] sm:leading-[0.97] lg:text-[68px]">
+            {{ $hero['title_line_1'] }}<br />{{ $hero['title_line_2'] }}<br />
+            <span class="bg-gradient-to-r from-[#6D28D9] to-[#B735D7] bg-clip-text text-transparent">{{ $hero['title_highlight'] }}</span>
+          </h1>
+          <p class="home-hero-copy mt-5 max-w-[520px] text-[15px] font-medium leading-[1.65] text-[#1F2B55] sm:text-[17px] sm:leading-[1.55]">
+            {{ $hero['subtitle'] }}
+          </p>
+          <div class="home-hero-actions mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-5">
+            <a href="{{ $hero['button_1_url'] ?? route('events.home') }}" class="inline-flex w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-[#6D28D9] to-[#4B16D8] px-6 py-4 text-[15px] font-bold text-white shadow-[0_14px_30px_rgba(91,46,255,0.28)] sm:w-auto sm:px-7 sm:text-[16px]">
+              <i class="far fa-calendar-alt text-lg"></i> {{ $hero['button_1_label'] ?? 'Explore Events' }}
+            </a>
+            <a href="{{ $hero['button_2_url'] ?? url('/exhibitions') }}" class="group inline-flex w-full items-center justify-center gap-3 rounded-xl border border-[#D8DCEB] bg-white px-6 py-4 text-[15px] font-bold text-navy shadow-sm transition-all duration-200 hover:border-transparent hover:bg-gradient-to-r hover:from-[#6D28D9] hover:to-[#4B16D8] hover:text-white hover:shadow-[0_14px_30px_rgba(91,46,255,0.28)] sm:w-auto sm:px-7 sm:text-[16px]">
+              <i class="far fa-building text-lg text-gray-500 transition-colors group-hover:text-white"></i> {{ $hero['button_2_label'] ?? 'Explore Exhibitions' }}
+            </a>
+          </div>
+        </div>
+
+        <div class="hidden min-h-[384px] lg:block"></div>
+      </div>
+
+      <div class="relative z-20 mx-auto mt-4 max-w-[1440px] px-4 pb-8 sm:px-6 lg:px-8">
+        <div class="grid items-center gap-5 lg:grid-cols-[1.02fr_1fr]">
+          <div class="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:grid-cols-4">
+            @foreach ($stats as $stat)
+              @php($statUrl = $stat['link_url'] ?? null)
+              @if ($statUrl)
+                <a href="{{ $statUrl }}" class="flex items-center gap-3 rounded-xl border border-[#E7EAF3] bg-white p-3 shadow-sm transition-colors hover:border-[#6D28D9]">
+              @else
+                <div class="flex items-center gap-3 rounded-xl border border-[#E7EAF3] bg-white p-3 shadow-sm">
+              @endif
+                <span class="grid h-11 w-11 shrink-0 place-items-center rounded-full text-white" style="background-color: {{ $stat['color'] ?? '#6325E6' }}">
+                  <i class="{{ $stat['icon'] ?? 'fa-solid fa-store' }} text-lg"></i>
+                </span>
+                <p class="text-[13px] font-bold leading-tight">{{ $stat['title'] ?? '' }}<br><span class="font-medium">{{ $stat['subtitle'] ?? '' }}</span></p>
+              @if ($statUrl)
+                </a>
+              @else
+                </div>
+              @endif
+            @endforeach
+          </div>
+          <div class="home-pills-wrap">
+            <div class="home-pills-grid grid grid-cols-2 gap-2 rounded-2xl bg-white p-3 shadow-soft min-[480px]:grid-cols-3 sm:grid-cols-6 sm:p-4">
+            @foreach ($featurePills as $pill)
+              <a href="{{ $pill['link_url'] ?? route('frontend.user.login') }}" class="text-center text-[12px] font-semibold text-gray-700 hover:text-[#6D28D9] transition-colors">
+                <div class="text-[20px] mb-1.5"><i class="{{ $pill['icon'] ?? 'far fa-circle' }}"></i></div>{{ $pill['title'] ?? '' }}
+              </a>
+            @endforeach
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="bg-[#F8F8FC] px-5 py-8 lg:px-8">
+      <div class="mx-auto max-w-[1440px]">
+        <div class="text-center">
+          <h2 class="text-[18px] font-extrabold tracking-[-0.02em] text-[#071044] sm:text-[21px]">Everything You Need, In One Platform</h2>
+          <div class="mx-auto mt-3 h-[2px] w-[58px] rounded-full bg-gradient-to-r from-[#6D28D9] via-[#C640CF] to-[#FF9B41]"></div>
+        </div>
+
+        <div class="home-features-grid mt-6 grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+          @foreach ($features as $feature)
+            <article class="home-feature-card min-h-[248px] rounded-[10px] border border-[#E7EAF3] bg-white px-4 py-6 text-center shadow-[0_8px_22px_rgba(7,16,68,0.06)] transition-transform hover:-translate-y-1">
+              <span class="mx-auto grid h-[52px] w-[52px] place-items-center rounded-full text-[24px] text-white" style="background-color: {{ $feature['color'] ?? '#8B2DE8' }}"><i class="{{ $feature['icon'] ?? 'far fa-circle' }}"></i></span>
+              <h3 class="mt-5 text-[15px] font-extrabold leading-snug text-[#071044]">{!! nl2br(e($feature['title'] ?? '')) !!}</h3>
+              <p class="mt-4 text-[11px] font-semibold leading-[1.75] text-[#25305B]">{{ $feature['body'] ?? '' }}</p>
+            </article>
+          @endforeach
+        </div>
+      </div>
+    </section>
+
+    <!-- Experience -->
+    <section id="exhibitions" class="bg-white px-4 py-8 sm:px-6 lg:px-8">
+      <div class="mx-auto grid max-w-[1440px] gap-6 lg:grid-cols-[300px_1fr]">
+        <aside class="home-steps-panel relative z-10 overflow-hidden rounded-[14px] bg-[#071A55] px-5 py-7 text-white shadow-[0_14px_34px_rgba(7,16,68,0.18)]">
+          <h2 class="text-center text-[21px] font-extrabold leading-none">How It Works</h2>
+          <div class="relative mt-8 space-y-7">
+            <div class="absolute bottom-10 left-[31px] top-9 border-l-2 border-dashed border-white/22"></div>
+            @foreach ($steps as $index => $step)
+              <div class="home-step-item relative grid grid-cols-[64px_1fr] gap-5">
+                <span class="home-step-icon relative z-10 grid h-[62px] w-[62px] place-items-center rounded-full text-[26px] text-white shadow-[0_8px_20px_rgba(0,0,0,0.15)]" style="background-color: {{ $step['color'] ?? '#8B2DE8' }}"><i class="{{ $step['icon'] ?? 'fas fa-circle' }}"></i></span>
+                <div class="pt-1">
+                  <div class="flex items-center gap-3"><span class="grid h-7 w-7 place-items-center rounded-full bg-white text-[14px] font-extrabold text-[#6D28D9]">{{ $step['step'] ?? ($index + 1) }}</span><h3 class="text-[15px] font-extrabold">{{ $step['title'] ?? '' }}</h3></div>
+                  <p class="mt-2 text-[12px] font-medium leading-[1.55] text-white/88">{{ $step['body'] ?? '' }}</p>
+                </div>
+              </div>
+            @endforeach
+          </div>
+        </aside>
+
+        <div class="min-w-0">
+          <h2 class="mb-5 text-[23px] font-extrabold tracking-[-0.03em]">Virtual Exhibition Experience</h2>
+          
+          <div class="flex flex-col gap-6 xl:flex-row xl:items-start">
+            <div class="flex-1 overflow-hidden rounded-2xl border border-[#DCE1EE] bg-[#F8F9FD] shadow-card" id="experience-preview-container">
+              <div class="home-tab-row flex gap-2 overflow-x-auto border-b border-[#DCE1EE] px-4 py-3 text-[13px] font-bold sm:px-8 sm:py-4">
+                @foreach ($experienceTabs as $index => $tab)
+                  <button class="rounded-lg {{ $index === 0 ? 'bg-[#6D28D9] text-white shadow active' : 'transition-colors hover:bg-white' }} px-5 py-2.5 sm:px-6 sm:py-3 tab-btn" data-img="{{ $tab['image_url'] ?? '' }}">{{ $tab['title'] ?? '' }}</button>
+                @endforeach
+              </div>
+              @if (!empty($experienceTabs))
+                <img src="{{ $experienceTabs[0]['image_url'] ?? '' }}" alt="Virtual exhibition lobby" id="experience-preview-img" class="h-[220px] w-full object-cover sm:h-[340px] xl:h-[390px]" />
+              @endif
+            </div>
+
+            <aside class="w-full shrink-0 rounded-xl border border-[#E7EAF3] bg-white p-5 shadow-card xl:w-[280px]" aria-label="Exhibitor demo preview">
+              @if ($boothHighlight['demo_only'] ?? true)
+                <p class="mb-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[#6A708F]">{{ $boothHighlight['demo_label'] ?? 'Demo preview' }}</p>
+              @endif
+              <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div class="text-[18px] font-black">{{ $boothHighlight['initials'] ?? 'EX' }}</div>
+                <div class="text-[14px] font-extrabold">{{ $boothHighlight['company_name'] ?? 'Exhibitor' }}</div>
+                @php($isLive = strtoupper($boothHighlight['status'] ?? '') === 'LIVE')
+                <span @class([
+                  'rounded-full px-2 py-1 text-[10px] font-bold border',
+                  'bg-[#FFF1F1] text-[#E03137] border-red-200' => $isLive,
+                  'bg-[#E9FFF2] text-[#0A9A55] border-green-200' => ! $isLive,
+                ])>{{ $boothHighlight['status'] ?? 'ONLINE' }}</span>
+              </div>
+              <img src="{{ $boothHighlight['image_url'] ?? asset('images/home/booth-preview-new.png') }}" alt="{{ $boothHighlight['company_name'] ?? 'Exhibitor' }} booth" class="h-[120px] w-full rounded-lg object-cover" />
+              <h3 class="mt-5 text-[15px] font-extrabold">{{ $boothHighlight['tagline'] ?? $boothHighlight['industry'] ?? '' }}</h3>
+              <p class="mt-3 text-[13px] font-medium leading-6 text-[#1F2B55]">{{ $boothHighlight['description'] ?? '' }}</p>
+              <div class="home-booth-actions mt-5 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2">
+                <span class="rounded-lg bg-[#6D28D9] px-3 py-3 text-[12px] font-bold text-white text-center block select-none" title="Preview only"><i class="far fa-comment-dots mr-1"></i> Chat Now</span>
+                <span class="rounded-lg border border-[#DCE1EE] bg-[#FAFAFC] px-3 py-3 text-[12px] font-bold text-center block select-none" title="Preview only"><i class="far fa-file-alt mr-1"></i> View Brochure</span>
+              </div>
+              <span class="mt-3 w-full rounded-lg border border-[#DCE1EE] bg-[#FAFAFC] px-3 py-3 text-[12px] font-bold text-center block select-none" title="Preview only"><i class="far fa-calendar-alt mr-1"></i> Book Meeting</span>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Trust -->
+    <section class="bg-white px-4 pb-4 pt-7 sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-[1440px] text-center">
+        <p class="text-[15px] font-extrabold text-[#071044]">Trusted by Organizations Worldwide</p>
+        <div class="home-partners-row mt-5 flex flex-wrap items-center justify-center gap-x-7 gap-y-4 text-[17px] font-bold text-[#8C91A0] sm:gap-x-12 sm:gap-y-5 sm:text-[23px]">
+          @foreach ($partners as $partner)
+            @php($style = $partner['meta']['style'] ?? null)
+            @if ($style === 'unilever')
+              <span class="flex flex-col items-center leading-none"><span class="text-[26px] font-black text-[#8C91A0] sm:text-[32px]">U</span><span class="mt-0.5 text-[8px] uppercase tracking-widest sm:text-[9px]">{{ $partner['title'] ?? 'Unilever' }}</span></span>
+            @elseif ($style === 'serif')
+              <span class="font-serif italic text-[24px] sm:text-[30px]">{{ $partner['title'] ?? '' }}</span>
+            @elseif ($style === 'serif-lg')
+              <span class="font-serif text-[23px] font-medium sm:text-[29px]">{{ $partner['title'] ?? '' }}</span>
+            @elseif ($style === 'tracking' || $style === 'tracking-sm')
+              <span class="{{ $style === 'tracking-sm' ? 'text-[17px] tracking-widest sm:text-[20px]' : 'tracking-widest' }}">{{ $partner['title'] ?? '' }}</span>
+            @elseif (! empty($partner['icon']))
+              <span class="flex items-center gap-2"><i class="{{ $partner['icon'] }} text-[20px]"></i> {{ $partner['title'] ?? '' }}</span>
+            @else
+              <span class="font-medium">{{ $partner['title'] ?? '' }}</span>
+            @endif
+          @endforeach
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA + Footer -->
+    <section id="pricing" class="px-0 pb-0 sm:px-3 lg:px-3">
+      <div class="mx-auto max-w-[1440px] overflow-hidden rounded-t-[16px] bg-gradient-to-r from-[#5522E6] via-[#9A31D5] to-[#FF4D3D] text-white">
+        <div class="grid items-start gap-8 px-5 py-8 sm:px-8 sm:py-9 lg:grid-cols-[1fr_auto] lg:px-[72px]">
+          <div>
+            <h2 class="text-[25px] font-extrabold leading-tight sm:text-[31px]">{{ $cta['title'] }}</h2>
+            <p class="mt-4 max-w-[560px] text-[15px] font-medium leading-7 text-white/90 sm:mt-5 sm:text-[16px]">{{ $cta['subtitle'] }}</p>
+          </div>
+          <div class="flex flex-col gap-3 pt-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-5 lg:gap-8 lg:pt-4">
+            <a class="w-full rounded-xl bg-white px-7 py-4 text-center text-[15px] font-extrabold text-violet shadow-xl transition-colors hover:bg-gray-50 sm:w-auto sm:px-12" href="{{ $cta['button_1_url'] ?? route('events.home') }}">{{ $cta['button_1_label'] ?? 'Get Started Free' }}</a>
+            <a class="w-full rounded-xl border border-white/55 px-7 py-4 text-center text-[15px] font-extrabold transition-colors hover:bg-white/10 sm:w-auto sm:px-12" href="{{ $cta['button_2_url'] ?? route('company.home') }}">{{ $cta['button_2_label'] ?? 'Exhibit Your Company' }}</a>
+          </div>
+        </div>
+        <div class="home-cta-benefits grid gap-5 px-5 pb-8 pt-2 text-[14px] font-semibold sm:grid-cols-2 sm:px-8 lg:grid-cols-4 lg:gap-7 lg:px-[180px]">
+          @foreach ($ctaBenefits as $benefit)
+            <div class="flex items-center gap-4">
+              <span class="flex h-10 w-10 items-center justify-center text-[27px] text-white/85"><i class="{{ $benefit['icon'] ?? 'far fa-check-square' }}"></i></span>
+              <div>
+                <p class="text-[15px]">{{ $benefit['title'] ?? '' }}</p>
+                <p class="text-[13px] font-medium text-white/80">{{ $benefit['subtitle'] ?? '' }}</p>
+              </div>
+            </div>
+          @endforeach
+        </div>
+      </div>
+
+      <footer class="home-footer-wrap mx-auto max-w-[1440px] bg-[#071044] px-5 py-6 text-white sm:px-8 lg:px-10">
+        <div class="flex flex-col items-center justify-between gap-6 text-center lg:flex-row lg:text-left">
+          <div class="rounded-2xl bg-white px-3 py-2">
+            <x-shared.frontend-brand-logo size="footer" />
+          </div>
+          <p class="text-[13px] text-white/70">{{ $footer['copyright'] }}</p>
+          <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-[13px] font-medium text-white/80 lg:gap-9">
+            @foreach (($footer['links'] ?? []) as $link)
+              <a href="{{ $link['link_url'] ?? '#' }}" class="transition-colors hover:text-white">{{ $link['title'] ?? '' }}</a>
+            @endforeach
+            @if (! empty($footer['contact_email']))
+              <a href="mailto:{{ $footer['contact_email'] }}" class="transition-colors hover:text-white">{{ $footer['contact_email'] }}</a>
+            @endif
+          </div>
+          <div class="flex gap-3">
+            @foreach (($footer['social'] ?? []) as $social)
+              <a href="{{ $social['link_url'] ?? '#' }}" class="grid h-9 w-9 place-items-center rounded-full bg-white/15 text-[14px] transition-colors hover:bg-[#6D28D9]"><i class="{{ $social['icon'] ?? 'fab fa-linkedin-in' }}"></i></a>
+            @endforeach
+          </div>
+        </div>
+      </footer>
+    </section>
+  </main>
+
+  <script>
+    document.querySelectorAll('#experience-preview-container .tab-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        // Remove active class from all buttons in container
+        document.querySelectorAll('#experience-preview-container .tab-btn').forEach(b => {
+          b.classList.remove('bg-[#6D28D9]', 'text-white', 'shadow');
+          b.classList.add('transition-colors', 'hover:bg-white');
+        });
+        // Add active class to clicked button
+        this.classList.add('bg-[#6D28D9]', 'text-white', 'shadow');
+        this.classList.remove('hover:bg-white');
+        
+        // Update image src
+        document.getElementById('experience-preview-img').src = this.dataset.img;
       });
     });
-
-    document.querySelectorAll(`[data-carousel-next="${carouselId}"]`).forEach((button) => {
-      button.addEventListener('click', (event) => {
-        event.preventDefault();
-        showSlide(current + 1);
-      });
-    });
-
-    let autoSlide = window.setInterval(() => showSlide(current + 1), 3200);
-    carousel.addEventListener('mouseenter', () => window.clearInterval(autoSlide));
-    carousel.addEventListener('mouseleave', () => {
-      autoSlide = window.setInterval(() => showSlide(current + 1), 3200);
-    });
-  })();
-</script>
+  </script>
 </body>
 </html>

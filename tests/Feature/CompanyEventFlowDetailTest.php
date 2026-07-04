@@ -296,6 +296,8 @@ class CompanyEventFlowDetailTest extends TestCase
         $response = $this->get(route('events.tickets.attendee-details', ['event' => $event->slug]));
         $response->assertStatus(200);
         $response->assertSee('Select Your Tickets');
+        $response->assertSee('Flow Test Visitor');
+        $response->assertSee('flowvisitor@example.com');
         $response->assertSee('Regular Pass');
         $response->assertSee('VIP Pass');
         $response->assertSee('INR 99.00');

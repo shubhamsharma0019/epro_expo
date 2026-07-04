@@ -12,6 +12,13 @@
 
 @section('content')
   <div id="about-page" class="-mx-4 -mt-5 overflow-x-hidden bg-white sm:-mx-6 sm:-mt-7 lg:-mx-8">
-    @include('frontend.pages.partials.about-content')
+    @include('frontend.pages.partials.about-content', [
+        'aboutHero' => $aboutHero ?? [],
+        'sectionHeadings' => $sectionHeadings ?? [],
+        'values' => $values ?? [],
+        'stats' => $stats ?? [],
+        'milestones' => $milestones ?? [],
+        'partners' => $partners ?? [],
+    ])
   </div>
 @endsection

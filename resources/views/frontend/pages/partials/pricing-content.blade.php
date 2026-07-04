@@ -30,7 +30,15 @@
         <div class="pp-icn"><i class="{{ $plan['icon'] ?? 'far fa-circle' }}"></i></div>
         <h3>{{ $plan['name'] ?? '' }}</h3>
         <p class="pp-pdesc">{{ $plan['description'] ?? '' }}</p>
-        <div class="pp-price">{{ $plan['price'] ?? 'Custom' }}<small> {{ $plan['period'] ?? '/event' }}</small></div>
+        <div
+          class="pp-price"
+          data-event-price="{{ $plan['price'] ?? 'Custom' }}"
+          data-event-period="{{ $plan['period'] ?? '/event' }}"
+          data-annual-price="{{ $plan['annual_price'] ?? ($plan['price'] ?? 'Custom') }}"
+          data-annual-period="{{ $plan['annual_period'] ?? '/year' }}"
+        >
+          <span class="pp-price-value">{{ $plan['price'] ?? 'Custom' }}</span><small class="pp-price-period"> {{ $plan['period'] ?? '/event' }}</small>
+        </div>
         <ul>
           @foreach (($plan['features'] ?? []) as $feature)
             <li><span class="chk">✓</span>{{ $feature }}</li>

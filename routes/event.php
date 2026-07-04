@@ -14,6 +14,7 @@ $eventHomeHandler = function (\App\Domain\Shared\Services\EventsHomePageData $ev
         'tickets' => $payload['tickets'],
         'slots' => $payload['slots'],
         'sampleTicket' => $payload['sample_ticket'],
+        'featuredEvent' => $payload['featured_event'],
     ]);
 };
 

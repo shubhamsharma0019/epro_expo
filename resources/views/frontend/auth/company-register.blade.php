@@ -46,7 +46,7 @@
     <main class="page">
         <section class="shell">
             <div class="story">
-                <x-shared.brand-logo href="{{ route('home') }}" class="story-brand" mark-class="h-11 w-11 rounded-[16px] text-[20px]" title-class="text-[24px] text-[#071044]" subtitle-class="text-[11px] text-[#8A94AD]" subtitle="{{ $isEventCompanyFlow ? 'ORGANIZER SUITE' : 'EXHIBITOR SUITE' }}" />
+                <x-shared.frontend-brand-logo class="story-brand" subtitle="{{ $isEventCompanyFlow ? 'ORGANIZER SUITE' : 'EXHIBITOR SUITE' }}" />
                 <div>
                     <h1>{{ $isEventCompanyFlow ? 'Create and manage company-hosted events.' : 'Manage booth bookings like a modern exhibitor.' }}</h1>
                     <p>{{ $isEventCompanyFlow ? 'Register your company to create events, configure tickets, add branding, preview details, and submit for review.' : 'Access pavilions, halls, booth slots, products, catalogues, enquiries, and meetings from your company workspace.' }}</p>

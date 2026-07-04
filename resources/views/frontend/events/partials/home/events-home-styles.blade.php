@@ -34,26 +34,6 @@
   }
   .hero-inner{ position:relative; z-index:2; max-width:1240px; padding:0 32px; margin:0 auto; }
 
-  .topbar{ background:#fff; border-bottom:1px solid var(--line); position:sticky; top:0; z-index:50; }
-  .nav-pill{
-    display:flex; align-items:center; justify-content:space-between;
-    padding:12px 0; gap:16px;
-  }
-  .nav-links{ display:flex; align-items:center; gap:26px; font-weight:600; font-size:15.5px; color:#38354A; }
-  .nav-links a:hover{ color:var(--violet-700); }
-  .nav-actions{ display:flex; align-items:center; gap:12px; }
-  .menu-btn{
-    display:none; width:40px; height:40px; border-radius:12px; border:1px solid var(--line);
-    background:#fff; color:var(--ink); font-size:20px; cursor:pointer; align-items:center; justify-content:center;
-  }
-  .mobile-menu{
-    display:none; border-top:1px solid var(--line); padding:16px 0 20px;
-  }
-  .mobile-menu.open{ display:block; }
-  .mobile-menu a{ display:block; padding:10px 0; font-weight:600; font-size:15px; color:#38354A; }
-  .mobile-menu a:hover{ color:var(--violet-700); }
-  .mobile-menu .get-started-mobile{ margin-top:12px; }
-
   .hero-grid{ display:grid; grid-template-columns:1.05fr 0.95fr; gap:44px; align-items:center; margin-top:50px; }
   .hero-eyebrow{
     display:inline-flex; align-items:center; gap:7px;
@@ -69,7 +49,10 @@
   .hero-visual{ position:relative; }
   .visual-card{
     position:relative; border-radius:24px; overflow:hidden; aspect-ratio:4/3;
-    background:#0E0421;
+    background:
+      radial-gradient(120% 120% at 20% 10%, rgba(139,92,246,0.55), transparent 55%),
+      repeating-linear-gradient(115deg, rgba(255,255,255,0.06) 0 2px, transparent 2px 40px),
+      linear-gradient(150deg,#1E0940,#0E0421 75%);
     box-shadow:0 30px 60px -20px rgba(15,4,35,0.6);
   }
   .visual-card .visual-slide{
@@ -201,14 +184,9 @@
   .footer-inner{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; }
   .foot-links{ display:flex; gap:24px; font-size:12.5px; font-weight:600; flex-wrap:wrap; }
   .foot-links a:hover{ color:#fff; }
-  .footer-brand .brand-title{ color:#fff; }
-  .footer-brand .brand-subtitle{ color:#B7B2CE; }
-
   @media (max-width:980px){
     .hero-grid, .split-grid{ grid-template-columns:1fr; }
     .search-fields{ grid-template-columns:1fr 1fr; }
-    .nav-links, .nav-actions .get-started-desktop{ display:none; }
-    .menu-btn{ display:inline-flex; }
     .hero-copy h1{ font-size:30px; }
     .lift{ margin-top:-90px; }
     .hero{ padding-bottom:160px; }
