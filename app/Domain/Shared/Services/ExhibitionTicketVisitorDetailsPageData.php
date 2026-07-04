@@ -97,7 +97,10 @@ class ExhibitionTicketVisitorDetailsPageData
         }
 
         $user = auth()->user();
-        $nameParts = $user ? preg_split('/\s+/', trim($user->name), 2) : [];
+        $prefill = ExhibitionTicketFlow::resolveVisitorPrefill($slug) ?? [];
+        $nameParts = filled($prefill['name'] ?? null)
+            ? preg_split('/\s+/', trim((string) $prefill['name']), 2)
+            : ($user ? preg_split('/\s+/', trim((string) $user->name), 2) : []);
 
         return [
             'slug' => $slug,
@@ -117,11 +120,11 @@ class ExhibitionTicketVisitorDetailsPageData
             'defaultCountry' => $countries->first(),
             'showVisitorSidebar' => ExhibitionTicketFlow::shouldShowVisitorSidebar($slug),
             'prefill' => [
-                'name' => old('name', $user?->name ?? ''),
-                'email' => old('email', $user?->email ?? ''),
-                'phone' => old('phone', $user?->phone ?? ''),
-                'gender' => old('gender', $user?->gender ?? ''),
-                'city' => old('city', $user?->city ?? ''),
+                'name' => old('name', $prefill['name'] ?? $user?->name ?? ''),
+                'email' => old('email', $prefill['email'] ?? $user?->email ?? ''),
+                'phone' => old('phone', $prefill['phone'] ?? $user?->phone ?? ''),
+                'gender' => old('gender', $prefill['gender'] ?? $user?->gender ?? ''),
+                'city' => old('city', $prefill['city'] ?? $user?->city ?? ''),
                 'first_name' => old('first_name', $nameParts[0] ?? ''),
                 'last_name' => old('last_name', $nameParts[1] ?? ''),
             ],

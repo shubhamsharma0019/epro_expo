@@ -22,9 +22,9 @@ class ExhibitionQuickLinks
     public static function lobbyLinks(string $slug): array
     {
         return [
-            ['title' => 'Participating Companies', 'desc' => 'Browse exhibitor profiles, products and booth locations.', 'href' => route('exhibitions.visitor.companies', $slug), 'action' => 'View Companies', 'icon' => 'ph ph-buildings'],
-            ['title' => 'Floor Map & Halls', 'desc' => 'Open halls, floor plans and booth positions.', 'href' => route('exhibitions.visitor.floor-map', $slug), 'action' => 'Open Map', 'icon' => 'ph ph-map-trifold'],
-            ['title' => 'Sessions & Webinars', 'desc' => 'Join live product demos and expert talks.', 'href' => route('exhibitions.visitor.sessions', $slug), 'action' => 'Join Session', 'icon' => 'ph ph-presentation'],
+            ['title' => 'Participating Companies', 'desc' => 'Browse exhibitor profiles, products and booth locations.', 'href' => route('frontend.user.exhibitions.halls', $slug), 'action' => 'View Companies', 'icon' => 'ph ph-buildings'],
+            ['title' => 'Floor Map & Halls', 'desc' => 'Open halls, floor plans and booth positions.', 'href' => route('frontend.user.exhibitions.halls', $slug), 'action' => 'Open Map', 'icon' => 'ph ph-map-trifold'],
+            ['title' => 'Sessions & Webinars', 'desc' => 'Join live product demos and expert talks.', 'href' => route('frontend.user.dashboard', ['slug' => $slug]), 'action' => 'Join Session', 'icon' => 'ph ph-presentation'],
             ['title' => 'My Meetings', 'desc' => 'Manage one-to-one meetings with exhibitors.', 'href' => route('frontend.user.meetings'), 'action' => 'View Meetings', 'icon' => 'ph ph-video-camera'],
             ['title' => 'Notifications', 'desc' => 'Check alerts, updates and reminders.', 'href' => route('frontend.user.dashboard'), 'action' => 'Open Alerts', 'icon' => 'ph ph-bell'],
             ['title' => 'QR Pass', 'desc' => 'Open your visitor QR pass for exhibition entry.', 'href' => route('frontend.user.passes'), 'action' => 'View Pass', 'icon' => 'ph ph-qr-code'],

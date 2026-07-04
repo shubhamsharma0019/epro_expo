@@ -58,7 +58,7 @@ class ExhibitionsVisitorIndexPageData
             ],
             'suggestedRouteSteps' => $featuredSlug ? [
                 ['01', 'Detail', route('exhibitions.show', $featuredSlug)],
-                ['02', 'Companies', route('exhibitions.visitor.companies', $featuredSlug)],
+                ['02', 'Companies', route('exhibitions.booths.index', $featuredSlug)],
                 ['03', 'Map', route('exhibitions.visitor-halls.index', $featuredSlug)],
                 ['04', 'QR Pass', route('exhibitions.tickets.select', $featuredSlug)],
             ] : [],

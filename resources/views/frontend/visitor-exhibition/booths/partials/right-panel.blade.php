@@ -34,7 +34,7 @@
         <div class="mb-4 flex items-center justify-between gap-3">
             <h2 class="text-[16px] font-bold text-[#071044]">Visitor Reporting</h2>
             @if ($slug)
-                <a href="{{ route('exhibitions.visitor.dashboard', $slug) }}" class="text-[12px] font-bold text-[#5B32F6] hover:underline">View All</a>
+                <a href="{{ route('frontend.user.meetings') }}" class="text-[12px] font-bold text-[#5B32F6] hover:underline">View All</a>
             @endif
         </div>
         <div class="grid grid-cols-2 gap-3">

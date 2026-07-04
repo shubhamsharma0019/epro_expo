@@ -99,7 +99,7 @@
 
                         <div class="flex flex-col gap-3">
                             <a href="{{ route('exhibitions.tickets.e-ticket', $exh->slug ?? $slug) }}?booking_id={{ $id }}&id={{ $visitor->exhibition_id }}" class="inline-flex h-11 items-center justify-center rounded-md bg-gradient-to-r from-[#5b2eff] to-[#4310d8] px-5 text-[14px] font-semibold text-white">View QR Pass</a>
-                            <a href="{{ route('exhibitions.visitor.dashboard', ['slug' => $exh->slug ?? $slug, 'booking_id' => $id]) }}" class="inline-flex h-11 items-center justify-center rounded-md border border-borderColor px-5 text-[14px] font-semibold text-purple">Open Dashboard</a>
+                            <a href="{{ route('frontend.user.dashboard', array_filter(['slug' => $exh->slug ?? $slug, 'booking_id' => $id])) }}" class="inline-flex h-11 items-center justify-center rounded-md border border-borderColor px-5 text-[14px] font-semibold text-purple">Open Dashboard</a>
                         </div>
                     </div>
                 </article>

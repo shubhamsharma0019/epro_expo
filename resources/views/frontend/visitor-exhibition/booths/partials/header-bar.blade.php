@@ -1,5 +1,5 @@
 @php
-    $homeUrl = $slug ? route('exhibitions.visitor.dashboard', $slug) : route('frontend.user.dashboard');
+    $homeUrl = route('frontend.user.dashboard');
     $shareUrl = url()->current();
 @endphp
 

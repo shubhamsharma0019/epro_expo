@@ -107,7 +107,7 @@
                     <h2 class="mt-2 text-[28px] font-black leading-tight tracking-[-0.03em] text-[#071044] sm:text-[38px]">Choose your next expo visit</h2>
                 </div>
                 @if ($featuredSlug)
-                    <a href="{{ route('exhibitions.visitor.dashboard', $featuredSlug) }}" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#D8DCEB] bg-white px-5 py-3 text-[13px] font-extrabold text-[#071044] shadow-sm hover:bg-[#F8F7FF]">
+                    <a href="{{ route('frontend.user.dashboard', ['slug' => $featuredSlug]) }}" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#D8DCEB] bg-white px-5 py-3 text-[13px] font-extrabold text-[#071044] shadow-sm hover:bg-[#F8F7FF]">
                         <i class="fa-solid fa-house text-[#6D28D9]"></i>
                         Visitor Dashboard
                     </a>
@@ -147,20 +147,20 @@
 
                             @if (! empty($exhibition['company_names']))
                                 <div class="mt-4 rounded-xl border border-[#E7EAF3] bg-[#FBFAFF] p-3 flex flex-col justify-center" style="height: 74px;">
-                                    <p class="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#6D28D9]">Published companies</p>
+                                    <p class="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#6D28D9]">Registered companies</p>
                                     <p class="mt-1 line-clamp-1 text-[13px] font-bold leading-5 text-[#071044]">{{ implode(', ', $exhibition['company_names']) }}</p>
                                 </div>
                             @else
                                 <div class="mt-4 rounded-xl border border-dashed border-[#E7EAF3] bg-white p-3 flex flex-col justify-center" style="height: 74px;">
-                                    <p class="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#A0A8BC]">Published companies</p>
-                                    <p class="mt-1 text-[13px] font-medium leading-5 text-[#8A90A8] italic">No companies published yet</p>
+                                    <p class="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#A0A8BC]">Registered companies</p>
+                                    <p class="mt-1 text-[13px] font-medium leading-5 text-[#8A90A8] italic">No companies registered yet</p>
                                 </div>
                             @endif
 
                             <div class="mt-auto flex flex-col gap-2 pt-5">
                                 <a href="{{ route('exhibitions.show', $exhibition['slug']) }}" class="inline-flex h-10 items-center justify-center rounded-xl bg-gradient-to-r from-[#6D28D9] to-[#4B16D8] px-4 text-[13px] font-extrabold text-white w-full">Details</a>
                                 <div class="grid grid-cols-2 gap-2">
-                                    <a href="{{ route('exhibitions.visitor.companies', $exhibition['slug']) }}" class="inline-flex h-10 items-center justify-center rounded-xl border border-[#D8DCEB] px-2 text-[13px] font-extrabold text-[#071044] hover:bg-[#F8F7FF] truncate">Companies</a>
+                                    <a href="{{ route('exhibitions.booths.index', $exhibition['slug']) }}" class="inline-flex h-10 items-center justify-center rounded-xl border border-[#D8DCEB] px-2 text-[13px] font-extrabold text-[#071044] hover:bg-[#F8F7FF] truncate">Companies</a>
                                     <a href="{{ route('exhibitions.tickets.select', $exhibition['slug']) }}" class="inline-flex h-10 items-center justify-center rounded-xl border border-[#D8DCEB] px-2 text-[13px] font-extrabold text-[#071044] hover:bg-[#F8F7FF] truncate">Get Pass</a>
                                 </div>
                             </div>

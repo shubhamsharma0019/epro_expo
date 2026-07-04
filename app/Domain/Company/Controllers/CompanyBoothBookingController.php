@@ -1725,11 +1725,25 @@ class CompanyBoothBookingController extends Controller
             }
 
             $booking->days()->delete();
+
+            $slotDates = $selectedSlots
+                ->pluck('date')
+                ->map(fn ($date) => $this->normalizeBookingDate($date))
+                ->filter()
+                ->values()
+                ->all();
+
+            $this->releaseConflictingDraftBookingDays((int) $booth->id, $slotDates, (int) $booking->id);
+
+            if ($this->hasActiveBookingDayConflicts((int) $booth->id, $slotDates, (int) $booking->id)) {
+                throw new \RuntimeException('booth_days_unavailable');
+            }
+
             foreach ($selectedSlots as $slot) {
                 BoothBookingDay::create([
                     'booth_booking_id' => $booking->id,
                     'booth_id' => $booth->id,
-                    'booking_date' => $slot['date'],
+                    'booking_date' => $this->normalizeBookingDate($slot['date']),
                     'label' => $slot['date_label'] ?? $slot['label'] ?? null,
                     'price' => (float) $slot['price'],
                 ]);
@@ -2079,6 +2093,7 @@ class CompanyBoothBookingController extends Controller
             ];
         }
 
+        try {
         $bookingDraft = $this->syncDraftBooking($hall, $booth, $selectedSize, $selectedSlots, array_filter(array_merge($bookingDraft, [
             'hall_id' => $hall->id,
             'pavilion_id' => $hall->pavilion_id,
@@ -2089,6 +2104,17 @@ class CompanyBoothBookingController extends Controller
             'booking_days_count' => $adminBoothDays,
             'slots_subtotal' => $selectedSlots->sum('price'),
         ])));
+        } catch (\RuntimeException $exception) {
+            if ($exception->getMessage() !== 'booth_days_unavailable') {
+                throw $exception;
+            }
+
+            return [
+                'bookingDraft' => $bookingDraft,
+                'selectedSlots' => collect(),
+                'adminBoothDays' => $adminBoothDays,
+            ];
+        }
 
         return [
             'bookingDraft' => array_filter(array_merge($bookingDraft, [
@@ -2133,12 +2159,67 @@ class CompanyBoothBookingController extends Controller
             ->when($excludeBookingId, fn ($query) => $query->where('booth_booking_id', '!=', $excludeBookingId))
             ->whereIn('booking_date', collect($slotGroups)->pluck('date')->all())
             ->pluck('booking_date')
+            ->map(fn ($date) => $this->normalizeBookingDate($date))
+            ->filter()
+            ->values()
             ->all();
 
         return collect($slotGroups)
             ->flatMap(fn ($group) => $group['slots'])
-            ->reject(fn ($slot) => in_array($slot['date'], $bookedDates, true))
+            ->reject(fn ($slot) => in_array($this->normalizeBookingDate($slot['date']), $bookedDates, true))
             ->values();
+    }
+
+    private function normalizeBookingDate(mixed $date): string
+    {
+        return Carbon::parse($date)->toDateString();
+    }
+
+    /** @param  list<string>  $slotDates */
+    private function releaseConflictingDraftBookingDays(int $boothId, array $slotDates, int $currentBookingId): void
+    {
+        if ($slotDates === []) {
+            return;
+        }
+
+        $draftBookingIds = BoothBooking::query()
+            ->where('booking_status', 'draft')
+            ->when($currentBookingId > 0, fn ($query) => $query->where('id', '!=', $currentBookingId))
+            ->pluck('id');
+
+        if ($draftBookingIds->isEmpty()) {
+            return;
+        }
+
+        BoothBookingDay::query()
+            ->where('booth_id', $boothId)
+            ->whereIn('booking_date', $slotDates)
+            ->whereIn('booth_booking_id', $draftBookingIds)
+            ->delete();
+    }
+
+    /** @param  list<string>  $slotDates */
+    private function hasActiveBookingDayConflicts(int $boothId, array $slotDates, int $currentBookingId): bool
+    {
+        if ($slotDates === []) {
+            return false;
+        }
+
+        return BoothBookingDay::query()
+            ->where('booth_id', $boothId)
+            ->whereIn('booking_date', $slotDates)
+            ->when($currentBookingId > 0, fn ($query) => $query->where('booth_booking_id', '!=', $currentBookingId))
+            ->whereHas('boothBooking', function ($query) {
+                $query->where(function ($activeQuery) {
+                    $activeQuery->where('payment_status', 'paid')
+                        ->whereIn('booking_status', ['confirmed', 'active'])
+                        ->whereIn('admin_status', ['pending', 'approved']);
+                })->orWhere(function ($draftQuery) {
+                    $draftQuery->where('booking_status', 'draft')
+                        ->where('payment_status', '!=', 'paid');
+                });
+            })
+            ->exists();
     }
 
     private function slotGroupsForHall(Hall $hall, int $slotPrice, ?int $daysCount = null): array

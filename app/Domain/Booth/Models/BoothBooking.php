@@ -69,6 +69,14 @@ class BoothBooking extends Model
             ->whereIn('booth_setup_status', ['published', 'approved', 'live']);
     }
 
+    public function scopeRegisteredExhibitor(Builder $query): Builder
+    {
+        return $query
+            ->where('payment_status', 'paid')
+            ->whereIn('booking_status', ['confirmed', 'active'])
+            ->where('admin_status', 'approved');
+    }
+
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);

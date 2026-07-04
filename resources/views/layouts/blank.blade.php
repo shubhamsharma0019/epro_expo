@@ -45,7 +45,7 @@
 
                         <!-- Dropdown Menu -->
                         <div id="blankLayoutDropdownMenu" class="hidden absolute right-0 z-50 mt-2.5 w-48 origin-top-right rounded-xl bg-white py-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.08)] ring-1 ring-black/5 focus:outline-none transition-all duration-200 border border-gray-100">
-                            <a href="{{ route('exhibitions.visitor.dashboard', $activeSlug) }}" class="flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+                            <a href="{{ route('frontend.user.dashboard') }}" class="flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
                                 <i class="fa-solid fa-gauge text-[14px] text-gray-500 w-4 text-center"></i>
                                 Visitor Dashboard
                             </a>
@@ -102,7 +102,7 @@
                     @php
                         $activeSlug = $activeSlug ?? $slug ?? request()->route('slug') ?? 'global-tech-expo-2024';
                     @endphp
-                    <a href="{{ route('exhibitions.visitor.dashboard', $activeSlug) }}" class="hover:text-[#5726E8]">Visitor Dashboard</a>
+                    <a href="{{ route('frontend.user.dashboard') }}" class="hover:text-[#5726E8]">Visitor Dashboard</a>
                     <a href="{{ url('/user/dashboard') }}" class="hover:text-[#5726E8]">My Passes</a>
                     <form method="POST" action="{{ url('/user/logout') }}" class="w-full m-0">
                         @csrf

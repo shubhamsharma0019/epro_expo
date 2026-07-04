@@ -92,7 +92,7 @@ class LiveContent
             ->with([
                 'boothBookings' => fn ($query) => $query
                     ->with(['boothProfile', 'boothProducts', 'boothCatalogues', 'boothSessions', 'company'])
-                    ->publiclyVisible(),
+                    ->registeredExhibitor(),
             ])
             ->orderBy('start_date')
             ->orderBy('id');
@@ -521,8 +521,8 @@ class LiveContent
             $exhibition = static::exhibitionPageQuery()
                 ->with([
                     'boothBookings' => fn ($query) => $query
-                        ->with(['boothProfile', 'boothBranding', 'company', 'boothProducts', 'boothCatalogues', 'boothSessions', 'boothTeamMembers'])
-                        ->publiclyVisible(),
+                        ->with(['boothProfile', 'boothBranding', 'company', 'boothProducts', 'boothCatalogues', 'boothSessions', 'boothTeamMembers', 'hall', 'booth'])
+                        ->registeredExhibitor(),
                 ])
                 ->where('slug', $slug)
                 ->first();

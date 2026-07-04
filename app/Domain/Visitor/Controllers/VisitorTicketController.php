@@ -9,6 +9,7 @@ use App\Domain\Shared\Services\ExhibitionTicketVisitorDetailsPageData;
 use App\Domain\Visitor\Models\Visitor;
 use App\Http\Requests\Visitor\ExhibitionVisitorRegistrationRequest;
 use App\Support\ExhibitionTicketFlow;
+use App\Support\LiveContent;
 use App\Support\UserVisitorPasses;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -19,13 +20,17 @@ use Illuminate\View\View;
 
 class VisitorTicketController extends Controller
 {
-    public function visitorRegistration(string $slug, ExhibitionTicketVisitorDetailsPageData $pageData): View
+    public function visitorRegistration(string $slug, ExhibitionTicketVisitorDetailsPageData $pageData): View|RedirectResponse
     {
         session([
             'activeExhibitionSlug' => $slug,
             'exhibition_booking_path' => ExhibitionTicketFlow::visitorPassEntryUrl($slug),
             'user_flow_context' => 'exhibition_ticket',
         ]);
+
+        if ($redirect = ExhibitionTicketFlow::redirectAuthenticatedVisitor($slug)) {
+            return $redirect;
+        }
 
         $data = $pageData->buildRegistration($slug);
         abort_unless($data, 404);
@@ -70,6 +75,21 @@ class VisitorTicketController extends Controller
 
         Auth::login($user);
         $request->session()->regenerate();
+
+        $exhibition = LiveContent::findExhibitionForVisitorFlow($slug);
+
+        ExhibitionTicketFlow::storeVisitorRegistration(
+            (int) $user->id,
+            $slug,
+            $exhibition?->id,
+            [
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'gender' => $user->gender,
+                'city' => $user->city,
+            ]
+        );
 
         session([
             ExhibitionTicketFlow::sessionRegistrationKey($slug) => true,

@@ -35,18 +35,14 @@
 
     $drawerPrimaryLinks = [
         ['Visitor Dashboard', $passFlowLocked ? $passFlowHref : route('frontend.user.dashboard'), request()->routeIs('frontend.user.dashboard'), 'ph ph-house'],
-        ['Exhibition Lobby', route('exhibitions.visit', $activeSlug), request()->routeIs('exhibitions.visit'), 'ph ph-monitor-play'],
-        ['Browse Exhibitions', route('exhibitions.index'), request()->routeIs('exhibitions.index') || request()->routeIs('exhibitions.browse') || request()->routeIs('exhibitions.show'), 'ph ph-magnifying-glass'],
-        ['Companies', route('exhibitions.visitor.companies', $activeSlug), request()->routeIs('exhibitions.visitor.companies*'), 'ph ph-storefront'],
-        ['Halls & Map', route('exhibitions.visitor.floor-map', $activeSlug), request()->routeIs('exhibitions.visitor.floor-map') || request()->routeIs('exhibitions.halls.*') || request()->routeIs('exhibitions.visitor-halls.*'), 'ph ph-map-trifold'],
+        ['Browse Exhibitions', route('frontend.user.browse'), request()->routeIs('frontend.user.browse') || request()->routeIs('exhibitions.index') || request()->routeIs('exhibitions.browse') || request()->routeIs('exhibitions.show'), 'ph ph-magnifying-glass'],
+        ['Exhibition Halls', route('frontend.user.exhibitions.halls', $activeSlug), request()->routeIs('frontend.user.exhibitions.halls*'), 'ph ph-map-trifold'],
         ['Get Visitor Pass', route('exhibitions.tickets.visitor-details', $activeSlug), request()->routeIs('exhibitions.tickets.*'), 'ph ph-identification-card'],
     ];
 
     $drawerVisitorLinks = [
         ['My Passes', $passFlowLocked ? $passFlowHref : route('frontend.user.passes'), request()->routeIs('frontend.user.passes'), 'ph ph-bookmark'],
         ['My Meetings', route('frontend.user.meetings'), request()->routeIs('frontend.user.meetings'), 'ph ph-calendar-check'],
-        ['Sessions', route('exhibitions.visitor.sessions', $activeSlug), request()->routeIs('exhibitions.visitor.sessions'), 'ph ph-play-circle'],
-        ['Notifications', route('frontend.user.dashboard'), request()->routeIs('frontend.user.dashboard'), 'ph ph-bell'],
         ['QR Pass', $passFlowLocked ? $passFlowHref : route('frontend.user.passes'), request()->routeIs('frontend.user.passes') || request()->routeIs('frontend.user.tickets.*'), 'ph ph-qr-code'],
     ];
 @endphp
@@ -66,7 +62,7 @@
 
             <!-- Dropdown Menu -->
             <div id="profileDropdownMenu" class="hidden absolute right-0 z-50 mt-2.5 w-48 origin-top-right rounded-xl bg-white py-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.08)] ring-1 ring-black/5 focus:outline-none transition-all duration-200 border border-gray-50">
-                    <a href="{{ $passFlowLocked ? $passFlowHref : route('exhibitions.visitor.dashboard', $activeSlug) }}" class="flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+                    <a href="{{ $passFlowLocked ? $passFlowHref : route('frontend.user.dashboard') }}" class="flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
                         <i class="ph ph-layout text-[16px] text-gray-500"></i>
                         Visitor Dashboard
                     </a>

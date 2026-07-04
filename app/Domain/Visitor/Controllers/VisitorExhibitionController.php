@@ -8,6 +8,7 @@ use App\Domain\Booth\Models\BoothSession;
 use App\Domain\Booth\Services\BoothSessionConferenceService;
 use App\Domain\Event\Models\Exhibition;
 use App\Support\LiveContent;
+use App\Support\LegacyVisitorExhibitionRedirect;
 use App\Domain\Visitor\Models\VisitorMeetingBooking;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\View\View;
@@ -270,7 +271,7 @@ class VisitorExhibitionController extends Controller
                 ['Floor Map', $displayHalls . ' halls', route('exhibitions.visitor.floor-map', $slug), 'fa-regular fa-map'],
                 ['Sessions', $displaySessions . ' scheduled', route('exhibitions.visitor.sessions', $slug), 'fa-regular fa-circle-play'],
                 ['QR Pass', $passActive ? 'Ready to scan' : 'Get visitor pass', $passAction['href'], 'fa-solid fa-qrcode'],
-                ['Dashboard', $passActive ? 'Pass dashboard' : 'Visitor dashboard', route('exhibitions.visitor.dashboard', $slug), 'fa-solid fa-gauge'],
+                ['Dashboard', $passActive ? 'Pass dashboard' : 'Visitor dashboard', route('frontend.user.dashboard', ['slug' => $slug]), 'fa-solid fa-gauge'],
             ],
             'lobbyCards' => [
                 ['Participating Companies', 'Browse exhibitor profiles, products, booth locations and categories.', route('exhibitions.visitor.companies', $slug)],
@@ -278,109 +279,23 @@ class VisitorExhibitionController extends Controller
                 ['Sessions & Webinars', 'Join live product demos, expert talks and exhibitor sessions.', route('exhibitions.visitor.sessions', $slug)],
                 ['Featured Speakers', 'Meet our industry experts and keynote presenters.', route('exhibitions.show', $slug) . '#tab-speakers'],
                 ['Event Sponsors', 'Explore our premium sponsors and corporate partners.', route('exhibitions.show', $slug) . '#tab-sponsors'],
-                ['Visitor Dashboard', 'See your QR pass, meetings and notifications.', route('exhibitions.visitor.dashboard', $slug)],
+                ['Visitor Dashboard', 'See your QR pass, meetings and notifications.', route('frontend.user.dashboard', ['slug' => $slug])],
             ],
         ];
     }
 
-    public function lobby(string $slug): View
+    public function lobby(string $slug): RedirectResponse
     {
         if (request()->has('booking_id')) {
             session(['selected_visitor_booking_id' => request()->query('booking_id')]);
         }
 
-        $exhibition = LiveContent::exhibitionQuery()
-            ->with([
-                'boothBookings' => fn ($query) => $query
-                    ->with(['boothProfile', 'boothBranding', 'company', 'boothProducts', 'boothCatalogues', 'boothSessions'])
-                    ->where('payment_status', 'paid')
-                    ->whereIn('booking_status', ['confirmed', 'active'])
-                    ->where('admin_status', 'approved'),
-                'boothBookings.boothSessions',
-                'boothBookings.hall',
-                'boothBookings.booth'
-            ])
-            ->where('slug', $slug)
-            ->first()
-            ?: Exhibition::with([
-                'boothBookings' => fn ($query) => $query
-                    ->with(['boothProfile', 'boothBranding', 'company', 'boothProducts', 'boothCatalogues', 'boothSessions', 'hall', 'booth'])
-                    ->where('payment_status', 'paid')
-                    ->whereIn('booking_status', ['confirmed', 'active'])
-                    ->where('admin_status', 'approved'),
-            ])->where('slug', $slug)->first();
-
-        $liveBooths = BoothBooking::query()
-            ->with(['company', 'exhibition', 'hall', 'booth', 'boothProfile', 'boothSessions'])
-            ->withCount([
-                'boothProducts as published_products_count' => fn (Builder $query) => $query->where('status', 'published'),
-                'boothCatalogues as public_catalogues_count' => fn (Builder $query) => $query->where('visibility', 'public')->where('status', 'active'),
-            ])
-            ->when($exhibition, fn (Builder $query) => $query->where('exhibition_id', $exhibition->id))
-            ->where('payment_status', 'paid')
-            ->whereIn('booking_status', ['confirmed', 'active'])
-            ->where('admin_status', 'approved')
-            ->latest()
-            ->take(6)
-            ->get()
-            ->filter(fn (BoothBooking $booking) => filled($booking->boothProfile?->company_name ?: $booking->company?->company_name ?: $booking->company?->name))
-            ->values();
-
-        $isPassActive = $this->isPassActive($slug);
-
-        return view('frontend.visitor-exhibition.lobby.index', array_merge(
-            [
-                'slug' => $slug,
-                'liveBooths' => $liveBooths,
-                'exhibition' => $exhibition,
-            ],
-            $this->prepareLobbyViewData($exhibition, $liveBooths, $slug, $isPassActive)
-        ));
+        return LegacyVisitorExhibitionRedirect::halls($slug);
     }
 
-    public function floorMap(string $slug): View
+    public function floorMap(string $slug): RedirectResponse
     {
-        $exhibition = Exhibition::where('slug', $slug)->firstOrFail();
-
-        // Fetch active pavilions with active halls loaded for the dropdown
-        $pavilions = Pavilion::with(['halls' => function($q) {
-                $q->where('status', 'active');
-            }])
-            ->where('exhibition_id', $exhibition->id)
-            ->where('status', 'active')
-            ->get();
-
-        // Get selected hall
-        $hallId = request()->query('hall');
-        $hall = null;
-        if ($hallId) {
-            $hall = Hall::with(['booths.boothSize', 'pavilion.exhibition'])
-                ->where('status', 'active')
-                ->find($hallId);
-        }
-
-        // Fallback to first hall of first pavilion if no hall matches or is passed
-        if (!$hall) {
-            $firstPavilion = $pavilions->first();
-            if ($firstPavilion) {
-                $hall = $firstPavilion->halls->first();
-                if ($hall) {
-                    $hall->loadMissing(['booths.boothSize', 'pavilion.exhibition']);
-                }
-            }
-        }
-
-        $isPassActive = $this->isPassActive($slug);
-        $visitorFloorMap = $hall ? \App\Support\VisitorFloorMap::prepare($hall) : null;
-
-        return view('frontend.visitor-exhibition.halls.floor-plan', [
-            'slug' => $slug,
-            'isPassActive' => $isPassActive,
-            'exhibition' => $exhibition,
-            'pavilions' => $pavilions,
-            'hall' => $hall,
-            'visitorFloorMap' => $visitorFloorMap,
-        ]);
+        return LegacyVisitorExhibitionRedirect::halls($slug);
     }
 
     public function dashboard(string $slug): RedirectResponse
@@ -401,10 +316,7 @@ class VisitorExhibitionController extends Controller
 
         session(['activeExhibitionSlug' => $slug]);
 
-        return redirect()->route('frontend.user.dashboard', array_filter([
-            'slug' => $slug,
-            'booking_id' => request()->query('booking_id'),
-        ]));
+        return LegacyVisitorExhibitionRedirect::dashboard($slug);
     }
 
     public function myPasses(string $slug)
@@ -412,35 +324,9 @@ class VisitorExhibitionController extends Controller
         return redirect()->route('frontend.user.passes');
     }
 
-    public function savedBooths(string $slug): View
+    public function savedBooths(string $slug): RedirectResponse
     {
-        $isPassActive = $this->isPassActive($slug);
-        $exhibition = $this->resolveExhibition($slug);
-        $visitor = $this->resolveVisitor($exhibition);
-        $savedBoothIds = $this->resolveBookmarkedBoothIds($visitor);
-
-        if ($savedBoothIds->isEmpty()) {
-            $savedBooths = collect();
-        } else {
-            $savedBooths = BoothBooking::query()
-                ->with(['company', 'boothProfile', 'hall', 'booth'])
-                ->when($exhibition, fn (Builder $query) => $query->where('exhibition_id', $exhibition->id))
-                ->whereIn('id', $savedBoothIds)
-                ->where('payment_status', 'paid')
-                ->whereIn('booking_status', ['confirmed', 'active'])
-                ->where('admin_status', 'approved')
-                ->whereIn('booth_setup_status', ['published', 'approved', 'live'])
-                ->latest()
-                ->get()
-                ->filter(fn (BoothBooking $booking) => filled($booking->boothProfile?->company_name ?: $booking->company?->company_name ?: $booking->company?->name))
-                ->values();
-        }
-
-        return view('frontend.visitor-exhibition.booths.saved', [
-            'slug' => $slug,
-            'isPassActive' => $isPassActive,
-            'savedBooths' => $savedBooths,
-        ]);
+        return LegacyVisitorExhibitionRedirect::dashboard($slug);
     }
 
     private function resolveRegisteredSessionsCount(?Exhibition $exhibition, ?Visitor $visitor): int
@@ -483,54 +369,9 @@ class VisitorExhibitionController extends Controller
         return $query->pluck('booth_session_id')->all();
     }
 
-    public function sessions(string $slug): View
+    public function sessions(string $slug): RedirectResponse
     {
-        $isPassActive = $this->isPassActive($slug);
-        $exhibition = LiveContent::exhibitionQuery()->where('slug', $slug)->first();
-        $visitor = $this->resolveVisitor($exhibition);
-
-        $sessions = BoothSession::query()
-            ->with([
-                'teamMember',
-                'companyMeeting',
-                'boothBooking.company',
-                'boothBooking.boothProfile',
-                'boothBooking.hall',
-                'boothBooking.booth',
-            ])
-            ->whereIn('status', ['live', 'upcoming', 'completed'])
-            ->whereHas('boothBooking', function (Builder $query) use ($exhibition) {
-                $query
-                    ->when($exhibition, fn (Builder $query) => $query->where('exhibition_id', $exhibition->id))
-                    ->publiclyVisible();
-            })
-            ->orderByRaw("CASE status WHEN 'live' THEN 0 WHEN 'upcoming' THEN 1 WHEN 'completed' THEN 2 ELSE 3 END")
-            ->orderBy('session_date')
-            ->orderBy('start_time')
-            ->get();
-
-        $visitorSessionBookings = collect();
-        if (auth()->check()) {
-            $visitorSessionBookings = VisitorMeetingBooking::query()
-                ->whereIn('booth_session_id', $sessions->pluck('id'))
-                ->where(function ($query) {
-                    $query->where('visitor_id', auth()->id());
-                    if (auth()->user()?->email) {
-                        $query->orWhere('visitor_email', auth()->user()->email);
-                    }
-                })
-                ->get()
-                ->keyBy('booth_session_id');
-        }
-
-        return view('frontend.visitor-exhibition.sessions.index', [
-            'slug' => $slug,
-            'isPassActive' => $isPassActive,
-            'sessions' => $sessions,
-            'exhibition' => $exhibition,
-            'registeredSessionIds' => $this->resolveRegisteredSessionIds($exhibition, $visitor),
-            'visitorSessionBookings' => $visitorSessionBookings,
-        ]);
+        return LegacyVisitorExhibitionRedirect::dashboard($slug);
     }
 
     public function requestSessionJoin(string $slug, int $session, BoothSessionConferenceService $conference): RedirectResponse
@@ -610,67 +451,18 @@ class VisitorExhibitionController extends Controller
         return back()->with('success', 'Session registration saved.');
     }
 
-    public function notifications(string $slug): View
+    public function notifications(string $slug): RedirectResponse
     {
-        $isPassActive = $this->isPassActive($slug);
-        $exhibition = $this->resolveExhibition($slug);
-        $visitor = $this->resolveVisitor($exhibition);
-
-        return view('frontend.visitor-exhibition.notifications.index', [
-            'slug' => $slug,
-            'isPassActive' => $isPassActive,
-            'notifications' => $this->buildVisitorNotifications($exhibition, $visitor),
-        ]);
+        return LegacyVisitorExhibitionRedirect::dashboard($slug);
     }
 
-    public function chat(string $slug, string $companySlug = null): View
+    public function chat(string $slug, string $companySlug = null): RedirectResponse
     {
-        $isPassActive = $this->isPassActive($slug);
-        $exhibition = $this->resolveExhibition($slug);
-        $visitor = $this->resolveVisitor($exhibition);
-
-        $booking = BoothBooking::query()
-            ->with(['company', 'boothProfile'])
-            ->when($exhibition, fn (Builder $query) => $query->where('exhibition_id', $exhibition->id))
-            ->publiclyVisible()
-            ->get()
-            ->first(fn (BoothBooking $item) => $this->companySlugForBooking($item) === $companySlug);
-
-        if (! $booking && $companySlug) {
-            $booking = BoothBooking::query()
-                ->with(['company', 'boothProfile'])
-                ->when($exhibition, fn (Builder $query) => $query->where('exhibition_id', $exhibition->id))
-                ->where('payment_status', 'paid')
-                ->whereIn('booking_status', ['confirmed', 'active'])
-                ->where('admin_status', 'approved')
-                ->get()
-                ->first(fn (BoothBooking $item) => $this->companySlugForBooking($item) === $companySlug);
+        if ($companySlug) {
+            return LegacyVisitorExhibitionRedirect::boothShow($slug, $companySlug);
         }
 
-        $companySlug = $companySlug ?: ($booking ? $this->companySlugForBooking($booking) : '');
-        $companyName = $booking
-            ? ($booking->boothProfile?->company_name ?: $booking->company?->company_name ?: $booking->company?->name)
-            : str($companySlug)->replace('-', ' ')->title();
-
-        $messages = collect();
-        if ($exhibition && $booking?->company_id) {
-            $messages = VisitorBoothMessage::query()
-                ->where('exhibition_id', $exhibition->id)
-                ->where('company_id', $booking->company_id)
-                ->when($visitor?->booking_id, fn ($query) => $query->where('visitor_booking_id', $visitor->booking_id))
-                ->oldest()
-                ->get();
-        }
-
-        return view('frontend.visitor-exhibition.networking.chat', [
-            'slug' => $slug,
-            'companySlug' => $companySlug,
-            'isPassActive' => $isPassActive,
-            'booking' => $booking,
-            'companyName' => $companyName,
-            'messages' => $messages,
-            'visitor' => $visitor,
-        ]);
+        return LegacyVisitorExhibitionRedirect::halls($slug);
     }
 
     public function sendChatMessage(Request $request, string $slug, string $companySlug): RedirectResponse
@@ -709,90 +501,30 @@ class VisitorExhibitionController extends Controller
         return back()->with('success', 'Message sent.');
     }
 
-    public function hallsIndex(string $slug): View
+    public function hallsIndex(string $slug): RedirectResponse
     {
-        $isPassActive = $this->isPassActive($slug);
-        $exhibition = $this->resolveExhibition($slug);
-
-        $halls = collect();
-        if ($exhibition) {
-            $halls = Hall::query()
-                ->whereHas('pavilion', fn ($query) => $query->where('exhibition_id', $exhibition->id))
-                ->where('status', 'active')
-                ->withCount([
-                    'boothBookings as active_booths_count' => fn (Builder $query) => $query
-                        ->where('payment_status', 'paid')
-                        ->whereIn('booking_status', ['confirmed', 'active'])
-                        ->where('admin_status', 'approved'),
-                ])
-                ->orderBy('title')
-                ->get();
-        }
-
-        return view('frontend.visitor-exhibition.halls.index', [
-            'slug' => $slug,
-            'isPassActive' => $isPassActive,
-            'halls' => $halls,
-            'exhibition' => $exhibition,
-        ]);
+        return LegacyVisitorExhibitionRedirect::halls($slug);
     }
 
-    public function hallsShow(string $slug, string $hallSlug): View
+    public function hallsShow(string $slug, string $hallSlug): RedirectResponse
     {
-        $isPassActive = $this->isPassActive($slug);
-        $exhibition = $this->resolveExhibition($slug);
-
-        $hall = null;
-        $featuredBooths = collect();
-        $hallSessions = collect();
-
-        if ($exhibition) {
-            $hall = Hall::query()
-                ->whereHas('pavilion', fn ($query) => $query->where('exhibition_id', $exhibition->id))
-                ->where('status', 'active')
-                ->where(fn ($query) => $query->where('slug', $hallSlug)->orWhere('id', $hallSlug))
-                ->with(['booths.boothSize', 'pavilion'])
-                ->first();
-
-            if ($hall) {
-                $featuredBooths = BoothBooking::query()
-                    ->with(['company', 'boothProfile', 'hall', 'booth', 'boothSessions'])
-                    ->where('hall_id', $hall->id)
-                    ->publiclyVisible()
-                    ->latest()
-                    ->take(8)
-                    ->get()
-                    ->filter(fn (BoothBooking $booking) => $this->companySlugForBooking($booking) !== '')
-                    ->values();
-
-                $hallSessions = BoothSession::query()
-                    ->with('boothBooking.boothProfile')
-                    ->whereIn('status', ['live', 'upcoming'])
-                    ->whereHas('boothBooking', fn (Builder $query) => $query->where('hall_id', $hall->id)->publiclyVisible())
-                    ->orderBy('session_date')
-                    ->orderBy('start_time')
-                    ->take(4)
-                    ->get();
-            }
+        if (auth()->check()) {
+            return redirect()->route('frontend.user.exhibitions.halls.show', [
+                'slug' => $slug,
+                'hallSlug' => $hallSlug,
+            ]);
         }
 
-        return view('frontend.visitor-exhibition.halls.show', [
-            'slug' => $slug,
-            'hallSlug' => $hallSlug,
-            'isPassActive' => $isPassActive,
-            'hall' => $hall,
-            'featuredBooths' => $featuredBooths,
-            'hallSessions' => $hallSessions,
-        ]);
+        return LegacyVisitorExhibitionRedirect::halls($slug);
     }
 
     public function pavilionsIndex(string $slug): RedirectResponse
     {
-        return redirect()->route('exhibitions.visitor.companies', $slug);
+        return LegacyVisitorExhibitionRedirect::halls($slug);
     }
 
     public function pavilionsShow(string $slug, string $pavilionSlug): RedirectResponse
     {
-        return redirect()->route('exhibitions.visitor.companies', $slug);
+        return LegacyVisitorExhibitionRedirect::halls($slug);
     }
 }

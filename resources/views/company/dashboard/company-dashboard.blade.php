@@ -501,15 +501,15 @@
         <div class="flex flex-col rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6 lg:col-span-2">
             <div class="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                 <h3 class="text-lg font-bold text-gray-900">Booth Performance</h3>
-                <div class="relative w-full sm:w-auto">
-                    <select class="w-full appearance-none rounded-lg border border-gray-200 bg-white py-2 pl-4 pr-10 text-sm font-medium text-gray-700 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary">
-                        <option>Last 7 Days</option>
-                        <option>Last 30 Days</option>
+                <form method="GET" action="{{ route('company.dashboard') }}" class="relative w-full sm:w-auto">
+                    <select name="performance_range" onchange="this.form.submit()" class="w-full appearance-none rounded-lg border border-gray-200 bg-white py-2 pl-4 pr-10 text-sm font-medium text-gray-700 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary">
+                        <option value="7" @selected(($performanceRange ?? 7) === 7)>Last 7 Days</option>
+                        <option value="30" @selected(($performanceRange ?? 7) === 30)>Last 30 Days</option>
                     </select>
                     <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
                         <i class="ph ph-caret-down text-sm"></i>
                     </div>
-                </div>
+                </form>
             </div>
 
             <div class="relative mt-4 h-[240px] w-full overflow-hidden sm:h-[280px]">
@@ -540,7 +540,7 @@
 
                 <div class="absolute bottom-0 left-10 right-2 flex justify-between gap-0.5 overflow-hidden sm:left-14 sm:right-4 sm:gap-1">
                     @foreach ($performanceValues as $date)
-                        <span class="truncate text-[9px] font-medium text-gray-400 sm:text-xs">{{ $date['label'] }}</span>
+                        <span class="truncate text-[9px] font-medium text-gray-400 sm:text-xs">{{ ($date['show_label'] ?? true) ? $date['label'] : '' }}</span>
                     @endforeach
                 </div>
             </div>

@@ -42,14 +42,10 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
     Route::get('/pavilions', function () {
         $exhibition = \App\Support\LiveContent::firstLiveExhibition();
         if ($exhibition) {
-            return redirect()->route('exhibitions.visitor.companies', $exhibition->slug);
+            return \App\Support\LegacyVisitorExhibitionRedirect::halls($exhibition->slug);
         }
 
-        $slug = '';
-        $isPassActive = false;
-        $booths = collect();
-
-        return view('frontend.visitor-exhibition.booths.companies', compact('slug', 'isPassActive', 'booths'));
+        return redirect()->route('exhibitions.index');
     })->name('pavilions.index');
 
     Route::get('/pavilions/show', function () {
@@ -57,31 +53,28 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
 
         abort_unless($exhibition, 404);
 
-        return redirect()->route('exhibitions.visitor.companies', $exhibition->slug);
+        return \App\Support\LegacyVisitorExhibitionRedirect::halls($exhibition->slug);
     })->name('pavilions.show');
 
     Route::get('/pavilions/{slug}', function ($slug) {
         $exhibition = \App\Support\LiveContent::findLiveExhibitionBySlug($slug);
 
         if ($exhibition) {
-            return redirect()->route('exhibitions.visitor.companies', $exhibition->slug);
+            return \App\Support\LegacyVisitorExhibitionRedirect::halls($exhibition->slug);
         }
 
         $fallbackExhibition = \App\Support\LiveContent::firstLiveExhibition();
 
         abort_unless($fallbackExhibition, 404);
 
-        return redirect()->route('exhibitions.visitor.companies.show', [
-            'slug' => $fallbackExhibition->slug,
-            'companySlug' => $slug,
-        ]);
+        return \App\Support\LegacyVisitorExhibitionRedirect::boothShow($fallbackExhibition->slug, $slug);
     })->name('pavilions.show.slug');
 
     Route::get('/halls', function () {
         $exhibition = \App\Support\LiveContent::firstLiveExhibition();
         abort_unless($exhibition, 404);
 
-        return redirect()->route('exhibitions.visitor-halls.index', $exhibition->slug);
+        return \App\Support\LegacyVisitorExhibitionRedirect::halls($exhibition->slug);
     })->name('halls.index');
 
     Route::get('/halls/show', function () {
@@ -89,25 +82,25 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
 
         abort_unless($exhibition, 404);
 
-        return redirect()->route('exhibitions.visitor.floor-map', $exhibition->slug);
+        return \App\Support\LegacyVisitorExhibitionRedirect::halls($exhibition->slug);
     })->name('halls.show');
 
     Route::get('/halls/floor-plan', function () {
         $exhibition = \App\Support\LiveContent::firstLiveExhibition();
         abort_unless($exhibition, 404);
 
-        return redirect()->route('exhibitions.visitor.floor-map', $exhibition->slug);
+        return \App\Support\LegacyVisitorExhibitionRedirect::halls($exhibition->slug);
     })->name('halls.floor-plan');
 
     Route::get('/halls/floor-plan/view', function () {
         $exhibition = \App\Support\LiveContent::firstLiveExhibition();
         abort_unless($exhibition, 404);
 
-        return redirect()->route('exhibitions.visitor.floor-map', $exhibition->slug);
+        return \App\Support\LegacyVisitorExhibitionRedirect::halls($exhibition->slug);
     })->name('halls.floor-plan.view');
 
     Route::get('/halls/{slug}', function ($slug) {
-        return redirect()->route('exhibitions.visitor.floor-map', $slug);
+        return \App\Support\LegacyVisitorExhibitionRedirect::halls($slug);
     })->name('halls.show.slug');
 
     Route::get('/booths/sizes', function () {
@@ -231,9 +224,14 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
         Route::get('/select', function ($slug) {
             session([
                 'activeExhibitionSlug' => $slug,
-                'exhibition_booking_path' => route('exhibitions.tickets.visitor-details', $slug),
+                'exhibition_booking_path' => \App\Support\ExhibitionTicketFlow::visitorPassEntryUrl($slug),
                 'user_flow_context' => 'exhibition_ticket',
             ]);
+
+            if (auth()->check()) {
+                return \App\Support\ExhibitionTicketFlow::redirectAuthenticatedVisitor($slug)
+                    ?? redirect()->route('exhibitions.tickets.pass-details', $slug);
+            }
 
             return redirect()->route('exhibitions.tickets.visitor-details', $slug);
         })->name('select');
@@ -312,7 +310,7 @@ Route::prefix('exhibitions')->name('exhibitions.')->group(function () {
     Route::get('/{slug}/visitor-dashboard', [VisitorExhibitionController::class, 'dashboard'])->name('visitor.dashboard');
     
     Route::get('/{slug}/qr-pass', function ($slug) {
-        return view('frontend.exhibitions.tickets.e-ticket', compact('slug'));
+        return \App\Support\LegacyVisitorExhibitionRedirect::passes();
     })->name('visitor.qr-pass');
 
     Route::get('/{slug}/my-passes', [VisitorExhibitionController::class, 'myPasses'])->name('visitor.my-passes');

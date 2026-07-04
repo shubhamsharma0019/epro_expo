@@ -169,6 +169,11 @@ Route::prefix('events')->name('events.')->group(function () use ($eventHomeHandl
                 'user_flow_context' => 'event_ticket',
             ]);
 
+            if (auth()->check()) {
+                return \App\Support\EventTicketFlow::redirectAuthenticatedVisitor($slug)
+                    ?? redirect()->route('events.tickets.attendee-details', ['event' => $slug]);
+            }
+
             return redirect()->route('events.tickets.visitor-details', ['event' => $slug]);
         })->name('select');
 

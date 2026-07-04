@@ -82,20 +82,7 @@
         <h3>Participating Companies</h3>
         @forelse ($participatingCompanies as $company)
             <div class="ex-company-card">
-                <div class="flex items-center gap-3 min-w-0">
-                    <div class="ex-company-logo">
-                        @if ($company['logo_url'])
-                            <img src="{{ $company['logo_url'] }}" alt="{{ $company['name'] }}" class="max-h-full max-w-full object-contain p-1">
-                        @else
-                            <span class="text-xs font-bold uppercase text-[#6D28D9]">{{ substr($company['name'], 0, 2) }}</span>
-                        @endif
-                    </div>
-                    <div class="min-w-0">
-                        <h4 class="font-bold text-[#171522]">{{ $company['name'] }}</h4>
-                        <p class="text-sm text-[#6B6884]">{{ $company['location'] }}</p>
-                    </div>
-                </div>
-                <a href="{{ route('exhibitions.visitor.companies.show', ['slug' => $slug, 'companySlug' => $company['slug']]) }}" class="ex-btn-white" style="padding:10px 18px;font-size:12px;">View Booth</a>
+                <h4 class="font-bold text-[#171522]">{{ $company['name'] }}</h4>
             </div>
         @empty
             <div class="ex-empty-state">No exhibitors registered yet</div>

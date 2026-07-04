@@ -134,16 +134,18 @@ class CompanyDashboardController extends Controller
             ->groupBy(fn ($view) => optional($view->viewed_at ?? $view->created_at)->format('Y-m-d'));
 
         $hasBoothProfile = (bool) $latestBooking?->boothProfile;
-        $performanceValues = collect(range(0, $performanceRange - 1))->map(function (int $offset) use ($performanceStart, $viewsByDate) {
+        $labelInterval = max(1, (int) ceil($performanceRange / 7));
+        $performanceValues = collect(range(0, $performanceRange - 1))->map(function (int $offset) use ($performanceStart, $viewsByDate, $performanceRange, $labelInterval) {
             $date = $performanceStart->copy()->addDays($offset);
 
             return [
                 'label' => $date->format('M j'),
                 'value' => $viewsByDate->get($date->format('Y-m-d'), collect())->count(),
+                'show_label' => $offset === 0 || $offset === ($performanceRange - 1) || $offset % $labelInterval === 0,
             ];
         });
 
-        $maxPerformanceValue = max($performanceValues->max('value'), 1);
+        $maxPerformanceValue = max((int) $performanceValues->max('value'), 4);
         $pointSpacing = $performanceRange > 1 ? 660 / ($performanceRange - 1) : 0;
         $chartPoints = $performanceValues->values()->map(function (array $item, int $index) use ($maxPerformanceValue, $pointSpacing) {
             $x = 20 + ($index * $pointSpacing);
@@ -154,6 +156,7 @@ class CompanyDashboardController extends Controller
                 'y' => round($y, 2),
                 'label' => $item['label'],
                 'value' => $item['value'],
+                'show_label' => $item['show_label'],
             ];
         });
         $lastChartX = (float) ($chartPoints->last()['x'] ?? 20);
@@ -161,7 +164,7 @@ class CompanyDashboardController extends Controller
         $performanceData = [
             'values' => $performanceValues,
             'max_value' => $maxPerformanceValue,
-            'axis_labels' => collect(range(5, 0))->map(fn (int $step) => (int) ceil($maxPerformanceValue * $step / 5)),
+            'axis_labels' => collect(range(4, 0))->map(fn (int $step) => (int) round($maxPerformanceValue * $step / 4)),
             'points' => $chartPoints,
             'polyline' => $chartPoints->map(fn (array $point) => $point['x'] . ',' . $point['y'])->implode(' '),
             'polygon' => $chartPoints->map(fn (array $point) => $point['x'] . ',' . $point['y'])->implode(' ') . ' ' . $lastChartX . ',200 20,200',

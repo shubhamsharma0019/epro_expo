@@ -21,15 +21,16 @@ use App\Support\MeetingJoinUrls;
 
 class ExhibitionBoothController extends Controller
 {
-    public function index(string $slug): View
+    public function index(string $slug): View|RedirectResponse
     {
         if (request()->has('booking_id')) {
             session(['selected_visitor_booking_id' => request()->query('booking_id')]);
         }
 
         if (! DbGuard::available()) {
-            return view(request()->routeIs('exhibitions.visitor.companies') ? 'frontend.visitor-exhibition.booths.companies' : 'frontend.exhibitions.booths.index', [
+            return view('frontend.exhibitions.booths.index', [
                 'slug' => $slug,
+                'exhibitionTitle' => 'Exhibition',
                 'booths' => collect(),
                 'isPassActive' => false,
             ]);
@@ -38,12 +39,12 @@ class ExhibitionBoothController extends Controller
         $exhibition = LiveContent::findLiveExhibitionBySlug($slug)
             ?: Exhibition::where('slug', $slug)->first();
 
+        abort_unless($exhibition, 404);
+
         $booths = BoothBooking::query()
             ->with(['company', 'exhibition', 'pavilion', 'hall', 'booth', 'boothProfile', 'boothBranding', 'boothSessions'])
-            ->when($exhibition, fn (Builder $query) => $query->where('exhibition_id', $exhibition->id))
-            ->where('payment_status', 'paid')
-            ->whereIn('booking_status', ['confirmed', 'active'])
-            ->where('admin_status', 'approved')
+            ->where('exhibition_id', $exhibition->id)
+            ->registeredExhibitor()
             ->withCount([
                 'boothProducts as published_products_count' => fn (Builder $query) => $query->where('status', 'published'),
                 'boothCatalogues as public_catalogues_count' => fn (Builder $query) => $query->where('visibility', 'public')->where('status', 'active'),
@@ -53,107 +54,17 @@ class ExhibitionBoothController extends Controller
             ->filter(fn (BoothBooking $booking) => $this->companySlug($booking) !== '')
             ->values();
 
-        if ($booths->isEmpty()) {
-            $booths = BoothBooking::query()
-                ->with(['company', 'exhibition', 'pavilion', 'hall', 'booth', 'boothProfile', 'boothBranding', 'boothSessions'])
-                ->where('payment_status', 'paid')
-                ->whereIn('booking_status', ['confirmed', 'active'])
-                ->where('admin_status', 'approved')
-                ->withCount([
-                    'boothProducts as published_products_count' => fn (Builder $query) => $query->where('status', 'published'),
-                    'boothCatalogues as public_catalogues_count' => fn (Builder $query) => $query->where('visibility', 'public')->where('status', 'active'),
-                ])
-                ->latest()
-                ->get()
-                ->filter(fn (BoothBooking $booking) => $this->companySlug($booking) !== '')
-                ->values();
-        }
-
-        return view(request()->routeIs('exhibitions.visitor.companies') ? 'frontend.visitor-exhibition.booths.companies' : 'frontend.exhibitions.booths.index', [
+        return view('frontend.exhibitions.booths.index', [
             'slug' => $slug,
+            'exhibitionTitle' => $exhibition->title ?: $exhibition->name,
             'booths' => $booths,
             'isPassActive' => $this->isPassActive($slug),
         ]);
     }
 
-    public function show(string $slug, string $companySlug): View
+    public function show(string $slug, string $companySlug): RedirectResponse
     {
-        if (request()->has('booking_id')) {
-            session(['selected_visitor_booking_id' => request()->query('booking_id')]);
-        }
-
-        $exhibition = LiveContent::exhibitionQuery()->where('slug', $slug)->first()
-            ?: Exhibition::where('slug', $slug)->first();
-
-        $booking = $this->findBookingQuery($slug, true)
-            ->with([
-                'boothProfile',
-                'boothBranding',
-                'boothProducts' => fn ($query) => $query->where('status', 'published')->orderBy('sort_order')->latest(),
-                'boothDocuments' => fn ($query) => $query->where('visibility', 'public')->where('status', 'active')->latest(),
-                'boothCatalogues' => fn ($query) => $query->where('visibility', 'public')->where('status', 'active')->latest(),
-                'boothMedia' => fn ($query) => $query->where('status', 'active')->orderBy('sort_order')->latest(),
-                'boothTeamMembers' => fn ($query) => $query->where('status', 'active')->latest(),
-                'boothMeetingSlots' => fn ($query) => $query->where('status', 'available')->orderBy('date')->orderBy('start_time'),
-                'boothMeetingAvailability',
-                'boothSessions' => fn ($query) => $query->whereIn('status', ['upcoming', 'live'])->orderBy('session_date')->orderBy('start_time'),
-            ])
-            ->get()
-            ->first(fn (BoothBooking $booking) => $this->companySlug($booking) === $companySlug);
-
-        if (! $booking) {
-            $booking = $this->findBookingQuery($slug, false)
-                ->with([
-                    'boothProfile',
-                    'boothBranding',
-                    'boothProducts' => fn ($query) => $query->where('status', 'published')->orderBy('sort_order')->latest(),
-                    'boothDocuments' => fn ($query) => $query->where('visibility', 'public')->where('status', 'active')->latest(),
-                    'boothCatalogues' => fn ($query) => $query->where('visibility', 'public')->where('status', 'active')->latest(),
-                    'boothMedia' => fn ($query) => $query->where('status', 'active')->orderBy('sort_order')->latest(),
-                    'boothTeamMembers' => fn ($query) => $query->where('status', 'active')->latest(),
-                    'boothMeetingSlots' => fn ($query) => $query->where('status', 'available')->orderBy('date')->orderBy('start_time'),
-                    'boothSessions' => fn ($query) => $query->whereIn('status', ['upcoming', 'live'])->orderBy('session_date')->orderBy('start_time'),
-                ])
-                ->get()
-                ->first(fn (BoothBooking $booking) => $this->companySlug($booking) === $companySlug);
-        }
-
-        if (! $booking) {
-            return view('frontend.visitor-exhibition.booths.show', [
-                'slug' => $slug,
-                'companySlug' => $companySlug,
-                'isPassActive' => $this->isPassActive($slug),
-                'visitorMeetings' => collect(),
-            ]);
-        }
-
-        $this->recordBoothView($booking);
-
-        return view('frontend.visitor-exhibition.booths.show', [
-            'slug' => $slug,
-            'companySlug' => $companySlug,
-            'isPassActive' => $this->isPassActive($slug),
-            'exhibition' => $exhibition,
-            'booking' => $booking,
-            'company' => $booking->boothProfile?->company_name ?: $booking->company?->company_name ?: $booking->company?->name,
-            'profile' => $booking->boothProfile,
-            'branding' => $booking->boothBranding,
-            'products' => $booking->boothProducts,
-            'documents' => $booking->boothDocuments,
-            'catalogues' => $booking->boothCatalogues,
-            'mediaItems' => $booking->boothMedia,
-            'teamMembers' => $booking->boothTeamMembers,
-            'meetingSlots' => $booking->boothMeetingSlots,
-            'meetingAvailability' => $booking->boothMeetingAvailability,
-            'companyMeetings' => CompanyMeeting::query()
-                ->where('company_id', $booking->company_id)
-                ->where('status', 'approved')
-                ->where('start_time', '>=', now()->startOfDay())
-                ->orderBy('start_time')
-                ->get(),
-            'sessions' => $booking->boothSessions,
-            'visitorMeetings' => $this->resolveVisitorMeetingsForCompany((int) $booking->company_id),
-        ]);
+        return redirect()->route('exhibitions.booths.index', $slug);
     }
 
     /**
@@ -529,7 +440,7 @@ class ExhibitionBoothController extends Controller
             ->where('exhibition_id', $exhibition->id);
 
         if ($onlyPublished) {
-            return $query->publiclyVisible();
+            return $query->registeredExhibitor();
         }
 
         return $query

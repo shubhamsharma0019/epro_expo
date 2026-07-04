@@ -560,25 +560,17 @@ class CompanyExhibitionFlowDetailTest extends TestCase
         $response->assertStatus(200);
         $this->assertTrue(session('visitor_pass_active'));
 
-        // Visit the Exhibition Lobby / Companies List
+        // Registered companies page lists exhibitors for this exhibition.
         $response = $this->get(route('exhibitions.visitor.companies', $this->exhibition->slug));
-        $response->assertStatus(200);
+        $response->assertOk();
         $response->assertSee('Acme Technologies Inc');
 
-        // View dynamic Booth details as a visitor
         $companySlug = \Illuminate\Support\Str::slug('Acme Technologies Inc');
-        $response = $this->get(route('exhibitions.visitor.companies.show', [$this->exhibition->slug, $companySlug]));
-        $response->assertStatus(200);
-        $response->assertSee('Acme Technologies Inc');
-        $response->assertSee('Acme Automation Overview PDF'); // Document
-        $response->assertSee('Product Catalogue 2026'); // Catalogue
-        $response->assertSee('Acme Workflow Automator'); // Product
+        $response = $this->get(route('exhibitions.booths.show', [$this->exhibition->slug, $companySlug]));
+        $response->assertRedirect(route('exhibitions.booths.index', $this->exhibition->slug));
 
-        // Visitor sessions page should be synced from booth setup sessions.
         $response = $this->get(route('exhibitions.visitor.sessions', $this->exhibition->slug));
-        $response->assertStatus(200);
-        $response->assertSee('Acme AI Masterclass');
-        $response->assertSee('Acme Technologies Inc');
+        $response->assertRedirect(route('frontend.user.dashboard', ['slug' => $this->exhibition->slug]));
     }
 
     public function test_company_analytics_page_renders_successfully(): void

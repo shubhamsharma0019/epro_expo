@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Domain\Visitor\Models\EventTicketVisitorRegistration;
 use App\Domain\Event\Models\CompanyEvent\CompanyEvent;
+use Illuminate\Http\RedirectResponse;
 
 class EventTicketFlow
 {
@@ -11,6 +12,10 @@ class EventTicketFlow
     {
         if (! filled($eventSlug)) {
             return route('events.listings.index');
+        }
+
+        if (auth()->check()) {
+            return self::ticketSelectionUrl($eventSlug);
         }
 
         return route('events.tickets.visitor-details', ['event' => $eventSlug]);
@@ -51,6 +56,49 @@ class EventTicketFlow
         }
 
         return (bool) session(self::sessionRegistrationKey($eventSlug), false);
+    }
+
+    public static function redirectAuthenticatedVisitor(string $eventSlug): ?RedirectResponse
+    {
+        if (! auth()->check() || ! filled($eventSlug)) {
+            return null;
+        }
+
+        $event = CompanyEvent::query()->where('slug', $eventSlug)->first();
+
+        self::ensureAuthenticatedRegistration($eventSlug, $event);
+
+        return redirect()->route('events.tickets.attendee-details', ['event' => $eventSlug]);
+    }
+
+    public static function ensureAuthenticatedRegistration(string $eventSlug, ?CompanyEvent $event = null): void
+    {
+        if (! auth()->check()) {
+            return;
+        }
+
+        $user = auth()->user();
+        $event ??= CompanyEvent::query()->where('slug', $eventSlug)->first();
+
+        session([
+            self::sessionRegistrationKey($eventSlug) => true,
+            self::refreshAttendeePrefillKey($eventSlug) => true,
+            'event_booking_path' => self::ticketSelectionUrl($eventSlug),
+            'user_flow_context' => 'event_ticket',
+        ]);
+
+        self::storeVisitorRegistration(
+            (int) $user->id,
+            $eventSlug,
+            $event?->id,
+            [
+                'name' => (string) ($user->name ?? ''),
+                'email' => (string) ($user->email ?? ''),
+                'phone' => $user->phone,
+                'gender' => $user->gender,
+                'city' => $user->city,
+            ]
+        );
     }
 
     /** @return array{name: string, email: string, phone: string, gender: string, city: string}|null */

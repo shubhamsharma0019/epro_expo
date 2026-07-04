@@ -27,13 +27,17 @@ class PurchaseController extends Controller
         $slug = $request->query('event');
         abort_unless(filled($slug), 404);
 
-        $data = $pageData->build($slug);
-        abort_if($data === null, 404);
-
         session([
             'event_booking_path' => EventTicketFlow::visitorPassEntryUrl($slug),
             'user_flow_context' => 'event_ticket',
         ]);
+
+        if ($redirect = EventTicketFlow::redirectAuthenticatedVisitor($slug)) {
+            return $redirect;
+        }
+
+        $data = $pageData->build($slug);
+        abort_if($data === null, 404);
 
         return view('frontend.events.tickets.visitor-details', $data);
     }

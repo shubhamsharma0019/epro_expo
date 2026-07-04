@@ -9,7 +9,6 @@
     $dateLabel = $bookingDays->isNotEmpty()
         ? $bookingDays->pluck('label')->filter()->join(', ')
         : 'Selected days';
-    $companyEmail = $booking?->company?->email ?? 'your registered company email';
     $selectedBoothCount = isset($booking) ? collect($booking->selected_booth_ids ?: [$booking->booth_id])->filter()->unique()->count() : 0;
     $boothLabel = $selectedBoothCount > 1
         ? $selectedBoothCount . ' linked booths'
@@ -93,56 +92,33 @@
             </div>
         </div>
 
-        <div class="mt-8 grid grid-cols-1 gap-0 xl:grid-cols-[minmax(0,1.7fr)_minmax(360px,1fr)]">
-            <div class="rounded-l-xl border border-borderColor bg-white p-5 shadow-sm">
-                <div class="rounded-xl border border-borderColor bg-[#FBFCFF] p-6">
-                    <div class="flex gap-5">
+        <div class="mt-8">
+            <div class="mx-auto max-w-[920px] rounded-xl border border-borderColor bg-white p-5 shadow-sm sm:p-6">
+                <div class="rounded-xl border border-borderColor bg-[#FBFCFF] p-6 sm:p-8">
+                    <div class="flex flex-col items-start gap-4 sm:flex-row sm:items-start sm:gap-5">
                         <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#F4F0FF] text-[26px] font-semibold text-purple">
                             i
                         </span>
-                        <div>
+                        <div class="min-w-0 text-left">
                             <h2 class="text-[20px] font-semibold text-navy">What&rsquo;s Next?</h2>
                             <p class="mt-2 text-[16px] leading-6 text-[#34405F]">
-                                A confirmation email has been sent to {{ $companyEmail }}
-                            </p>
-                            <p class="mt-1 text-[16px] leading-6 text-[#34405F]">
                                 You can view your booking details and download invoice from your dashboard.
                             </p>
                         </div>
                     </div>
                 </div>
 
-                <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <a href="{{ $booking?->id ? url('/company/bookings/' . $booking->id) : url('/company/bookings') }}"
-                        class="inline-flex h-[62px] items-center justify-center gap-4 rounded-md border border-purple px-6 text-[20px] font-semibold text-purple">
+                        class="inline-flex h-[62px] items-center justify-center gap-4 rounded-md border border-purple px-6 text-[18px] font-semibold text-purple sm:text-[20px]">
                         <i class="fa-regular fa-clipboard text-[24px]"></i>
                         View Booking Details
                     </a>
                     <a href="{{ url('/company/dashboard') }}"
-                        class="inline-flex h-[62px] items-center justify-center gap-4 rounded-md bg-gradient-to-r from-[#5b2eff] to-[#4310d8] px-6 text-[20px] font-semibold text-white">
+                        class="inline-flex h-[62px] items-center justify-center gap-4 rounded-md bg-gradient-to-r from-[#5b2eff] to-[#4310d8] px-6 text-[18px] font-semibold text-white sm:text-[20px]">
                         <i class="fa-solid fa-table-cells-large text-[24px]"></i>
                         Go to Dashboard
                     </a>
-                </div>
-            </div>
-
-            <div class="rounded-r-xl border border-l-0 border-borderColor bg-white p-5 shadow-sm">
-                <div class="h-full rounded-xl border border-[#DCEFE6] bg-[#F6FFFA] p-6">
-                    <div class="flex gap-5">
-                        <span class="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-[#BFE8CF] bg-[#EAF9F0] text-[#16A34A]">
-                            <i class="fa-solid fa-envelope text-[32px]"></i>
-                        </span>
-                        <div>
-                            <h2 class="text-[22px] font-semibold text-[#16A34A]">Confirmation Email Sent!</h2>
-                            <p class="mt-5 text-[16px] leading-7 text-[#34405F]">
-                                We&rsquo;ve sent all the details to
-                            </p>
-                            <p class="mt-1 text-[16px] font-semibold text-navy">{{ $companyEmail }}</p>
-                            <p class="mt-5 text-[16px] leading-7 text-[#34405F]">
-                                Please check your inbox (and spam folder) if you don&rsquo;t see it.
-                            </p>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
