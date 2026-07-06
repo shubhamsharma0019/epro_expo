@@ -7,22 +7,6 @@
     $flowCards = $flowCards ?? \App\Support\WebsiteContent::sectionOrDefaults('home', 'flow_card', \App\Support\WebsiteContent::defaultFlowCards());
     $primaryFeatures = array_slice($features, 0, 3);
     $audienceFeatures = array_slice($features, 3);
-    $resolveFlowUrl = function (array $card) {
-        if (! empty($card['link_url'])) {
-            return $card['link_url'];
-        }
-
-        $route = $card['route'] ?? ($card['meta']['route'] ?? null);
-        if ($route) {
-            try {
-                return route($route);
-            } catch (\Throwable) {
-                return url('/');
-            }
-        }
-
-        return url('/');
-    };
 @endphp
 
 <div class="hf-hero">
@@ -33,15 +17,15 @@
       <p>{{ $featuresHero['subtitle'] ?? '' }}</p>
     </div>
     <div class="hf-hero-cta">
-      <a href="{{ $featuresHero['button_1_url'] ?? route('events.home') }}" class="hf-btn-white">{{ $featuresHero['button_1_label'] ?? 'Explore Events' }}</a>
-      <a href="{{ $featuresHero['button_2_url'] ?? route('exhibitions.index') }}" class="hf-btn-outline">{{ $featuresHero['button_2_label'] ?? 'Browse Exhibitions' }}</a>
+      <span class="hf-btn-white">{{ $featuresHero['button_1_label'] ?? 'Explore Events' }}</span>
+      <span class="hf-btn-outline">{{ $featuresHero['button_2_label'] ?? 'Browse Exhibitions' }}</span>
     </div>
     <div class="hf-hero-stats">
       @foreach ($featurePills as $pill)
-        <a href="{{ $pill['link_url'] ?? route('frontend.user.login') }}" class="hf-hero-stat">
+        <div class="hf-hero-stat">
           <strong><i class="{{ $pill['icon'] ?? 'far fa-circle' }}"></i></strong>
           <span>{{ $pill['title'] ?? '' }}</span>
-        </a>
+        </div>
       @endforeach
     </div>
   </div>
@@ -113,7 +97,6 @@
           <span class="tag">{{ $card['title'] ?? '' }}</span>
           <h4>{{ $flowHeadline }}</h4>
           <p>{{ $card['body'] ?? '' }}</p>
-          <a href="{{ $resolveFlowUrl($card) }}">{{ $card['link_label'] ?? 'Learn more' }} →</a>
         </div>
       @endforeach
     </div>
@@ -125,7 +108,7 @@
   <h2>{{ $featuresHero['cta_title'] ?? 'Ready to explore the platform?' }}</h2>
   <p>{{ $featuresHero['cta_subtitle'] ?? '' }}</p>
   <div class="hf-hero-cta">
-    <a href="{{ route('events.home') }}" class="hf-btn-white">Explore Events</a>
-    <a href="{{ route('exhibitions.index') }}" class="hf-btn-outline">Browse Exhibitions</a>
+    <span class="hf-btn-white">Explore Events</span>
+    <span class="hf-btn-outline">Browse Exhibitions</span>
   </div>
 </div>

@@ -125,12 +125,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    text-decoration: none;
-    transition: opacity 0.2s;
-  }
-
-  #about-page .ap-btn-white:hover {
-    opacity: 0.92;
+    cursor: default;
   }
 
   #about-page .ap-btn-outline {
@@ -144,12 +139,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    text-decoration: none;
-    transition: background 0.2s;
-  }
-
-  #about-page .ap-btn-outline:hover {
-    background: rgba(255, 255, 255, 0.1);
+    cursor: default;
   }
 
   #about-page .ap-hero-stats {

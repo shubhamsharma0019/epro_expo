@@ -127,11 +127,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: opacity 0.2s;
-  }
-
-  #features-page .hf-btn-white:hover {
-    opacity: 0.92;
+    cursor: default;
   }
 
   #features-page .hf-btn-outline {
@@ -145,11 +141,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.2s;
-  }
-
-  #features-page .hf-btn-outline:hover {
-    background: rgba(255, 255, 255, 0.1);
+    cursor: default;
   }
 
   #features-page .hf-hero-stats {
@@ -169,8 +161,8 @@
     min-width: 96px;
     flex: 1 1 auto;
     max-width: 140px;
-    text-decoration: none;
     color: inherit;
+    cursor: default;
   }
 
   #features-page .hf-hero-stat strong {
@@ -428,19 +420,8 @@
     font-size: 12.5px;
     color: var(--hf-ink-soft);
     line-height: 1.55;
-    margin-bottom: 10px;
+    margin-bottom: 0;
     flex: 1;
-  }
-
-  #features-page .hf-flow-card a {
-    font-size: 12.5px;
-    font-weight: 700;
-    color: var(--hf-violet-700);
-    margin-top: auto;
-  }
-
-  #features-page .hf-flow-card a:hover {
-    color: var(--hf-violet-800);
   }
 
   #features-page .hf-bottom-cta {

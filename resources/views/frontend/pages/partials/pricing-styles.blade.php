@@ -293,16 +293,10 @@
     border: 1.5px solid var(--pp-line);
     background: #fff;
     color: var(--pp-ink);
-    cursor: pointer;
+    cursor: default;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    text-decoration: none;
-    transition: opacity 0.2s;
-  }
-
-  #pricing-page .pp-pcard .pp-pbtn:hover {
-    opacity: 0.92;
   }
 
   #pricing-page .pp-pcard.mid .pp-pbtn {
@@ -636,12 +630,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    text-decoration: none;
-    transition: opacity 0.2s;
-  }
-
-  #pricing-page .pp-btn-white:hover {
-    opacity: 0.92;
+    cursor: default;
   }
 
   #pricing-page .pp-btn-outline {
@@ -655,11 +644,6 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    text-decoration: none;
-    transition: background 0.2s;
-  }
-
-  #pricing-page .pp-btn-outline:hover {
-    background: rgba(255, 255, 255, 0.1);
+    cursor: default;
   }
 </style>
