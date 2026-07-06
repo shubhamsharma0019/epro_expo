@@ -11,7 +11,10 @@
     --es-shadow-card: 0 1px 2px rgba(23, 21, 34, 0.04), 0 16px 34px -18px rgba(76, 29, 149, 0.25);
     font-family: 'Inter', sans-serif;
     color: var(--es-ink);
-    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+    padding-bottom: 48px;
   }
 
   #event-show-page h1,
@@ -37,7 +40,7 @@
   #event-show-page .es-hero {
     position: relative;
     background: var(--es-grad-hero);
-    padding: 0 0 150px;
+    padding: 0 0 28px;
     overflow: hidden;
   }
 
@@ -187,21 +190,28 @@
   }
 
   #event-show-page .es-hero-stats {
-    display: flex;
-    margin-top: 28px;
-    gap: 12px;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 24px;
+    gap: 10px;
+  }
+
+  @media (min-width: 768px) {
+    #event-show-page .es-hero-stats {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 28px;
+    }
   }
 
   #event-show-page .es-hero-stat {
     background: rgba(255, 255, 255, 0.12);
     border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: 16px;
-    padding: 14px 18px;
+    padding: 12px 14px;
     display: flex;
     align-items: center;
-    gap: 12px;
-    flex: 1 1 180px;
+    gap: 10px;
     min-width: 0;
   }
 
@@ -232,19 +242,21 @@
   }
 
   #event-show-page .es-lift {
-    margin-top: -104px;
+    margin-top: 0;
     position: relative;
     z-index: 3;
-    padding-bottom: 72px;
+    padding-bottom: 24px;
   }
 
   #event-show-page .es-tab-strip {
     display: flex;
     gap: 24px;
+    margin-top: 8px;
     margin-bottom: 0;
     border-bottom: 1px solid var(--es-line);
     overflow-x: auto;
     scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
   }
 
   #event-show-page .es-tab-strip::-webkit-scrollbar {
@@ -285,13 +297,6 @@
     gap: 18px;
     margin-top: 22px;
     align-items: start;
-  }
-
-  @media (min-width: 980px) {
-    #event-show-page .es-body-grid {
-      grid-template-columns: 1fr 320px;
-      gap: 22px;
-    }
   }
 
   #event-show-page .es-icard {
@@ -518,21 +523,194 @@
     margin-bottom: 10px;
   }
 
-  @media (max-width: 979px) {
+  @media (min-width: 980px) {
+    #event-show-page .es-body-grid {
+      grid-template-columns: 1fr 320px;
+      gap: 22px;
+    }
+
+    #event-show-page .es-meta-card {
+      position: sticky;
+      top: 88px;
+    }
+  }
+
+  @media (max-width: 767px) {
+    #event-show-page {
+      padding-bottom: 72px;
+    }
+
+    #event-show-page .es-container {
+      padding: 0 16px;
+    }
+
     #event-show-page .es-hero {
-      padding-bottom: 180px;
+      padding-bottom: 20px;
     }
 
-    #event-show-page .es-lift {
-      margin-top: -140px;
+    #event-show-page .es-hero::after {
+      display: none;
     }
 
-    #event-show-page .es-hero-stats {
+    #event-show-page .es-crumb {
+      margin-top: 12px;
+      font-size: 11px;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    #event-show-page .es-crumb .cur {
+      display: inline;
+    }
+
+    #event-show-page .es-hero-headrow {
+      margin-top: 18px;
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    #event-show-page .es-eyebrow-hero {
+      font-size: 10px;
+      padding: 7px 12px;
+      line-height: 1.4;
+      max-width: 100%;
+    }
+
+    #event-show-page .es-share-btn {
+      align-self: flex-start;
+      font-size: 12px;
+      padding: 8px 14px;
+    }
+
+    #event-show-page .es-hero-copy {
+      margin-top: 14px;
+    }
+
+    #event-show-page .es-hero-copy h1 {
+      font-size: clamp(1.45rem, 7vw, 2rem);
+      line-height: 1.2;
+      max-width: none;
+    }
+
+    #event-show-page .es-hero-meta {
       flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    #event-show-page .es-hero-meta span {
+      font-size: 12px;
+      width: 100%;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    #event-show-page .es-hero-tags {
+      margin-top: 12px;
+      gap: 6px;
+    }
+
+    #event-show-page .es-hero-tags .tag {
+      font-size: 10px;
+      padding: 6px 12px;
     }
 
     #event-show-page .es-hero-stat {
-      flex: 1 1 auto;
+      padding: 12px 10px;
+      border-radius: 14px;
+      gap: 8px;
+    }
+
+    #event-show-page .es-hero-stat .icn {
+      width: 30px;
+      height: 30px;
+      font-size: 12px;
+      border-radius: 8px;
+    }
+
+    #event-show-page .es-hero-stat strong {
+      font-size: 11.5px;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    #event-show-page .es-hero-stat span.sub {
+      font-size: 10px;
+      line-height: 1.35;
+    }
+
+    #event-show-page .es-tab-strip {
+      gap: 16px;
+      margin-top: 4px;
+      padding-bottom: 2px;
+    }
+
+    #event-show-page .es-tab-strip .tab {
+      font-size: 12px;
+      padding: 10px 0;
+    }
+
+    #event-show-page .es-body-grid {
+      margin-top: 14px;
+      gap: 14px;
+    }
+
+    #event-show-page .es-icard {
+      padding: 18px 16px;
+      border-radius: 18px;
+    }
+
+    #event-show-page .es-about-card h2 {
+      font-size: 17px;
+    }
+
+    #event-show-page .es-about-card > p {
+      font-size: 13px;
+    }
+
+    #event-show-page .es-price-row {
+      gap: 12px;
+      padding-top: 16px;
+    }
+
+    #event-show-page .es-cta-btn {
+      width: 100%;
+      padding: 13px 20px;
+    }
+
+    #event-show-page .es-meta-row {
+      gap: 10px;
+      padding: 12px 0;
+    }
+
+    #event-show-page .es-meta-row .txt strong,
+    #event-show-page .es-meta-row .txt a {
+      font-size: 12px;
+    }
+
+    #event-show-page .es-subsection {
+      margin-top: 22px;
+      padding-top: 18px;
+    }
+
+    #event-show-page .es-subsection h3 {
+      font-size: 16px;
+    }
+  }
+
+  @media (max-width: 380px) {
+    #event-show-page .es-hero-stats {
+      grid-template-columns: 1fr;
+    }
+
+    #event-show-page .es-hero-headrow {
+      flex-direction: column;
+    }
+
+    #event-show-page .es-share-btn {
+      width: 100%;
+      justify-content: center;
     }
   }
 </style>

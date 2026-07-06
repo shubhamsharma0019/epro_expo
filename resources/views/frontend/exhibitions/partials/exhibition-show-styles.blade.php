@@ -11,6 +11,9 @@
     --ex-shadow-card: 0 1px 2px rgba(23, 21, 34, 0.04), 0 16px 34px -18px rgba(76, 29, 149, 0.25);
     font-family: 'Inter', sans-serif;
     color: var(--ex-ink);
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
     padding-bottom: 76px;
   }
 
@@ -35,7 +38,7 @@
   #exhibition-show-page .ex-hero {
     position: relative;
     background: var(--ex-grad-hero);
-    padding: 8px 0 170px;
+    padding: 8px 0 64px;
     overflow: hidden;
   }
 
@@ -45,11 +48,24 @@
     left: 50%;
     bottom: -260px;
     transform: translateX(-50%);
-    width: min(900px, 120vw);
+    width: min(900px, 100%);
     height: 520px;
     border-radius: 50%;
     background: radial-gradient(circle, rgba(255, 255, 255, 0.16), transparent 65%);
     pointer-events: none;
+  }
+
+  #exhibition-show-page .ex-hero-inner,
+  #exhibition-show-page .ex-hero-split,
+  #exhibition-show-page .ex-stat-carousel,
+  #exhibition-show-page .ex-stat-row,
+  #exhibition-show-page .ex-body-grid,
+  #exhibition-show-page .ex-tab-strip,
+  #exhibition-show-page .ex-promo,
+  #exhibition-show-page .ex-promo-body {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
 
   #exhibition-show-page .ex-hero-inner { position: relative; z-index: 2; }
@@ -238,15 +254,23 @@
     display: block;
   }
 
-  @media (max-width: 1100px) {
-    #exhibition-show-page .ex-promo-info { position: static; width: auto; margin-top: 16px; }
+  @media (max-width: 1023px) {
+    #exhibition-show-page .ex-promo-info {
+      position: static;
+      width: auto;
+      margin-top: 16px;
+      right: auto;
+      top: auto;
+    }
   }
 
   #exhibition-show-page .ex-stat-carousel {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-top: 36px;
+    margin-top: 32px;
+    position: relative;
+    z-index: 2;
   }
 
   #exhibition-show-page .ex-car-arrow {
@@ -267,7 +291,7 @@
     scroll-behavior: smooth;
   }
 
-  @media (min-width: 768px) {
+  @media (min-width: 1024px) {
     #exhibition-show-page .ex-stat-row { grid-template-columns: repeat(4, 1fr); gap: 18px; }
   }
 
@@ -278,7 +302,7 @@
     padding: 18px 14px;
     text-align: center;
     box-shadow: var(--ex-shadow-card);
-    min-width: 140px;
+    min-width: 0;
   }
 
   #exhibition-show-page .ex-stat-card .icn {
@@ -300,10 +324,21 @@
     font-size: 11px;
     color: var(--ex-ink-soft);
     font-weight: 600;
+    line-height: 1.35;
+    display: block;
   }
 
-  #exhibition-show-page .ex-lift { margin-top: -118px; position: relative; z-index: 3; }
-  #exhibition-show-page .ex-lift-space { height: 48px; }
+  #exhibition-show-page .ex-lift { position: relative; }
+
+  @media (min-width: 1024px) {
+    #exhibition-show-page .ex-hero { padding-bottom: 32px; }
+    #exhibition-show-page .ex-stat-carousel { margin-top: 36px; }
+    #exhibition-show-page .ex-lift { margin-top: 0; }
+    #exhibition-show-page .ex-car-arrow { display: none; }
+    #exhibition-show-page .ex-tab-strip {
+      margin-top: 8px;
+    }
+  }
 
   #exhibition-show-page .ex-icard {
     background: #fff;
@@ -528,6 +563,14 @@
     margin-bottom: 14px;
   }
 
+  @media (min-width: 640px) {
+    #exhibition-show-page .ex-session-row {
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 16px;
+    }
+  }
+
   #exhibition-show-page .ex-session-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
 
   #exhibition-show-page .ex-speaker-card {
@@ -579,8 +622,277 @@
     white-space: nowrap;
   }
 
-  @media (max-width: 979px) {
-    #exhibition-show-page .ex-hero { padding-bottom: 200px; }
-    #exhibition-show-page .ex-lift { margin-top: -140px; }
+  @media (max-width: 1023px) {
+    #exhibition-show-page .ex-hero {
+      padding-bottom: 28px;
+    }
+
+    #exhibition-show-page .ex-hero::after {
+      width: 100%;
+      height: 280px;
+      bottom: -120px;
+    }
+
+    #exhibition-show-page .ex-lift {
+      margin-top: 0;
+    }
+
+    #exhibition-show-page .ex-stat-carousel {
+      margin-top: 24px;
+    }
+
+    #exhibition-show-page .ex-stat-row {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      overflow: visible;
+    }
+
+    #exhibition-show-page .ex-car-arrow {
+      display: none;
+    }
+
+    #exhibition-show-page .ex-promo-info {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    #exhibition-show-page .ex-body-grid > .ex-stack:last-child .ex-icard:last-child {
+      display: none;
+    }
+  }
+
+  #exhibition-show-page .ex-hero-meta-location span {
+    line-height: 1.5;
+    max-width: 100%;
+    word-break: break-word;
+  }
+
+  @media (max-width: 767px) {
+    #exhibition-show-page {
+      padding-bottom: 112px;
+    }
+
+    #exhibition-show-page .ex-container {
+      padding: 0 16px;
+    }
+
+    #exhibition-show-page .ex-hero {
+      padding: 0 0 20px;
+    }
+
+    #exhibition-show-page .ex-stat-carousel {
+      margin-top: 20px;
+    }
+
+    #exhibition-show-page .ex-crumb {
+      margin-top: 12px;
+      font-size: 12px;
+    }
+
+    #exhibition-show-page .ex-hero-split {
+      gap: 18px;
+      margin-top: 16px;
+    }
+
+    #exhibition-show-page .ex-hero-copy h1 {
+      font-size: clamp(1.5rem, 7.4vw, 2rem);
+      line-height: 1.2;
+    }
+
+    #exhibition-show-page .ex-hero-copy .subline {
+      font-size: 14px;
+    }
+
+    #exhibition-show-page .ex-hero-meta {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    #exhibition-show-page .ex-hero-meta span {
+      font-size: 12px;
+      width: 100%;
+      line-height: 1.5;
+    }
+
+    #exhibition-show-page .ex-hero-copy p.desc {
+      font-size: 13px;
+      max-width: none;
+      margin-top: 14px;
+    }
+
+    #exhibition-show-page .ex-hero-cta-row {
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    #exhibition-show-page .ex-btn-white,
+    #exhibition-show-page .ex-btn-outline-w {
+      width: 100%;
+      justify-content: center;
+      padding: 12px 18px;
+      font-size: 13px;
+    }
+
+    #exhibition-show-page .ex-promo {
+      min-height: auto;
+      padding: 16px;
+      border-radius: 18px;
+    }
+
+    #exhibition-show-page .ex-promo h3 {
+      font-size: 18px;
+      padding-right: 0;
+    }
+
+    #exhibition-show-page .ex-promo > .ex-promo-body > p {
+      max-width: none;
+      font-size: 12px;
+    }
+
+    #exhibition-show-page .ex-promo-icons {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    #exhibition-show-page .ex-promo-icons div {
+      min-width: 0;
+    }
+
+    #exhibition-show-page .ex-promo-info {
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 14px;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    #exhibition-show-page .ex-hero::after {
+      display: none;
+    }
+
+    #exhibition-show-page .ex-stat-row {
+      gap: 10px;
+    }
+
+    #exhibition-show-page .ex-stat-card {
+      padding: 14px 10px;
+      border-radius: 16px;
+    }
+
+    #exhibition-show-page .ex-stat-card strong {
+      font-size: 18px;
+    }
+
+    #exhibition-show-page .ex-stat-card span {
+      font-size: 10px;
+      line-height: 1.35;
+    }
+
+    #exhibition-show-page .ex-tab-strip {
+      gap: 16px;
+      padding-bottom: 2px;
+    }
+
+    #exhibition-show-page .ex-tab-strip .tab {
+      font-size: 12px;
+      padding: 10px 0;
+    }
+
+    #exhibition-show-page .ex-body-grid {
+      margin-top: 14px;
+      gap: 14px;
+    }
+
+    #exhibition-show-page .ex-icard {
+      padding: 18px 16px;
+      border-radius: 18px;
+    }
+
+    #exhibition-show-page .ex-meta-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+
+    #exhibition-show-page .ex-meta-row .val {
+      text-align: left;
+      max-width: none;
+      word-break: break-word;
+    }
+
+    #exhibition-show-page .ex-company-card {
+      gap: 10px;
+    }
+
+    #exhibition-show-page .ex-session-row {
+      gap: 10px;
+    }
+
+    #exhibition-show-page .ex-sticky-cta {
+      padding: 12px 0 calc(12px + env(safe-area-inset-bottom));
+    }
+
+    #exhibition-show-page .ex-sticky-cta .ex-container {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+    }
+
+    #exhibition-show-page .ex-sticky-cta .info {
+      text-align: left;
+      min-width: 0;
+    }
+
+    #exhibition-show-page .ex-sticky-cta .info strong {
+      font-size: 13px;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: unset;
+      line-height: 1.35;
+    }
+
+    #exhibition-show-page .ex-sticky-cta .info span {
+      display: block;
+      font-size: 11px;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+
+    #exhibition-show-page .ex-sticky-cta a {
+      width: 100%;
+      text-align: center;
+      padding: 12px 18px;
+      white-space: normal;
+    }
+
+    #exhibition-show-page #panel-floorplan .mb-4.flex .ex-btn-white {
+      width: 100%;
+      justify-content: center;
+    }
+
+    #exhibition-show-page .ex-tab-panel button.flex.w-full.items-center {
+      gap: 12px;
+      padding: 14px 16px;
+      font-size: 12px;
+    }
+
+    #exhibition-show-page .ex-tab-panel button.flex.w-full.items-center > span:first-child {
+      min-width: 0;
+      flex: 1;
+      word-break: break-word;
+      padding-right: 8px;
+    }
+  }
+
+  @media (max-width: 380px) {
+    #exhibition-show-page .ex-stat-row,
+    #exhibition-show-page .ex-promo-icons {
+      grid-template-columns: 1fr 1fr;
+    }
   }
 </style>

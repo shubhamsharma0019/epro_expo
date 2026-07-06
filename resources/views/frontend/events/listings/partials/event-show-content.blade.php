@@ -67,7 +67,7 @@
     @endif
 
     <div class="es-body-grid">
-        <div id="event-about" class="es-icard es-about-card">
+        <div id="event-about" class="es-icard es-about-card scroll-mt-24">
             <h2>About This Event</h2>
             <p>{!! nl2br(e($event['description'])) !!}</p>
 
@@ -130,7 +130,7 @@
             </div>
         </div>
 
-        <div class="es-icard es-meta-card">
+        <div class="es-icard es-meta-card scroll-mt-24">
             <h3>Event Details</h3>
             <div class="es-meta-list">
                 <div class="es-meta-row">

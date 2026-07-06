@@ -221,8 +221,38 @@ class LiveContent
         ];
     }
 
+    public static function formatExhibitionDateRange(?\Illuminate\Support\Carbon $start, ?\Illuminate\Support\Carbon $end): string
+    {
+        if (! $start && ! $end) {
+            return 'Date TBD';
+        }
+
+        if ($start && $end) {
+            if ($start->isSameDay($end)) {
+                return $start->format('M d, Y');
+            }
+
+            if ($start->year === $end->year) {
+                return $start->format('M d') . ' – ' . $end->format('M d, Y');
+            }
+
+            return $start->format('M d, Y') . ' – ' . $end->format('M d, Y');
+        }
+
+        return ($start ?? $end)->format('M d, Y');
+    }
+
     public static function resolveExhibitionTime(Exhibition $exhibition): string
     {
+        if (filled($exhibition->show_start_time)) {
+            $start = \Illuminate\Support\Carbon::parse($exhibition->show_start_time)->format('g:i A');
+            $end = filled($exhibition->show_end_time)
+                ? \Illuminate\Support\Carbon::parse($exhibition->show_end_time)->format('g:i A')
+                : null;
+
+            return $end ? $start . ' - ' . $end : $start;
+        }
+
         $session = \App\Domain\Event\Models\AgendaSession::query()
             ->where('exhibition_id', $exhibition->id)
             ->orderBy('start_time')
@@ -456,8 +486,25 @@ class LiveContent
 
         $value = fn (string $key): string => trim((string) (is_array($exhibition) ? ($exhibition[$key] ?? '') : ($exhibition->{$key} ?? '')));
 
-        $parts = collect([$value('venue')])
-            ->merge(collect(explode(',', $value('location')))->map(fn ($part) => trim($part))->filter())
+        $venue = $value('venue');
+        $locationParts = collect(explode(',', $value('location')))
+            ->map(fn ($part) => trim($part))
+            ->filter();
+
+        $parts = collect();
+        if ($venue !== '') {
+            $parts->push($venue);
+        }
+
+        foreach ($locationParts as $part) {
+            if ($venue !== '' && stripos($venue, $part) !== false) {
+                continue;
+            }
+
+            $parts->push($part);
+        }
+
+        $parts = $parts
             ->filter(fn ($part) => $part !== '')
             ->unique(fn ($part) => strtolower(preg_replace('/\s+/', ' ', $part)))
             ->values();

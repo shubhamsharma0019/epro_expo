@@ -26,7 +26,7 @@
                     <span><i class="far fa-calendar-alt"></i> {{ $dateStr }}</span>
                     <span><i class="far fa-clock"></i> {{ $timeStr }}</span>
                 </div>
-                <div class="ex-hero-meta" style="margin-top:6px;">
+                <div class="ex-hero-meta ex-hero-meta-location">
                     <span><i class="fas fa-map-marker-alt"></i> {{ $location }}</span>
                 </div>
                 <p class="desc">{{ $description }}</p>
@@ -77,8 +77,6 @@
 </div>
 
 <div class="ex-container ex-lift">
-    <div class="ex-lift-space"></div>
-
     <nav class="ex-tab-strip" aria-label="Exhibition sections">
         @foreach ($visibleTabs as $tab)
             <button

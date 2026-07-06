@@ -390,7 +390,16 @@ class UserExhibitionBoothController extends Controller
                 $query->where('booth_id', $boothId)
                     ->orWhereJsonContains('selected_booth_ids', $boothId);
             })
-            ->firstOrFail();
+            ->get()
+            ->sortByDesc(function (BoothBooking $candidate) {
+                $score = $candidate->boothMeetingAvailability ? 100 : 0;
+                $score += $candidate->boothMeetingSlots->count();
+
+                return $score;
+            })
+            ->first();
+
+        abort_unless($booking, 404);
 
         return compact('user', 'exhibition', 'hall', 'booth', 'booking', 'visitorPass');
     }

@@ -22,9 +22,7 @@ class ExhibitionShowPageData
             $exhibition->banner_image ?: ($exhibition->banner_url ?: 'images/exhibitions/hero-pavilion-scene.png')
         );
 
-        $dateStr = $exhibition->start_date && $exhibition->end_date
-            ? $exhibition->start_date->format('M d') . ' – ' . $exhibition->end_date->format('d, Y')
-            : ($exhibition->start_date?->format('M d, Y') ?: 'Date TBD');
+        $dateStr = LiveContent::formatExhibitionDateRange($exhibition->start_date, $exhibition->end_date);
 
         $location = LiveContent::formatExhibitionVenue($exhibition);
         $timeStr = LiveContent::resolveExhibitionTime($exhibition);

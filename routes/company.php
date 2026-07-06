@@ -220,8 +220,9 @@ Route::prefix('company')->name('company.')->group(function () {
             return view('company.bookings.my-bookings', compact('bookings', 'allBookings', 'activeStatus', 'search'));
         })->name('index');
 
-        Route::get('/{booking}', [BookingDetailsController::class, 'show'])->name('show');
         Route::get('/{booking}/invoice', [BookingDetailsController::class, 'invoice'])->name('invoice');
+        Route::get('/{booking}/services', [BookingDetailsController::class, 'services'])->name('services');
+        Route::get('/{booking}', [BookingDetailsController::class, 'show'])->name('show');
     });
 
     $latestSetupRedirect = function (string $path = '') {

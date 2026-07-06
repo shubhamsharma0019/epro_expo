@@ -4,6 +4,7 @@ namespace App\Domain\Admin\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Domain\Admin\Models\Admin;
+use App\Domain\Shared\Services\AdminLoginPageData;
 use App\Support\AdminAudit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,9 +14,11 @@ use Illuminate\View\View;
 
 class AuthController extends Controller
 {
-    public function showLogin(): View
+    public function showLogin(AdminLoginPageData $pageData): View
     {
-        return view('admin.auth.login');
+        return view('admin.auth.login', [
+            'page' => $pageData->build(),
+        ]);
     }
 
     public function login(Request $request): RedirectResponse

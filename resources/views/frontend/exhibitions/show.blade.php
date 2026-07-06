@@ -10,7 +10,7 @@
 @endpush
 
 @section('content')
-  <div id="exhibition-show-page" class="-mx-4 -mt-5 overflow-x-hidden bg-white sm:-mx-6 sm:-mt-7 lg:-mx-8">
+  <div id="exhibition-show-page" class="w-full max-w-full overflow-x-clip bg-white">
     @include('frontend.exhibitions.partials.exhibition-show-content')
   </div>
 @endsection

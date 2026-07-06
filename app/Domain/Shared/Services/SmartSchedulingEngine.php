@@ -88,23 +88,14 @@ class SmartSchedulingEngine
             }
         }
 
-        // 3. Check Company Representative / Slot Availability
-        // Check if there are other confirmed meetings for the company overlapping with this time
-        $companyConflictExists = CompanyMeeting::where('company_id', $companyId)
-            ->whereIn('status', ['confirmed', 'accepted', 'rescheduled', 'pending'])
-            ->where('start_time', '<', $end->toDateTimeString())
-            ->where('end_time', '>', $start->toDateTimeString())
-            ->where(function ($q) use ($meetingType) {
-                $q->where('meeting_type', 'one-to-one')
-                    ->orWhereRaw('? = ?', [$meetingType, 'one-to-one']);
-            })
-            ->exists();
-
-        if ($companyConflictExists) {
+        // 3. Check Company Representative availability for one-to-one requests.
+        // One-to-many sessions use slot capacity checks below; they should not block a new one-to-one.
+        if ($meetingType === 'one-to-one' && $this->hasCompanyOneToOneConflict($companyId, $start, $end, $visitorId)) {
             $suggestion = $this->suggestNextBestSlot($companyId, $visitorId, $visitorEmail, now()->toDateTimeString(), $meetingType, $exhibitionId);
+
             return [
                 'valid' => false,
-                'conflict' => "The company representative has another one-to-one meeting or slot conflict at this time.",
+                'conflict' => 'The company representative has another one-to-one meeting or slot conflict at this time.',
                 'suggest_slot' => $suggestion,
             ];
         }
@@ -216,12 +207,8 @@ class SmartSchedulingEngine
                 }
             }
 
-            // Check if company has conflict (overlap)
-            $companyConflict = CompanyMeeting::where('company_id', $companyId)
-                ->whereIn('status', ['confirmed', 'accepted', 'rescheduled'])
-                ->where('start_time', '<', $slotEnd->toDateTimeString())
-                ->where('end_time', '>', $slotStart->toDateTimeString())
-                ->exists();
+            // Check if company has a blocking one-to-one conflict.
+            $companyConflict = $this->hasCompanyOneToOneConflict($companyId, $slotStart, $slotEnd, $visitorId);
 
             if ($companyConflict) {
                 continue;
@@ -256,5 +243,38 @@ class SmartSchedulingEngine
         }
 
         return null;
+    }
+
+    /**
+     * A company can host one-to-many and one-to-one on different tracks, but never two one-to-one meetings
+     * that overlap. Pending requests from the same visitor are ignored so they can retry without a false conflict.
+     */
+    private function hasCompanyOneToOneConflict(
+        int $companyId,
+        Carbon $start,
+        Carbon $end,
+        ?int $visitorId = null
+    ): bool {
+        $query = CompanyMeeting::query()
+            ->where('company_id', $companyId)
+            ->where('meeting_type', 'one-to-one')
+            ->where('start_time', '<', $end->toDateTimeString())
+            ->where('end_time', '>', $start->toDateTimeString());
+
+        if ($visitorId) {
+            $query->where(function ($q) use ($visitorId) {
+                $q->whereIn('status', ['confirmed', 'accepted', 'rescheduled'])
+                    ->orWhere(function ($sub) use ($visitorId) {
+                        $sub->where('status', 'pending')
+                            ->whereHas('visitorMeetingBookings', function ($booking) use ($visitorId) {
+                                $booking->where('visitor_id', '!=', $visitorId);
+                            });
+                    });
+            });
+        } else {
+            $query->whereIn('status', ['confirmed', 'accepted', 'rescheduled', 'pending']);
+        }
+
+        return $query->exists();
     }
 }

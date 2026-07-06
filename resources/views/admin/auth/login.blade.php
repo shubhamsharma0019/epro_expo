@@ -3,33 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eproexpo - Admin Login</title>
-    <!-- Tailwind CSS -->
+    <title>{{ $page['app_name'] }} - Admin Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <!-- Google Fonts (Inter) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
     <style>
-        body { animation: fadeIn 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        html, body {
+            min-height: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
+            animation: fadeIn 0.3s ease-out;
         }
-        /* Custom checkbox style to match the green square with check */
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
         .custom-checkbox {
             appearance: none;
             background-color: #fff;
             margin: 0;
-            font: inherit;
-            color: currentColor;
             width: 1.15em;
             height: 1.15em;
             border: 1px solid #d1d5db;
             border-radius: 0.25em;
             display: grid;
             place-content: center;
+            flex-shrink: 0;
         }
 
         .custom-checkbox::before {
@@ -40,150 +45,153 @@
             transform: scale(0);
             transform-origin: bottom left;
             transition: 120ms transform ease-in-out;
-            box-shadow: inset 1em 1em white;
             background-color: white;
         }
 
         .custom-checkbox:checked {
-            background-color: #10B981; /* Emerald 500 */
+            background-color: #10B981;
             border-color: #10B981;
         }
 
         .custom-checkbox:checked::before {
             transform: scale(1);
         }
-    
-        /* Enterprise responsive fixes: prevent side scroll while keeping all data visible */
-        html, body { max-width: 100%; overflow-x: hidden; }
-        *, *::before, *::after { box-sizing: border-box; }
-        main, header, section, .main-scrollbar { min-width: 0; }
-        img, svg, video, canvas { max-width: 100%; height: auto; }
-        input, select, textarea { max-width: 100%; }
-        table { width: 100%; table-layout: fixed; border-collapse: collapse; }
-        th, td { white-space: normal !important; overflow-wrap: anywhere; word-break: break-word; vertical-align: top; }
-        thead th { line-height: 1.25; letter-spacing: .02em; }
-        .overflow-x-visible, .overflow-x-visible { overflow-x: visible !important; }
-        .whitespace-normal { white-space: normal !important; }
-        .no-scrollbar { scrollbar-width: none; }
-        @media (max-width: 1280px) {
-            .main-scrollbar { padding-left: 1rem !important; padding-right: 1rem !important; }
-            th, td { padding-left: .75rem !important; padding-right: .75rem !important; font-size: 12px !important; }
-            header input { width: 240px !important; }
-            .tracking-wider { letter-spacing: .02em !important; }
-        }
-        @media (max-width: 1024px) {
-            .lg\:flex-row { flex-direction: column !important; }
-            .lg\:items-end { align-items: flex-start !important; }
-            th, td { padding-left: .55rem !important; padding-right: .55rem !important; font-size: 11.5px !important; }
-            .gap-6 { gap: 1rem !important; }
-        }
-
-    
-        /* Blade alignment fixes: keep layout clean without horizontal page scroll */
-        html, body { max-width: 100%; overflow-x: hidden; }
-        *, *::before, *::after { box-sizing: border-box; }
-        main, header, section, .main-scrollbar, .grid, .flex-1 { min-width: 0; }
-        img, svg, video, canvas { max-width: 100%; height: auto; }
-        input, select, textarea { max-width: 100%; }
-        .max-w-\[1400px\] { max-width: min(1400px, 100%) !important; }
-        .overflow-x-auto, .overflow-x-visible { overflow-x: hidden !important; }
-        table { width: 100%; table-layout: fixed; border-collapse: collapse; }
-        th, td { white-space: normal !important; overflow-wrap: anywhere; word-break: break-word; vertical-align: top; }
-        thead th { line-height: 1.25; letter-spacing: .02em; }
-        @media (max-width: 768px) {
-            header { padding-left: 1rem !important; padding-right: 1rem !important; }
-            .px-8 { padding-left: 1rem !important; padding-right: 1rem !important; }
-            .p-8, .lg\:p-8 { padding: 1rem !important; }
-        }
     </style>
 </head>
-<body class="min-h-screen bg-white">
-    <div class="flex min-h-screen flex-col lg:flex-row">
-        
-        <!-- Left Side: Illustration Area (Hidden on mobile) -->
-        <div class="hidden lg:flex lg:w-1/2 bg-[#f8f7fc] items-center justify-center relative overflow-hidden p-12">
-            <!-- Include the 3D illustration generated -->
-            <img src="{{ asset('admin_assets/illustration.png') }}" alt="Secure Server Dashboard" class="w-full max-w-2xl h-auto object-contain relative z-10 drop-shadow-2xl" />
+<body class="min-h-dvh bg-white text-[#1a1c29]">
+    <div class="grid min-h-dvh w-full lg:grid-cols-2">
+        <div class="relative hidden overflow-hidden bg-[#f8f7fc] lg:flex lg:min-h-dvh lg:items-center lg:justify-center lg:p-10 xl:p-14">
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(55,35,219,0.08),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(16,185,129,0.08),transparent_38%)]"></div>
+            <img
+                src="{{ $page['illustration_url'] }}"
+                alt="Secure admin dashboard"
+                class="relative z-10 h-auto w-full max-w-[min(92%,720px)] object-contain drop-shadow-2xl"
+            >
         </div>
 
-        <!-- Right Side: Login Form -->
-        <div class="w-full lg:w-1/2 flex flex-col px-8 sm:px-16 lg:px-24 xl:px-32 py-12">
-            
-            <div class="flex flex-col h-full justify-center max-w-[440px] w-full mx-auto relative">
-                
-                <!-- Main Form Content -->
-                <div class="flex-1 flex flex-col justify-center mt-12 mb-12">
-                    
-                    <!-- Logo -->
-                    <div class="flex items-center gap-4 mb-12">
+        <div class="flex min-h-dvh flex-col bg-white">
+            <div class="border-b border-[#ece9f8] bg-[#f8f7fc] px-4 py-5 sm:px-6 lg:hidden">
+                <div class="mx-auto flex max-w-md items-center gap-4">
+                    <img
+                        src="{{ $page['illustration_url'] }}"
+                        alt="Secure admin dashboard"
+                        class="h-20 w-20 shrink-0 rounded-2xl object-cover object-center shadow-sm sm:h-24 sm:w-24"
+                    >
+                    <div class="min-w-0">
+                        <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-[#3723db]">Admin Portal</p>
+                        <p class="mt-1 text-[15px] font-semibold leading-5 text-[#1a1c29]">Secure access to your exhibition control center</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-1 items-center justify-center px-4 py-8 sm:px-8 sm:py-10 lg:px-12 xl:px-20">
+                <div class="w-full max-w-[440px]">
+                    <div class="mb-8 sm:mb-10">
                         <x-shared.frontend-brand-logo
                             href="{{ route('admin.dashboard') }}"
                             subtitle="ADMIN PORTAL"
+                            size="compact"
                         />
                     </div>
 
-                    <!-- Headings -->
-                    <h1 class="text-[34px] font-bold text-[#1a1c29] mb-3">Welcome Back, Admin</h1>
-                    <p class="text-[#64748B] text-[17px] mb-12 font-medium">Sign in to your admin dashboard</p>
+                    <h1 class="text-[28px] font-bold leading-tight text-[#1a1c29] sm:text-[32px] lg:text-[34px]">
+                        {{ $page['title'] }}
+                    </h1>
+                    <p class="mt-2 text-[15px] font-medium text-[#64748B] sm:mt-3 sm:text-[17px]">
+                        {{ $page['subtitle'] }}
+                    </p>
 
-                    <!-- Form -->
-                    <form action="{{ route('admin.login.store') }}" method="POST" class="space-y-6">
+                    <form action="{{ route('admin.login.store') }}" method="POST" class="mt-8 space-y-5 sm:mt-10 sm:space-y-6">
                         @csrf
+
                         @if ($errors->any())
                             <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-[14px] font-medium text-red-700">
                                 {{ $errors->first() }}
                             </div>
                         @endif
-                        
-                        <!-- Email -->
-                        <div class="space-y-2.5">
-                            <label for="email" class="block text-[15px] font-semibold text-[#1a1c29]">Email Address</label>
-                            <input type="email" name="email" id="email" class="w-full px-4 py-3.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3723db] focus:border-transparent transition-all text-[15px] text-gray-800" value="{{ old('email', 'admin@example.com') }}" placeholder="Enter your email" required>
+
+                        <div class="space-y-2">
+                            <label for="email" class="block text-[14px] font-semibold sm:text-[15px]">Email Address</label>
+                            <input
+                                type="email"
+                                name="email"
+                                id="email"
+                                value="{{ old('email') }}"
+                                placeholder="Enter your email"
+                                required
+                                autocomplete="username"
+                                class="w-full rounded-lg border border-gray-200 px-4 py-3.5 text-[15px] text-gray-800 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#3723db]"
+                            >
                         </div>
 
-                        <!-- Password -->
-                        <div class="space-y-2.5">
-                            <label for="password" class="block text-[15px] font-semibold text-[#1a1c29]">Password</label>
+                        <div class="space-y-2">
+                            <label for="password" class="block text-[14px] font-semibold sm:text-[15px]">Password</label>
                             <div class="relative">
-                                <input type="password" name="password" id="password" class="w-full px-4 py-3.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#3723db] focus:border-transparent transition-all text-[15px] text-gray-800 tracking-[0.2em]" value="password" placeholder="Enter your password" required>
-                                <button type="button" class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors">
-                                    <i class="ph ph-eye text-xl"></i>
+                                <input
+                                    type="password"
+                                    name="password"
+                                    id="password"
+                                    placeholder="Enter your password"
+                                    required
+                                    autocomplete="current-password"
+                                    class="w-full rounded-lg border border-gray-200 px-4 py-3.5 pr-12 text-[15px] text-gray-800 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#3723db]"
+                                >
+                                <button
+                                    type="button"
+                                    id="toggle-password"
+                                    class="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 transition-colors hover:text-gray-600"
+                                    aria-label="Show password"
+                                >
+                                    <i class="ph ph-eye text-xl" id="toggle-password-icon"></i>
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Actions -->
-                        <div class="flex items-center justify-between pt-1">
-                            <div class="flex items-center">
-                                <input id="remember-me" name="remember-me" type="checkbox" class="custom-checkbox cursor-pointer" checked>
-                                <label for="remember-me" class="ml-2.5 block text-[15px] font-medium text-[#475569] cursor-pointer select-none">
-                                    Remember me
-                                </label>
-                            </div>
-                            
-                            <div class="text-[15px]">
-                                <a href="#" class="font-medium text-[#3723db] hover:text-[#2515a6] transition-colors">
-                                    Forgot Password?
-                                </a>
-                            </div>
+                        <div class="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
+                            <label class="inline-flex cursor-pointer select-none items-center">
+                                <input id="remember-me" name="remember" type="checkbox" class="custom-checkbox cursor-pointer" {{ old('remember') ? 'checked' : '' }}>
+                                <span class="ml-2.5 text-[14px] font-medium text-[#475569] sm:text-[15px]">Remember me</span>
+                            </label>
+
+                            <a href="#" class="text-[14px] font-medium text-[#3723db] transition-colors hover:text-[#2515a6] sm:text-[15px]">
+                                Forgot Password?
+                            </a>
                         </div>
 
-                        <!-- Submit Button -->
-                        <div class="pt-5">
-                            <button type="submit" class="w-full flex justify-center py-4 px-4 border border-transparent rounded-[10px] shadow-md text-[16px] font-semibold text-white bg-[#3723db] hover:bg-[#2515a6] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3723db] transition-all transform active:scale-[0.98]">
-                                Login
-                            </button>
-                        </div>
+                        <button
+                            type="submit"
+                            class="w-full rounded-[10px] border border-transparent bg-[#3723db] px-4 py-4 text-[16px] font-semibold text-white shadow-md transition-all hover:bg-[#2515a6] focus:outline-none focus:ring-2 focus:ring-[#3723db] focus:ring-offset-2 active:scale-[0.98]"
+                        >
+                            Login
+                        </button>
                     </form>
+
+                    <p class="mt-8 text-center text-[13px] font-medium text-[#64748B] sm:mt-10 sm:text-left sm:text-[14px]">
+                        {{ $page['footer_text'] }}
+                    </p>
                 </div>
-                
-                <!-- Footer -->
-                <div class="text-[#64748B] text-[14px] font-medium mt-auto pb-4">
-                    &copy; 2024 EproExpo. All rights reserved.
-                </div>
-                
             </div>
         </div>
     </div>
+
+    <script>
+        (() => {
+            const passwordInput = document.getElementById('password');
+            const toggleButton = document.getElementById('toggle-password');
+            const toggleIcon = document.getElementById('toggle-password-icon');
+
+            if (!passwordInput || !toggleButton || !toggleIcon) {
+                return;
+            }
+
+            toggleButton.addEventListener('click', () => {
+                const isHidden = passwordInput.type === 'password';
+                passwordInput.type = isHidden ? 'text' : 'password';
+                toggleIcon.classList.toggle('ph-eye', !isHidden);
+                toggleIcon.classList.toggle('ph-eye-slash', isHidden);
+                toggleButton.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+            });
+        })();
+    </script>
 </body>
 </html>

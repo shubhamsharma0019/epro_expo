@@ -9,7 +9,8 @@
     $action = $editingMedia
         ? route('company.booth-setup.media.update', [$booking, $editingMedia])
         : route('company.booth-setup.media.store', $booking);
-    $mediaCounts = collect($mediaItems ?? [])->groupBy('type')->map->count();
+    $mediaCounts = $mediaCounts ?? \App\Domain\Booth\Models\BoothMedia::countByType(collect($mediaItems ?? []));
+    $activeTab = request('tab', 'all');
 @endphp
 
 <section class="px-4 py-6 sm:px-6 lg:px-8">
@@ -24,12 +25,12 @@
         @endif
 
         <div class="mb-8 border-b border-gray-200 overflow-x-auto">
-            <nav class="flex min-w-max space-x-8">
-                <button type="button" data-filter="all" class="media-tab-btn border-b-2 border-[#3D1B9B] px-1 py-3 text-[15px] font-bold text-[#3D1B9B] focus:outline-none cursor-pointer transition-all">All Media</button>
-                <button type="button" data-filter="image" class="media-tab-btn border-b-2 border-transparent px-1 py-3 text-[15px] font-medium text-gray-500 hover:text-[#3D1B9B] focus:outline-none cursor-pointer transition-all">Images ({{ $mediaCounts->get('image', 0) }})</button>
-                <button type="button" data-filter="video" class="media-tab-btn border-b-2 border-transparent px-1 py-3 text-[15px] font-medium text-gray-500 hover:text-[#3D1B9B] focus:outline-none cursor-pointer transition-all">Videos ({{ $mediaCounts->get('video', 0) }})</button>
-                <button type="button" data-filter="document" class="media-tab-btn border-b-2 border-transparent px-1 py-3 text-[15px] font-medium text-gray-500 hover:text-[#3D1B9B] focus:outline-none cursor-pointer transition-all">Documents ({{ $mediaCounts->get('document', 0) }})</button>
-                <button type="button" data-filter="360" class="media-tab-btn border-b-2 border-transparent px-1 py-3 text-[15px] font-medium text-gray-500 hover:text-[#3D1B9B] focus:outline-none cursor-pointer transition-all">360 ({{ $mediaCounts->get('360', 0) }})</button>
+            <nav class="flex min-w-max space-x-8" id="media-tabs">
+                <button type="button" data-filter="all" class="media-tab-btn border-b-2 px-1 py-3 text-[15px] focus:outline-none cursor-pointer transition-all {{ $activeTab === 'all' ? 'border-[#3D1B9B] font-bold text-[#3D1B9B]' : 'border-transparent font-medium text-gray-500 hover:text-[#3D1B9B]' }}">All Media ({{ $mediaCounts['all'] }})</button>
+                <button type="button" data-filter="image" class="media-tab-btn border-b-2 px-1 py-3 text-[15px] focus:outline-none cursor-pointer transition-all {{ $activeTab === 'image' ? 'border-[#3D1B9B] font-bold text-[#3D1B9B]' : 'border-transparent font-medium text-gray-500 hover:text-[#3D1B9B]' }}">Images ({{ $mediaCounts['image'] }})</button>
+                <button type="button" data-filter="video" class="media-tab-btn border-b-2 px-1 py-3 text-[15px] focus:outline-none cursor-pointer transition-all {{ $activeTab === 'video' ? 'border-[#3D1B9B] font-bold text-[#3D1B9B]' : 'border-transparent font-medium text-gray-500 hover:text-[#3D1B9B]' }}">Videos ({{ $mediaCounts['video'] }})</button>
+                <button type="button" data-filter="document" class="media-tab-btn border-b-2 px-1 py-3 text-[15px] focus:outline-none cursor-pointer transition-all {{ $activeTab === 'document' ? 'border-[#3D1B9B] font-bold text-[#3D1B9B]' : 'border-transparent font-medium text-gray-500 hover:text-[#3D1B9B]' }}">Documents ({{ $mediaCounts['document'] }})</button>
+                <button type="button" data-filter="360" class="media-tab-btn border-b-2 px-1 py-3 text-[15px] focus:outline-none cursor-pointer transition-all {{ $activeTab === '360' ? 'border-[#3D1B9B] font-bold text-[#3D1B9B]' : 'border-transparent font-medium text-gray-500 hover:text-[#3D1B9B]' }}">360 ({{ $mediaCounts['360'] }})</button>
             </nav>
         </div>
 
@@ -92,13 +93,25 @@
         <div id="media-grid" class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             @forelse ($mediaItems as $item)
                 @php
-                    $mediaUrl = $item->file_path ? asset('storage/' . $item->file_path) : $item->video_url;
-                    $thumbUrl = $item->thumbnail ? asset('storage/' . $item->thumbnail) : ($item->type === 'image' && $item->file_path ? asset('storage/' . $item->file_path) : asset('assets/exhibition/images/booth_banner.png'));
+                    $resolvedType = $item->resolvedType();
+                    $mediaUrl = $item->mediaUrl();
+                    $thumbUrl = $item->thumbnailUrl();
+                    $isHidden = $activeTab !== 'all' && $activeTab !== $resolvedType;
                 @endphp
-                <div class="media-card group flex flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm" data-media-type="{{ $item->type }}">
+                <div class="media-card group flex flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm {{ $isHidden ? 'hidden' : '' }}" data-media-type="{{ $resolvedType }}">
                     <a href="{{ $mediaUrl ?: '#' }}" target="_blank" class="relative h-40 w-full overflow-hidden bg-[#0F172A]">
-                        <img src="{{ $thumbUrl }}" alt="{{ $item->title }}" class="h-full w-full object-cover">
-                        <span class="absolute left-2 top-2 rounded bg-[#4C1D95] px-2.5 py-1 text-[10px] font-bold text-white">{{ ucfirst($item->type) }}</span>
+                        @if ($resolvedType === 'video')
+                            <div class="flex h-full w-full items-center justify-center bg-[#111827] text-white">
+                                <i class="ph ph-play-circle text-[42px]"></i>
+                            </div>
+                        @elseif ($resolvedType === 'document')
+                            <div class="flex h-full w-full items-center justify-center bg-[#F8FAFC] text-[#3D1B9B]">
+                                <i class="ph ph-file-pdf text-[42px]"></i>
+                            </div>
+                        @else
+                            <img src="{{ $thumbUrl }}" alt="{{ $item->title }}" class="h-full w-full object-cover">
+                        @endif
+                        <span class="absolute left-2 top-2 rounded bg-[#4C1D95] px-2.5 py-1 text-[10px] font-bold text-white">{{ ucfirst($resolvedType) }}</span>
                     </a>
                     <div class="p-4">
                         <h4 class="mb-1 truncate text-[14px] font-bold text-[#1E1B4B]">{{ $item->title }}</h4>
@@ -185,40 +198,44 @@
         const cards = document.querySelectorAll('.media-card');
         const emptyState = document.getElementById('media-filter-empty');
 
-        tabs.forEach((tab) => {
-            tab.addEventListener('click', () => {
-                const filter = tab.dataset.filter;
+        const applyFilter = (filter) => {
+            tabs.forEach((tab) => {
+                const isActive = tab.dataset.filter === filter;
+                tab.classList.toggle('border-[#3D1B9B]', isActive);
+                tab.classList.toggle('font-bold', isActive);
+                tab.classList.toggle('text-[#3D1B9B]', isActive);
+                tab.classList.toggle('border-transparent', !isActive);
+                tab.classList.toggle('font-medium', !isActive);
+                tab.classList.toggle('text-gray-500', !isActive);
+            });
 
-                // Toggle active styles on tabs
-                tabs.forEach((t) => {
-                    t.classList.remove('border-[#3D1B9B]', 'font-bold', 'text-[#3D1B9B]');
-                    t.classList.add('border-transparent', 'font-medium', 'text-gray-500');
-                });
-
-                tab.classList.add('border-[#3D1B9B]', 'font-bold', 'text-[#3D1B9B]');
-                tab.classList.remove('border-transparent', 'font-medium', 'text-gray-500');
-
-                // Filter cards
-                let visibleCount = 0;
-                cards.forEach((card) => {
-                    if (filter === 'all' || card.dataset.mediaType === filter) {
-                        card.style.display = '';
-                        visibleCount++;
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
-
-                // Toggle empty state if no matching items
-                if (emptyState) {
-                    if (visibleCount === 0 && cards.length > 0) {
-                        emptyState.classList.remove('hidden');
-                    } else {
-                        emptyState.classList.add('hidden');
-                    }
+            let visibleCount = 0;
+            cards.forEach((card) => {
+                const shouldShow = filter === 'all' || card.dataset.mediaType === filter;
+                card.classList.toggle('hidden', !shouldShow);
+                if (shouldShow) {
+                    visibleCount++;
                 }
             });
+
+            if (emptyState) {
+                emptyState.classList.toggle('hidden', visibleCount > 0 || cards.length === 0);
+            }
+
+            const url = new URL(window.location.href);
+            if (filter === 'all') {
+                url.searchParams.delete('tab');
+            } else {
+                url.searchParams.set('tab', filter);
+            }
+            window.history.replaceState({}, '', url);
+        };
+
+        tabs.forEach((tab) => {
+            tab.addEventListener('click', () => applyFilter(tab.dataset.filter || 'all'));
         });
+
+        applyFilter(@json($activeTab));
     })();
 </script>
 @endpush

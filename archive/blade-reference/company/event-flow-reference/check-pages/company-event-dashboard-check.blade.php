@@ -99,7 +99,7 @@
     <main class="company-event-flow-main min-h-screen min-w-0 overflow-x-hidden bg-white">
         
         
-        <div class="mx-auto w-full max-w-[1200px] px-5 py-8 sm:px-8 lg:px-10">
+        <div class=" w-full max-w-[1200px] px-5 py-8 sm:px-8 lg:px-10">
 <header class="flex flex-col gap-5 lg:flex-row lg:justify-between lg:items-center mb-10">
             <div class="flex flex-wrap gap-4 sm:gap-6">
                 <a href="http://localhost/events" class="text-sm font-medium text-gray-500 hover:text-gray-900">Explore Events</a>

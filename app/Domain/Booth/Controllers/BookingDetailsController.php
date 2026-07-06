@@ -3,19 +3,47 @@
 namespace App\Domain\Booth\Controllers;
 
 use App\Domain\Booth\Models\BoothBooking;
+use App\Domain\Company\Models\Service;
+use App\Domain\Shared\Services\BookingDetailsPageData;
 use App\Support\BoothInvoiceData;
 use Illuminate\View\View;
 
 class BookingDetailsController extends BaseBoothSetupController
 {
-    public function show(BoothBooking $booking): View
+    public function show(BoothBooking $booking, BookingDetailsPageData $pageData): View
     {
         $booking = $this->ownedBooking($booking);
+        $bookingDays = $booking->days()->orderBy('booking_date')->get();
+        $bookingServices = $booking->services()->get();
 
         return view('company.bookings.booking-details', [
             'booking' => $booking,
-            'bookingServices' => $booking->services()->get(),
-            'bookingDays' => $booking->days()->orderBy('booking_date')->get(),
+            'bookingServices' => $bookingServices,
+            'bookingDays' => $bookingDays,
+            'page' => $pageData->build($booking, $bookingDays, $bookingServices),
+        ]);
+    }
+
+    public function services(BoothBooking $booking): View
+    {
+        $booking = $this->ownedBooking($booking);
+
+        Service::syncDefaultCatalog();
+
+        $services = Service::where('status', 'active')->orderBy('id')->get();
+        $bookingServices = $booking->services()
+            ->get()
+            ->keyBy('id');
+        $selectedTotal = (float) $bookingServices->sum(fn ($service) => (float) ($service->pivot->total ?? 0));
+
+        return view('company.bookings.booking-services', [
+            'booking' => $booking,
+            'services' => $services,
+            'bookingServices' => $bookingServices,
+            'selectedCount' => $bookingServices->count(),
+            'selectedTotal' => $selectedTotal,
+            'currencySymbol' => config('invoice.currency_symbol', '₹'),
+            'readOnly' => $booking->payment_status === 'paid',
         ]);
     }
 
