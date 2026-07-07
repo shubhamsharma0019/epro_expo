@@ -38,10 +38,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ $pageTitle }}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   @include('frontend.shared.partials.home-brand-styles')
   @include('frontend.shared.partials.site-navbar-styles')
+  <style>
+    #event-home-page {
+      --events-hero-gradient: {{ $pageHero['hero_gradient'] ?? 'linear-gradient(135deg, #F6F3FF 0%, #EFE9FE 30%, #F8FAFF 68%, #FFFFFF 100%)' }};
+      --events-page-font: {{ $pageHero['page_font_family'] ?? 'Inter, sans-serif' }};
+      --events-heading-font: {{ $pageHero['heading_font_family'] ?? 'Inter, sans-serif' }};
+      --events-nav-font: {{ $pageHero['nav_font_family'] ?? 'Inter, sans-serif' }};
+      --events-nav-size: {{ $pageHero['nav_font_size'] ?? '14px' }};
+      --events-nav-weight: {{ $pageHero['nav_font_weight'] ?? '600' }};
+      --events-hero-heading: {{ $pageHero['hero_heading_color'] ?? '#071044' }};
+      --events-hero-accent: {{ $pageHero['hero_accent_color'] ?? '#6D28D9' }};
+      --events-hero-body: {{ $pageHero['hero_body_color'] ?? '#1F2B55' }};
+      --events-hero-eyebrow-bg: {{ $pageHero['hero_eyebrow_bg'] ?? 'rgba(109, 40, 217, 0.08)' }};
+      --events-hero-eyebrow-color: {{ $pageHero['hero_eyebrow_color'] ?? '#6D28D9' }};
+      --events-hero-eyebrow-border: {{ $pageHero['hero_eyebrow_border'] ?? 'rgba(109, 40, 217, 0.18)' }};
+    }
+  </style>
   @include('frontend.events.partials.home.events-home-styles')
   @include('frontend.events.partials.home.mobile-styles')
   @include('frontend.shared.partials.responsive-fixes')

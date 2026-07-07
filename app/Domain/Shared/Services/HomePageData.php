@@ -3,6 +3,7 @@
 namespace App\Domain\Shared\Services;
 
 use App\Domain\Booth\Models\BoothBooking;
+use App\Domain\Booth\Models\BoothMedia;
 use App\Domain\Company\Models\Company;
 use App\Domain\Event\Models\Exhibition;
 use App\Support\DbGuard;
@@ -227,9 +228,7 @@ class HomePageData
         }
 
         $bannerPath = $branding?->booth_banner ?: $profile?->booth_banner;
-        $imageUrl = $bannerPath
-            ? asset('storage/' . ltrim($bannerPath, '/'))
-            : asset('images/home/booth-preview-new.png');
+        $imageUrl = $this->resolveBoothHighlightImage($booking, $bannerPath);
 
         $brochure = $booking->boothCatalogues
             ->first(fn ($item) => ($item->visibility ?? 'public') === 'public' && ($item->status ?? 'active') === 'active');
@@ -344,6 +343,7 @@ class HomePageData
                     'boothBranding',
                     'boothCatalogues',
                     'boothSessions',
+                    'boothMedia',
                 ])
                 ->where('payment_status', 'paid')
                 ->whereIn('booking_status', ['confirmed', 'active'])
@@ -487,5 +487,85 @@ class HomePageData
             ['title' => 'Halls', 'image_url' => asset('images/exhibitions/info-hall-floorplan.png')],
             ['title' => 'Booths', 'image_url' => asset('images/exhibitions/info-custom-booth.png')],
         ]);
+    }
+
+    private function resolveBoothHighlightImage(BoothBooking $booking, ?string $bannerPath): string
+    {
+        foreach ($this->boothHighlightImageCandidates($booking, $bannerPath) as $candidate) {
+            $url = $this->resolvePublicAssetUrl($candidate);
+
+            if ($url !== null) {
+                return $url;
+            }
+        }
+
+        return $this->defaultBoothPreviewImage();
+    }
+
+    /** @return list<string> */
+    private function boothHighlightImageCandidates(BoothBooking $booking, ?string $bannerPath): array
+    {
+        $candidates = array_filter([
+            $bannerPath,
+            $booking->boothProfile?->company_logo,
+        ]);
+
+        foreach ($booking->boothMedia as $media) {
+            if (! $media instanceof BoothMedia) {
+                continue;
+            }
+
+            if ($media->resolvedType() === 'image' && filled($media->file_path)) {
+                $candidates[] = $media->file_path;
+            }
+
+            if (filled($media->video_url)) {
+                $candidates[] = $media->video_url;
+            }
+        }
+
+        $candidates[] = $booking->exhibition?->banner_url;
+        $candidates[] = $booking->exhibition?->banner_image;
+
+        return array_values(array_filter($candidates, fn ($value) => filled($value)));
+    }
+
+    private function resolvePublicAssetUrl(string $path): ?string
+    {
+        $path = trim($path);
+
+        if ($path === '') {
+            return null;
+        }
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+
+        if (! $this->storageAssetExists($path)) {
+            return null;
+        }
+
+        return asset('storage/' . ltrim($path, '/'));
+    }
+
+    private function storageAssetExists(string $path): bool
+    {
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return true;
+        }
+
+        return file_exists(storage_path('app/public/' . ltrim($path, '/')));
+    }
+
+    private function defaultBoothPreviewImage(): string
+    {
+        foreach (['images/home/booth-preview-new.png', 'images/home/booth-preview.svg'] as $relative) {
+            if (file_exists(public_path($relative))) {
+                return asset($relative);
+            }
+        }
+
+        return asset('images/home/booth-preview.svg');
     }
 }

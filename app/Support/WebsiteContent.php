@@ -48,6 +48,18 @@ class WebsiteContent
                 'title_line_3' => $meta['title_line_3'] ?? $defaults['title_line_3'],
                 'subtitle' => $row->body ?: $defaults['subtitle'],
                 'subtitle_template' => $meta['subtitle_template'] ?? $defaults['subtitle_template'],
+                'page_font_family' => $meta['page_font_family'] ?? $defaults['page_font_family'],
+                'heading_font_family' => $meta['heading_font_family'] ?? $defaults['heading_font_family'],
+                'hero_gradient' => $meta['hero_gradient'] ?? $defaults['hero_gradient'],
+                'nav_font_family' => $meta['nav_font_family'] ?? $defaults['nav_font_family'],
+                'nav_font_size' => $meta['nav_font_size'] ?? $defaults['nav_font_size'],
+                'nav_font_weight' => $meta['nav_font_weight'] ?? $defaults['nav_font_weight'],
+                'hero_heading_color' => $meta['hero_heading_color'] ?? $defaults['hero_heading_color'],
+                'hero_accent_color' => $meta['hero_accent_color'] ?? $defaults['hero_accent_color'],
+                'hero_body_color' => $meta['hero_body_color'] ?? $defaults['hero_body_color'],
+                'hero_eyebrow_bg' => $meta['hero_eyebrow_bg'] ?? $defaults['hero_eyebrow_bg'],
+                'hero_eyebrow_color' => $meta['hero_eyebrow_color'] ?? $defaults['hero_eyebrow_color'],
+                'hero_eyebrow_border' => $meta['hero_eyebrow_border'] ?? $defaults['hero_eyebrow_border'],
             ]);
         }
 
@@ -584,7 +596,7 @@ class WebsiteContent
 
     public static function defaultEventsHero(): array
     {
-        return [
+        return array_merge([
             'page_title' => 'eproexpo — Discover Events. Book Tickets. Join Live.',
             'eyebrow' => 'Live events, near you',
             'title_line_1' => 'Discover',
@@ -594,6 +606,25 @@ class WebsiteContent
             'title_line_3' => 'Join Live.',
             'subtitle' => 'Explore events across categories and countries. Book tickets and get access to live sessions in one seamless platform.',
             'subtitle_template' => 'Explore {event_count} live events across {category_count} categories and {country_count} countries. Book tickets and get access to live sessions in one seamless platform.',
+        ], self::defaultEventsHeroTheme());
+    }
+
+  /** @return array<string, string> */
+    public static function defaultEventsHeroTheme(): array
+    {
+        return [
+            'hero_gradient' => 'linear-gradient(135deg, #F6F3FF 0%, #EFE9FE 30%, #F8FAFF 68%, #FFFFFF 100%)',
+            'page_font_family' => 'Inter, sans-serif',
+            'heading_font_family' => 'Inter, sans-serif',
+            'nav_font_family' => 'Inter, sans-serif',
+            'nav_font_size' => '14px',
+            'nav_font_weight' => '600',
+            'hero_heading_color' => '#071044',
+            'hero_accent_color' => '#6D28D9',
+            'hero_body_color' => '#1F2B55',
+            'hero_eyebrow_bg' => 'rgba(109, 40, 217, 0.08)',
+            'hero_eyebrow_color' => '#6D28D9',
+            'hero_eyebrow_border' => 'rgba(109, 40, 217, 0.18)',
         ];
     }
 
