@@ -146,6 +146,27 @@ Route::prefix('events')->name('events.')->group(function () use ($eventHomeHandl
         return view('frontend.events.listings.index', compact('dbEvents', 'categories', 'countries', 'status', 'statusCounts'));
     })->name('listings.index');
 
+    Route::get('/listings/categories', function () {
+        $categories = \App\Support\DbGuard::whenAvailable(fn () => \App\Support\LiveContent::databaseCompanyEventsQuery()
+            ->whereNotNull('category')
+            ->where('category', '!=', '')
+            ->selectRaw('category, count(*) as total')
+            ->groupBy('category')
+            ->orderBy('category')
+            ->get()
+            ->map(fn ($row) => [
+                'name' => ucfirst(str_replace('_', ' ', $row->category)),
+                'value' => $row->category,
+                'total' => (int) $row->total,
+            ])
+            ->values(), collect());
+
+        return view('frontend.events.listings.categories', compact('categories'));
+    })->name('listings.categories');
+
+    Route::get('/listings/search', function () {
+        return view('frontend.events.listings.search');
+    })->name('listings.search');
     Route::get('/listings/{slug}', function ($slug) {
         $pageData = app(\App\Domain\Shared\Services\EventListingShowPageData::class)->build($slug);
 

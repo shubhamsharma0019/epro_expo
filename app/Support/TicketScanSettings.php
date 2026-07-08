@@ -4,6 +4,7 @@ namespace App\Support;
 
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 
 class TicketScanSettings
@@ -94,12 +95,16 @@ class TicketScanSettings
         config(['app.ticket_qr_base_url' => $detected]);
 
         if ($urlChanged) {
-            self::refreshStoredTicketUrls();
+            app()->booted(fn () => self::refreshStoredTicketUrls());
         }
     }
 
     private static function refreshStoredTicketUrls(): void
     {
+        if (! Route::has('verify-ticket.show')) {
+            return;
+        }
+
         if (! Schema::hasTable('tickets') || ! class_exists(\App\Domain\Visitor\Models\Ticket::class)) {
             return;
         }

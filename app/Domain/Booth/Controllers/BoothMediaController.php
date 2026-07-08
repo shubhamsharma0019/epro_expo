@@ -24,7 +24,7 @@ class BoothMediaController extends BaseBoothSetupController
     /** @return array<string, mixed> */
     private function mediaPageData(BoothBooking $booking, BoothSetupStepService $steps, ?BoothMedia $mediaItem = null): array
     {
-        $mediaItems = $booking->boothMedia()->active()->latest()->get();
+        $mediaItems = $booking->boothMedia()->active()->orderBy('sort_order')->latest()->get();
         $used = (int) $mediaItems->sum('file_size');
 
         return $this->commonData($booking, $steps) + [

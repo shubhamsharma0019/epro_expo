@@ -6,7 +6,7 @@
     'subtitleClass' => 'text-[11px] text-[#8A94AD]',
 ])
 
-<a href="{{ $href }}" {{ $attributes->merge(['class' => 'flex min-w-0 items-center gap-3']) }}>
+<a href="{{ $href }}" {{ $attributes->merge(['class' => 'inline-flex min-w-0 items-center gap-3']) }}>
     <span class="flex shrink-0 items-center justify-center bg-gradient-to-br from-[#071044] to-[#5b2eff] font-bold leading-none text-white shadow-[0_14px_30px_rgba(7,16,68,0.18)] {{ $markClass }}">
         e
     </span>

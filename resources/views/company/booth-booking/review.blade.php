@@ -107,11 +107,11 @@
                     @foreach ($exhibitionTerms as $termKey => $term)
                         <label data-term-row class="flex cursor-pointer items-start gap-3 rounded-xl border border-borderColor bg-[#FBFAFF] p-3.5 transition-all duration-200 hover:border-[#c7bcff] sm:gap-4 sm:p-4">
                             <input
-                                type="radio"
+                                type="checkbox"
                                 name="acknowledged_terms[{{ $termKey }}]"
                                 value="1"
                                 required
-                                data-term-radio
+                                data-term-checkbox
                                 class="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-[#5b2eff]"
                             >
                             <span class="min-w-0">
@@ -146,16 +146,24 @@
 @push('scripts')
 <script>
     (() => {
-        // Highlight a term row once its radio is acknowledged.
-        document.querySelectorAll('[data-term-radio]').forEach((radio) => {
-            radio.addEventListener('change', () => {
-                const row = radio.closest('[data-term-row]');
+        // Highlight a term row while its checkbox is acknowledged.
+        document.querySelectorAll('[data-term-checkbox]').forEach((checkbox) => {
+            const syncTermRow = () => {
+                const row = checkbox.closest('[data-term-row]');
                 if (!row) {
                     return;
                 }
-                row.classList.remove('border-borderColor', 'bg-[#FBFAFF]', 'hover:border-[#c7bcff]');
-                row.classList.add('border-[#5b2eff]', 'bg-[#f5f2ff]', 'shadow-[0_4px_12px_rgba(91,46,255,0.10)]');
-            });
+
+                row.classList.toggle('border-borderColor', ! checkbox.checked);
+                row.classList.toggle('bg-[#FBFAFF]', ! checkbox.checked);
+                row.classList.toggle('hover:border-[#c7bcff]', ! checkbox.checked);
+                row.classList.toggle('border-[#5b2eff]', checkbox.checked);
+                row.classList.toggle('bg-[#f5f2ff]', checkbox.checked);
+                row.classList.toggle('shadow-[0_4px_12px_rgba(91,46,255,0.10)]', checkbox.checked);
+            };
+
+            checkbox.addEventListener('change', syncTermRow);
+            syncTermRow();
         });
     })();
 </script>

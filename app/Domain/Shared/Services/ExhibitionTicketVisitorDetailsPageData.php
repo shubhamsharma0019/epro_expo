@@ -7,6 +7,7 @@ use App\Domain\Visitor\Models\Visitor;
 use App\Support\ExhibitionTicketFlow;
 use App\Support\LiveContent;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class ExhibitionTicketVisitorDetailsPageData
 {
@@ -58,6 +59,7 @@ class ExhibitionTicketVisitorDetailsPageData
         );
 
         $states = $this->uniqueValues(
+            $this->indiaStates(),
             $bookings->map(fn ($booking) => $booking->boothProfile?->state),
             Visitor::query()->where('exhibition_id', $exhibition->id)->pluck('state')
         );
@@ -173,6 +175,15 @@ class ExhibitionTicketVisitorDetailsPageData
             ->unique()
             ->sort()
             ->values();
+    }
+
+    private function indiaStates(): Collection
+    {
+        return DB::table('india_states')
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->pluck('name');
     }
 
     private function guessCountryFromLocation(string $location): ?string

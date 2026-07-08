@@ -73,9 +73,16 @@ class MailSetupController extends Controller
             'mail_from_address' => $validated['mail_from_address'] ?? null,
         ]);
 
+        $resentCount = $this->sendPendingTicketEmails();
+        $message = 'Sender saved successfully. New ticket emails will go automatically to the buyer email entered at checkout.';
+
+        if ($resentCount > 0) {
+            $message .= ' Also sent ' . $resentCount . ' pending ticket ' . str('email')->plural($resentCount) . '.';
+        }
+
         return redirect()
             ->route($this->mailSetupRoute('index'))
-            ->with('status', 'Gmail SMTP saved successfully. You can now send scanner/ticket emails as often as needed without pasting the App Password again.');
+            ->with('status', $message);
     }
 
     public function test(Request $request): RedirectResponse
@@ -117,6 +124,26 @@ class MailSetupController extends Controller
         }
     }
 
+    private function sendPendingTicketEmails(): int
+    {
+        $sent = 0;
+
+        VisitorTicket::query()
+            ->whereNull('email_sent_at')
+            ->whereNotNull('attendee_email')
+            ->latest('id')
+            ->take(25)
+            ->get()
+            ->each(function (VisitorTicket $ticket) use (&$sent): void {
+                $result = EventTicketMail::sendTicket($ticket);
+
+                if ($result['sent'] ?? false) {
+                    $sent++;
+                }
+            });
+
+        return $sent;
+    }
     private function authorizeMailSetup(): void
     {
         if (app()->environment('local')) {

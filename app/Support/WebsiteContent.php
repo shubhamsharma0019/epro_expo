@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Schema;
 
 class WebsiteContent
 {
+    private const SHARED_FOOTER_PAGES = ['events', 'exhibitions', 'features', 'pricing', 'about'];
+
     public static function publishedItems(string $page, string $sectionKey): Collection
     {
         if (! self::tableExists()) {
@@ -128,19 +130,30 @@ class WebsiteContent
     public static function footer(string $page = 'home'): array
     {
         $row = self::publishedItems($page, 'footer')->first();
+        $defaults = self::defaultFooter();
 
         if (! $row) {
-            return self::defaultFooter();
+            return $defaults;
         }
 
         $meta = json_decode((string) ($row->meta ?? '{}'), true) ?: [];
+        $links = self::sectionOrDefaults($page, 'footer_link', []);
+        $social = self::sectionOrDefaults($page, 'social', []);
 
-        return array_merge(self::defaultFooter(), [
-            'copyright' => $row->body ?: self::defaultFooter()['copyright'],
-            'links' => self::sectionOrDefaults($page, 'footer_link', self::defaultFooter()['links']),
-            'social' => self::sectionOrDefaults($page, 'social', self::defaultFooter()['social']),
-            'contact_email' => $meta['contact_email'] ?? self::defaultFooter()['contact_email'],
-            'contact_phone' => $meta['contact_phone'] ?? self::defaultFooter()['contact_phone'],
+        if ($links === []) {
+            $links = $defaults['links'];
+        }
+
+        if ($social === []) {
+            $social = $defaults['social'];
+        }
+
+        return array_merge($defaults, [
+            'copyright' => $row->body ?: $defaults['copyright'],
+            'links' => $links,
+            'social' => $social,
+            'contact_email' => $meta['contact_email'] ?? $defaults['contact_email'],
+            'contact_phone' => $meta['contact_phone'] ?? $defaults['contact_phone'],
         ]);
     }
 
@@ -650,6 +663,32 @@ class WebsiteContent
         $meta = json_decode((string) ($row->meta ?? '{}'), true) ?: [];
 
         return array_merge($defaults, $meta);
+    }
+
+    public static function exhibitionsNavbar(): array
+    {
+        $defaults = self::defaultExhibitionsNavbar();
+        $row = self::publishedItems('exhibitions', 'navbar')->first();
+
+        if (! $row) {
+            return $defaults;
+        }
+
+        $meta = json_decode((string) ($row->meta ?? '{}'), true) ?: [];
+
+        return array_merge($defaults, $meta);
+    }
+
+    /** @return array<string, string> */
+    public static function defaultExhibitionsNavbar(): array
+    {
+        return [
+            'events_url' => '/events',
+            'exhibitions_url' => '/exhibitions',
+            'features_url' => '/features',
+            'pricing_url' => '/pricing',
+            'about_url' => '/about-us',
+        ];
     }
 
     public static function defaultEventsSections(): array

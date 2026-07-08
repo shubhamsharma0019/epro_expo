@@ -263,24 +263,7 @@
   </div>
 </div>
 
-<footer>
-  <div class="container footer-inner">
-    <div class="footer-brand-shell">
-      <x-shared.home-brand-logo size="footer" />
-    </div>
-    <div class="foot-links">
-      <a href="{{ route('events.home') }}">Explore Events</a>
-      <a href="{{ route('exhibitions.index') }}">Exhibitions</a>
-      <a href="{{ route('frontend.features') }}">Features</a>
-      <a href="{{ route('frontend.pricing') }}">Pricing</a>
-      <a href="{{ route('frontend.about') }}">About Us</a>
-      @foreach (($footer['links'] ?? []) as $link)
-        <a href="{{ $link['link_url'] ?? '#' }}">{{ $link['title'] ?? '' }}</a>
-      @endforeach
-    </div>
-    <span style="font-size:12px;">{{ $footer['copyright'] ?? '© ' . date('Y') . ' eproexpo. All rights reserved.' }}</span>
-  </div>
-</footer>
+    @include('frontend.shared.partials.marketing-footer-shell', ['footerPage' => 'events'])
 
 <script>
   (() => {

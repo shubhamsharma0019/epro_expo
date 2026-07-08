@@ -191,4 +191,9 @@
         </div>
     </div>
 </div>
+@push('scripts')
+<script>
+    window.history.replaceState({}, '', @json(route('company.booth-setup.legacy.publish')));
+</script>
+@endpush
 @endsection

@@ -24,11 +24,21 @@
         'menuId' => 'pagesNav',
     ])
 
-    <main class="mx-auto max-w-[1540px] px-4 pb-8 pt-5 sm:px-6 sm:pt-7 lg:px-8">
+    <main class="mx-auto max-w-[1540px] px-0 pt-5">
         @yield('content')
     </main>
 
-    @include('frontend.events.partials.home.footer')
+    @php
+        $footerPage = match ($activeNav ?? 'home') {
+            'features' => 'features',
+            'pricing' => 'pricing',
+            'about' => 'about',
+            default => 'home',
+        };
+    @endphp
+
+    @include('frontend.shared.partials.marketing-footer-shell', ['footerPage' => $footerPage])
     @stack('scripts')
 </body>
 </html>
+

@@ -230,7 +230,7 @@
             <!-- Top Products -->
             <div class="col-span-12 lg:col-span-5 border border-gray-100 rounded-xl p-6 bg-white shadow-sm flex flex-col justify-between">
                 <div>
-                    <h3 class="text-[#1E1B4B] font-bold text-[15px] mb-6">Top Products</h3>
+                    <div class="flex justify-between items-center mb-6"><h3 class="text-[#1E1B4B] font-bold text-[15px]">Top Products</h3><div class="flex items-center"><span class="w-2 h-2 rounded-full bg-[#4C1D95] mr-2"></span><span class="text-[#6B7280] text-[12px] font-medium">Product Views</span></div></div>
                     
                     <div class="space-y-0">
                         @forelse ($topProducts as $idx => $prod)
@@ -239,7 +239,7 @@
                                     <span class="mr-6 text-gray-500">{{ $idx + 1 }}.</span>
                                     <span>{{ $prod->name }}</span>
                                 </div>
-                                <span class="text-[#4C1D95] font-bold text-[14px]">{{ $prod->views }}</span>
+                                <span class="text-right"><span class="block text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8A92AD]">Views</span><span class="block text-[#4C1D95] font-bold text-[14px]">{{ $prod->views }}</span></span>
                             </div>
                         @empty
                             <div class="text-center py-8 text-gray-400 text-[13px]">No products uploaded yet.</div>

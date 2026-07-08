@@ -190,10 +190,6 @@
   .empty-state p{ font-size:14px; font-weight:700; color:var(--ink); }
   .empty-state span{ display:block; margin-top:8px; font-size:12.5px; color:var(--ink-soft); font-weight:600; }
 
-  footer{ background:var(--ink); color:#B7B2CE; padding:34px 0 22px; }
-  .footer-inner{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; }
-  .foot-links{ display:flex; gap:24px; font-size:12.5px; font-weight:600; flex-wrap:wrap; }
-  .foot-links a:hover{ color:#fff; }
   @media (max-width:980px){
     .hero-grid, .split-grid{ grid-template-columns:1fr; }
     .search-fields{ grid-template-columns:1fr 1fr; }

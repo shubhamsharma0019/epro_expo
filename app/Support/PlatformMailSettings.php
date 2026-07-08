@@ -227,7 +227,7 @@ class PlatformMailSettings
 
     public static function hasPassword(): bool
     {
-        return filled(self::get()['mail_password'] ?? null) || filled(env('MAIL_PASSWORD'));
+        return filled(self::resolveCredentials()['mail_password'] ?? null);
     }
 
     private static function usesDatabase(): bool
@@ -326,8 +326,22 @@ class PlatformMailSettings
         try {
             return Crypt::decryptString($value);
         } catch (\Throwable) {
+            if (self::looksLikeEncryptedPayload($value)) {
+                return '';
+            }
+
             return self::sanitizeAppPassword($value);
         }
+    }
+
+    private static function looksLikeEncryptedPayload(string $value): bool
+    {
+        $decoded = json_decode(base64_decode($value, true) ?: '', true);
+
+        return is_array($decoded)
+            && array_key_exists('iv', $decoded)
+            && array_key_exists('value', $decoded)
+            && array_key_exists('mac', $decoded);
     }
 
     private static function normalizeScheme(?string $scheme, int $port): string
@@ -361,13 +375,13 @@ class PlatformMailSettings
             || str_contains($rawMessage, 'BadCredentials')
             || str_contains($rawMessage, 'Username and Password not accepted')
         ) {
-            return 'Gmail rejected the App Password. Turn on 2-Step Verification in your Google Account, create a new App Password (Mail), paste all 16 characters without spaces, then save and test again.';
+            return 'Gmail rejected the saved sender authorization. Create a fresh Gmail App Password for the sender email, paste all 16 characters without spaces, then save and test again. Buyer password is not used.';
         }
 
         if (str_contains($rawMessage, 'Connection could not be established')) {
             return 'Could not connect to the SMTP server. Check your internet connection and try again.';
         }
 
-        return 'Email could not be sent. Check your Gmail App Password and try again.';
+        return 'Email could not be sent. Check the saved sender authorization and try again. Buyer password is not used.';
     }
 }

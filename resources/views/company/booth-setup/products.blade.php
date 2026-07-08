@@ -10,9 +10,7 @@
     $productAction = $editingProduct
         ? route('company.booth-setup.products.update', [$booking, $editingProduct])
         : route('company.booth-setup.products.store', $booking);
-    $productImageUrl = $editingProduct?->product_image
-        ? asset('storage/' . $editingProduct->product_image)
-        : asset('assets/exhibition/images/booth_banner.png');
+    $productImageUrl = \App\Support\MediaUrl::url($editingProduct?->product_image, 'assets/exhibition/images/booth_banner.png');
 @endphp
 
 <section class="px-4 py-6 sm:px-6 lg:px-8">
@@ -126,7 +124,7 @@
         <div class="overflow-hidden rounded-xl border border-gray-100 bg-white">
             @forelse ($products as $item)
                 @php
-                    $imageUrl = $item->product_image ? asset('storage/' . $item->product_image) : asset('assets/exhibition/images/booth_banner.png');
+                    $imageUrl = \App\Support\MediaUrl::url($item->product_image, 'assets/exhibition/images/booth_banner.png');
                     $statusClasses = $item->status === 'published'
                         ? 'bg-emerald-50 border-emerald-200 text-[#10B981]'
                         : 'bg-amber-50 border-amber-200 text-amber-700';
@@ -208,3 +206,4 @@
     })();
 </script>
 @endpush
+

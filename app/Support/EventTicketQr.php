@@ -10,6 +10,7 @@ use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
+use Illuminate\Support\Facades\Route;
 
 class EventTicketQr
 {
@@ -20,7 +21,9 @@ class EventTicketQr
 
     public static function scannableUrlForToken(string $qrToken): string
     {
-        $path = route('verify-ticket.show', ['qr_token' => $qrToken], false);
+        $path = Route::has('verify-ticket.show')
+            ? route('verify-ticket.show', ['qr_token' => $qrToken], false)
+            : '/verify-ticket/' . rawurlencode($qrToken);
 
         $baseUrl = self::resolveScannableBaseUrl();
 
@@ -113,10 +116,11 @@ class EventTicketQr
 
     public static function imageUrlForToken(string $qrToken, int $size = 512): string
     {
-        return url(route('ticket-qr.image', [
-            'qr_token' => $qrToken,
-            'size' => $size,
-        ], false));
+        $path = Route::has('ticket-qr.image')
+            ? route('ticket-qr.image', ['qr_token' => $qrToken, 'size' => $size], false)
+            : '/ticket-qr/' . rawurlencode($qrToken) . '?size=' . $size;
+
+        return url($path);
     }
 
     public static function imageUrl(VisitorTicket $ticket, int $size = 512): string

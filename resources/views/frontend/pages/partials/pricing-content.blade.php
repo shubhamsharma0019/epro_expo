@@ -44,7 +44,7 @@
             <li><span class="chk">✓</span>{{ $feature }}</li>
           @endforeach
         </ul>
-        <span class="pp-pbtn">{{ $plan['button'] ?? 'Get Started' }}</span>
+        <a href="{{ $plan['url'] ?? '#' }}" class="pp-pbtn">{{ $plan['button'] ?? 'Get Started' }}</a>
       </div>
     @endforeach
   </div>
@@ -103,7 +103,7 @@
   <h2>{{ $pricingHero['cta_title'] ?? 'Any event. Every audience. Everywhere.' }}</h2>
   <p>{{ $pricingHero['cta_subtitle'] ?? '' }}</p>
   <div class="pp-hero-cta">
-    <span class="pp-btn-white">{{ $pricingHero['button_1_label'] ?? 'Create Event' }}</span>
-    <span class="pp-btn-outline">{{ $pricingHero['button_2_label'] ?? 'Book a Demo' }}</span>
+    <a href="{{ $pricingHero['button_1_url'] ?? '#' }}" class="pp-btn-white">{{ $pricingHero['button_1_label'] ?? 'Create Event' }}</a>
+    <a href="{{ $pricingHero['button_2_url'] ?? '#' }}" class="pp-btn-outline">{{ $pricingHero['button_2_label'] ?? 'Book a Demo' }}</a>
   </div>
 </div>

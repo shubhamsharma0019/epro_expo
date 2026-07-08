@@ -65,17 +65,7 @@ class BoothMedia extends Model
     public function mediaUrl(): ?string
     {
         if (filled($this->file_path)) {
-            $path = ltrim((string) $this->file_path, '/');
-
-            if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-                return $path;
-            }
-
-            if (str_starts_with($path, 'storage/')) {
-                return asset($path);
-            }
-
-            return asset('storage/' . $path);
+            return \App\Support\MediaUrl::url((string) $this->file_path);
         }
 
         return filled($this->video_url) ? (string) $this->video_url : null;
@@ -84,17 +74,7 @@ class BoothMedia extends Model
     public function thumbnailUrl(): string
     {
         if (filled($this->thumbnail)) {
-            $path = ltrim((string) $this->thumbnail, '/');
-
-            if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-                return $path;
-            }
-
-            if (str_starts_with($path, 'storage/')) {
-                return asset($path);
-            }
-
-            return asset('storage/' . $path);
+            return \App\Support\MediaUrl::url((string) $this->thumbnail, 'assets/exhibition/images/booth_banner.png');
         }
 
         if ($this->resolvedType() === 'image') {
@@ -143,3 +123,4 @@ class BoothMedia extends Model
             || preg_match('/\.(mp4|mov|webm|m4v)(\?|$)/', $url) === 1;
     }
 }
+

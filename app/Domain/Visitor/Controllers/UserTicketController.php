@@ -111,13 +111,24 @@ class UserTicketController extends Controller
     public function download($id)
     {
         $ticket = VisitorTicket::where('user_id', auth()->id())
-            ->with(['companyEvent', 'ticketType'])
+            ->with(['companyEvent', 'ticketType', 'user'])
             ->findOrFail($id);
+
+        $emailConfigured = EventTicketMail::isDeliverable();
+
+        if (! $ticket->email_sent_at && $emailConfigured) {
+            $result = EventTicketMail::attemptAutoSend($ticket);
+
+            if (($result['sent'] ?? false) && ! ($result['skipped'] ?? false) && filled($result['message'] ?? null)) {
+                session()->flash('success', $result['message']);
+                $ticket->refresh();
+            }
+        }
 
         return view('frontend.user.tickets.e-ticket', [
             'ticket' => $ticket,
             'user' => auth()->user(),
-            'emailConfigured' => EventTicketMail::isDeliverable(),
+            'emailConfigured' => $emailConfigured,
         ]);
     }
 

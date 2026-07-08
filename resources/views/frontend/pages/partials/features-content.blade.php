@@ -1,12 +1,23 @@
 @php
     $featuresHero = $featuresHero ?? \App\Support\WebsiteContent::featuresHero();
     $sectionHeadings = $sectionHeadings ?? \App\Support\WebsiteContent::featuresSectionHeadings();
-    $features = $features ?? \App\Support\WebsiteContent::sectionOrDefaults('home', 'feature', \App\Support\WebsiteContent::defaultFeatures());
-    $featurePills = $featurePills ?? (new \App\Domain\Shared\Services\HomePageData)->featurePills();
-    $steps = $steps ?? \App\Support\WebsiteContent::sectionOrDefaults('home', 'step', \App\Support\WebsiteContent::defaultSteps());
-    $flowCards = $flowCards ?? \App\Support\WebsiteContent::sectionOrDefaults('home', 'flow_card', \App\Support\WebsiteContent::defaultFlowCards());
+    $features = $features ?? \App\Support\WebsiteContent::sectionOrDefaults('features', 'feature', \App\Support\WebsiteContent::defaultFeatures());
+    $featurePills = $featurePills ?? \App\Support\WebsiteContent::sectionOrDefaults('features', 'feature_pill', \App\Support\WebsiteContent::defaultFeaturePills());
+    $steps = $steps ?? \App\Support\WebsiteContent::sectionOrDefaults('features', 'step', \App\Support\WebsiteContent::defaultSteps());
+    $flowCards = $flowCards ?? \App\Support\WebsiteContent::sectionOrDefaults('features', 'flow_card', \App\Support\WebsiteContent::defaultFlowCards());
     $primaryFeatures = array_slice($features, 0, 3);
     $audienceFeatures = array_slice($features, 3);
+    $resolveFeatureUrl = function (?string $url) {
+        if (! filled($url)) {
+            return '#';
+        }
+
+        if (str_starts_with($url, 'http://') || str_starts_with($url, 'https://') || str_starts_with($url, '#')) {
+            return $url;
+        }
+
+        return str_starts_with($url, '/') ? url($url) : url('/' . ltrim($url, '/'));
+    };
 @endphp
 
 <div class="hf-hero">
@@ -17,8 +28,8 @@
       <p>{{ $featuresHero['subtitle'] ?? '' }}</p>
     </div>
     <div class="hf-hero-cta">
-      <span class="hf-btn-white">{{ $featuresHero['button_1_label'] ?? 'Explore Events' }}</span>
-      <span class="hf-btn-outline">{{ $featuresHero['button_2_label'] ?? 'Browse Exhibitions' }}</span>
+      <a href="{{ $resolveFeatureUrl($featuresHero['button_1_url'] ?? '/events') }}" class="hf-btn-white">{{ $featuresHero['button_1_label'] ?? 'Explore Events' }}</a>
+      <a href="{{ $resolveFeatureUrl($featuresHero['button_2_url'] ?? '/exhibitions') }}" class="hf-btn-outline">{{ $featuresHero['button_2_label'] ?? 'Browse Exhibitions' }}</a>
     </div>
     <div class="hf-hero-stats">
       @foreach ($featurePills as $pill)
@@ -108,7 +119,7 @@
   <h2>{{ $featuresHero['cta_title'] ?? 'Ready to explore the platform?' }}</h2>
   <p>{{ $featuresHero['cta_subtitle'] ?? '' }}</p>
   <div class="hf-hero-cta">
-    <span class="hf-btn-white">Explore Events</span>
-    <span class="hf-btn-outline">Browse Exhibitions</span>
+    <a href="{{ $resolveFeatureUrl($featuresHero['button_1_url'] ?? '/events') }}" class="hf-btn-white">{{ $featuresHero['button_1_label'] ?? 'Explore Events' }}</a>
+    <a href="{{ $resolveFeatureUrl($featuresHero['button_2_url'] ?? '/exhibitions') }}" class="hf-btn-outline">{{ $featuresHero['button_2_label'] ?? 'Browse Exhibitions' }}</a>
   </div>
 </div>

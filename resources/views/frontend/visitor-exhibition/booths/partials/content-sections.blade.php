@@ -16,7 +16,7 @@
                 <div>
                     <div class="h-24 overflow-hidden rounded-lg bg-gradient-to-br from-[#F4F0FF] to-white">
                         @if ($product->product_image)
-                            <img src="{{ asset('storage/' . $product->product_image) }}" alt="{{ $product->name }}" class="h-full w-full object-cover">
+                            <img src="{{ \App\Support\MediaUrl::url($product->product_image, 'assets/exhibition/images/product_analytics.png') }}" alt="{{ $product->name }}" class="h-full w-full object-cover">
                         @endif
                     </div>
                     <h3 class="mt-4 text-[15px] font-bold text-[#071044]">{{ $product->name }}</h3>
@@ -99,9 +99,9 @@
                     ? 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80'
                     : 'https://images.unsplash.com/photo-1542744094-3a31f103e35f?auto=format&fit=crop&w=400&q=80';
                 $mediaThumb = $media->thumbnail
-                    ? asset('storage/' . $media->thumbnail)
-                    : (($media->type === 'image' && $media->file_path) ? asset('storage/' . $media->file_path) : $fallback);
-                $mediaUrl = $media->file_path ? asset('storage/' . $media->file_path) : ($media->video_url ?: '#');
+                    ? \App\Support\MediaUrl::url($media->thumbnail, $fallback)
+                    : (($media->type === 'image' && $media->file_path) ? \App\Support\MediaUrl::url($media->file_path, $fallback) : $fallback);
+                $mediaUrl = $media->file_path ? (\App\Support\MediaUrl::url($media->file_path) ?: '#') : ($media->video_url ?: '#');
                 $isExternalWebpage = false;
                 if ($isVid && !empty($media->video_url)) {
                     $url = $media->video_url;
@@ -161,3 +161,4 @@
         </div>
     </div>
 </section>
+

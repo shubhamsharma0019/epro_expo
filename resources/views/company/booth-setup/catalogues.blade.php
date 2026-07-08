@@ -9,7 +9,7 @@
     $action = $editingCatalogue
         ? route('company.booth-setup.catalogues.update', [$booking, $editingCatalogue])
         : route('company.booth-setup.catalogues.store', $booking);
-    $coverUrl = $editingCatalogue?->cover_image ? asset('storage/' . $editingCatalogue->cover_image) : asset('assets/exhibition/images/booth_banner.png');
+    $coverUrl = \App\Support\MediaUrl::url($editingCatalogue?->cover_image, 'assets/exhibition/images/booth_banner.png');
 @endphp
 
 <section class="px-4 py-6 sm:px-6 lg:px-8">
@@ -102,7 +102,7 @@
                     <div class="flex flex-col gap-3 border-b border-gray-100 p-4 last:border-b-0 lg:grid lg:grid-cols-12 lg:items-center lg:gap-4 lg:p-6">
                         <div class="flex min-w-0 items-center lg:col-span-4">
                             <div class="mr-4 h-14 w-14 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 bg-gray-100">
-                                <img src="{{ $item->cover_image ? asset('storage/' . $item->cover_image) : asset('assets/exhibition/images/booth_banner.png') }}" alt="{{ $item->title }}" class="h-full w-full object-cover">
+                                <img src="{{ \App\Support\MediaUrl::url($item->cover_image, 'assets/exhibition/images/booth_banner.png') }}" alt="{{ $item->title }}" class="h-full w-full object-cover">
                             </div>
                             <span class="truncate pr-4 text-[14px] font-bold text-[#1E1B4B]">{{ $item->title }}</span>
                         </div>
@@ -164,3 +164,4 @@
     });
 </script>
 @endpush
+

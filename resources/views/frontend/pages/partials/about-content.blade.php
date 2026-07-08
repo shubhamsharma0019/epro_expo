@@ -15,8 +15,8 @@
       <p>{{ $aboutHero['subtitle'] ?? '' }}</p>
     </div>
     <div class="ap-hero-cta">
-      <span class="ap-btn-white">{{ $aboutHero['button_1_label'] ?? 'Explore Events' }}</span>
-      <span class="ap-btn-outline">{{ $aboutHero['button_2_label'] ?? 'View Features' }}</span>
+      <a href="{{ $aboutHero['button_1_url'] ?? '#' }}" class="ap-btn-white">{{ $aboutHero['button_1_label'] ?? 'Explore Events' }}</a>
+      <a href="{{ $aboutHero['button_2_url'] ?? '#' }}" class="ap-btn-outline">{{ $aboutHero['button_2_label'] ?? 'View Features' }}</a>
     </div>
     <div class="ap-hero-stats">
       @foreach ($stats as $stat)
@@ -98,7 +98,7 @@
   <h2>{{ $aboutHero['cta_title'] ?? 'Connect. Explore. Engage.' }}</h2>
   <p>{{ $aboutHero['cta_subtitle'] ?? '' }}</p>
   <div class="ap-hero-cta">
-    <span class="ap-btn-white">{{ $aboutHero['cta_button_1_label'] ?? $aboutHero['button_1_label'] ?? 'Explore Events' }}</span>
-    <span class="ap-btn-outline">{{ $aboutHero['cta_button_2_label'] ?? $aboutHero['button_2_label'] ?? 'View Features' }}</span>
+    <a href="{{ $aboutHero['cta_button_1_url'] ?? $aboutHero['button_1_url'] ?? '#' }}" class="ap-btn-white">{{ $aboutHero['cta_button_1_label'] ?? $aboutHero['button_1_label'] ?? 'Explore Events' }}</a>
+    <a href="{{ $aboutHero['cta_button_2_url'] ?? $aboutHero['button_2_url'] ?? '#' }}" class="ap-btn-outline">{{ $aboutHero['cta_button_2_label'] ?? $aboutHero['button_2_label'] ?? 'View Features' }}</a>
   </div>
 </div>

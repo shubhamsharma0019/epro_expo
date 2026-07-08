@@ -532,21 +532,7 @@ class HomePageData
 
     private function resolvePublicAssetUrl(string $path): ?string
     {
-        $path = trim($path);
-
-        if ($path === '') {
-            return null;
-        }
-
-        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-            return $path;
-        }
-
-        if (! $this->storageAssetExists($path)) {
-            return null;
-        }
-
-        return asset('storage/' . ltrim($path, '/'));
+        return \App\Support\MediaUrl::url($path);
     }
 
     private function storageAssetExists(string $path): bool
@@ -569,3 +555,4 @@ class HomePageData
         return asset('images/home/booth-preview.svg');
     }
 }
+

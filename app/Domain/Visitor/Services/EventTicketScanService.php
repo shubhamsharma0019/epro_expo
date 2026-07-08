@@ -32,10 +32,6 @@ class EventTicketScanService
 
         $windowState = $this->eventWindowState($ticket->event);
 
-        if ($windowState === 'not_started') {
-            return 'not_started';
-        }
-
         if ($windowState === 'expired') {
             return 'expired';
         }
@@ -171,7 +167,7 @@ class EventTicketScanService
             return false;
         }
 
-        return $this->isWithinEventWindow($ticket->event);
+        return $this->eventWindowState($ticket->event) !== 'expired';
     }
 
     public function isPaymentValid(Ticket $ticket): bool

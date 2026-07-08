@@ -176,7 +176,7 @@
                 @foreach ($products->take(4) as $product)
                 <div class="flex gap-3 bg-white p-3 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
                     @if ($product->product_image)
-                        <img src="{{ asset('storage/' . $product->product_image) }}" class="w-[76px] h-[84px] object-cover rounded-lg shadow-sm group-hover:opacity-90 shrink-0" alt="{{ $product->name }}">
+                        <img src="{{ \App\Support\MediaUrl::url($product->product_image, 'assets/exhibition/images/product_analytics.png') }}" class="w-[76px] h-[84px] object-cover rounded-lg shadow-sm group-hover:opacity-90 shrink-0" alt="{{ $product->name }}">
                     @else
                         <div class="w-[76px] h-[84px] bg-gradient-to-br from-slate-700 to-indigo-900 rounded-lg shadow-sm flex items-center justify-center text-indigo-300 text-[32px] shrink-0 group-hover:opacity-90">
                             <i class="fa-solid fa-box"></i>
@@ -467,3 +467,4 @@
     </aside>
 </div>
 @endsection
+

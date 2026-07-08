@@ -26,11 +26,11 @@ class EventTicketConfirmationMail extends Mailable
     public function envelope(): Envelope
     {
         $eventName = $this->ticket->companyEvent?->title ?? 'Event';
-        $replyTo = EventTicketMail::resolveRecipient($this->ticket);
+        $fromAddress = EventTicketMail::fromAddress();
 
         return new Envelope(
-            subject: 'Your Event Ticket — ' . $eventName,
-            replyTo: $replyTo ? [new Address($replyTo)] : [],
+            from: $fromAddress ? new Address($fromAddress, (string) config('mail.from.name', 'EproExpo')) : null,
+            subject: 'Your Event Ticket - ' . $eventName,
         );
     }
 

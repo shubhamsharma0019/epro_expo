@@ -54,9 +54,6 @@ class EventTicketController extends Controller
 
                 if (($autoSend['sent'] ?? false) && ! ($autoSend['skipped'] ?? false) && filled($autoSend['message'] ?? null)) {
                     session()->flash('success', $autoSend['message']);
-                } elseif (! ($autoSend['sent'] ?? false) && ! ($autoSend['skipped'] ?? false)) {
-                    $emailDeliveryError = $autoSend['admin_message'] ?? null;
-                    session()->flash('warning', $autoSend['message'] ?? EventTicketMail::visitorSendFailureMessage($ticketRecipientEmail));
                 }
             }
         }
@@ -245,13 +242,7 @@ class EventTicketController extends Controller
             ]);
         }
 
-        $warning = $result['message'];
-
-        if (filled($result['admin_message'] ?? null) && app()->environment('local')) {
-            $warning .= ' ' . $result['admin_message'];
-        }
-
-        return back()->with('warning', $warning);
+        return back()->with('warning', $result['message']);
     }
 
     private function authorizeTicketOwner(Ticket $ticket): void

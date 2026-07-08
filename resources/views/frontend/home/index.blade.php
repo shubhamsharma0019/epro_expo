@@ -258,27 +258,7 @@
         </div>
       </div>
 
-      <footer class="home-footer-wrap mx-auto max-w-[1440px] bg-[#071044] px-5 py-6 text-white sm:px-8 lg:px-10">
-        <div class="flex flex-col items-center justify-between gap-6 text-center lg:flex-row lg:text-left">
-          <div class="rounded-2xl bg-white px-3 py-2">
-            <x-shared.frontend-brand-logo size="footer" />
-          </div>
-          <p class="text-[13px] text-white/70">{{ $footer['copyright'] }}</p>
-          <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-[13px] font-medium text-white/80 lg:gap-9">
-            @foreach (($footer['links'] ?? []) as $link)
-              <a href="{{ $link['link_url'] ?? '#' }}" class="transition-colors hover:text-white">{{ $link['title'] ?? '' }}</a>
-            @endforeach
-            @if (! empty($footer['contact_email']))
-              <a href="mailto:{{ $footer['contact_email'] }}" class="transition-colors hover:text-white">{{ $footer['contact_email'] }}</a>
-            @endif
-          </div>
-          <div class="flex gap-3">
-            @foreach (($footer['social'] ?? []) as $social)
-              <a href="{{ $social['link_url'] ?? '#' }}" class="grid h-9 w-9 place-items-center rounded-full bg-white/15 text-[14px] transition-colors hover:bg-[#6D28D9]"><i class="{{ $social['icon'] ?? 'fab fa-linkedin-in' }}"></i></a>
-            @endforeach
-          </div>
-        </div>
-      </footer>
+      @include('frontend.shared.partials.site-footer', ['footer' => $footer, 'footerPage' => 'home'])
     </section>
   </main>
 

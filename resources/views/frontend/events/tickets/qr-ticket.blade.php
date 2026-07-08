@@ -19,7 +19,7 @@
     $bookingNumber = $ticket->booking?->booking_number ?? $visitorTicket?->order_number ?? 'N/A';
     $scanWindowState = app(\App\Domain\Visitor\Services\EventTicketScanService::class)->eventWindowState($event);
     $scanStatusLabel = match ($scanWindowState) {
-        'not_started' => 'QR scan opens on event start date',
+        'not_started' => 'Ready for QR scan',
         'expired' => 'Event ended — QR scan no longer valid',
         default => ($remainingCheckIns ?? 0) <= 0
             ? 'All event day check-ins used'
@@ -47,24 +47,20 @@
     @if (session('success'))
         <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[14px] font-medium text-emerald-700">{{ session('success') }}</div>
     @endif
-    @if (session('warning'))
+    @php
+        $warningMessage = session('warning');
+        $emailFailureMessage = \App\Support\EventTicketMail::visitorSendFailureMessage($ticketRecipientEmail ?? null);
+    @endphp
+    @if ($warningMessage && $warningMessage !== $emailFailureMessage)
         <div class="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[14px] font-medium text-amber-700">
-            {{ session('warning') }}
-            @if (app()->environment('local') && filled($emailDeliveryError ?? null))
-                <p class="mt-2 text-[13px]">
-                    Admin fix: <a href="{{ route('setup.mail.index') }}" class="font-semibold underline">Open Mail Setup</a> and save a fresh Gmail App Password.
-                </p>
-            @endif
+            {{ $warningMessage }}
         </div>
     @endif
     @if (($emailSent ?? false) && ($ticketRecipientEmail ?? null))
         <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[14px] font-medium text-emerald-700">
             Ticket emailed to {{ $ticketRecipientEmail }}.
         </div>
-    @elseif (! ($emailConfigured ?? true) && ($ticketRecipientEmail ?? null))
-        <div class="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[14px] font-medium text-amber-700">
-            We could not email your ticket right now. Please download it below or tap Resend Email.
-        </div>
+
     @endif
 
     <div id="ticketCard" class="overflow-hidden rounded-[16px] border border-[#3B47C8] bg-white shadow-[0_8px_30px_rgba(31,42,107,0.08)]">
