@@ -14,6 +14,7 @@
 
     $sidebarItems = [
         ['Dashboard', route('company.dashboard'), ['company.dashboard'], [], 'ph ph-squares-four'],
+        ['Book Event', route('company.event-company-flow.dashboard'), ['company.event-company-flow.*'], [], 'ph ph-calendar-plus'],
 
         ['Pavilions', route('company.booth-booking.pavilions'), ['company.booth-booking.pavilions'], [], 'ph ph-bank'],
         ['Halls', route('company.booth-booking.halls'), ['company.booth-booking.halls'], [], 'ph ph-buildings'],
@@ -31,7 +32,7 @@
 
 <aside id="company-sidebar" class="fixed inset-y-0 left-0 z-50 flex h-screen w-[300px] max-w-[86vw] shrink-0 -translate-x-full flex-col overflow-y-auto overflow-x-hidden border-r border-gray-100 bg-white px-5 py-4 shadow-sm transition-transform duration-200 lg:translate-x-0 lg:w-[280px] lg:max-w-none">
     <div class="mb-3 flex h-[68px] shrink-0 items-center justify-between px-3">
-        <x-shared.brand-logo href="{{ url('/company/dashboard') }}" mark-class="h-9 w-9 rounded-[13px] text-[18px]" title-class="text-[24px] text-[#071044]" subtitle-class="text-[9px] text-[#8A94AD]" subtitle="EXHIBITOR CENTRE" />
+        <x-shared.brand-logo href="{{ url('/') }}" mark-class="h-9 w-9 rounded-[13px] text-[18px]" title-class="text-[24px] text-[#071044]" subtitle-class="text-[9px] text-[#8A94AD]" subtitle="EXHIBITOR CENTRE" />
         <button type="button" data-company-sidebar-close class="grid h-10 w-10 place-items-center rounded-xl text-gray-500 hover:bg-gray-50 lg:hidden">
             <i class="ph ph-x text-2xl"></i>
         </button>

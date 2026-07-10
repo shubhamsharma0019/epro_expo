@@ -1,6 +1,7 @@
 @php
     $items = [
         ['Dashboard', '/company/dashboard', 'company/dashboard', 'fa-solid fa-house'],
+        ['Book Event', '/company/event-company-flow/dashboard', 'company/event-company-flow*', 'fa-solid fa-calendar-plus'],
         ['Exhibitions', '/company/exhibitions', 'company/exhibitions*', 'fa-solid fa-globe'],
         ['Book Booths', '/company/exhibitions', 'company/booth-booking*', 'fa-regular fa-clipboard'],
         ['My Bookings', '/company/bookings', 'company/bookings*', 'fa-regular fa-bookmark'],
@@ -22,7 +23,7 @@
 
 <aside id="company-sidebar" class="fixed inset-y-0 left-0 z-50 w-[280px] shrink-0 -translate-x-full border-r border-[#E7EAF3] bg-white transition-transform duration-200 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:translate-x-0 lg:overflow-y-auto">
     <div class="flex h-[76px] items-center justify-between px-5 lg:h-[92px]">
-        <x-shared.brand-logo href="{{ url('/company/dashboard') }}" mark-class="h-11 w-11 rounded-[16px] text-[20px]" title-class="text-[23px]" subtitle-class="text-[11px]" />
+        <x-shared.brand-logo href="{{ url('/') }}" mark-class="h-11 w-11 rounded-[16px] text-[20px]" title-class="text-[23px]" subtitle-class="text-[11px]" />
 
         <button type="button" data-company-sidebar-close class="flex h-10 w-10 items-center justify-center rounded-xl border border-[#E7EAF3] text-[#071044] lg:hidden">
             <i class="fa-solid fa-xmark text-[18px]"></i>

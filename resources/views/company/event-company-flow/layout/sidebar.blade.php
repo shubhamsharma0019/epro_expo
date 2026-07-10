@@ -12,6 +12,7 @@
 
     $eventFlowItems = [
         ['Dashboard', route('company.event-company-flow.dashboard'), ['company.event-company-flow.home', 'company.event-company-flow.dashboard*'], 'ph ph-squares-four'],
+        ['Book Exhibition', route('company.dashboard', ['flow' => 'exhibitor']), ['company.dashboard'], 'ph ph-storefront'],
         ['Create Event', route('company.event-company-flow.create'), ['company.event-company-flow.create*'], 'ph ph-calendar-plus'],
         ['Basic Details', route('company.event-company-flow.basic'), ['company.event-company-flow.basic*'], 'ph ph-note-pencil'],
         ['Branding', route('company.event-company-flow.branding'), ['company.event-company-flow.branding*'], 'ph ph-palette'],

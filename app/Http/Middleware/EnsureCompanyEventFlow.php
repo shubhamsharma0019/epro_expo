@@ -15,17 +15,13 @@ class EnsureCompanyEventFlow
     {
         $companyId = (int) $request->session()->get('company_id');
         $company = Company::find($companyId);
-        $hasBoothBookings = BoothBooking::where('company_id', $companyId)->exists();
-        $hasCompanyEvents = CompanyEvent::where('company_id', $companyId)->exists();
-        $isEventFlow = $request->session()->get('company_flow_context') === 'event_company';
-        $isEventCompany = ($company?->account_type ?? 'exhibitor') === 'event';
-
-        if (! $isEventFlow || ! $isEventCompany || ($hasBoothBookings && ! $hasCompanyEvents)) {
+        if (! $company) {
             $request->session()->forget(['company_flow_context', 'company_event_flow_event_id']);
 
-            return redirect()->route('company.dashboard')
-                ->with('status', 'Create Event flow is separate. Please use Create Event to access the event suite.');
+            return redirect()->route('company.login');
         }
+
+        $request->session()->put('company_flow_context', 'event_company');
 
         return $next($request);
     }

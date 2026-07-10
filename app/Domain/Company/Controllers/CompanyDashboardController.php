@@ -51,7 +51,9 @@ class CompanyDashboardController extends Controller
             return redirect('/company/login');
         }
 
-        if (session('company_flow_context') === 'event_company') {
+        if ($request->query('flow') === 'exhibitor') {
+            session()->forget(['company_flow_context', 'company_event_flow_event_id']);
+        } elseif (session('company_flow_context') === 'event_company') {
             return redirect()->route('company.event-company-flow.dashboard');
         }
 
