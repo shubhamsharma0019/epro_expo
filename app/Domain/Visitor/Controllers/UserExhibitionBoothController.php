@@ -18,6 +18,7 @@ use App\Domain\Visitor\Models\VisitorSessionRegistration;
 use App\Domain\Visitor\Models\VisitorTicket;
 use App\Domain\Visitor\Services\SessionRegistrationMeetingService;
 use App\Http\Controllers\Controller;
+use App\Support\MediaUrl;
 use App\Support\UserVisitorPasses;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -67,6 +68,26 @@ class UserExhibitionBoothController extends Controller
 
         $scheduleItems = $upcomingMeetings->concat($sessions)->take(3)->values();
 
+        $publishedProducts = $booking->boothProducts;
+        $publishedDocuments = $booking->boothDocuments->concat($booking->boothCatalogues);
+        $publishedMedia = $booking->boothMedia;
+        $publishedSessions = $booking->boothSessions;
+        $availableSlotsCount = $booking->boothMeetingSlots->count();
+        $heroHeadline = $booking->boothBranding?->welcome_heading
+            ?: $booking->boothProfile?->booth_title
+            ?: $companyName;
+        $heroCopy = $booking->boothProfile?->welcome_text
+            ?: $booking->boothProfile?->tagline
+            ?: $booking->boothBranding?->theme_template
+            ?: ($booking->boothProfile?->about_company
+                ? str($booking->boothProfile->about_company)->limit(120)->toString()
+                : 'Explore products, brochures, live sessions and meeting options from this booth.');
+        $heroBannerUrl = $booking->boothBranding?->booth_banner
+            ? MediaUrl::url($booking->boothBranding->booth_banner)
+            : ($booking->boothProfile?->booth_banner
+                ? MediaUrl::url($booking->boothProfile->booth_banner)
+                : ($exhibition->banner_url ?: ($exhibition->banner_image ? MediaUrl::url($exhibition->banner_image) : null)));
+
         $eventPassesCount = VisitorTicket::query()->where('user_id', $user->id)->count()
             + UserVisitorPasses::forUser($user)->where('payment_status', 'completed')->count();
         $upcomingMeetingsCount = VisitorMeetingBooking::query()
@@ -105,32 +126,38 @@ class UserExhibitionBoothController extends Controller
             'profile' => $booking->boothProfile,
             'branding' => $booking->boothBranding,
             'companyName' => $companyName,
-            'products' => $booking->boothProducts,
-            'documents' => $booking->boothDocuments->concat($booking->boothCatalogues),
-            'mediaItems' => $booking->boothMedia,
-            'sessions' => $booking->boothSessions,
+            'products' => $publishedProducts,
+            'documents' => $publishedDocuments,
+            'mediaItems' => $publishedMedia,
+            'sessions' => $publishedSessions,
             'scheduleItems' => $scheduleItems,
             'backUrl' => route('frontend.user.exhibitions.halls.show', [$slug, $hallSlug]),
-            'heroBannerUrl' => $booking->boothBranding?->booth_banner
-                ? asset('storage/' . $booking->boothBranding->booth_banner)
-                : ($booking->boothProfile?->booth_banner
-                    ? asset('storage/' . $booking->boothProfile->booth_banner)
-                    : ($exhibition->banner_url ?: $exhibition->banner_image)),
+            'heroBannerUrl' => $heroBannerUrl,
+            'heroHeadline' => $heroHeadline,
+            'heroCopy' => $heroCopy,
             'eventMeta' => [
                 'date_label' => $dateLabel,
-                'time_label' => '09:00 AM - 08:00 PM (IST)',
+                'time_label' => trim(($exhibition->show_start_time ? Carbon::parse($exhibition->show_start_time)->format('g:i A') : '09:00 AM') . ' - ' . ($exhibition->show_end_time ? Carbon::parse($exhibition->show_end_time)->format('g:i A') : '08:00 PM') . ' (IST)'),
                 'venue' => $exhibition->venue ?: $exhibition->location ?: 'Venue TBD',
                 'website' => $booking->boothProfile?->website ?: $booking->company?->website,
                 'organized_by' => $exhibition->title ?: $exhibition->name ?: 'Event Organizer',
                 'category' => $booking->boothProfile?->industry ?: $booking->company?->industry ?: 'Technology, Conference',
             ],
             'stats' => [
-                'upcoming_events' => max($eventPassesCount, $upcomingSessionsCount),
+                'upcoming_events' => $upcomingSessionsCount,
                 'meetings' => $upcomingMeetingsCount,
                 'saved_items' => $savedItemsCount,
             ],
             'meetingSlots' => $booking->boothMeetingSlots,
             'meetingAvailability' => $booking->boothMeetingAvailability,
+            'boothCounts' => [
+                'products' => $publishedProducts->count(),
+                'documents' => $publishedDocuments->count(),
+                'media' => $publishedMedia->count(),
+                'sessions' => $publishedSessions->count(),
+                'meeting_slots' => $availableSlotsCount,
+                'booth_number' => $booth->booth_number,
+            ],
             'registeredSessionIds' => $registeredSessionIds,
             'sessionBookingIds' => $sessionBookingIds,
             'slug' => $slug,
@@ -432,11 +459,7 @@ class UserExhibitionBoothController extends Controller
 
     private function resolveExhibitionPass($user, Exhibition $exhibition): ?Visitor
     {
-        return UserVisitorPasses::queryForUser($user)
-            ->where('exhibition_id', $exhibition->id)
-            ->where('payment_status', 'completed')
-            ->orderByDesc('created_at')
-            ->first();
+        return UserVisitorPasses::activePassForExhibition($user, $exhibition);
     }
 
     private function recordHubVisit($user, Visitor $visitorPass, Exhibition $exhibition, Hall $hall, Booth $booth, BoothBooking $booking): void

@@ -52,6 +52,8 @@ class EventTicketMail
      */
     public static function sendTicket(VisitorTicket $ticket): array
     {
+        TicketScanSettings::ensureLocalBaseUrl();
+        TicketScanSettings::applyToConfig();
         self::ensureIssuedTicket($ticket);
 
         $recipient = self::resolveRecipient($ticket);
@@ -110,36 +112,42 @@ class EventTicketMail
             ['scheme' => 'smtps', 'port' => 465],
         ];
 
-        $seen = [];
         $lastException = null;
 
-        foreach ($attempts as $attempt) {
-            $key = $attempt['scheme'] . ':' . $attempt['port'];
+        foreach ([1, 2] as $round) {
+            $seen = [];
 
-            if (isset($seen[$key])) {
-                continue;
+            foreach ($attempts as $attempt) {
+                $key = $attempt['scheme'] . ':' . $attempt['port'];
+
+                if (isset($seen[$key])) {
+                    continue;
+                }
+
+                $seen[$key] = true;
+
+                config([
+                    'mail.mailers.smtp.scheme' => $attempt['scheme'],
+                    'mail.mailers.smtp.port' => $attempt['port'],
+                ]);
+                Mail::purge('smtp');
+
+                try {
+                    Mail::to($recipient)->send($mailable);
+
+                    return;
+                } catch (Throwable $exception) {
+                    $lastException = $exception;
+                }
             }
 
-            $seen[$key] = true;
-
-            config([
-                'mail.mailers.smtp.scheme' => $attempt['scheme'],
-                'mail.mailers.smtp.port' => $attempt['port'],
-            ]);
-            Mail::purge('smtp');
-
-            try {
-                Mail::to($recipient)->send($mailable);
-
-                return;
-            } catch (Throwable $exception) {
-                $lastException = $exception;
+            if ($round === 1) {
+                usleep(250000);
             }
         }
 
         throw $lastException ?? new \RuntimeException('Email could not be sent.');
     }
-
     public static function visitorSendFailureMessage(?string $recipient = null): string
     {
         if ($recipient) {

@@ -194,7 +194,13 @@ class EventTicketController extends Controller
                 ->with('warning', $message);
         }
 
-        $this->scanService->recordCheckIn($ticket, $request, $request->input('entry_gate'));
+        try {
+            $this->scanService->recordCheckIn($ticket, $request, $request->input('entry_gate'));
+        } catch (\RuntimeException $exception) {
+            return redirect()
+                ->route('verify-ticket.show', $qr_token)
+                ->with('warning', 'This ticket cannot be checked in again for this scan.');
+        }
 
         return redirect()
             ->route('verify-ticket.show', $qr_token)

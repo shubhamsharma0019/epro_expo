@@ -22,7 +22,7 @@
     </button>
     <div class="brand">
         <x-shared.brand-logo
-            href="{{ route('frontend.user.dashboard') }}"
+            href="{{ url('/') }}"
             subtitle=""
             mark-class="h-10 w-10 rounded-[14px] text-[18px]"
             title-class="text-[20px] text-white"

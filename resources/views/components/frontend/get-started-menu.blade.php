@@ -15,8 +15,8 @@
 @php
     $bookBoothUrl = $bookBoothUrl ?: route('company.home');
     $createEventUrl = $createEventUrl ?: route('company.event-company.login');
-    $visitorLoginUrl = $visitorLoginUrl ?: route('frontend.user.login');
-    $visitorRegisterUrl = $visitorRegisterUrl ?: route('frontend.user.register');
+    $visitorLoginUrl = $visitorLoginUrl ?: route('company.login');
+    $visitorRegisterUrl = $visitorRegisterUrl ?: route('company.register');
     $mobileLinkClass = 'group inline-flex items-center justify-center gap-3 rounded-xl border border-[#D8DCEB] bg-white px-5 py-3.5 text-[14px] font-bold text-navy shadow-sm transition-all duration-200 hover:border-transparent hover:bg-gradient-to-r hover:from-[#6D28D9] hover:to-[#4B16D8] hover:text-white hover:shadow-[0_14px_30px_rgba(91,46,255,0.28)]';
 @endphp
 

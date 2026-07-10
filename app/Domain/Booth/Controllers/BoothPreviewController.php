@@ -6,6 +6,7 @@ use App\Domain\Booth\Models\BoothBooking;
 use App\Domain\Booth\Services\BoothAnalyticsService;
 use App\Domain\Booth\Services\BoothSetupStepService;
 use App\Domain\Company\Models\Enquiry;
+use App\Support\MediaUrl;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -76,14 +77,22 @@ class BoothPreviewController extends BaseBoothSetupController
             ->values();
 
         $enquiries = Enquiry::query()->where('company_id', $companyId);
+        $leadStats = [
+            'total' => (int) (clone $enquiries)->count(),
+            'hot' => (int) (clone $enquiries)->where('status', 'hot')->count(),
+            'qualified' => (int) (clone $enquiries)->where('status', 'qualified')->count(),
+            'new' => (int) (clone $enquiries)->where('status', 'new')->count(),
+        ];
         $analytics = $analyticsService->snapshot($booking);
         $visitorMetrics = $analyticsService->visitorMetrics($booking);
+        $companyAgeYears = $company?->created_at ? max(0, now()->diffInYears($company->created_at)) : 0;
+        $servedCountries = collect([$profile?->country, $company?->country])->filter()->unique()->count();
 
         $highlightStats = [
-            'years_experience' => $profile?->years_experience ?: ($profile?->highlight_stats['years_experience'] ?? null),
-            'clients' => $profile?->clients_count ?: ($profile?->highlight_stats['clients'] ?? null),
-            'countries' => $profile?->countries_served ?: ($profile?->highlight_stats['countries'] ?? null),
-            'team_size' => $profile?->expert_team_size ?: ($profile?->highlight_stats['team_size'] ?? null),
+            'years_experience' => $profile?->years_experience ?: ($profile?->highlight_stats['years_experience'] ?? $companyAgeYears),
+            'clients' => $profile?->clients_count ?: ($profile?->highlight_stats['clients'] ?? $leadStats['total']),
+            'countries' => $profile?->countries_served ?: ($profile?->highlight_stats['countries'] ?? $servedCountries),
+            'team_size' => $profile?->expert_team_size ?: ($profile?->highlight_stats['team_size'] ?? $teamMembers->count()),
         ];
 
         $companyName = $profile?->company_name ?: $company?->company_name ?: $company?->name ?: 'Your Company Name';
@@ -93,7 +102,7 @@ class BoothPreviewController extends BaseBoothSetupController
             ? route('exhibitions.visitor.companies.show', [$publicSlug, $companySlug])
             : null;
 
-        $videoItem = $mediaItems->first(fn ($m) => filled($m->video_url) || ($m->type ?? '') === 'video');
+        $videoItem = $mediaItems->first(fn ($m) => $m->resolvedType() === 'video') ?: $mediaItems->first();
         $firstBrochure = $catalogues->concat($documents)->first(fn ($item) => filled($item->file_path));
         $rep = $teamMembers->first();
         $liveSession = $sessions->firstWhere('status', 'live');
@@ -125,8 +134,8 @@ class BoothPreviewController extends BaseBoothSetupController
             ],
             [
                 'icon' => 'fa-regular fa-circle-play',
-                'title' => 'Company Video',
-                'desc' => $videoItem?->title
+                'title' => $videoItem?->title ?: 'Company Media',
+                'desc' => $videoItem?->description ?: $videoItem?->title
                     ?: ($profile?->video_url ? 'Company video is ready to watch.' : 'Add a company video for visitors.'),
                 'cta' => 'Watch Now',
                 'url' => $routes('company.booth-setup.media.index'),
@@ -165,8 +174,8 @@ class BoothPreviewController extends BaseBoothSetupController
             [
                 'icon' => 'fa-regular fa-user',
                 'title' => 'Business Leads',
-                'desc' => ((int) $enquiries->count()) > 0
-                    ? number_format($enquiries->count()) . ' enquiries captured from visitors.'
+                'desc' => $leadStats['total'] > 0
+                    ? number_format($leadStats['total']) . ' enquiries captured from visitors.'
                     : 'Capture and manage business enquiries.',
                 'cta' => 'View Leads',
                 'url' => route('company.enquiries.index'),
@@ -185,12 +194,8 @@ class BoothPreviewController extends BaseBoothSetupController
             'highlightStats' => $highlightStats,
             'visitorPreviewUrl' => $visitorPreviewUrl,
             'featureCards' => $featureCards,
-            'leadStats' => [
-                'total' => (int) $enquiries->count(),
-                'hot' => (int) (clone $enquiries)->where('status', 'hot')->count(),
-                'qualified' => (int) (clone $enquiries)->where('status', 'qualified')->count(),
-                'new' => (int) (clone $enquiries)->where('status', 'new')->count(),
-            ],
+            'leadStats' => $leadStats,
+
             'visitorStats' => $visitorMetrics,
             'meetingSlots' => $meetingSlots,
             'meetingAvailability' => $booking->boothMeetingAvailability,
@@ -208,13 +213,12 @@ class BoothPreviewController extends BaseBoothSetupController
                     ? asset('storage/' . $branding->booth_banner)
                     : ($profile?->booth_banner ? asset('storage/' . $profile->booth_banner) : asset('assets/exhibition/images/booth_banner.png')),
                 'logoUrl' => $profile?->company_logo ? asset('storage/' . $profile->company_logo) : null,
-                'videoUrl' => $videoItem?->video_url ?: $profile?->video_url,
-                'videoTitle' => $videoItem?->title ?: 'Company Video',
-                'videoThumb' => $videoItem?->thumbnail
-                    ? asset('storage/' . $videoItem->thumbnail)
-                    : ($videoItem?->file_path ? asset('storage/' . $videoItem->file_path) : null),
-                'brochureTitle' => $firstBrochure?->title ?: 'Company Profile',
-                'brochureUrl' => $firstBrochure?->file_path ? asset('storage/' . $firstBrochure->file_path) : null,
+                'videoUrl' => $videoItem?->mediaUrl() ?: $profile?->video_url,
+                'videoTitle' => $videoItem?->title ?: ($profile?->video_url ? 'Company Video' : 'Company Media'),
+                'videoThumb' => $videoItem?->thumbnailUrl(),
+                'brochureHeading' => $firstBrochure ? 'Download ' . ($firstBrochure->title ?: 'Brochure') : 'Upload Brochure',
+                'brochureTitle' => $firstBrochure?->title ?: 'No brochure uploaded',
+                'brochureUrl' => $firstBrochure?->file_path ? MediaUrl::url($firstBrochure->file_path) : null,
                 'rep' => $rep,
                 'repEmail' => $rep?->email ?: $profile?->email ?: $company?->email,
                 'repPhone' => $rep?->phone ?: $profile?->phone ?: $company?->phone,

@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class VisitorDashboardController extends Controller
 {
@@ -25,6 +26,7 @@ class VisitorDashboardController extends Controller
         }
 
         $user = Auth::user();
+        $isFirstDashboardVisit = blank($user->visitor_dashboard_seen_at);
         $userEmail = $user->email;
         $bookingId = UserVisitorPasses::normalizeBookingId($request->query('booking_id'));
 
@@ -251,6 +253,13 @@ class VisitorDashboardController extends Controller
             ->filter(fn (VisitorSessionRegistration $registration) => $registration->boothSession?->status === 'live')
             ->count();
 
+        if ($isFirstDashboardVisit) {
+            DB::table('users')
+                ->where('id', $user->id)
+                ->whereNull('visitor_dashboard_seen_at')
+                ->update(['visitor_dashboard_seen_at' => now()]);
+        }
+
         return view('frontend.user.dashboard', [
             'user' => $user,
             'eventTickets' => $eventTickets,
@@ -271,6 +280,7 @@ class VisitorDashboardController extends Controller
             'todayAgenda' => $todayAgenda,
             'sessionProgress' => $sessionProgress,
             'liveSessionsCount' => $liveSessionsCount,
+            'isFirstDashboardVisit' => $isFirstDashboardVisit,
         ]);
     }
 

@@ -193,13 +193,13 @@
                                         @if ($p['videoThumb'])
                                             <img src="{{ $p['videoThumb'] }}" alt="{{ $p['videoTitle'] }}">
                                         @else
-                                            <div style="width:100%;height:100%;background:#111;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px">Add company video</div>
+                                            <div style="width:100%;height:100%;background:#111;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px">{{ $p['videoTitle'] }}</div>
                                         @endif
                                         <div class="pv-video-play"><span><i class="fa-solid fa-play" style="margin-left:2px;font-size:12px"></i></span></div>
                                     </a>
                                 </div>
                                 <div class="pv-panel">
-                                    <p class="pv-panel-title">Download Brochure</p>
+                                    <p class="pv-panel-title">{{ $p['brochureHeading'] }}</p>
                                     <div class="pv-brochure-body">
                                         <div class="pv-brochure-icon">{{ \Illuminate\Support\Str::limit($p['brochureTitle'], 24) }}</div>
                                         @if ($p['brochureUrl'])
@@ -218,7 +218,7 @@
                                     <div class="pv-stats">
                                         @foreach ([['years_experience', 'Years Experience'], ['clients', 'Clients'], ['countries', 'Countries'], ['team_size', 'Expert Team']] as [$key, $label])
                                             <div class="pv-stat">
-                                                <div class="pv-stat-val">{{ $stats[$key] ?? '—' }}</div>
+                                                <div class="pv-stat-val">{{ filled($stats[$key] ?? null) ? $stats[$key] : '0' }}</div>
                                                 <div class="pv-stat-lbl">{{ $label }}</div>
                                             </div>
                                         @endforeach

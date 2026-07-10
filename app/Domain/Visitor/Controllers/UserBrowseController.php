@@ -134,11 +134,7 @@ class UserBrowseController extends Controller
 
     private function userHasExhibitionPass($user, Exhibition $exhibition): bool
     {
-        return Visitor::query()
-            ->where('exhibition_id', $exhibition->id)
-            ->whereRaw('LOWER(email) = ?', [strtolower($user->email)])
-            ->where('payment_status', 'completed')
-            ->exists();
+        return \App\Support\UserVisitorPasses::hasActivePassForExhibition($user, $exhibition);
     }
 
     private function resolveCategory($start, $end, Carbon $now): string

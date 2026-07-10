@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Domain\Event\Models\Exhibition;
 use App\Domain\Shared\Models\User;
 use App\Domain\Visitor\Models\Visitor;
 use Illuminate\Database\Eloquent\Builder;
@@ -91,11 +92,46 @@ class UserVisitorPasses
         if ($completedPass) {
             session([
                 'selected_visitor_booking_id' => $completedPass->booking_id,
-                'visitor_pass_active' => $completedPass->payment_status === 'completed',
+                'visitor_pass_active' => $completedPass->payment_status === 'completed'
+                    && $completedPass->exhibition
+                    && self::isExhibitionAccessOpen($completedPass->exhibition),
             ]);
         }
     }
 
+    public static function hasActivePassForExhibition(User $user, Exhibition $exhibition, ?string $bookingId = null): bool
+    {
+        if (! self::isExhibitionAccessOpen($exhibition)) {
+            return false;
+        }
+
+        return self::queryForUser($user, $bookingId)
+            ->where('exhibition_id', $exhibition->id)
+            ->where('payment_status', 'completed')
+            ->exists();
+    }
+
+    public static function activePassForExhibition(User $user, Exhibition $exhibition, ?string $bookingId = null): ?Visitor
+    {
+        if (! self::isExhibitionAccessOpen($exhibition)) {
+            return null;
+        }
+
+        return self::queryForUser($user, $bookingId)
+            ->where('exhibition_id', $exhibition->id)
+            ->where('payment_status', 'completed')
+            ->orderByDesc('created_at')
+            ->first();
+    }
+
+    public static function isExhibitionAccessOpen(Exhibition $exhibition): bool
+    {
+        if (! $exhibition->end_date) {
+            return true;
+        }
+
+        return now()->lte($exhibition->end_date->copy()->endOfDay());
+    }
     public static function hasUserIdColumn(): bool
     {
         static $has = null;

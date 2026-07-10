@@ -32,6 +32,10 @@ class EventTicketScanService
 
         $windowState = $this->eventWindowState($ticket->event);
 
+        if ($windowState === 'not_started') {
+            return 'not_started';
+        }
+
         if ($windowState === 'expired') {
             return 'expired';
         }
@@ -167,7 +171,15 @@ class EventTicketScanService
             return false;
         }
 
-        return $this->eventWindowState($ticket->event) !== 'expired';
+        if ($this->eventWindowState($ticket->event) !== 'active') {
+            return false;
+        }
+
+        if ($this->hasCheckedInToday($ticket) || $this->hasExceededEventDayLimit($ticket)) {
+            return false;
+        }
+
+        return true;
     }
 
     public function isPaymentValid(Ticket $ticket): bool
@@ -183,6 +195,20 @@ class EventTicketScanService
 
         if ($ticket->booking && (int) $ticket->booking->user_id !== (int) $ticket->visitor_id) {
             return false;
+        }
+
+        $visitorTicket = $ticket->booking?->visitorTicket;
+        if ($visitorTicket) {
+            if ((int) $visitorTicket->user_id !== (int) $ticket->visitor_id) {
+                return false;
+            }
+
+            $ticketEmail = strtolower(trim((string) ($visitorTicket->attendee_email ?: $ticket->visitor?->email)));
+            $ownerEmail = strtolower(trim((string) $ticket->visitor?->email));
+
+            if ($ticketEmail !== '' && $ownerEmail !== '' && $ticketEmail !== $ownerEmail) {
+                return false;
+            }
         }
 
         return in_array($ticket->status, ['confirmed', 'used', 'pending'], true);
@@ -301,6 +327,10 @@ class EventTicketScanService
 
     public function recordCheckIn(Ticket $ticket, ?Request $request = null, ?string $entryGate = null): VisitorCheckin
     {
+        if ($this->resolveVerifyState($ticket) !== 'valid') {
+            throw new \RuntimeException('Ticket is not valid for check-in.');
+        }
+
         $checkedInAt = now();
         $visitorTicket = $ticket->booking?->visitorTicket;
         $device = TicketScanDevice::fromRequest($request);

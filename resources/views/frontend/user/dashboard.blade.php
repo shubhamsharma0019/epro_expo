@@ -133,12 +133,13 @@
         'live' => 'Live',
         default => 'Completed',
     };
+    $welcomeLabel = ($isFirstDashboardVisit ?? false) ? 'Welcome' : 'Welcome back';
 @endphp
 
 <main class="main">
     <div class="welcome-banner">
         <div>
-            <h1>Welcome back, {{ $firstName }}</h1>
+            <h1>{{ $welcomeLabel }}, {{ $firstName }}</h1>
             <p>Your event tickets, exhibition passes, and activity agenda are ready in one place.</p>
         </div>
         @if ($liveSessionsCount > 0)

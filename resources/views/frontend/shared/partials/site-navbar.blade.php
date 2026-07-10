@@ -61,8 +61,8 @@
     @auth
       <a href="{{ route('frontend.user.dashboard') }}">My Dashboard</a>
     @else
-      <a href="{{ route('frontend.user.login') }}">Log In</a>
-      <a href="{{ route('frontend.user.register') }}">Sign Up</a>
+      <a href="{{ route('company.login') }}">Log In</a>
+      <a href="{{ route('company.register') }}">Sign Up</a>
     @endauth
     <div class="site-navbar__get-started-mobile">
       <x-frontend.get-started-menu

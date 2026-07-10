@@ -40,9 +40,10 @@
     $bookingDate = optional(optional($latestBooking ?? $pendingBooking)->created_at)->format('M d, Y') ?? 'Not booked';
     $boothSize = optional(optional($latestBooking ?? $pendingBooking)->boothSize)->title ?? 'Not selected';
     $bookedStepActive = (bool) ($latestBooking ?? $pendingBooking);
-    $setupStepActive = $bookedStepActive && ($boothSetup['progress_percent'] ?? 0) > 0 && $latestBooking;
     $liveStepActive = $bookedStepActive && in_array(optional($latestBooking)->booth_setup_status, ['published', 'approved', 'live'], true);
     $isBoothLive = (bool) $liveStepActive;
+    $setupStepActive = $bookedStepActive && $latestBooking && (($boothSetup['progress_percent'] ?? 0) > 0 || $isBoothLive);
+    $setupStepState = $isBoothLive ? 'success' : 'warning';
     $primaryBoothHref = $isBoothLive && $publicBoothHref ? $publicBoothHref : $setupHref;
     $primaryBoothTarget = $isBoothLive && $publicBoothHref ? '_blank' : null;
     $eventCompleted = $latestBooking && in_array($latestBooking->booking_status, ['completed', 'closed'], true);
@@ -345,12 +346,12 @@
             <div class="relative mb-8 mt-2 px-0 py-2 sm:px-10">
                 <div class="absolute left-10 right-10 top-8 z-0 hidden h-0.5 bg-gray-200 sm:block"></div>
                 <div class="absolute left-10 top-8 z-0 hidden h-0.5 bg-primary sm:block {{ $bookedStepActive ? 'w-[33%]' : 'w-0' }}"></div>
-                <div class="absolute left-[calc(10px+33%)] top-8 z-0 hidden h-0.5 bg-warning sm:block {{ $setupStepActive ? 'w-[33%]' : 'w-0' }}"></div>
+                <div class="absolute left-[calc(10px+33%)] top-8 z-0 hidden h-0.5 sm:block {{ $setupStepActive ? 'w-[33%]' : 'w-0' }} {{ $isBoothLive ? 'bg-primary' : 'bg-warning' }}"></div>
 
                 <div class="relative z-10 flex flex-col items-stretch justify-between gap-4 sm:flex-row sm:items-center sm:gap-0">
                     @foreach ([
                         ['Booth Booked', 'ph ph-briefcase', $bookedStepActive, 'success'],
-                        ['Booth Setup', 'ph ph-storefront', $setupStepActive, 'warning'],
+                        ['Booth Setup', 'ph ph-storefront', $setupStepActive, $setupStepState],
                         ['Booth Live', 'ph ph-desktop', $liveStepActive, 'primary'],
                         ['Event Completed', 'ph ph-flag', $eventCompleted, 'success'],
                     ] as [$label, $icon, $active, $state])

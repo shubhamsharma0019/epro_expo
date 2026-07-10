@@ -54,7 +54,7 @@ class UserTicketController extends Controller
 
         foreach ($exhibitionPasses as $pass) {
             $slug = $pass->exhibition->slug ?? '';
-            $hasPass = $pass->payment_status === 'completed' && filled($slug);
+            $hasPass = $pass->payment_status === 'completed' && filled($slug) && $pass->exhibition && UserVisitorPasses::isExhibitionAccessOpen($pass->exhibition);
 
             $passes->push([
                 'type' => 'exhibition',
@@ -351,10 +351,7 @@ class UserTicketController extends Controller
 
     private function hasExhibitionPass($user, Exhibition $exhibition): bool
     {
-        return UserVisitorPasses::queryForUser($user)
-            ->where('exhibition_id', $exhibition->id)
-            ->where('payment_status', 'completed')
-            ->exists();
+        return UserVisitorPasses::hasActivePassForExhibition($user, $exhibition);
     }
 
     private function categorizeItems($items, Carbon $now)

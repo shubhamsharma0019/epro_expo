@@ -51,6 +51,12 @@
 @section('content')
 @php
     $about = $profile?->about_company ?: $profile?->welcome_text ?: $profile?->tagline ?: 'Explore company details, products, brochures and live sessions from this exhibitor booth.';
+    $companyLogo = $profile?->company_logo ? \App\Support\MediaUrl::url($profile->company_logo) : ($booking->company?->logo ? \App\Support\MediaUrl::url($booking->company->logo) : null);
+    $primaryCtaText = $profile?->cta_text ?: $branding?->cta_button_text ?: 'Learn More';
+    $primaryCtaLink = $profile?->cta_link ?: $branding?->cta_button_link ?: null;
+    $documentCount = $boothCounts['documents'] ?? $documents->count();
+    $sessionCount = $boothCounts['sessions'] ?? $sessions->count();
+    $slotCount = $boothCounts['meeting_slots'] ?? $meetingSlots->count();
     $videoItem = $mediaItems->first(fn ($m) => !empty($m->video_url) || ($m->type ?? '') === 'video');
     $videoUrl = $videoItem?->video_url ?: $profile?->video_url;
     $firstName = explode(' ', $user->name ?? 'Visitor')[0];
@@ -143,9 +149,9 @@
             <div class="hub-hero-overlay absolute inset-0 bg-gradient-to-r from-[#0c0529] via-[#0c0529]/80 to-transparent w-full sm:w-[70%]"></div>
 
             <div class="relative z-10 w-full md:max-w-[80%] lg:max-w-[60%] pt-4">
-                <h1 class="text-[24px] sm:text-[30px] md:text-[34px] font-bold text-white mb-3">Welcome Back, {{ $firstName }}! <span class="text-[24px] sm:text-[28px]">👋</span></h1>
+                <h1 class="text-[24px] sm:text-[30px] md:text-[34px] font-bold text-white mb-3">{{ $heroHeadline }}</h1>
                 <p class="text-[13px] sm:text-[14px] md:text-[15px] font-medium text-indigo-100/90 mb-6 sm:mb-10 leading-relaxed max-w-[100%] md:max-w-[85%]">
-                    Discover events, connect with exhibitors <br class="hidden sm:inline"> and make the most of your experience.
+                    {{ $heroCopy }}
                 </p>
 
                 <div class="hub-stat-strip flex items-center gap-6 sm:gap-8 md:gap-14 bg-[#1b1049]/60 backdrop-blur-md border border-white/10 rounded-2xl px-6 md:px-10 py-5 md:py-6 inline-flex flex-wrap shadow-lg">
@@ -168,7 +174,7 @@
         {{-- Products & Services --}}
         <div class="bg-white rounded-2xl shadow-card p-4 md:p-6 border border-gray-100" id="products">
             <div class="flex justify-between items-center mb-4 md:mb-5">
-                <h2 class="text-[16px] md:text-[18px] font-bold text-slate-900">Our Products & Services</h2>
+                <h2 class="text-[16px] md:text-[18px] font-bold text-slate-900">{{ $companyName }} Products & Services</h2>
                 <a href="#products" class="text-[12px] font-bold text-primary hover:underline">View All</a>
             </div>
             @if ($products->isNotEmpty())
@@ -202,8 +208,8 @@
                     <div class="w-10 h-10 rounded-full bg-white border-2 border-indigo-50 shadow-sm flex items-center justify-center text-primary mb-3.5 group-hover:bg-primary group-hover:text-white transition-colors">
                         <i class="fa-regular fa-building text-[16px]"></i>
                     </div>
-                    <h4 class="text-[13px] font-bold text-slate-800 mb-1.5 group-hover:text-primary transition-colors">Company Details</h4>
-                    <p class="text-[10px] text-slate-500 mb-4 leading-[1.5] flex-1 font-medium">Learn more about our company, vision, mission and team.</p>
+                    <h4 class="text-[13px] font-bold text-slate-800 mb-1.5 group-hover:text-primary transition-colors">{{ $companyName }}</h4>
+                    <p class="text-[10px] text-slate-500 mb-4 leading-[1.5] flex-1 font-medium">{{ Str::limit(strip_tags($about), 80) }}</p>
                     <span class="text-[11px] font-bold text-primary flex items-center gap-1.5 mt-auto">View Details <i class="fa-solid fa-chevron-down hub-chevron text-[9px] transition-transform"></i></span>
                 </button>
 
@@ -211,8 +217,8 @@
                     <div class="w-10 h-10 rounded-full bg-white border-2 border-indigo-50 shadow-sm flex items-center justify-center text-primary mb-3.5 group-hover:bg-primary group-hover:text-white transition-colors">
                         <i class="fa-regular fa-file-pdf text-[16px]"></i>
                     </div>
-                    <h4 class="text-[13px] font-bold text-slate-800 mb-1.5 group-hover:text-primary transition-colors">Brochures</h4>
-                    <p class="text-[10px] text-slate-500 mb-4 leading-[1.5] flex-1 font-medium">Download our company profile, product catalog and more.</p>
+                    <h4 class="text-[13px] font-bold text-slate-800 mb-1.5 group-hover:text-primary transition-colors">Brochures ({{ $documentCount }})</h4>
+                    <p class="text-[10px] text-slate-500 mb-4 leading-[1.5] flex-1 font-medium">{{ $documentCount }} public download{{ $documentCount === 1 ? '' : 's' }} available from this booth.</p>
                     <span class="text-[11px] font-bold text-primary flex items-center gap-1.5 mt-auto">Download Now <i class="fa-solid fa-chevron-down hub-chevron text-[9px] transition-transform"></i></span>
                 </button>
 
@@ -220,8 +226,8 @@
                     <div class="w-10 h-10 rounded-full bg-white border-2 border-indigo-50 shadow-sm flex items-center justify-center text-primary mb-3.5 group-hover:bg-primary group-hover:text-white transition-colors">
                         <i class="fa-regular fa-circle-play text-[16px]"></i>
                     </div>
-                    <h4 class="text-[13px] font-bold text-slate-800 mb-1.5 group-hover:text-primary transition-colors">Company Video</h4>
-                    <p class="text-[10px] text-slate-500 mb-4 leading-[1.5] flex-1 font-medium">Watch our video to know more about our solutions and success stories.</p>
+                    <h4 class="text-[13px] font-bold text-slate-800 mb-1.5 group-hover:text-primary transition-colors">Media ({{ $mediaItems->count() }})</h4>
+                    <p class="text-[10px] text-slate-500 mb-4 leading-[1.5] flex-1 font-medium">{{ $mediaItems->isNotEmpty() ? 'View booth media, videos and product visuals from ' . $companyName . '.' : 'No booth media has been published yet.' }}</p>
                     <span class="text-[11px] font-bold text-primary flex items-center gap-1.5 mt-auto">Watch Now <i class="fa-solid fa-chevron-down hub-chevron text-[9px] transition-transform"></i></span>
                 </button>
 
@@ -230,7 +236,7 @@
                         <i class="fa-solid fa-headset text-[16px]"></i>
                     </div>
                     <h4 class="text-[13px] font-bold text-slate-800 mb-1.5 group-hover:text-primary transition-colors">Live Session (1 to 1)</h4>
-                    <p class="text-[10px] text-slate-500 mb-4 leading-[1.5] flex-1 font-medium">Schedule a 1 to 1 meeting with our experts at your convenience.</p>
+                    <p class="text-[10px] text-slate-500 mb-4 leading-[1.5] flex-1 font-medium">{{ $slotCount }} meeting slot{{ $slotCount === 1 ? '' : 's' }} available for visitors.</p>
                     <span class="text-[11px] font-bold text-primary flex items-center gap-1.5 mt-auto">Request Meeting <i class="fa-solid fa-chevron-down hub-chevron text-[9px] transition-transform"></i></span>
                 </button>
 
@@ -238,8 +244,8 @@
                     <div class="w-10 h-10 rounded-full bg-white border-2 border-indigo-50 shadow-sm flex items-center justify-center text-primary mb-3.5 group-hover:bg-primary group-hover:text-white transition-colors">
                         <i class="fa-solid fa-desktop text-[16px]"></i>
                     </div>
-                    <h4 class="text-[13px] font-bold text-slate-800 mb-1.5 group-hover:text-primary transition-colors">Conference</h4>
-                    <p class="text-[10px] text-slate-500 mb-4 leading-[1.5] flex-1 font-medium">Join our live sessions and webinars to learn, engage and grow.</p>
+                    <h4 class="text-[13px] font-bold text-slate-800 mb-1.5 group-hover:text-primary transition-colors">Conference ({{ $sessionCount }})</h4>
+                    <p class="text-[10px] text-slate-500 mb-4 leading-[1.5] flex-1 font-medium">{{ $sessionCount }} upcoming/live session{{ $sessionCount === 1 ? '' : 's' }} scheduled for this booth.</p>
                     <span class="text-[11px] font-bold text-primary flex items-center gap-1.5 mt-auto">View Schedule <i class="fa-solid fa-chevron-down hub-chevron text-[9px] transition-transform"></i></span>
                 </button>
             </div>
@@ -256,7 +262,7 @@
                         <div data-hub-panel="brochures" class="hidden">
                             <h2 class="text-[17px] font-bold text-slate-900 mb-3">Brochures & Downloads</h2>
                             @forelse ($documents as $doc)
-                                <a href="{{ asset('storage/' . $doc->file_path) }}" target="_blank" class="flex items-center justify-between py-2 border-b border-gray-50 last:border-0 text-[13px] font-semibold text-primary hover:underline">
+                                <a href="{{ \App\Support\MediaUrl::url($doc->file_path) }}" target="_blank" class="flex items-center justify-between py-2 border-b border-gray-50 last:border-0 text-[13px] font-semibold text-primary hover:underline">
                                     {{ $doc->title }}
                                     <i class="fa-solid fa-download text-[11px]"></i>
                                 </a>
@@ -266,7 +272,7 @@
                         </div>
 
                         <div data-hub-panel="company-video" class="hidden">
-                            <h2 class="text-[17px] font-bold text-slate-900 mb-3">Company Video</h2>
+                            <h2 class="text-[17px] font-bold text-slate-900 mb-3">Media ({{ $mediaItems->count() }})</h2>
                             @if ($videoUrl)
                                 <div class="aspect-video rounded-xl overflow-hidden bg-black">
                                     <iframe src="{{ $videoUrl }}" class="w-full h-full" allowfullscreen></iframe>
@@ -429,11 +435,15 @@
                 <h3 class="font-bold text-[14px] text-slate-800">Profile Overview</h3>
             </div>
             <div class="w-[72px] h-[72px] rounded-full p-1 border-2 border-indigo-100 mb-3">
-                <img src="https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&background=f1f5f9&color=334155" class="w-full h-full rounded-full object-cover" alt="{{ $user->name }}">
+                <img src="{{ $companyLogo ?: 'https://ui-avatars.com/api/?name=' . urlencode($companyName) . '&background=f1f5f9&color=334155' }}" class="w-full h-full rounded-full object-cover" alt="{{ $companyName }}">
             </div>
-            <h2 class="text-[18px] font-bold text-slate-900 mb-1">{{ $user->name }}</h2>
-            <p class="text-[12px] text-slate-500 font-medium mb-5">Visitor</p>
-            <a href="{{ route('frontend.user.profile') }}" class="w-full py-2 rounded-lg border border-gray-200 text-primary text-[13px] font-bold hover:bg-gray-50 transition-colors">View Profile</a>
+            <h2 class="text-[18px] font-bold text-slate-900 mb-1">{{ $companyName }}</h2>
+            <p class="text-[12px] text-slate-500 font-medium mb-5">{{ $hall->title }} / Booth {{ $booth->booth_number }}</p>
+            @if ($primaryCtaLink)
+                <a href="{{ $primaryCtaLink }}" target="_blank" rel="noopener" class="w-full py-2 rounded-lg border border-gray-200 text-primary text-[13px] font-bold hover:bg-gray-50 transition-colors">{{ $primaryCtaText }}</a>
+            @else
+                <a href="{{ route('frontend.user.profile') }}" class="w-full py-2 rounded-lg border border-gray-200 text-primary text-[13px] font-bold hover:bg-gray-50 transition-colors">View Profile</a>
+            @endif
         </div>
 
         <div class="bg-white rounded-2xl shadow-card p-5 border border-gray-100">

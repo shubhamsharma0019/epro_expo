@@ -77,6 +77,7 @@ class CompanyNotificationService
             ]);
 
         $meetings = $company->visitorMeetingBookings()
+            ->whereNull('booth_session_id')
             ->latest()
             ->take(10)
             ->get()

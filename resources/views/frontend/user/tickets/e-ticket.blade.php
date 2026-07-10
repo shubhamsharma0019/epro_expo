@@ -1,6 +1,6 @@
 @extends('layouts.visitor-portal')
 
-@section('title', 'eproexpo — Event E-Ticket')
+@section('title', 'eproexpo - Event E-Ticket')
 @section('shell-class', 'shell--passes')
 
 @section('page-styles')
@@ -14,12 +14,32 @@
     if (! $ticket->companyEvent && $ticket->event_slug == 'global-tech-summit-2024') {
         $eventName = 'Global Tech Summit 2024';
     }
-    $dateInfo = $ticket->companyEvent ? ($ticket->companyEvent->starts_at?->format('M d, Y') ?? 'Date TBD') : 'May 15 - May 17, 2024';
-    $timeInfo = $ticket->companyEvent && $ticket->companyEvent->start_time
-        ? \Carbon\Carbon::parse($ticket->companyEvent->start_time)->format('h:i A')
-        : '10:00 AM';
+    $event = $ticket->companyEvent;
+    $dateInfo = $event
+        ? ($event->starts_at
+            ? ($event->ends_at && ! $event->starts_at->isSameDay($event->ends_at)
+                ? ($event->starts_at->month === $event->ends_at->month && $event->starts_at->year === $event->ends_at->year
+                    ? $event->starts_at->format('M d') . '-' . $event->ends_at->format('d, Y')
+                    : $event->starts_at->format('M d') . '-' . $event->ends_at->format('M d, Y'))
+                : $event->starts_at->format('M d, Y'))
+            : 'Date TBD')
+        : 'May 15 - May 17, 2024';
+    $timeInfo = $event && $event->start_time
+        ? \Carbon\Carbon::parse($event->start_time)->format('h:i A')
+        : ($event?->starts_at?->format('h:i A') ?? '10:00 AM');
+    $venueParts = array_filter([
+        $event->venue_name ?? null,
+        $event->city ?? null,
+        $event->country ?? null,
+    ]);
+    $venueInfo = $venueParts ? implode(', ', $venueParts) : ($event->venue_address ?? 'Venue details on event page');
+    $statusText = ucfirst((string) ($ticket->payment_status ?: $ticket->status ?: 'confirmed'));
+    $statusClass = in_array(strtolower($statusText), ['paid', 'confirmed', 'completed'], true) ? 'is-positive' : 'is-neutral';
+    $ticketLabel = trim(($ticket->ticket_name ?: 'General') . ' x ' . max((int) $ticket->quantity, 1));
+    $attendeeName = $ticket->attendee_name ?: ($ticket->user?->name ?? 'Guest');
+    $attendeeEmail = $ticket->attendee_email ?: ($ticket->user?->email ?? 'Email not available');
     $qrImageUrl = EventTicketQr::imageUrl($ticket, 512);
-    $initials = collect(explode(' ', $ticket->attendee_name))->map(fn ($w) => substr($w, 0, 1))->take(2)->implode('');
+    $initials = collect(explode(' ', $attendeeName))->map(fn ($w) => substr($w, 0, 1))->take(2)->implode('');
 @endphp
 <main class="main">
     @if (session('success'))
@@ -46,11 +66,12 @@
                 <div class="ticket-hero">
                     <span class="tag">Confirmed Ticket</span>
                     <h1>{{ $eventName }}</h1>
-                    <p>Arrive early for smooth badge verification at the entry gate.</p>
+                    <p>{{ $event?->summary ?? 'Arrive early for smooth badge verification at the entry gate.' }}</p>
                     <div class="ticket-meta">
                         <div class="box"><span>Date</span><strong>{{ $dateInfo }}</strong></div>
                         <div class="box"><span>Time</span><strong>{{ $timeInfo }}</strong></div>
-                        <div class="box"><span>Seat</span><strong>General</strong></div>
+                        <div class="box"><span>Pass</span><strong>{{ $ticket->ticket_name ?: 'General' }}</strong></div>
+                        <div class="box wide"><span>Venue</span><strong>{{ $venueInfo }}</strong></div>
                     </div>
                 </div>
                 <div class="ticket-qr">
@@ -67,13 +88,13 @@
                 <div class="attendee">
                     <div class="av">{{ strtoupper($initials) }}</div>
                     <div>
-                        <p>{{ $ticket->attendee_name }}</p>
-                        <span>{{ $ticket->attendee_email }}</span>
+                        <p>{{ $attendeeName }}</p>
+                        <span>{{ $attendeeEmail }}</span>
                     </div>
                 </div>
-                <div class="detail-row"><span>Entry gate</span><strong>Main Gate</strong></div>
-                <div class="detail-row"><span>Ticket type</span><strong>{{ $ticket->ticket_name }} x {{ $ticket->quantity }}</strong></div>
-                <div class="detail-row"><span>Status</span><strong style="color:#1D9E75;">Paid</strong></div>
+                <div class="detail-row"><span>Venue</span><strong>{{ $venueInfo }}</strong></div>
+                <div class="detail-row"><span>Ticket type</span><strong>{{ $ticketLabel }}</strong></div>
+                <div class="detail-row"><span>Status</span><strong class="{{ $statusClass }}">{{ $statusText }}</strong></div>
             </div>
             <div class="side-card">
                 <h2>Actions</h2>
